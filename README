@@ -3442,7 +3442,7 @@ NOTES
 
 SUPPORT
   COMMUNITY
-    MAILING LIST ARCHIVE
+    Mailing List Archives
     Try the Apache::ASP mailing list archive first when working through an issue
     as others may have had the same question as you, then try the mod_perl list
     archives since often problems working with Apache::ASP are really mod_perl
@@ -3459,7 +3459,7 @@ SUPPORT
      http://www.geocrawler.com/lists/3/web/182/0/
      http://www.egroups.com/group/modperl/
 
-    EMAIL
+    Mailing List
     Please subscribe to the Apache::ASP mailing list by sending an email to
     asp-subscribe@perl.apache.org and send your questions or comments to the
     list after your subscription is confirmed.
@@ -3470,7 +3470,7 @@ SUPPORT
     If you think this is a mod_perl specific issue, you can send your question
     to modperl@apache.org
 
-    DONATIONS
+    Donations
     Apache::ASP is freely distributed under the terms of the GPL license ( see
     the LICENSE section ). However development time is expensive, and is fueled
     in part by donations from the user community in the form of patches,
@@ -3708,6 +3708,108 @@ CHANGES
     the equivalent of a 1.0 release for other kinds of software.
 
      + = improvement   - = bug fix    (d) = documentations
+
+    $VERSION = 2.47; $DATE="11/06/2002"
+     ++ Runtime speed enhancements for 15-20% improvement including:
+       + INTERNAL API ReadFile() now returns scalar ref as memory optimization
+       + cache InodeNames config setting in ASP object now for common lookups
+       + removed CompileChecksum() INTERNAL API, since it was an unnecesary
+         method decomposition along a common code path
+       + removed IsChanged() INTERNAL API since compiling of scripts
+         is now handled by CompileInclude() which does this functionality already
+       + removed unnecessary decomp of IncludesChanged() INTERNAL API, which was along
+         critical code path
+       + do not call INTERNAL SearchDirs() API when compiling base script
+         since we have already validated its path earlier
+       + Use stat(_) type shortcut for stat() & -X calls where possible
+       + Moved @INC initilization up to handler() & consolidated with $INCDir lib
+       + removed useless Apache::ASP::Collection::DESTROY
+       + removed useless Apache::ASP::Server::DESTROY
+       + removed useless Apache::ASP::GlobalASA::DESTROY
+       + removed useless Apache::ASP::Response::DESTROY
+
+     - Default path for $Response->{Cookies} was from CookiePath
+       config, but this was incorrect as CookiePath config is only
+       for $Session cookie, so now path for $Response->{Cookies}
+       defaults to /
+
+     - Fixed bug where global.asa events would get undefined with
+       StatINC and GlobalPackage set when the GlobalPackage library
+       changed & get reloaded.
+
+     (d) Documented long time config NoCache.
+
+     -- Fixed use with Apache::Filter, capable as both source
+        and destination filter.  Added ./site/eg/filter.filter example
+        to demonstrate these abilities.
+
+     + Use $r->err_headers_out->add Apache::Table API for cookies 
+       now instead of $r->cgi_header_out.  Added t/cookies.t test to 
+       cover new code path as well as general $Response->Cookies API.
+       Also make cookies headers sorted by cookie and dictionary key 
+       while building headers for repeatable behavior, this latter was 
+       to facilitate testing.
+
+     - fixed $Server->Mail error_log output when failing to connect
+       to SMTP server.
+
+     + added tests to cover UniquePackages & NoCache configs since this
+       config logic was updated
+
+     + made deprecated warnings for use of certain $Response->Member
+       calls more loudly write to error_log, so I can remove the AUTOLOAD
+       for Response one day
+
+     - Probably fixed behavior in CgiHeaders, at least under perl 5.8.0, and
+       added t/cgi_headers.t to cover this config.
+
+     + removed $Apache::ASP::CompressGzip setting ability, used to possibly
+       set CompressGzip in the module before, not documented anyway
+
+     + removed $Apache::ASP::Filter setting ability to set Filter globally, 
+       not documented anyway
+
+     + removed old work around for setting ServerStarting to 0
+       at runtime, which was bad for Apache::DBI on win32 a long
+       time ago:
+
+        $Apache::ServerStarting and $Apache::ServerStarting = 0;
+
+       If this code is still needed in Apache::ASP->handler() let
+       me know.
+
+     + check to make sure data in internal database is a HASH ref
+       before using it for session garbage collection.  This is to
+       help prevent against internal database corruption in a 
+       network share that does not support flock() file locking.
+
+     + For new XMLSubs ASP type <%= %> argument interpolation
+       activated with XMLSubsPerlArgs 0, data references can now
+       be passed in addition to SCALAR/string references, so one
+       can pass an object reference like so:
+
+         <my:tag value="<%= $Object %>" />
+
+       This will only work as long as the variable interpolation <%= %>
+       are flushed against the containing " " or ' ', or else the object
+       reference will be stringified when it is concatenated with 
+       the rest of the data.
+
+       Testing for this feature was added to ./t/xmlsubs_aspargs.t
+
+       This feature is still experimental, and its interface may change.
+       However it is slated for the 3.0 release as default method,
+       so feedback is appreciated.
+
+     + For new XMLSubs ASP type <%= %> argument interpolation
+       activated with XMLSubsPerlArgs 0, <% %> will no longer work,
+       just <%= %>, as in 
+
+         <my:tag value="some value <%= $value %> more data" />
+
+       This feature is still experimental, and its interface may change.
+       However it is slated for the 3.0 release as default method,
+       so feedback is appreciated.
 
     $VERSION = 2.45; $DATE="10/13/2002"
      ++New XMLSubsPerlArgs config, default 1, indicates how 

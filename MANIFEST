@@ -214,6 +214,9 @@ t/req_params_none.t
 t/request.t
 t/response.t
 t/response_end.t
+t/same_name.t
+t/same_name/test1/test.asp
+t/same_name/test2/test.asp
 t/server.t
 t/server_mail.t
 t/server_transfer.inc

@@ -160,6 +160,6 @@ use ExtUtils::MakeMaker;
 			       'MLDBM::Sync' => 0,
 			      },
                'EXE_FILES' => [ 'asp-perl' ],
-	       'clean' => { FILES => 't/long_directory_path_test t/.cache t/.state t/session_events/.state Makefile.old' },
+	       'clean' => { FILES => 't/long_directory_path_test t/.cache t/.state t/session_events/.state t/null/.state Makefile.old' },
 	      );
 
