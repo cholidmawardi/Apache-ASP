@@ -2,8 +2,8 @@
 
 $necessary_modules = {
     'Apache' => 'Make sure your installation of mod_perl is complete',
-    'MLDBM' => 'This is used reading and writing multi-level hashes on disk',
-    'SDBM_File' => 'Internal databases used for state files',
+    'MLDBM' => 'This is used for reading and writing multi-level hashes on disk',
+    'SDBM_File' => 'Internal databases used for state files, like $Session',
     'Data::Dumper' => 'Serializes data for MLDBM',
     'File::stat' => 'Nice way of checking modification times for files',
     'File::Basename' => 'Nice way of parsing directory and file paths',
@@ -11,11 +11,16 @@ $necessary_modules = {
     'Fcntl' => 'Used for file locking constants',
     'MD5' => '32 byte hash algorithm for cookie session-id',
     'HTTP::Date' => 'Provides mapping between Perl time() and HTTP dates',
+    'Carp' => 'Provides critical error messaging with confess()',
 };
 
 $optional_modules = {
     'Devel::Symdump' => 'Used for StatINC setting, which reloads modules dynamically',
-    'Win32::OLE' => 'Required for access to ActiveX objects on Win32, like ADO.',
+    'Win32::OLE' => { 
+	test => '$^O eq \'MSWin32\'',
+	message => 'Required for access to ActiveX objects on Win32, like ADO.',
+    },
+    'CGI' => 'Required for file upload.',
 };
 	    
 print "Checking for the prerequisite modules...\n";
@@ -32,6 +37,16 @@ for(sort keys %$necessary_modules) {
 }
 
 for(sort keys %$optional_modules) {
+    my $data = $optional_modules->{$_};
+    my $message = ref($data) ? $data->{message} : $data;
+
+    # if there is a test for this module run it and if returns false
+    # skip this module's message, first so UNIX users don't see 
+    # message about Win32::OLE
+    if(ref($data) && $data->{test} && ! eval($data->{test})) {
+	next;
+    }
+
     eval 'require ' . $_ ;
     if($@) {
 	$warnings++;

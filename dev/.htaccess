@@ -28,8 +28,20 @@
 <Files ~ (\.ssi)>
 	PerlModule Apache::Filter
 	SetHandler perl-script
-	PerlHandler Apache::ASP Apache::SSI
+	PerlHandler Apache::SSI Apache::ASP
 	PerlSetVar Filter On
 	PerlSetVar Debug  2
+</Files>
+
+<Files ~ (\.auth)>
+	AuthName MyRealm
+	AuthType Basic
+	require valid-user
+	AuthUserFile auth_passwd
+	SetHandler perl-script
+	PerlHandler Apache::ASP
+	PerlSetVar Debug  2
+	PerlSetVar Global auth
+	PerlSetVar SessionTimeout 1
 </Files>
 

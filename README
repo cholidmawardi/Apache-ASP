@@ -7,21 +7,25 @@ SYNOPSIS
      PerlSetVar Global /tmp # must be some writeable directory
 
 DESCRIPTION
-    This module provides a Active Server Pages port to Apache.
-    Active Server Pages is a web application platform that
-    originated with Microsoft's IIS server. Under Apache for both
-    Win32 and Unix, it allows a developer to create web applications
-    with session management and perl embedded in static html files.
+    This module provides a Active Server Pages port to Apache with perl as
+    the host scripting language. Active Server Pages is a web application
+    platform that originated with Microsoft's IIS server. Under Apache for
+    both Win32 and Unix, it allows a developer to create dynamic web
+    applications with session management and perl code embedded in static
+    html files.
 
-    This is a portable solution, similar to ActiveWare's PerlScript
-    and MKS's PScript implementation of perl for IIS ASP. Work has
-    been done and will continue to make ports to and from these
-    other implementations as seemless as possible.
+    This is a portable solution, similar to ActiveWare's PerlScript and
+    MKS's PScript implementation of perl for IIS ASP. Work has been done and
+    will continue to make ports to and from these other implementations as
+    seemless as possible.
+
+    For database access, ActiveX, and scripting language issues, please read
+    the FAQ at the end of this document.
 
   INSTALLATION
 
-    Apache::ASP installs easily using the make or nmake commands as
-    shown below. Otherwise, just copy ASP.pm to $PERLLIB/site/Apache
+    Apache::ASP installs easily using the make or nmake commands as shown
+    below. Otherwise, just copy ASP.pm to $PERLLIB/site/Apache
 
      > perl Makefile.PL
      > make 
@@ -32,22 +36,20 @@ DESCRIPTION
 
   CONFIG
 
-    Use with Apache. Copy the /eg directory from the ASP
-    installation to your Apache document tree and try it out! You
-    have to put
+    Use with Apache. Copy the /eg directory from the ASP installation to
+    your Apache document tree and try it out! You have to put
 
      AllowOverride All
 
-    in your <Directory> config section to let the .htaccess file in
-    the /eg installation directory do its work.
+    in your <Directory> config section to let the .htaccess file in the /eg
+    installation directory do its work.
 
-    If you want a STARTER config file, just look at the .htaccess
-    file in the /eg directory.
+    If you want a STARTER config file, just look at the .htaccess file in
+    the /eg directory.
 
-    Here is a Location directive that you would put in a *.conf
-    Apache configuration file. It describes the ASP variables that
-    you can set. Don't set the optional ones if you don't want, the
-    defaults are fine...
+    Here is a Location directive that you would put in a *.conf Apache
+    configuration file. It describes the ASP variables that you can set.
+    Don't set the optional ones if you don't want, the defaults are fine...
 
      ##ASP##PERL##APACHE##UNIX##WINNT##ASP##PERL##APACHE##NOT##IIS##ASP##
      ## INSERT INTO Apache *.conf file, probably access.conf
@@ -69,7 +71,8 @@ DESCRIPTION
      # state files will be stored in this directory, and 
      # as this directory is pushed onto @INC, you will be 
      # able to "use" and "require" files in this directory.
-     #
+     # Included files may also be in this directory, please see 
+     # section on includes for more information.
      PerlSetVar Global /tmp  
             
      ###########################################################
@@ -140,16 +143,13 @@ DESCRIPTION
      # ----------------
      # default 0, if true, locks $Session for duration of script, which
      # serializes requests to the $Session object.  Only one script at
-     # a time may run, with sessions allowed.
+     # a time may run, per user $Session, with sessions allowed.
      # 
      # Serialized requests to the session object is the Microsoft ASP way, 
      # but is dangerous in a production environment, where there is risk
      # of long-running or run-away processes.  If these things happen,
-     # a session may be locked for an indefinate period of time.  The
-     # terrible STOP button, would be easy prey here, where a user
-     # keeps hitting stop and reload, and the scripts execute one at a time
-     # until finished.  A run-away process would keep the session locked
-     # until server restart.
+     # a session may be locked for an indefinate period of time.  A user
+     # STOP button should safely quit the session however.
      #
      PerlSetVar SessionSerialize 0
 
@@ -161,7 +161,7 @@ DESCRIPTION
      # way of doing redirects, allowing for html output after the 
      # redirect is specified.
      #
-     SoftRedirect 0
+     PerlSetVar SoftRedirect 0
 
      # NoState
      # -------
@@ -169,7 +169,72 @@ DESCRIPTION
      # be created.  Use this for a performance increase.  Please note that 
      # this setting takes precedence over the AllowSessionState setting.
      #
-     NoState 0
+     PerlSetVar NoState 0
+
+     # StateDir
+     # --------
+     # default $Global/.state.  State files for ASP application go to 
+     # this directory.  Where the state files go is the most important
+     # determinant in what makes a unique ASP application.  Different
+     # configs pointing to the same StateDir are part of the same
+     # ASP application.
+     # 
+     # The default has not changed since implementing this config directive.
+     # The reason for this config option is to allow OS's with caching
+     # file systems like Solaris to specify a state directory separatly
+     # from the Global directory, which contains more permanent files.
+     # This way one may point StateDir to /tmp/asp, and make one's ASP
+     # application scream with speed.
+     #
+     PerlSetVar StateDir ./.state
+
+     # StateManager
+     # ------------
+     # default 10, this number specifies the numbers of times per SessionTimeout
+     # that timed out sessions are garbage collected.  The bigger the number,
+     # the slower your system, but the more precise Session_OnEnd's will be 
+     # run from global.asa, which occur when a timed out session is cleaned up,
+     # and the better able to withstand Session guessing hacking attempts.
+     # The lower the number, the faster a normal system will run.  
+     #
+     # The defaults of 20 minutes for SessionTimeout and 10 times for 
+     # StateManager, has dead Sessions being cleaned up every 2 minutes.
+     #
+     PerlSetVar StateManager 10
+
+     # Filter
+     # ------
+     # default Off.  With filtering enabled, you can take advantage of 
+     # full server side includes (SSI), implemented through Apache::SSI.  
+     # SSI is implemented through this mechanism by using Apache::Filter.  
+     # A sample configuration for full SSI with filtering is in the 
+     # eg/.htaccess file, with a relevant example script eg/ssi_filter.ssi.
+     # 
+     # You may only use this option with modperl v1.16 or greater installed
+     # and PERL_STACKED_HANDLERS enabled.  Filtering may be used in 
+     # conjunction with other handlers that are also "filter aware".
+     #
+     # With filtering through Apache::SSI, you should expect at least
+     # a 20% performance decrease, increasing as your files get bigger, 
+     # increasing the work that SSI must do.
+     PerlSetVar Filter On
+
+     # PodComments
+     # -----------
+     # default 1.  With pod comments turned on, perl pod style comments
+     # and documentation are parsed out of scripts at compile time.
+     # This make for great documentation and a nice debugging tool,
+     # and it lets you comment out perl code and html in blocks.  
+     # Specifically text like this:
+     # 
+     # =pod
+     # text or perl code here
+     # =cut 
+     #
+     # will get ripped out of the script before compiling.  The =pod and
+     # =cut perl directives must be at the beginning of the line, and must
+     # be followed by the end of the line.
+     PerlSetVar PodComments 1
 
      </Location>
 
@@ -177,18 +242,18 @@ DESCRIPTION
      ## END INSERT
      ##ASP##PERL##APACHE##ACTIVE##SERVER##PAGES##SCRIPTING##!#MICROSOFT##
 
-    You can use the same config in .htaccess files without the
-    Location tag. I use the <Files ~ (\.asp)> tag in the .htaccess
-    file of the directory that I want to run my asp application.
-    This allows me to mix other file types in my application, static
-    or otherwise.
+    You can use the same config in .htaccess files without the Location tag.
+    I use the <Files ~ (\.asp)> tag in the .htaccess file of the directory
+    that I want to run my asp application. This allows me to mix other file
+    types in my application, static or otherwise. Again, please see the ./eg
+    directory in the installation for some good starter .htaccess configs,
+    and see them in action on the example scripts.
 
 ASP Syntax
-    ASP embedding syntax allows one to embed code in html in 2
-    simple ways. The first is the <% xxx %> tag in which xxx is any
-    valid perl code. The second is <%= xxx %> where xxx is some
-    scalar value that will be inserted into the html directly. An
-    easy print.
+    ASP embedding syntax allows one to embed code in html in 2 simple ways.
+    The first is the <% xxx %> tag in which xxx is any valid perl code. The
+    second is <%= xxx %> where xxx is some scalar value that will be
+    inserted into the html directly. An easy print.
 
      A simple asp page would look like:
 
@@ -204,15 +269,88 @@ ASP Syntax
      </html>
      <!-- end sample here -->
 
-    Notice that your perl code blocks can span any html. The for
-    loop above iterates over the html without any special syntax.
+    Notice that your perl code blocks can span any html. The for loop above
+    iterates over the html without any special syntax.
+
+The Event Model & global.asa
+    The ASP platform allows developers to create Web Applications. In
+    fulfillment of real software requirements, ASP allows event-triggered
+    actions to be taken, which are defined in an application's - global.asa
+    - file. The global.asa file resides in the application's - Global -
+    directory, and may define the following actions:
+
+            Action                  Event
+            ------                  ------
+            Application_OnStart     Beginning of Application
+            Application_OnEnd       End of Application
+            Session_OnStart         Beginning of user's Session.
+            Session_OnEnd           End of user's Session.
+
+    These actions must be defined in the $Global/global.asa file as
+    subroutines, for example:
+
+            sub Session_OnStart {
+                    $Application->{$Session->SessionID()} = started;
+            }
+
+    Sessions are easy to understand. When visiting a page in a web
+    application, each user has one unique $Session. This session expires,
+    after which the user will have a new $Session upon revisiting.
+
+    A web application starts when the user visits a page in that
+    application, and has a new $Session created. Right before the first
+    $Session is created, the $Application is created. When the last user
+    $Session expires, that $Application expires also.
+
+  Application_OnStart
+
+    This event marks the beginning of an ASP application, and is run just
+    before the Session_OnStart of the first Session of an application. This
+    event is useful to load up $Application with data that will be used in
+    all user sessions.
+
+  Application_OnEnd
+
+    The end of the application is marked by this event, which is run after
+    the last user session has timed out for a given ASP application.
+
+  Session_OnStart
+
+    Triggered by the beginning of a user's session, Session_OnStart get's
+    run before the user's executing script, and if the same session recently
+    timed out, after the session's triggered Session_OnEnd.
+
+    The Session_OnStart is particularly useful for caching database data,
+    and avoids having the caching handled by clumsy code inserted into each
+    script being executed.
+
+  Session_OnEnd
+
+    Triggered by a user's session ending, Session_OnEnd can be useful for
+    cleaning up and analyzing user data accumulated during a session.
+
+    Sessions end when the session timeout expires, and the StateManager
+    performs session cleanup. The timing of the Session_OnEnd does not occur
+    immediately after the session times out, but when the first script runs
+    after the session expires, and the StateManager allows for that session
+    to be cleaned up.
+
+    So on a busy site with default SessionTimeout (20 minutes) and
+    StateManager (10 times) settings, the Session_OnEnd for a particular
+    session should be run near 22 minutes past the last activity that
+    Session saw. A site infrequently visited will only have the
+    Session_OnEnd run when a subsequent visit occurs, and theoretically the
+    last session of an application ever run will never have its
+    Session_OnEnd run.
+
+    Thus I would not put anything mission-critical in the Session_OnEnd,
+    just stuff that would be nice to run whenever it gets run.
 
 The Object Model
-    The beauty of the ASP Object Model is that it takes the burden
-    of CGI and Session Management off the developer, and puts them
-    in objects accessible from any ASP page. For the perl
-    programmer, treat these objects as globals accesible from
-    anywhere in your ASP application.
+    The beauty of the ASP Object Model is that it takes the burden of CGI
+    and Session Management off the developer, and puts them in objects
+    accessible from any ASP page. For the perl programmer, treat these
+    objects as globals accesible from anywhere in your ASP application.
 
      Currently the Apache::ASP object model supports the following:
 
@@ -224,93 +362,86 @@ The Object Model
      $Application   --      application state
      $Server        --      OLE support + misc
 
-    These objects, and their methods are further defined in the
-    following sections.
+    These objects, and their methods are further defined in the following
+    sections.
 
   $Session Object
 
     The $Session object keeps track of user + web client state, in a
     persistent manner, making it relatively easy to develop web
-    applications. The $Session state is stored accross HTTP
-    connections, in SDBM_Files in the Global directory, and will
-    persist across server restarts.
+    applications. The $Session state is stored accross HTTP connections, in
+    SDBM_Files in the Global directory, and will persist across server
+    restarts.
 
-    The user's session is referenced by a 32-byte md5-hashed cookie,
-    and can be considered secure from session_id guessing, or
-    session hijacking. When a hacker fails to guess a session, the
-    system times out for a second, and with 2**128 (3.4e38) keys to
-    guess, a hacker won't be guessing an id any time soon. Compare
-    the 32-byte key with Miscrosoft ASP implementation which is only
-    16 bytes.
+    The user's session is referenced by a 32-byte md5-hashed cookie, and can
+    be considered secure from session_id guessing, or session hijacking.
+    When a hacker fails to guess a session, the system times out for a
+    second, and with 2**128 (3.4e38) keys to guess, a hacker won't be
+    guessing an id any time soon. Compare the 32-byte key with Miscrosoft
+    ASP implementation which is only 16 bytes.
 
-    If an incoming cookie matches a timed out or non-existent
-    session, a new session is created with the incoming id. If the
-    id matches a currently active session, the session is tied to it
-    and returned. This is also similar to Microsoft's ASP
-    implementation.
+    If an incoming cookie matches a timed out or non-existent session, a new
+    session is created with the incoming id. If the id matches a currently
+    active session, the session is tied to it and returned. This is also
+    similar to Microsoft's ASP implementation.
 
-    The $Session ref is a hash ref, and can be used as such to store
-    data as in:
+    The $Session ref is a hash ref, and can be used as such to store data as
+    in:
 
      $Session->{count}++;   # increment count by one
      %{$Session} = ();      # clear $Session data
 
-    The $Session object state is implemented through MLDBM &
-    SDBM_File, and a user should be aware of MLDBM's limitations.
-    Basically, you can read complex structures, but not write them,
-    directly:
+    The $Session object state is implemented through MLDBM & SDBM_File, and
+    a user should be aware of MLDBM's limitations. Basically, you can read
+    complex structures, but not write them, directly:
 
      $data = $Session->{complex}{data};      # Read ok.
      $Session->{complex}{data} = $data;      # Write NOT ok.
      $Session->{complex} = {data => $data};  # Write ok, all at once.
 
-    Please see MLDBM for more information on this topic. $Session
-    can also be used for the following methods and properties:
+    Please see MLDBM for more information on this topic. $Session can also
+    be used for the following methods and properties:
 
     $Session->SessionID()
-        SessionID property, returns the id number for the current
-        session, which is exchanged between the client and the
-        server as a cookie.
+        SessionID property, returns the id number for the current session,
+        which is exchanged between the client and the server as a cookie.
 
     $Session->Timeout($minutes)
-        Timeout property, if minutes is defined, sets this session's
-        default timeout, else returns the current session timeout.
-        If a user session is inactive for the full timeout, the
-        user's session is destroyed by the system. No one can access
-        the session after it times out, and the system garbage
-        collects it eventually.
+        Timeout property, if minutes is defined, sets this session's default
+        timeout, else returns the current session timeout. If a user session
+        is inactive for the full timeout, the user's session is destroyed by
+        the system. No one can access the session after it times out, and
+        the system garbage collects it eventually.
 
     $Session->Abandon()
-        The abandon method times out the session immediately. All
-        Session data is cleared in the process, just as when any
-        session times out.
+        The abandon method times out the session immediately. All Session
+        data is cleared in the process, just as when any session times out.
 
   $Response Object
 
-    This object manages the output from the ASP Application and the
-    client's web browser. It does store state information like the
-    $Session object but does have a wide array of methods to call.
+    This object manages the output from the ASP Application and the client's
+    web browser. It does store state information like the $Session object
+    but does have a wide array of methods to call.
 
     $Response->{Buffer}
-        Default 1, when TRUE sends output from script to client only
-        at the end of processing the script. When 0, response is not
-        buffered, and client is sent output as output is generated
-        by the script.
+        Default 1, when TRUE sends output from script to client only at the
+        end of processing the script. When 0, response is not buffered, and
+        client is sent output as output is generated by the script.
 
     $Response->{ContentType} = "text/html"
-        Sets the MIME type for the current response being sent to
-        the client. Sent as an HTTP header.
+        Sets the MIME type for the current response being sent to the
+        client. Sent as an HTTP header.
 
     $Response->{Expires} = $time
-        Sends a response header to the client indicating the $time
-        in SECONDS in which the document should expire. A time of 0
-        means immediate expiration. The header generated is a
-        standard HTTP date like: "Wed, 09 Feb 1994 22:23:32 GMT".
+        Sends a response header to the client indicating the $time in
+        SECONDS in which the document should expire. A time of 0 means
+        immediate expiration. The header generated is a standard HTTP date
+        like: "Wed, 09 Feb 1994 22:23:32 GMT".
 
     $Response->{ExpiresAbsolute} = $date
-        Sends a response header to the client with $date being an
-        absolute time to expire. Formats accepted are all those
-        accepted by HTTP::Date::str2time(), e.g.
+        Sends a response header to the client with $date being an absolute
+        time to expire. Formats accepted are all those accepted by
+        HTTP::Date::str2time(), e.g.
 
          "Wed, 09 Feb 1994 22:23:32 GMT"       -- HTTP format
          "Tuesday, 08-Feb-94 14:15:29 GMT"     -- old rfc850 HTTP format
@@ -322,28 +453,25 @@ The Object Model
          "Feb  3 17:03"      -- Unix 'ls -l' format
 
     $Response->AddHeader($name, $value)
-        Adds a custom header to a web page. Headers are sent only
-        before any text from the main page is sent, so if you want
-        to set a header after some text on a page, you must turn
-        BufferingOn.
+        Adds a custom header to a web page. Headers are sent only before any
+        text from the main page is sent, so if you want to set a header
+        after some text on a page, you must turn BufferingOn.
 
     $Response->AppendToLog($message)
         Adds $message to the server log.
 
     $Response->BinaryWrite($data)
-        Writes binary data to a page for use by client objects.
-        Could someone explain this to me? This currently does
-        nothing more than a Write($data), since binary data can be
-        in a scalar.
+        Writes binary data to a page for use by client objects. Could
+        someone explain this to me? This currently does nothing more than a
+        Write($data), since binary data can be in a scalar.
 
     $Response->Clear()
         Erases buffered ASP output.
 
     $Response->Cookies($name,$key,$value) (alpha)
-        Sets the key or attribute of cookie with name $name to the
-        value $value. If $key is not defined, then the Value of the
-        cookie is assumed. ASP CookiePath is assumed to be / in
-        these examples.
+        Sets the key or attribute of cookie with name $name to the value
+        $value. If $key is not defined, then the Value of the cookie is
+        assumed. ASP CookiePath is assumed to be / in these examples.
 
          $Response->Cookies("Test Name", "", "Test Value"); 
            [... results in ...]
@@ -358,9 +486,9 @@ The Object Model
            [... results in ...]
          Set-Cookie: Test=data1=test+value&data2=more+test; expires=Wed, 09 Feb 1994 22:23:32 GMT; path=/; domain=host.com; secure 
 
-        Because this is perl, you can (NOT PORTABLE) reference the
-        cookies directly through hash notation. The same 5 commands
-        above could be compressed to:
+        Because this is perl, you can (NOT PORTABLE) reference the cookies
+        directly through hash notation. The same 5 commands above could be
+        compressed to:
 
          $Response->{Cookies}{Test} = { 
                 Secure  => 1, 
@@ -380,34 +508,33 @@ The Object Model
         http://home.netscape.com/newsref/std/cookie_spec.html
 
     $Response->End()
-        Sends result to client, and immediately exits script.
-        Automatically called at end of script, if not already
-        called.
+        Sends result to client, and immediately exits script. Automatically
+        called at end of script, if not already called.
 
     $Response->Flush()
         Sends buffered output to client and clears buffer.
 
     $Response->Redirect($url)
-        Sends the client a command to go to a different url $url.
-        Script immediately ends.
+        Sends the client a command to go to a different url $url. Script
+        immediately ends.
 
     $Response->{Status} = $status
-        Sets the status code returned by the server. Can be used to
-        set messages like 500, internal server error
+        Sets the status code returned by the server. Can be used to set
+        messages like 500, internal server error
 
     $Response->Write($data)
-        Write output to the HTML page. <%=$data%> syntax is
-        shorthand for a $Response->Write($data). All final output to
-        the client must at some point go through this method.
+        Write output to the HTML page. <%=$data%> syntax is shorthand for a
+        $Response->Write($data). All final output to the client must at some
+        point go through this method.
 
   $Request Object
 
-    The request object manages the input from the client brower,
-    like posts, query strings, cookies, etc. Normal return results
-    are values if an index is specified, or a collection / perl hash
-    ref if no index is specified. WARNING, the latter property is
-    not supported in Activeware's PerlScript, so if you use the
-    hashes returned by such a technique, it will not be portable.
+    The request object manages the input from the client brower, like posts,
+    query strings, cookies, etc. Normal return results are values if an
+    index is specified, or a collection / perl hash ref if no index is
+    specified. WARNING, the latter property is not supported in Activeware's
+    PerlScript, so if you use the hashes returned by such a technique, it
+    will not be portable.
 
      # A normal use of this feature would be to iterate through the 
      # form variables in the form hash...
@@ -424,113 +551,120 @@ The Object Model
         Not implemented.
 
     $Request->Cookies($name, $key) (alpha)
-        Returns the value of the Cookie with name $name. If a $key
-        is specified, then a lookup will be done on the cookie as if
-        it were a query string. So, a cookie set by:
+        Returns the value of the Cookie with name $name. If a $key is
+        specified, then a lookup will be done on the cookie as if it were a
+        query string. So, a cookie set by:
 
          Set-Cookie: test=data1=1&data2=2
 
-        would have a value of 2 returned by $Request-
-        >Cookies('test', 'data2').
+        would have a value of 2 returned by $Request->Cookies('test',
+        'data2').
 
-        If no name is specified, a hash will be returned of cookie
-        names as keys and cookie values as values. If the cookie
-        value is a query string, it will automatically be parsed,
-        and the value will be a hash reference to these values.
+        If no name is specified, a hash will be returned of cookie names as
+        keys and cookie values as values. If the cookie value is a query
+        string, it will automatically be parsed, and the value will be a
+        hash reference to these values.
 
     $Request->Form($name)
-        Returns the value of the input of name $name used in a form
-        with POST method. If $name is not specified, returns a ref
-        to a hash of all the form data.
+        Returns the value of the input of name $name used in a form with
+        POST method. If $name is not specified, returns a ref to a hash of
+        all the form data.
 
     $Request->QueryString($name)
-        Returns the value of the input of name $name used in a form
-        with GET method, or passed by appending a query string to
-        the end of a url as in http://someurl.com/?data=value. If
-        $name is not specified, returns a ref to a hash of all the
-        query string data.
+        Returns the value of the input of name $name used in a form with GET
+        method, or passed by appending a query string to the end of a url as
+        in http://someurl.com/?data=value. If $name is not specified,
+        returns a ref to a hash of all the query string data.
 
     $Request->ServerVariables($name)
-        Returns the value of the server variable / environment
-        variable with name $name. If $name is not specified, returns
-        a ref to a hash of all the server / environment variables
-        data. The following would be a common use of this method:
+        Returns the value of the server variable / environment variable with
+        name $name. If $name is not specified, returns a ref to a hash of
+        all the server / environment variables data. The following would be
+        a common use of this method:
 
          $env = $Request->ServerVariables();
          # %{$env} here would be equivalent to the cgi %ENV in perl.
 
   $Application Object
 
-    Like the $Session object, you may use the $Application object to
-    store data across the entire life of the application. Every page
-    in the ASP application always has access to this object. So if
-    you wanted to keep track of how many visitors there where to the
-    application during its lifetime, you might have a line like
-    this:
+    Like the $Session object, you may use the $Application object to store
+    data across the entire life of the application. Every page in the ASP
+    application always has access to this object. So if you wanted to keep
+    track of how many visitors there where to the application during its
+    lifetime, you might have a line like this:
 
      $Application->{num_users}++
 
-    The Lock and Unlock methods are used to prevent simultaneous
-    access to the $Application object.
+    The Lock and Unlock methods are used to prevent simultaneous access to
+    the $Application object.
 
     $Application->Lock()
-        Locks the Application object for the life of the script, or
-        until UnLock() unlocks it, whichever comes first. When
-        $Application is locked, this gaurantees that data being read
-        and written to it will not suddenly change on you between
-        the reads and the writes.
+        Locks the Application object for the life of the script, or until
+        UnLock() unlocks it, whichever comes first. When $Application is
+        locked, this gaurantees that data being read and written to it will
+        not suddenly change on you between the reads and the writes.
 
-        This and the $Session object both lock automatically upon
-        every read and every write to ensure data integrity. This
-        lock is useful for concurrent access control purposes.
+        This and the $Session object both lock automatically upon every read
+        and every write to ensure data integrity. This lock is useful for
+        concurrent access control purposes.
 
-        Be careful to not be too liberal with this, as you can
-        quickly create application bottlenecks with its improper
-        use.
+        Be careful to not be too liberal with this, as you can quickly
+        create application bottlenecks with its improper use.
 
     $Application->UnLock()
-        Unlocks the $Application object. If already unlocked, does
-        nothing.
+        Unlocks the $Application object. If already unlocked, does nothing.
+
+    $Application->SessionCount()
+        This NON-PORTABLE method returns the current number of active
+        sessions, in the application. This method is not implemented as part
+        of the ASP object model, but is implemented here because it is
+        useful. In particular, when accessing databases with license
+        requirements, one can monitor usage effectively through accessing
+        this value.
+
+        This is a new feature, and if run on a site with previous versions
+        of Apache::ASP, the count may take a while to synch up. To ensure a
+        correct count, you must delete all the current state files
+        associated with an application, usually in the $Global/.state
+        directory.
 
   $Server Object
 
-    The server object is that object that handles everything that
-    the other objects don't. The best part of the server object for
-    Win32 users is the CreateObject method which allows developers
-    to create instances of ActiveX components, like the ADO
-    component.
+    The server object is that object that handles everything that the other
+    objects don't. The best part of the server object for Win32 users is the
+    CreateObject method which allows developers to create instances of
+    ActiveX components, like the ADO component.
 
     $Server->{ScriptTimeout} = $seconds
-        Will not be implemented, please see the Apache Timeout
-        configuration option, normally in httpd.conf.
+        Will not be implemented, please see the Apache Timeout configuration
+        option, normally in httpd.conf.
 
     $Server->CreateObject($program_id)
-        Allows use of ActiveX objects on Win32. This routine returns
-        a reference to an Win32::OLE object upon success, and
-        nothing upon failure. It is through this mechanism that a
-        developer can utilize ADO. The equivalent syntax in VBScript
-        is
+        Allows use of ActiveX objects on Win32. This routine returns a
+        reference to an Win32::OLE object upon success, and nothing upon
+        failure. It is through this mechanism that a developer can utilize
+        ADO. The equivalent syntax in VBScript is
 
          Set object = Server.CreateObject(program_id)
 
-        For further information, try 'perldoc Win32::OLE' from your
-        favorite command line.
+        For further information, try 'perldoc Win32::OLE' from your favorite
+        command line.
 
     $Server->HTMLEncode($string)
-        Returns an HTML escapes version of $string. &, ", >, <, are
-        each escapes with their HTML equivalents. Strings encoded in
-        this nature should be raw text displayed to an end user, as
-        HTML tags become escaped with this method.
+        Returns an HTML escapes version of $string. &, ", >, <, are each
+        escapes with their HTML equivalents. Strings encoded in this nature
+        should be raw text displayed to an end user, as HTML tags become
+        escaped with this method.
 
     $Server->MapPath($virtual_directory);
         Not implemented
 
     $Server->URLEncode($string)
-        Returns the URL-escaped version of the string $string. +'s
-        are substituted in for spaces and special characters are
-        escaped to the ascii equivalents. Strings encoded in this
-        manner are safe to put in url's... they are especially
-        useful for encoding data used in a query string as in:
+        Returns the URL-escaped version of the string $string. +'s are
+        substituted in for spaces and special characters are escaped to the
+        ascii equivalents. Strings encoded in this manner are safe to put in
+        url's... they are especially useful for encoding data used in a
+        query string as in:
 
          $data = $Server->URLEncode("test data");
          $url = "http://localhost?data=$data";
@@ -539,44 +673,170 @@ The Object Model
          valid URL for use in anchor <a> tags and redirects, etc.
 
 EXAMPLES
-    Use with Apache. Copy the ./eg directory from the ASP
-    installation to your Apache document tree and try it out! You
-    have to put
+    Use with Apache. Copy the ./eg directory from the ASP installation to
+    your Apache document tree and try it out! You have to put
 
      AllowOverride All
 
-    in your <Directory> config section to let the .htaccess file in
-    the /eg installation directory do its work.
+    in your <Directory> config section to let the .htaccess file in the /eg
+    installation directory do its work.
 
-    IMPORTANT (FAQ): Make sure that the web server has write access
-    to that directory. Usually a
+    IMPORTANT (FAQ): Make sure that the web server has write access to that
+    directory. Usually a
 
      chmod -R 0777 eg
 
     will do the trick :)
 
+COMPATIBILITY
+  CGI
+
+    CGI has been the standard way of deploying web applications long before
+    ASP came along. CGI.pm is a very useful module that aids developers in
+    the building of these applications, and Apache::ASP has been made to be
+    compatible with function calls in CGI.pm. Please see cgi.htm in the ./eg
+    directory for a sample ASP script written almost entirely in CGI.
+
+    Following are some special notes with respect to compatibility with CGI.
+    Use of CGI.pm in any of these ways was made possible through a great
+    amount of work, and is not gauranteed to be portable with other perl ASP
+    implementations.
+
+    Query Object Initialization
+        You may create a CGI $query object like so:
+
+                use CGI;
+                my $query = new CGI;
+
+        But because POST data has already been read by Apache::ASP, you will
+        not get any use of reading input with the $query object normally. If
+        you initialize the object with $Request data, you may get input like
+        so:
+
+                my $query = new CGI({ %{$Request->Form}, %{$Request->QueryString} });
+                my $data = $query->param('some_input_field_name');
+
+    print()ing CGI
+        CGI is notorious for its print() statements, and the functions in
+        CGI.pm usually return strings to print(). You can do this under
+        Apache::ASP.
+
+                print $query->header();
+                print $query->start_form();
+
+    File Upload
+        CGI.pm is used for implementing reading the input from file upload.
+        You may create the file upload form however you wish, and then the
+        data may be recovered from the file upload by using $Request-
+        >Form(). Data from a file upload gets written to a filehandle, that
+        may in turn be read from. The original file name that was uploaded
+        is the name of the file handle.
+
+                my $filehandle = $Request->Form('file_upload_field_name');
+                print $filehandle; # will get you the file name
+                my $data;
+                while(read($filehandle, $data, 1024)) {
+                        # data from the uploaded file read into $data
+                };
+
+        Please see the docs on CGI.pm (try perldoc CGI) for more information
+        on this topic, and ./eg/file_upload.asp for an example of its use.
+
+  PerlScript
+
+    Much work has been done to bring compatibility with ASP applications
+    written in PerlScript under IIS. Most of that work revolved around
+    bringing a Win32::OLE Collection's interface to many of the objects in
+    Apache::ASP, which are natively written as perl hashes.
+
+    The following objects in Apache::ASP respond as Collections:
+
+            $Application
+            $Session
+            $Request->Form
+            $Request->QueryString
+            $Request->Cookies
+            $Response->Cookies
+            $Response->Cookies('Any Cookie')
+
+    And as such may be used with the following syntax, as compared with the
+    Apache::ASP native calls. Please note the native Apache::ASP interface
+    is compatible with the deprecated PerlScript interface.
+
+            C = PerlScript Compatibility    N = Native Apache::ASP 
+            
+            ## Collection->Contents($name) 
+            [C] $Application->Contents('XYZ')               
+            [N] $Application->{XYZ}
+
+            ## Collection->SetProperty($property, $name, $value)
+            [C] $Application->Contents->SetProperty('Item', 'XYZ', "Fred");
+            [N] $Application->{XYZ} = "Fred"
+
+            ## Collection->GetProperty($property, $name)
+            [C] $Application->Contents->GetProperty('Item', 'XYZ')          
+            [N] $Application->{XYZ}
+
+            ## Collection->Item($name)
+            [C] print $Request->QueryString->Item('message'), "<br>\n\n";
+            [N] print $Request->{QueryString}{'message'}, "<br>\n\n";               
+
+            ## Working with Cookies
+            [C] $Response->SetProperty('Cookies', 'Testing', 'Extra');
+            [C] $Response->SetProperty('Cookies', 'Testing', {'Path' => '/'});
+            [C] print $Request->Cookies(Testing) . "<br>\n";
+            [N] $Response->{Cookies}{Testing} = {Value => Extra, Path => '/'};
+            [N] print $Request->{Cookies}{Testing} . "<br>\n";
+
+    Several incompatibilities exist between PerlScript and Apache::ASP:
+
+     > Collection->{Count} property has not been implemented.
+     > VBScript dates may not be used for Expires property of cookies.
+     > Win32::OLE::in may not be used.  Use keys() to iterate over Collections.
+     > The ->{Item} property is parsed automatically out of scripts, use ->Item().
+
 FAQ
+    How is database connectivity handled?
+        Database connectivity is handled through perl's DBI & DBD
+        interfaces. Please see
+        http://www.hermetica.com/technologia/perl/DBI/ for more information.
+        In the UNIX world, it seems most databases have cross platform
+        support in perl.
+
+        DBD::ODBC is often your ticket on Win32. On UNIX, commercial vendors
+        like OpenLink Software (http://www.openlinksw.com/) provide the nuts
+        and bolts for ODBC.
+
+    Do I have access to ActiveX objects?
+        Only under Win32 will developers have access to ActiveX objects
+        through the perl Win32::OLE interface. This will remain true until
+        there are free COM ports to the UNIX world. At this time, there is
+        no ActiveX for the UNIX world.
+
+    Can I script in VBScript or JScript ?
+        Yes, but not with this perl module. For ASP with other scripting
+        languages besides perl, you will need to go with a commercial vendor
+        in the UNIX world. ChiliSoft (http://www.chilisoft.com/) has one
+        such solution. Of course on NT, you get this for free with IIS.
+
     How do I get things I want done?!
-        If you find a problem with the module, or would like a
-        feature added, please mail support, as listed below, and
-        your needs will be promptly and seriously considered, then
-        implemented.
+        If you find a problem with the module, or would like a feature
+        added, please mail support, as listed below, and your needs will be
+        promptly and seriously considered, then implemented.
 
     What is the state of Apache::ASP?  Can I publish a web site on it?
-        Apache::ASP has been production ready since v.02. Work being
-        done on the module is on a per-need basis, with the goal
-        being to eventually have the ASP API completed, with full
-        portability to ActiveState's PerlScript and MKS's PScript.
-        If you can suggest any changes to facilitate these goals,
-        your comments are welcome.
+        Apache::ASP has been production ready since v.02. Work being done on
+        the module is on a per-need basis, with the goal being to eventually
+        have the ASP API completed, with full portability to ActiveState's
+        PerlScript and MKS's PScript. If you can suggest any changes to
+        facilitate these goals, your comments are welcome.
 
     I am getting a tie or MLDBM / state error message, what do I do?
         Make sure the web server or you have write access to the eg
-        directory, or to the directory specified as Global in the
-        config you are using. Default for Global is the directory
-        the script is in (e.g. '.'), but should be set to some
-        directory not under the www server's document root, for
-        security reasons, on a production site.
+        directory, or to the directory specified as Global in the config you
+        are using. Default for Global is the directory the script is in
+        (e.g. '.'), but should be set to some directory not under the www
+        server's document root, for security reasons, on a production site.
 
         Usually a
 
@@ -585,48 +845,55 @@ FAQ
         will take care of the write access issue for initial testing
         purposes.
 
-        Failing write access being the problem, try upgrading your
-        version of Data::Dumper and MLDBM, which are the modules
-        used to write the state files.
+        Failing write access being the problem, try upgrading your version
+        of Data::Dumper and MLDBM, which are the modules used to write the
+        state files.
 
     How do I access the ASP Objects in general?
-        All the ASP objects can be referenced through the main
-        package with the following notation:
+        All the ASP objects can be referenced through the main package with
+        the following notation:
 
          $main::Response->Write("html output");
 
-        This notation can be used from anywhere in perl. Only in
-        your main ASP script, can you use the normal notation:
+        This notation can be used from anywhere in perl. Only in your main
+        ASP script, can you use the normal notation:
 
          $Response->Write("html output");
 
     Can I print() in ASP?
-        Yes. You can print() from anywhere in an ASP script as it
-        aliases to the $Response->Write() method. However, this
-        method is not portable (unless you can tell me otherwise :)
+        Yes. You can print() from anywhere in an ASP script as it aliases to
+        the $Response->Write() method. However, this method is not portable
+        (unless you can tell me otherwise :)
 
 SEE ALSO
-    perl(1), mod_perl(3), Apache(3), MLDBM(3), HTTP::Date(3),
-    CGI(3), Win32::OLE(3)
+    perl(1), mod_perl(3), Apache(3), MLDBM(3), HTTP::Date(3), CGI(3),
+    Win32::OLE(3)
 
 NOTES
-    Many thanks to those who helped me make this module a reality.
-    Whoever said you couldn't do ASP on UNIX? Kudos go out to:
+    Many thanks to those who helped me make this module a reality. Whoever
+    said you couldn't do ASP on UNIX? Kudos go out to:
 
      :) Doug MacEachern, for moral support and of course mod_perl
      :) Ryan Whelan, for boldly testing on Unix in its ASP's early infancy
      :) Lupe Christoph, for his immaculate and stubborn testing skills
-     :) Bryan Murphy, for being a PerlScript wiz.
-     :) Francesco Pasqualini, for bringing ASP to CGI.
-     :) Michael Rothwell, for his love of Session hacking.
+     :) Bryan Murphy, for being a PerlScript wiz
+     :) Francesco Pasqualini, for bringing ASP to CGI
+     :) Michael Rothwell, for his love of Session hacking
+     :) Lincoln Stein, for his blessed CGI module
+     :) Alan Sparks, for knowing when size is more important than speed
+     :) Jeff Groves, who put a STOP to user stop button woes
+     :) Matt Sergeant, for his excellect tutorial on PerlScript
+     :) Ken Williams, for great teamwork bringing full SSI to the table
+     :) Darren Gibbons, the biggest cookie-monster I've ever known.
+     :) Doug Silver, for finding all the bugs.
 
 SUPPORT
-    Please send any questions or comments to the Apache modperl
-    mailing list at modperl@apache.org or to me at
-    chamas@alumni.stanford.org.
+    Please send any questions or comments to the Apache modperl mailing list
+    at modperl@apache.org or to me at chamas@alumni.stanford.org.
 
 COPYRIGHT
-    Copyright (c) 1998 Joshua Chamas. All rights reserved. This
-    program is free software; you can redistribute it and/or modify
-    it under the same terms as Perl itself.
+    Copyright (c) 1998, Joshua Chamas.
+
+    All rights reserved. This program is free software; you can redistribute
+    it and/or modify it under the same terms as Perl itself.
 

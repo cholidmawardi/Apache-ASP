@@ -1,0 +1,40 @@
+<%
+package Test;
+
+# This is just a simple test package which grabs a cookie, unscrambles
+# it, and returns the individual information to a user
+
+sub new {
+    my $self = {};
+    bless $self;
+    return $self;
+}
+
+sub getUserInfo {
+    my ($self) = @_;
+
+     my $cookie = $main::Request->Cookies('userinfo');
+
+    $cookie =~ tr/a-zA-Z/N-ZA-Mn-za-m/;
+
+    my ($userid, $domain, $password) = split ('@', $cookie);
+    return ($userid, $password, $domain);
+}
+
+#use Test;
+
+my $foo = Test->new();
+
+my ($userid, $pass, $domain) = $foo->getUserInfo();
+
+    $main::Response->Cookies('foo', '0');
+    $main::Response->AddHeader('Set-cookie', 'bar=0');
+    $main::Response->AddHeader('Set-cookie', 'again=2');
+
+
+$main::Response->Flush();
+$main::Response->Write( "Userid: $userid, Password: $pass, Domain: $domain")
+;
+
+%>
+

@@ -1,0 +1,7 @@
+sub Session_OnStart {
+	$Session->{Count} = 10;
+}
+
+sub Session_OnEnd {
+
+}

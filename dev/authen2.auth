@@ -1,0 +1,9 @@
+<html><body>
+Congrats!, you got in!<p>
+<% 
+my $env = $Request->ServerVariables();
+for(sort keys %$env) {
+	print "<b>$_</b>: $env->{$_}<br>\n";
+}
+%>
+</body></html>

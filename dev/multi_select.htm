@@ -1,0 +1,12 @@
+<html>
+<body>
+<form method=POST>
+<select name=multi size=2 multiple>
+<option>Test1</option>
+<option>Test2</option>
+</select>
+<input type=submit>
+</form>
+The values from the last post were: <%=join(", ", $Request->Form('multi'))%>
+</body>
+</html>

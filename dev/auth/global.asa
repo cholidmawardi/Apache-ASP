@@ -1,0 +1,31 @@
+sub Session_OnStart {
+	my $user = $Request->ServerVariables('REMOTE_USER');
+	$Response->AppendToLog("starting session");
+	
+	# if we have seen the user this session, then there will
+	# be an auth cookie set, if there is no auth cookie set,
+	# then we will assume the user has authenticated for the first time,
+	# and won't require a re-authentication.
+	#
+	# Note that if the user disables this cookie, then we won't
+	# be able to force a password check, but that's OK, this is just
+	# for user (un)friendliness.  Note also that a user with IE 4.0
+	# will re-authenticate w/o a password box popping up.  The browser
+	# does it automatically.
+	#
+	if(! $user || $Request->Cookies('auth')) {
+		my $rand = int(rand() * 100);
+		$Response->AppendToLog("forcing authenticate: $Request->{Cookies}{auth}");
+		$Response->{Status} = 401;
+		$Response->AddHeader('WWW-Authenticate', 'basic realm="MyRealm'.$rand.'"');
+		$Response->Cookies('auth', 1) if ! $Request->{Cookies}{auth};
+
+		# if user doesn't enter correct password, they see a blank doc,
+		# is this ok?  You might have to do a redirect here instead.
+		$Response->End(); 
+	} else {
+		$Response->AppendToLog("first time entering password");
+		$Response->Cookies('auth', 1);
+	}		
+}
+

@@ -1,6 +1,69 @@
-$VERSION = .05
+$MODULE=Apache::ASP; $VERSION = .08;
 
 + = improvement; - = bug fix
+
+++SSI with Apache::Filter & Apache::SSI, see config options & ./eg files
+  Currently filtering only works in the direction Apache::ASP -> Apache::SSI,
+  will not work the other way around, as SSI must come last in a set of filters
++ SSI file includes may reference files in the Global directory, better code sharing
+- <% @array... %> no longer dropped from code.
++ perl =pod comments are stripped from script before compiling, and associated
+  PodComments configuration options.
++ Command line cgi/asp script takes various options, and allows execution
+  of multiple asp scripts at one time.  This script should be used for
+  command line debugging.  This is also the beginning of building
+  a static site from asp scripts with the -b option, suppressing headers.
++ $Response->AddHeader('Set-Cookie') works for multiple cookies.
+- $Response->Cookies('foo', '0') works, was dropping 0 because of boolean test
+- Fixed up some config doc errors.
+
+$MODULE=Apache::ASP; $VERSION = .07;
+
+- removed SIG{__WARN__} handler, it was a bad idea.
+- fixes file locking on QNX, work around poor flock porting
++ removed message about Win32::OLE on UNIX platforms from Makefile.PL
+- Better lock garbage collection.  Works with StatINC seemlessly.
+- Multiple select forms now work in array context with $Response->Form()
+	@values = $Response->Form('multi');
+- Better CGI.pm compatibility with $r->header_out('Content-type'),
+  improved garabage collection under modperl, esp. w/ file uploads
+
+$VERSION = .06
+
++ Application_OnStart & Application_OnEnd event handlers support.
+- Compatible with CGI.pm 2.46 headers() 
+- Compatible with CGI.pm $q = new CGI(), caveat: does not set params 
++ use strict; followed by use of objects like $Session is fine.
+- Multiple cookies may be set per script execution.
++ file upload implemented via CGI.pm
+++global.asa implemented with events Session_OnStart and Session_OnEnd
+  working appropriately.
++ StateDir configuration directive implemented.
+  StateDir allows the session state directory to be specified separately 
+  from the Global directory, useful for OS's with caching filesystems.
++ StateManager config directive.  StateManager specifies how frequently
+  Sessions are cleaned up, with 10 (default) meaning that old Sessions
+  will be cleaned up 10 times per SessionTimeout period (default 20 minutes).
++ $Application->SessionCount() implemented, non-portable method.
+	: returns the number of currently active sessions
+- STOP button fix.  Users may hit STOP button during script 
+  execution, and Apache::ASP will cleanup with a routine registered
+  in Apache's $r->register_cleanup.  Works well supposedly.
++ PerlScript compatibility work, trying to make ports smoother.
+	: Collection emulator, no ->{Count} property
+	: $.*(.*)->{Item} parsed automatically, 
+	  shedding the ->{Item} for Collection support (? better way ?)
+	: No VBScript dates support, just HTTP RFC dates with HTTP::Date
+	: Win32::OLE::in not supported, just use "keys %{$Collection}"	
++ ./cgi/asp script for testing scripts from the command line
+	: will be upgraded to CGI method of doing asp
+	: is not "correct" in anyway, so not documented for now
+	  but still useful
++ strips DOS carriage returns from scripts automatically, so that
+  programs like FrontPage can upload pages to UNIX servers
+  without perl choking on the extra \r characters.
+
+$VERSION = .05
 
 + Added PERFORMANCE doc, which includes benchmarks + hints.
 + Better installation warnings and errors for other modules required. 

@@ -1,0 +1,57 @@
+#!/usr/local/bin/perl 
+
+use Apache::ASP;
+
+# help section
+use Getopt::Std;
+getopts('hsdb');
+if($opt_h || ! @ARGV) {
+    print <<HELP;
+Usage: asp [-hsdb] file1 \@arguments file2 \@arguments ...
+
+    -h  Help you are getting now!
+    -s  Setup \$Session and \$Application state for script.
+    -d  Set to debug code upon errors.
+    -b  Only return body of document, no headers.
+
+This program will run asp scripts from the command line.
+Each file that is specified will be run, and the 
+\$Request->QueryString() and \$Request->Form() data will
+be initialized by the \@arguments following the script file
+name.  The \@arguments will be written as space separated 
+words, and will be initialized as an associate array where
+%arguments = \@arguments.
+
+HELP
+    ;
+    exit;
+}
+
+while(@ARGV) {
+    my $file = shift @ARGV;
+    my @script_args;
+
+    unless(-e $file) {
+	print "file $file does not exist\n";
+	next;
+    }
+
+    while(@ARGV) {
+	last if(-e $ARGV[0]);
+	push(@script_args, shift @ARGV);
+    }
+	
+    $r = &Apache::ASP::CGI::init($file, @script_args);
+    $r->dir_config('NoState', 0) if $opt_s;
+    if($opt_d) {
+	$r->dir_config('Debug', 2);
+	$r->dir_config('CommandLine', 1);
+    }
+    if($opt_b) {
+	$r->dir_config('NoHeaders', 1);
+    }
+    
+    &Apache::ASP::handler($r);
+}
+
+

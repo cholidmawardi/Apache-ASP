@@ -1,0 +1,20 @@
+sub Session_OnStart {
+	$Session->{Count} = 10;
+	$Session->{onstart} = time();
+	$Application->{'Session'.$Session->SessionID} = '?';
+}
+
+sub Session_OnEnd {
+	my $t_session_active = time() - $Session->{onstart};
+	$Application->{'Session'.$Session->SessionID} = $t_session_active;
+	$Response->AppendToLog("Session Ending :) in ./eg/global.asa ". 
+		$Session->SessionID);
+}
+
+sub Application_OnStart {
+	$Application->{Count} = 20;
+}
+
+sub Application_OnEnd {
+	$Response->AppendToLog("Application Ending :) in ./eg/global.asa");
+}

@@ -1,7 +1,8 @@
 <% 
+	use strict;
 	use DemoASP; 
-	$demo = &DemoASP::new($Request);
-	$form = $Request->Form();
+	my $demo = &DemoASP::new($Request);
+	my $form = $Request->Form();
 
 	# process form here
 	if($form->{increment}) {
@@ -42,6 +43,9 @@
 </tr>
 </table>
 </center>
+<p>
+The value for $Session->{Count} gets reset to 10 on every session start
+in the global.asa file.
 <p>
 <a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
 view this file's source
