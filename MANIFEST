@@ -44,6 +44,7 @@ editors/aasp.vim
 editors/mmm-asp-perl.el
 lib/Apache/ASP/Application.pm
 lib/Apache/ASP/CGI.pm
+lib/Apache/ASP/CGI/Table.pm
 lib/Apache/ASP/CGI/Test.pm
 lib/Apache/ASP/Collection.pm
 lib/Apache/ASP/CollectionItem.pm
@@ -99,6 +100,7 @@ site/eg/default.htm
 site/eg/dynamic_includes.htm
 site/eg/error_document.htm
 site/eg/file_upload.asp
+site/eg/filter.filter
 site/eg/footer.inc
 site/eg/form.asp
 site/eg/formfill.asp
@@ -118,7 +120,7 @@ site/eg/session_query_parse.asp
 site/eg/source.asp
 site/eg/source.inc
 site/eg/ssi_filter.ssi
-site/eg/syntax_error.htm
+site/eg/syntax_error.asp
 site/eg/table.inc
 site/eg/template.xsl
 site/eg/test.gif
@@ -153,6 +155,7 @@ site/syntax.html
 site/todo.html
 site/top.inc
 site/tuning.html
+site/webtimelogo.jpg
 site/xml.html
 t/T.pm
 t/application.t
@@ -164,9 +167,11 @@ t/asp-perl2.t
 t/asp_object.t
 t/cache.t
 t/cache_test.inc
+t/cgi_headers.t
 t/closure.t
 t/collection.t
 t/collectionitem.t
+t/cookies.t
 t/dynamic_include_change.inc
 t/end.t
 t/end_basic.inc
@@ -187,6 +192,7 @@ t/include_change.t
 t/include_change_piece.inc_temp
 t/include_code.inc
 t/include_code2.inc
+t/include_dir_error.t
 t/include_return.inc
 t/include_runtime.t
 t/inline_include_change.inc
@@ -196,6 +202,8 @@ t/load.t
 t/long_names.t
 t/loops.t
 t/mail_error.t
+t/no_cache.inc
+t/no_cache.t
 t/null/global.asa
 t/null/ok.inc
 t/raw.t
@@ -220,6 +228,8 @@ t/stat_inc.t
 t/strict_error.inc
 t/strict_error.t
 t/taint_check.t
+t/unique_packages.inc
+t/unique_packages.t
 t/xmlsubs.t
 t/xmlsubs_aspargs.t
 t/xmlsubs_perlargs.t

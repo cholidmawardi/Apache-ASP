@@ -73,6 +73,8 @@ sub Application_OnEnd {
 
        'error_document.htm' => 'Shows a custom error message using the $Response->ErrorDocument() API extension',
 
+       'filter.filter' => "Demonstrates Apache::ASP's ability to act both as a source and destination filter with Apache::Filter.",
+
        'file_upload.asp' => 'File upload data can be read from the $Request->Form(), '.
 				'and is implemented via CGI.pm',
 
@@ -126,7 +128,7 @@ sub Application_OnEnd {
 			'your apache with stacked handlers and install these modules to see '.
        '		this script',
 
-       'syntax_error.htm' => 'Demonstrates asp debugging with Debug 2 by creating a perl syntax error ',
+       'syntax_error.asp' => 'Demonstrates asp debugging with Debug 2 by creating a perl syntax error ',
 
        'table.inc' => 'Another include used to demo dynamic_includes.htm',
 

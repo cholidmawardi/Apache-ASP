@@ -267,6 +267,22 @@ equivalent of a 1.0 release for other kinds of software.
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%2029e470448>$VERSION = 2.45; $DATE="10/13/2002"</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%201716f16ef>$VERSION = 1.95; $DATE="07/10/2000";</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
 			<a href=#%24VERSION%20%3D%2022337f806>$VERSION = 2.41; $DATE="09/29/2002"</a>
 			</font>
 			</td>
@@ -582,21 +598,67 @@ equivalent of a 1.0 release for other kinds of software.
 			</td>
 							
 		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#%24VERSION%20%3D%201716f16ef>$VERSION = 1.95; $DATE="07/10/2000";</a>
-			</font>
-			</td>
-		<td>&nbsp;</td>					
-		</tr>
 			
 	</table>
 	<hr size=1>
 	<p>
 
+	<p>
+	<a name=%24VERSION%20%3D%2029e470448></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.45; $DATE="10/13/2002"</b></font><p>
+<font face="courier new" size=3><pre>
+ ++New XMLSubsPerlArgs config, default 1, indicates how 
+  XMLSubs arguments have always been parsed.  If set to 0,
+  will enable new XMLSubs args that are more ASP like with
+  &lt;%= %&gt; for dynamic interpolation, such as:
+
+    &lt;my:xmlsub arg=&quot;&lt;%= $data %&gt;&quot; arg2=&quot;text &lt;%= $data2 %&gt;&quot; /&gt;
+ 
+  Settings XMLSubsPerlArgs to 0 is experimental for now, but
+  will become the default by Apache::ASP version 3.0
+
+ ++Optimization for static HTML/XML files that are served up 
+  via Apache::ASP so that they are not compiled into perl subroutines
+  first.  This makes especially native XSLT both faster &amp; take
+  less memory to serve, before XSL &amp; XML files being transformed
+  by XSLT would both be compiled as normal ASP script first, so 
+  now this will happen if they really are ASP scripts with embedded
+  &lt;% %&gt; code blocks &amp; XMLSubs being executed.
+
+ +Consolidate some config data for Apache::ASP-&gt;Loader to use
+  globals in @Apache::ASP::CompileChecksumKeys to know which 
+  config data is important for precompiling ASP scripts.
+
+ +Further streamlined code compilation.  Now both base
+  scripts and includes use the internal CompileInclude() API
+  to generate code.
+
+ -Fixed runtime HTML error output when Debug is set to -2/2,
+  so that script correctly again gets rendered in final perl form.
+  Added compile time error output to <a href=eg/syntax_error.htm>./site/eg/syntax_error.htm</a>
+  when a special link is clicked for a quick visual test.
+
+ -Cleaned up some bad coding practices in <a href=eg/global.asa>./site/eg/global.asa</a>
+  associated changes in other example files.  Comment example
+  global.asa some for the first time reader
+
+ -DemoASP.pm examples module needed &quot;use strict&quot; fix, thanks
+  to Allan Vest for bug report
+
+ --$rv = $Response-&gt;Include({ File =&gt; ..., Cache =&gt; 1});
+  now works to get the first returned value fetched from
+  the cache.  Before, because a list was always returned,
+  $rv would have been equal to the number of items returned,
+  even if the return value list has just one element.
+
+ (d) added site/robots.txt file with just a comment for
+     search engine indexing
+
+ -fixed <a href=eg/binary_write.htm>./site/eg/binary_write.htm</a> to not use 
+  $Response-&gt;{ContentLength} because it does not exist.
+  Fixed it to use $Response-&gt;AddHeader now instead
+</pre></font>
+	
 	<p>
 	<a name=%24VERSION%20%3D%2022337f806></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.41; $DATE="09/29/2002"</b></font><p>

@@ -4,7 +4,7 @@
 
 package Apache::ASP;
 
-$VERSION = 2.45;
+$VERSION = 2.47;
 
 use Digest::MD5 qw(md5_hex);
 use Cwd qw(cwd);
@@ -27,7 +27,7 @@ use strict;
 no strict qw(refs);
 use vars qw($VERSION
 	    %NetConfig %LoadedModules %LoadModuleErrors 
-	    %Compiled %Codes %includes %Includes %CompiledIncludes
+	    %Codes %includes %Includes %CompiledIncludes
 	    @Objects %Register %ScriptSubs %XSLT
 	    $ServerID $ServerPID $SrandPid 
             $CompileErrorSize $CacheSize @CompileChecksumKeys
@@ -142,8 +142,9 @@ sub handler {
 
     # default to Apache request object if not passed in, for possible DSO fix
     # rarely happens, but just in case
-    unless(eval { $r->filename }) {
-	if(eval { Apache->request->filename }) {
+    my $filename;
+    unless($filename = eval { $r->filename }) {
+	if($filename = eval { Apache->request->filename }) {
 	    $r = Apache->request;
 	} else {
 	    return &DSOError($r);
@@ -151,25 +152,29 @@ sub handler {
     }
 
     # better error checking ?
-    my $filename = $r->filename();
-    return(404) if (! -e $filename or -d $filename);
+    $filename ||= $r->filename();
+    # using _ is optimized to use last stat() record
+    return(404) if (! -e $filename or -d _);
 
     # alias $0 to filename, bind to glob for bug workaround
     local *0 = \$filename;
 
-    #X: compensate for bug on Win32 that has this always set
-    # screws with Apache::DBI 
-    $Apache::ServerStarting and $Apache::ServerStarting = 0;
+    # ASP object creation, a lot goes on in there!
+    # method call used for speed optimization, as OO calls are slow
+    my $self = Apache::ASP::new('Apache::ASP', $r, $filename);
 
-    # ASP object creation, a lot goes on in there!    
-    my $self = Apache::ASP->new($r);
+    # for runtime use/require library loads from global/INCDir
+    # do this in the handler section to cover all the execution stages
+    # following object set up as possible.
+    local @INC = ($self->{global}, $INCDir, @INC);
 
     # Execute if no errors
-    $self->{errs} || $self->Run();
+    $self->{errs} || &Run($self);
     
     # moved print of object to the end, so we'll pick up all the 
     # runtime config directives set while the code is running
-    $self->{dbg} && $self->Debug('ASP Done Processing', $self );
+
+    $self->{dbg} && $self->Debug("ASP Done Processing $self", $self );
 
     # error processing
     if($self->{errs}) {
@@ -213,7 +218,7 @@ sub Warn {
 }
 
 sub new {
-    my($class, $r) = @_;
+    my($class, $r, $filename) = @_;
     $r || die("need Apache->request() object to Apache::ASP->new(\$r)");
 
     # $StartTime is set by asp-perl early on before modules are loaded
@@ -227,11 +232,9 @@ sub new {
 	$start_time = eval { &Time::HiRes::time(); } || time();
     }
 
-    eval "use lib qw($INCDir);";
-
     local $SIG{__DIE__} = \&Carp::confess;
     # like cgi, operate in the scripts directory
-    my $filename = $r->filename();
+    $filename ||= $r->filename();
     $filename =~ m|^(.*?[/\\]?)([^/\\]+)$|;
     my $dirname = $1 || '.';
     my $basename = $2;
@@ -248,19 +251,17 @@ sub new {
       { 
        'basename'       => $basename,
        'cleanup'        => [],
-       compile_includes => $r->dir_config('DynamicIncludes'),
        'dbg'            => $r->dir_config('Debug') || 0,  # debug level
        filename         => $filename,
        global           => $global,
        global_package   => $r->dir_config('GlobalPackage'),
+       inode_names      => $r->dir_config('InodeNames'),
        no_cache         => $r->dir_config('NoCache'),
-       no_state         => $r->dir_config('NoState'),
        'r'              => $r, # apache request object 
        start_time       => $start_time,
        stat_scripts     => defined $r->dir_config('StatScripts') ? $r->dir_config('StatScripts') : 1,
        stat_inc         => $r->dir_config('StatINC'),    
        stat_inc_match   => $r->dir_config('StatINCMatch'),
-       unique_packages  => $r->dir_config('UniquePackages'),
        use_strict       => $r->dir_config('UseStrict'),
        win32            => ($^O eq 'MSWin32') ? 1 : 0,
        xslt             => $r->dir_config('XSLT'),
@@ -283,22 +284,13 @@ sub new {
     # Ken said no need for seed ;), now we just make sure its called post fork
     # Patch from Ime suggested no need for %SrandPid, just srand() again when $$ has changed
     unless($SrandPid && $SrandPid == $$) {
-	$self->Debug("call srand() post fork");
+	$self->{dbg} && $self->Debug("call srand() post fork");
 	srand();
 	$SrandPid = $$;
     }
 
-    if($self->{no_cache}) {
-	# this way subsequent recompiles overwrite each other
-	$self->{id} = '__ASP_NoCache';
-    } else {
-	# pass in basename for where to find the file for InodeNames, and the full path
-	# for the FileId otherwise
-	$self->{id} = &FileId($self, $self->{basename}, $self->{filename});
-    }
-
     # filtering support
-    my $filter_config = $r->dir_config('Filter') || $Apache::ASP::Filter;
+    my $filter_config = $r->dir_config('Filter');
     if($filter_config && ($filter_config !~ /off/io)) {
         if($self->LoadModules('Filter', 'Apache::Filter')) {
 	    # new filter_register with Apache::Filter 1.013
@@ -325,7 +317,7 @@ sub new {
     }
     
     # gzip content encoding option by ime@iae.nl 28/4/2000
-    my $compressgzip_config = $r->dir_config('CompressGzip') || $Apache::ASP::CompressGzip;
+    my $compressgzip_config = $r->dir_config('CompressGzip');
     if($compressgzip_config && $compressgzip_config !~ /off/io) {	
 	if($self->LoadModule('Gzip','Compress::Zlib')) {
 	    $self->{compressgzip} = 1;
@@ -357,36 +349,32 @@ sub new {
     #&Apache::ASP::Server::new($self);
 
     # After GlobalASA Init, init the package that this script will execute in
-    # must be here, and not end of new before things like Application_OnStart
-    # get run
-    if($self->{unique_packages}) {
-	$self->{id} .= "::handler" unless($self->{no_cache});
-	my $package = $global_asa->{'package'}.'::'.$self->{id};
-	$package =~ s/::[^:]+$//;
+    # must be here, and not end of new before things like Application_OnStart get run
+    # UniquePackages & NoCache configs do not work together, NoCache wins here
+    if($r->dir_config('UniquePackages')) {
+	# id is not generally useful for the ASP object now, so calculate
+	# it here now, only to twist the package object for this script
+
+	# pass in basename for where to find the file for InodeNames, and the full path
+	# for the FileId otherwise
+	my $package = $global_asa->{'package'}.'::'.&FileId($self, $self->{basename}, $self->{filename});
 	$self->{'package'} = $package;
 	$self->{init_packages} = ['main', $global_asa->{'package'}, $self->{'package'}];	
     } else {
 	$self->{'package'} = $global_asa->{'package'};
 	$self->{init_packages} = ['main', $global_asa->{'package'}];	
     }
-    # must happen after tweaking id
-    $self->{subid} = $global_asa->{'package'}.'::'.$self->{id};
 
     $self->{state_dir}   = $r->dir_config('StateDir') || $self->{global}.'/.state';
     $self->{state_dir}   =~ tr///; # untaint
 
     # if no state has been config'd, then set up none of the 
     # state objects: Application, Internal, Session
-    unless($self->{no_state}) {
+    unless($r->dir_config('NoState')) {
 	# load at runtime for CGI environments, preloaded for mod_perl
 	require Apache::ASP::StateManager;
 	$self->InitState;
     }
-
-    # init package globals as soon as possible so if there is an error before
-    # the first Execute() during which this is run, core system templates will
-    # still have access to the variables in the global namespace
-    &InitPackageGlobals($self);
 
     $self;
 }
@@ -395,9 +383,7 @@ sub new {
 sub DESTROY {
     my $self = shift;
     return unless $self->{r}; # still active object
-
-    $self->{dbg} && $self->Debug("destroying ASP", 'self' => $self);
-    $self->{DESTROY} = 1;
+    $self->{dbg} && $self->Debug("destroying ASP object $self");
 
     # do before undef'ing the object references in main
     for my $code ( @{$self->{cleanup}} ) {
@@ -409,21 +395,20 @@ sub DESTROY {
     local $^W = 0; # suppress untie while x inner references warnings
     select(STDOUT); 
     untie *STDIN if tied *STDIN;
+    untie *RESPONSE if tied *RESPONSE;
 
     # in case there is a dummy session here by the 
     # end of object execution
     if($self->{Session}) {
-        unless(eval { $self->{Session}->isa('Apache::ASP::Session') }) {
+        if(eval { $self->{Session}->isa('Apache::ASP::Session') }) {
+	    # only the cleanup master may cleanup groups now, so OK
+	    # to call just CleanupGroups
+	    $self->CleanupGroups();
+	} else {
             $self->Debug("$self->{Session} is not an Apache::ASP::Session");
             eval { $self->{Session}->DESTROY };
             $self->{Session} = undef;
         }
-    }
-
-    # only the cleanup master may cleanup groups now, so OK
-    # to call just CleanupGroups
-    if($self->{Session}) {
-	$self->CleanupGroups();
     }
 
     # free file handles here.  mod_perl tends to be pretty clingy
@@ -523,6 +508,9 @@ sub InitPaths {
     $INCDir =~ /^(.*)$/s;
     $INCDir = $1;
 
+    # make sure this gets on @INC at startup, can't hurt
+    eval "use lib qw($INCDir);";
+
     1;
 }
 
@@ -531,13 +519,23 @@ sub FileId {
     $file || die("no file passed to FileId()");
     my $id;
 
+    # calculate compile checksum for file id
     unless($self->{compile_checksum}) {
-	$self->{compile_checksum} = &CompileChecksum($self);
+	my $r = $self->{r};
+	my $checksum = md5_hex(join('&-+', 
+				    $VERSION,
+				    map { $r->dir_config($_) || '' }
+				    @CompileChecksumKeys
+				   )
+			      );
+	#    $self->{dbg} && $self->Debug("compile checksum $checksum");
+	$self->{compile_checksum} = $checksum;
     }
+
     my $compile_checksum = $no_compile_checksum ? '' : $self->{compile_checksum};
 
     my @inode_stat = ();
-    if($self->{r}->dir_config('InodeNames')) {
+    if($self->{inode_names}) {
 	@inode_stat = stat($file);
 	unless($inode_stat[0] && $inode_stat[1]) {
 	    @inode_stat = ();
@@ -546,7 +544,7 @@ sub FileId {
 
     if(@inode_stat) {
 	$id = sprintf("____DEV%X_INODE%X",@inode_stat[0,1]);
-	$id .= 'x'.$self->{compile_checksum};
+	$id .= 'x'.$compile_checksum;
     } else {
 	if($abs_file) {
 	    $file = $abs_file;
@@ -556,70 +554,14 @@ sub FileId {
 	my $file_name_length = length($file);
 	if($file_name_length >= 35) {
 	    $id = substr($file, $file_name_length - 35, 36);
+	    # only do the hex of the original file to create a unique identifier for the long id
+	    $id .= 'x'.&md5_hex($file.$compile_checksum);
 	} else {
-	    $id = $file;
+	    $id = $file.'x'.$compile_checksum;
 	}
-	$id .= 'x'.&md5_hex($file.$self->{compile_checksum});
     }
 
     $id = '__ASP_'.$id;
-}
-
-sub IsChanged {
-    my $self = shift;
-    
-    # always recompile if we are not supposed to cache
-    if($self->{no_cache}) {
-	return 1;
-    }
-
-    # support for includes, changes to included files
-    # cause script to recompile
-    if($self->{stat_scripts}) {
-	return(1) if &IncludesChanged($self, $self->{basename});
-    }
-
-    my $last_update = $Apache::ASP::Compiled{$self->{subid}}->{mtime} || 0;
-    if(! $self->{stat_scripts} && $last_update) {
-	$self->{dbg} && $self->Debug("no stat: script already compiled");
-	return 0;
-    }
-
-    if($self->{filter}) {
-	$self->{r}->changed_since($last_update);
-    } else {
-	$self->{mtime} = (stat($self->{basename}))[9];
-	# we only get here if we have a chance of caching and all
-	# our dependent components have not changed
-	($self->{mtime} > $last_update) ? 1 : 0;
-    }
-}        
-
-sub IncludesChanged {
-    my($self, $file) = @_;
-
-    if($self->{stat_scripts} and 
-       my $includes = $Apache::ASP::Includes{$file}) 
-      {
-	  for my $k (keys %$includes) {
-	      my $v = $includes->{$k} || 0;
-	      my @stat = stat($k);
-	      if(@stat) {
-		  if($stat[9] >= $v) {
-		      $self->{dbg} && $self->Debug("file $k mtime changed from $v to $stat[9]");
-		      return 1;
-		  } else {
-		      $self->{dbg} && $self->Debug("file $k mtime not changed from $v");
-		  }
-	      } else {
-		  $self->{dbg} && $self->Debug("can't get mtime for file $k: $!");
-	      }
-	  }
-      }
-
-    $self->{dbg} && $self->Debug("includes have not changed for script $file");
-
-    0;
 }
 
 # defaults to parsing the script's file, or data from a file handle 
@@ -647,7 +589,7 @@ sub Parse {
     } elsif((length($file) < 1024) && ($file !~ /^GLOB/) && (-e $file)) {
 	# filename has length < 1024, should be fine across OS's
 	$self->{dbg} && $self->Debug("parsing $file");
-	$data = $self->ReadFile($file);	
+	$data = ${$self->ReadFile($file)};
 	$file_exists = 1;
 	$self->{parse_file_count}++;
     } else {
@@ -658,6 +600,9 @@ sub Parse {
     # eval execution of scripts after compilation
     unless($self->{parse_config}) {
 	$self->{parse_config} = 1;
+
+	$self->{compile_includes} = $r->dir_config('DynamicIncludes');
+
 	$self->{pod_comments} = defined($r->dir_config('PodComments')) ? 
 	  $r->dir_config('PodComments') : 1;
 	$self->{xml_subs_strict} = $r->dir_config('XMLSubsStrict');
@@ -815,7 +760,7 @@ sub Parse {
 		$self->{dbg} && $self->Debug("include $include found for file $parse_file");
 		$Apache::ASP::Includes{$parse_file}->{$include} = time();
 	    }
-	    my $text = $self->ReadFile($include);
+	    my $text = ${$self->ReadFile($include)};
 	    $text =~ s/\n$//sg;
 	    $text =~ s/^\#\![^\n]+(\n\n?)/$1/s; #X cgi compat ?
 	      ;
@@ -937,8 +882,11 @@ sub ParseHelper {
 		    # we pass by reference here with the idea that we are not
 		    # copying the HTML twice this way.  This might be large
 		    # saving on a typical site with rich HTML headers & footers
-		    $script .= 
-		      '&Apache::ASP::WriteRef($main::Response, \('.join('.', @out).'));';
+		    $script .= '&Apache::ASP::WriteRef($main::Response, \('.join('.', @out).'));';
+#		    $script .= '$main::Response->{Bit} = \('.join('.', @out).');';
+#		    $script .= '($main::Response->{Buffer} && ! $main::Response->{Ended}) ? '.
+#		      '${$main::Response->{out}} .= ${$main::Response->{Bit}} : '.
+#			'$main::Response->WriteRef($main::Response->{Bit}); ';
 		    @out = ();
 		}			 
 
@@ -1024,7 +972,7 @@ sub ParseXMLSubs {
 
     $data = &CodeTagDecode($self, $data);
 
-#    print STDERR "\n\n$data\n\n";
+#    print STDERR "\nXMLSubs:\n$data\n\n";
 
     $data;
 }
@@ -1075,14 +1023,29 @@ sub ParseXMLSubsArgs {
 	$args =~ s/^(\s*),/$1/s;
     } else {
 	my %args;
-	while ($args =~ s/(\s*)([^\s]+)(\s*)\=\s*([\'\"])(.*?)(\4)\s*//s) {
+	while ($args =~ s/(\s*)([^\s]+?)(\s*)\=\s*([\'\"])(.*?)(\4)\s*//s) {
 	    my($key, $value) = ($2, $5);
-	    $value =~ s/<\%\=?(.*?)\%\>/\'.$1.\'/isg;
-	    $args{$key} = $value;
+	    # we go through the pain of @value_bits so that someone can 
+	    # pass in non scalar data to XMLSubs args like:
+	    #   <my:tag data="<%= [ 'data' ] %>" />
+	    # As long as the <%= %> bits are flush against the 
+	    # 
+	    my @value_bits;
+	    while($value =~ s/^(.*?)<\%\=(.*?)\%\>/
+		  {
+		   length($1) && push(@value_bits, "'$1'");
+		   push(@value_bits, "($2)");
+		   ''; # return nothing to replace with
+		  }
+		  /exs
+		 ) { 1 };
+	    length($value) && push(@value_bits, "'$value'");
+	    $args{$key} = join('.', @value_bits);
 	}
-	$args = join(', ', map { "'$_' => '$args{$_}'" } keys %args);
+	$args = join(', ', map { "'$_' => $args{$_}" } keys %args);
     }
 
+#    print STDERR "ARGS: $args\n";
     $args;
 }
 
@@ -1148,7 +1111,7 @@ sub SearchDirs {
 
     # test & return if absolute
     if($file =~ m,^/|^[a-zA-Z]\:,) {
-	if(-e $file && ! -d $file) {
+	if(-e $file && ! -d _) {
 	    return $file;
 	} else {
 	    return undef;
@@ -1158,7 +1121,7 @@ sub SearchDirs {
     for my $dir (@includes_dir) {
 	my $path = "$dir/$file";
 	$path =~ s|/+|/|isg;
-	if(-e $path && ! -d $path) {
+	if(-e $path && ! -d _) {
 	    $self->{search_dirs_cache}{$cache_key} = $path;
 	    return $path;
 	}
@@ -1190,7 +1153,7 @@ sub RegisterIncludes {
 }
 
 sub CompileInclude {
-    my($self, $include) = @_;
+    my($self, $include, $package, $is_base_script) = @_;
     my($include_ref, $mtime, $subid);
 
     local $self->{use_strict} = $self->{use_strict};
@@ -1200,18 +1163,34 @@ sub CompileInclude {
     }
     
     if ( ref $include ) {
-	$self->{dbg} && $self->Debug("compiling scalar data $include for include");
+#	$self->{dbg} && $self->Debug("compiling scalar data $include for include");
 	$include_ref = $include;
 #	$include = $$include;
     } else { # file here
-	# streamlined, SearchDirs now caches per request
-	my $file = $self->SearchDirs($include);
-	die("no include $include") unless defined $file;
-	$include = $file;
-	
+	if($is_base_script) {
+	    # if its the base script being executed, then we already know
+	    # it exists because of earlier file tests, and do not need to
+	    # search for it
+	    #
+	    # leave $include alone
+	} else {
+	    # streamlined, SearchDirs now caches per request
+	    my $file = &SearchDirs($self, $include);
+	    die("no include $include") unless defined $file;
+	    $include = $file;
+	}
+
+	# treat as anonymous subroutine compilation like data passed in 
+	# as a scalar ref as above if we have NoCache set
+	if($self->{no_cache}) {
+	    $include = $self->ReadFile($include);
+	    $include_ref = $include;
+	    goto COMPILE_INCLUDE_PARSE;
+	}
+
 	my $id = &FileId($self, $include);
-	$subid = $self->{GlobalASA}{'package'}."::$id".'xINC';
-	
+	$subid = ($package || $self->{GlobalASA}{'package'})."::$id".'xINC';
+
 	my $compiled = $Apache::ASP::CompiledIncludes{$subid};
 	if($compiled && ! $self->{stat_scripts}) {
 	    $self->{dbg} && $self->Debug("no stat: found cached code for include $id");
@@ -1222,18 +1201,41 @@ sub CompileInclude {
 	$mtime = (stat($include))[9];
 	if($compiled && ($compiled->{mtime} > $mtime)) {
 	    #	$self->Debug("found cached code for include $id");
-	    if(! &IncludesChanged($self, $include)) {
+
+	    # now check for changed includes, return if not changed
+	    my $includes_changed = 0;
+	    if(my $includes = $Apache::ASP::Includes{$include}) {
+		for my $k (keys %$includes) {
+		    my $v = $includes->{$k} || 0;
+		    my @stat = stat($k);
+		    if(@stat) {
+			if($stat[9] >= $v) {
+			    $self->{dbg} && $self->Debug("file $k mtime changed from $v to $stat[9]");
+			    $includes_changed = 1;
+			    last;
+			}
+		    } else {
+			$self->{dbg} && $self->Debug("can't get mtime for file $k: $!");
+			$includes_changed = 1;
+			last;
+		    }
+		}
+	    }
+
+	    if(! $includes_changed) {
 		return $compiled;
 	    } else {
 		$self->{dbg} && $self->Debug("includes changed for $include, recompiling");
 	    }
 	}
     }
+
+COMPILE_INCLUDE_PARSE:
     
     my $parse_data = $self->Parse($include);
     my $data;
     if ($parse_data->{is_perl}) {
-       my $sub = $self->CompilePerl($parse_data->{data}, $subid);
+       my $sub = $self->CompilePerl($parse_data->{data}, $subid, $package);
 
        if ($sub) {
 	   $data = { 
@@ -1281,7 +1283,7 @@ sub ReadFile {
     my $data = <READFILE>;
     close READFILE;
 
-    $data;
+    \$data;
 }
 
 # if the $file is an absolute path, then just return the file
@@ -1309,7 +1311,7 @@ sub CompilePerl {
 
     ref($script) || die("no ref to perl script to compile");
     $subid && $self->UndefRoutine($subid);
-    $self->{dbg} && $self->Debug("compiling into package $self->{'package'} subid [$subid]");    
+    $self->{dbg} && $self->Debug("compiling into package $package subid [$subid]");    
 
     my $eval = 
       join(" ;; ", 
@@ -1347,11 +1349,9 @@ sub CompilePerl {
 	    if($self->{r}->dir_config('RegisterIncludes')) {
 		$self->RegisterIncludes($script);
 	    }
-	    $Apache::ASP::Compiled{$subid}->{mtime} = time();
 	    if($package eq $self->{GlobalASA}{'package'}) {
-		$self->RegisterSubs($self->{subid}, $eval);
+		$self->RegisterSubs($subid, $eval);
 	    }
-	    $Apache::ASP::Compiled{$subid}->{output} = $eval;
 	    $rv = $subid;
 	} else {
 	    $rv = $sub_ref;
@@ -1360,20 +1360,6 @@ sub CompilePerl {
 
     $@ = $error;
     $rv;
-}
-
-sub CompileChecksum {
-    my $self = shift;
-
-    my $r = $self->{r};
-    my $checksum = md5_hex(join('&-+', 
-				$VERSION,
-				map { $r->dir_config($_) || '' }
-				@CompileChecksumKeys
-			       )
-			  );
-#    $self->{dbg} && $self->Debug("compile checksum $checksum");
-    $checksum;
 }
 
 sub RegisterSubs {
@@ -1404,30 +1390,23 @@ sub RegisterSubs {
 sub InitPackageGlobals {
     my $self = shift;
 
-#    $self->Debug("init package globals");
-
-    # init objects, skip if already done for this asp object,
-    # which will speed execution of GlobalASA subs
-    my($object, $import_package);
-    for $object (@Apache::ASP::Objects) {
-	next if (defined $self->{packages_init}{$object} and 
-		 ($self->{packages_init}{$object} || '') eq ($self->{$object} || ''));
-	$self->{packages_init}{$object} = $self->{$object} || '';
-	for $import_package (@{$self->{init_packages}}) {
-	    my $init_var = $import_package.'::'.$object;	    
-	    $$init_var = $self->{$object};	    
-	}
-    }
-
-    # set printing to Response object
     unless($self->{response_tied}) {
-#	$self->{dbg} && $self->Debug("tieing response package for STDOUT");
+	# set printing to Response object
 	$self->{response_tied} = 1;
 	tie *RESPONSE, 'Apache::ASP::Response', $self->{Response};
 	select(RESPONSE);
     }
 
-    $self;
+    # ---- init package objects ----
+    # unoptimized this because we should only call this function once
+    # and maybe twice if there is a defined Script_OnStart
+    for my $object (@Apache::ASP::Objects) {
+	for my $import_package (@{$self->{init_packages}}) {
+	    my $init_var = $import_package.'::'.$object;
+	    $$init_var = $self->{$object};	}
+    }
+
+    undef;
 }
 
 sub Run {
@@ -1436,8 +1415,10 @@ sub Run {
     ($self->{stat_inc_match} || $self->{stat_inc}) && $self->StatINC;
 
     my $compiled;
-    if(! $self->{errs} && &IsChanged($self)) {
-	$compiled = $self->CompileInclude($self->{basename});
+    if(! $self->{errs}) {
+	my $compile_file = $self->{filehandle} || $self->{basename};
+	$compiled = $self->CompileInclude($compile_file, $self->{'package'}, 1);
+
 	unless($compiled) {
 	    $self->Error("error compiling $self->{basename}: $@");
 	    return;
@@ -1475,20 +1456,15 @@ sub Execute {
     $code || die("no subroutine passed to Execute()");
     $self->{dbg} && $self->Debug("executing $code");
 
-    # call this every Execute() instead of in Run() so that if the 
-    # globals have changed they will be refreshed, this might allow
-    # someone to change the objects in Script_OnStart to populate the global
-    # spaces here
+    # set up globals as early as Application_OnStart, also
+    # allows variables to be changed in Script_OnStart for running script
     &InitPackageGlobals($self);
-
-    # for runtime use/require library loads from global
-    local @INC = ($self->{global}, @INC);
 
     if(my $ref = ref $code) {
 	if($ref eq 'CODE') {
 	    eval { &$code(); };
 	} elsif($ref eq 'SCALAR') {
-	    $self->{dbg} && $self->Debug("writing cached static file data $code, length: ".length($$code));
+#	    $self->{dbg} && $self->Debug("writing cached static file data $code, length: ".length($$code));
 	    $self->{Response}->WriteRef($code);
 	} else {
 	    $self->Error("$code is a ref, but not CODE or SCALAR!");
@@ -1859,7 +1835,7 @@ sub SendMail {
 	$smtp = Net::SMTP->new(%args);
     }
     unless($smtp) {
-	$self->Log("[ERROR] can't connect to SMTP server with args ", \%args);
+	$self->Out("[ERROR] can't connect to SMTP server with args ", \%args);
 	return 0;
     } else {
 	$self->Debug("connected to SMTP server with args ", \%args);
@@ -2297,15 +2273,11 @@ and subs defined in a perl module that is included with commands like:
 
 =item UniquePackages
 
-default 0.  Set to 1 to emulate pre-v.10 ASP script compilation 
-behavior, which compiles each script into its own perl package.
+default 0.  Set to 1 to compile each script into its own perl package,
+so that subroutines defined in one script will not collide with another.
 
-Before v.10, ASP scripts were compiled into their own perl package
-namespace.  This allowed ASP scripts in the same ASP application
-to defined subroutines of the same name without a problem.  
-
-As of v.10, ASP scripts in a web application are compiled into the 
-*same* perl package by default, so these scripts, their includes, and the 
+By default, ASP scripts in a web application are compiled into the 
+*same* perl package, so these scripts, their includes, and the 
 global.asa events all share common globals & subroutines defined by each other.
 The problem for some developers was that they would at times define a 
 subroutine of the same name in 2+ scripts, and one subroutine definition would
@@ -2348,6 +2320,15 @@ The current directory of the executing script is checked first
 whenever an include is specified, then the Global directory
 in which the global.asa resides, and finally the IncludesDir 
 setting.
+
+=item NoCache
+
+Default 0, if set to 1 will make it so that neither script nor
+include compilations are cached by the server.  Using this configuration
+will save on memory but will slow down script execution.  Please
+see the TUNING section for other strategies on improving site performance.
+
+  PerlSetVar NoCache 0
 
 =head2 State Management
 
@@ -3081,7 +3062,7 @@ default 0.  When true, script output that looks like HTTP / CGI
 headers, will be added to the HTTP headers of the request.
 So you could add:
   Set-Cookie: test=message
-  
+
   <html>...
 to the top of your script, and all the headers preceding a newline
 will be added as if with a call to $Response->AddHeader().  This
@@ -5813,15 +5794,13 @@ settings -3 through -1, where user level debugging is 1 to 3.  User level
 debugging is much more light weight depending on how many $Reponse->Debug()
 statements you use in your program, and you may want to leave it on.
 
-=head2 RAM Sparing
+=head2 Memory Sparing, NoCache
 
 If you have a lot (1000's+) of scripts, and limited memory, set NoCache to 1,
 so that compiled scripts are not cached in memory.  You lose about
 10-15% in speed for small scripts, but save at least 10K RAM per cached
-script.  These numbers are very rough.  If you use includes, you
-can instead try setting DynamicIncludes to 1, which will share compiled
-code for includes between scripts by turning an <!--#include file..-->
-into a $Response->Include().
+script.  These numbers are very rough and will largely depend on the size
+of your scripts and includes.
 
 =head2 Resource Limits
 
@@ -5865,8 +5844,9 @@ Other honorable mentions include:
 
  !! Doug MacEachern, for moral support and of course mod_perl
 
+ :) Broc, for keeping things filter aware & help on the list.
  :) Manabu Higashida, for fixes to work under perl 5.8.0
- :) Slaven Rezic, for suggestions on smoother CPAN installtion
+ :) Slaven Rezic, for suggestions on smoother CPAN installation
  :) Mitsunobu Ozato, for working on a japanese translation of the site & docs.
  :) Eamon Daly for persistence in resolving a MailErrors bug.
  :) Gert, for help on the mailing list, and pushing the limits of use on Win32 
@@ -5919,7 +5899,9 @@ Other honorable mentions include:
 
 =head1 SUPPORT
 
-=head2 MAILING LIST ARCHIVE
+=head2 COMMUNITY
+
+=item MAILING LIST ARCHIVE
 
 Try the Apache::ASP mailing list archive first when working
 through an issue as others may have had the same question
@@ -5937,7 +5919,7 @@ The mod_perl mailing list archives are located at:
  http://www.geocrawler.com/lists/3/web/182/0/
  http://www.egroups.com/group/modperl/
 
-=head2 EMAIL
+=item EMAIL
 
 Please subscribe to the Apache::ASP mailing list
 by sending an email to asp-subscribe@perl.apache.org
@@ -5950,12 +5932,75 @@ just send an email to asp-unsubscribe@perl.apache.org
 If you think this is a mod_perl specific issue, you can
 send your question to modperl@apache.org
 
+=item DONATIONS
+
+Apache::ASP is freely distributed under the terms of the GPL license 
+( see the LICENSE section ).  However development time is expensive, 
+and is fueled in part by donations from the user community in the 
+form of patches, debugging, and money.  For monetary contributions, 
+please go to:
+
+  http://www.chamas.com/open_source.htm
+
+and contribute via the PayPal button, or you may send a check to
+the address listed at:
+
+  http://www.chamas.com/contact.htm
+
+=head2 COMMERCIAL
+
+If you would like commercial support for Apache::ASP, please
+check out any of the following listed companies.  Note that 
+this is not an endorsement, and if you would like your company
+listed here, please email asp@chamas.com with your information.
+
+=item Chamas Enterprises Inc.
+
+We created Apache::ASP, and we can bring you top notch software
+engineering solutions!  We are experts with open source web
+and database systems.  We offer:
+
+ * Installation support & configuration
+ * System optimization & tuning
+ * Custom development
+ * Apache::ASP core extensions
+ * Advanced support for mod_perl, MySQL, Apache, Perl, & UNIX 
+
+We will contract for $150 per hour or $1800 per day USD.  Please see:
+
+ http://www.chamas.com/consulting.htm
+ http://www.chamas.com/open_source.htm
+
+=item TUX IT AG
+
+Main business is implementing and maintaining infrastructure for big
+websites and portals, as well as developing web applications for our
+customers (Apache, Apache::ASP, PHP, Perl, MySQL, etc.)
+
+The prices for our service are about 900 EUR per day which is negotiable
+(for longer projects, etc.).
+
+http://www.tuxit.de
+
+=item AlterCom
+
+We use, host and support mod_perl. We would love to be able to help 
+anyone with their mod_perl Apache::ASP needs.  Our mod_perl hosting is $24.95 mo.
+
+http://altercom.com/home.html
+
 =head1 SITES USING
 
 What follows is a list of public sites that are using 
 Apache::ASP.  If you use the software for your site, and 
 would like to show your support of the software by being listed, 
 please send your URL to asp@chamas.com
+
+        WebTime
+        http://webtime-project.net
+
+        Meet-O-Matic
+        http://meetomatic.com/about.asp
 
         Dr. Joel's Computer Shoppe
         http://www.drjoelscomputers.com
@@ -5971,9 +6016,6 @@ please send your URL to asp@chamas.com
 
         SEAWA, Software Engineering Australia
         http://www.seawa.org.au/
-
-        WebTime
-        http://webtime.sourceforge.net
 
         ESSTECwebservices
         http://www.esstec.be/
@@ -6150,6 +6192,59 @@ means first production ready release, this would be the
 equivalent of a 1.0 release for other kinds of software.
 
  + = improvement   - = bug fix    (d) = documentations
+
+=item $VERSION = 2.45; $DATE="10/13/2002"
+
+ ++New XMLSubsPerlArgs config, default 1, indicates how 
+  XMLSubs arguments have always been parsed.  If set to 0,
+  will enable new XMLSubs args that are more ASP like with
+  <%= %> for dynamic interpolation, such as:
+
+    <my:xmlsub arg="<%= $data %>" arg2="text <%= $data2 %>" />
+ 
+  Settings XMLSubsPerlArgs to 0 is experimental for now, but
+  will become the default by Apache::ASP version 3.0
+
+ ++Optimization for static HTML/XML files that are served up 
+  via Apache::ASP so that they are not compiled into perl subroutines
+  first.  This makes especially native XSLT both faster & take
+  less memory to serve, before XSL & XML files being transformed
+  by XSLT would both be compiled as normal ASP script first, so 
+  now this will happen if they really are ASP scripts with embedded
+  <% %> code blocks & XMLSubs being executed.
+
+ +Consolidate some config data for Apache::ASP->Loader to use
+  globals in @Apache::ASP::CompileChecksumKeys to know which 
+  config data is important for precompiling ASP scripts.
+
+ +Further streamlined code compilation.  Now both base
+  scripts and includes use the internal CompileInclude() API
+  to generate code.
+
+ -Fixed runtime HTML error output when Debug is set to -2/2,
+  so that script correctly again gets rendered in final perl form.
+  Added compile time error output to ./site/eg/syntax_error.htm
+  when a special link is clicked for a quick visual test.
+
+ -Cleaned up some bad coding practices in ./site/eg/global.asa
+  associated changes in other example files.  Comment example
+  global.asa some for the first time reader
+
+ -DemoASP.pm examples module needed "use strict" fix, thanks
+  to Allan Vest for bug report
+
+ --$rv = $Response->Include({ File => ..., Cache => 1});
+  now works to get the first returned value fetched from
+  the cache.  Before, because a list was always returned,
+  $rv would have been equal to the number of items returned,
+  even if the return value list has just one element.
+
+ (d) added site/robots.txt file with just a comment for
+     search engine indexing
+
+ -fixed ./site/eg/binary_write.htm to not use 
+  $Response->{ContentLength} because it does not exist.
+  Fixed it to use $Response->AddHeader now instead  
 
 =item $VERSION = 2.41; $DATE="09/29/2002"
 

@@ -6,6 +6,7 @@ package Apache::ASP::CGI;
 use Apache::ASP;
 use Apache::ASP::Request;
 use Class::Struct;
+use Apache::ASP::CGI::Table;
 
 use strict;
 no strict qw(refs);
@@ -13,8 +14,21 @@ use vars qw($StructsDefined @END);
 $StructsDefined = 0;
 
 sub do_self {
+    my $class = shift;
+
+    if(defined($class)) {
+	if(ref $class or $class =~ /Apache::ASP::CGI/) {
+	    # we called this OO style
+	} else {
+	    unshift(@_, $class);
+	    $class = undef;
+	}
+    }
+
     my %config = @_;
-    my $r = Apache::ASP::CGI->init($0, @ARGV);
+    $class ||= 'Apache::ASP::CGI';
+
+    my $r = $class->init($0, @ARGV);
     $r->dir_config('CgiDoSelf', 1);
     $r->dir_config('NoState', 0);
 
@@ -25,6 +39,8 @@ sub do_self {
 
 #    $r->dir_config('Debug', -1);
     &Apache::ASP::handler($r);
+
+    $r;
 }
 
 sub init {
@@ -48,7 +64,7 @@ sub init {
 				   'fileno' => "\$",
 			       }
 			       );    
-	
+
 	&Class::Struct::struct( 'Apache::ASP::CGI' => 
 				{
 				   'connection'=>'Apache::ASP::CGI::connection',
@@ -59,6 +75,7 @@ sub init {
 				   'get_basic_auth_pw' => "\$",
 				   'header_in' =>    "\%",
 				   'header_out'=>    "\%",
+				   'err_headers_out' => "Apache::ASP::CGI::Table",
 				   'method'    =>    "\$",
 				   'sent_header' =>  "\$",
 				   'OUT'    =>    "\$",
@@ -79,6 +96,7 @@ sub init {
     $self->filename($filename);
     $self->header_in('Cookie', $ENV{HTTP_COOKIE});
     $self->connection(Apache::ASP::CGI::connection->new);
+    $self->err_headers_out(Apache::ASP::CGI::Table->new);
     $self->connection->remote_ip($ENV{REMOTE_HOST} || $ENV{REMOTE_ADDR} || '0.0.0.0');
     $self->connection->aborted(0);
 #    $self->dir_config('Global') || $self->dir_config('Global', '.');
@@ -125,22 +143,27 @@ sub cgi_header_out {
 
 sub send_http_header {
     my($self) = @_;
-    my($k, $v, $header, $value);
+    my($k, $v, $header);
     
     $self->sent_header(1);
     $header = "Content-Type: " .$self->content_type()."\n";
-    my $headers = $self->header_out();
-    while(($k, $v) = each %$headers) {
-	next if ($k =~ /^content\-type$/i);
-	if(ref $v) {
-	    # if ref, then we have an array for cgi_header_out for cookies
-	    for $value (@$v) {
-		$header .= "$k: $value\n";
+    
+    for my $headers ($self->header_out, $self->err_headers_out) {
+        while(($k, $v) = each %$headers) {
+	    next if ($k =~ /^content\-type$/i);
+	    if(ref $v) {
+		# if ref, then we have an array for cgi_header_out for cookies
+		for my $value (@$v) {
+		    $value ||= '';
+		    $header .= "$k: $value\n";
+		}
+	    } else {
+		$v ||= '';
+		$header .= "$k: $v\n";	    
 	    }
-	} else {
-	    $header .= "$k: $v\n";	    
 	}
     }
+
     $header .= "\n";
  	
     $self->print($header);

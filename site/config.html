@@ -285,7 +285,7 @@ better for performance.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#XMLSubsStric8f2f2c03>XMLSubsStrict</a>
+			<a href=#XMLSubsMatch>XMLSubsMatch</a>
 			</font>
 			</td>
 							
@@ -301,7 +301,7 @@ better for performance.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#XMLSubsPerlAc1711b7e>XMLSubsPerlArgs</a>
+			<a href=#XMLSubsStric8f2f2c03>XMLSubsStrict</a>
 			</font>
 			</td>
 							
@@ -317,7 +317,7 @@ better for performance.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#XSLT>XSLT</a>
+			<a href=#XMLSubsPerlAc1711b7e>XMLSubsPerlArgs</a>
 			</font>
 			</td>
 							
@@ -327,13 +327,13 @@ better for performance.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#UniquePackag00f06756>UniquePackages</a>
+			<a href=#UniquePackagcf82a357>UniquePackages</a>
 			</font>
 			</td>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#XSLTMatch>XSLTMatch</a>
+			<a href=#XSLT>XSLT</a>
 			</font>
 			</td>
 							
@@ -349,7 +349,7 @@ better for performance.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#XSLTParser>XSLTParser</a>
+			<a href=#XSLTMatch>XSLTMatch</a>
 			</font>
 			</td>
 							
@@ -360,6 +360,22 @@ better for performance.</font>
 			<td valign=top >
 			<font face="lucida console" size=-1>
 			<a href=#IncludesDir>IncludesDir</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#XSLTParser>XSLTParser</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#NoCache>NoCache</a>
 			</font>
 			</td>
 		
@@ -908,16 +924,6 @@ better for performance.</font>
 			</td>
 		<td>&nbsp;</td>					
 		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#XMLSubsMatch>XMLSubsMatch</a>
-			</font>
-			</td>
-		<td>&nbsp;</td>					
-		</tr>
 			
 	</table>
 	<hr size=1>
@@ -972,18 +978,14 @@ and subs defined in a perl module that is included with commands like:
 </pre></font>
 	
 	<p>
-	<a name=UniquePackag00f06756></a>
+	<a name=UniquePackagcf82a357></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>UniquePackages</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>default 0.  Set to 1 to emulate pre-v.10 ASP script compilation 
-behavior, which compiles each script into its own perl package.
+</pre></font>default 0.  Set to 1 to compile each script into its own perl package,
+so that subroutines defined in one script will not collide with another.
 <font face="courier new" size=3><pre>
-</pre></font>Before v.10, ASP scripts were compiled into their own perl package
-namespace.  This allowed ASP scripts in the same ASP application
-to defined subroutines of the same name without a problem.  
-<font face="courier new" size=3><pre>
-</pre></font>As of v.10, ASP scripts in a web application are compiled into the 
-*same* perl package by default, so these scripts, their includes, and the 
+</pre></font>By default, ASP scripts in a web application are compiled into the 
+*same* perl package, so these scripts, their includes, and the 
 global.asa events all share common globals &amp; subroutines defined by each other.
 The problem for some developers was that they would at times define a 
 subroutine of the same name in 2+ scripts, and one subroutine definition would
@@ -1030,6 +1032,18 @@ The current directory of the executing script is checked first
 whenever an include is specified, then the Global directory
 in which the global.asa resides, and finally the IncludesDir 
 setting.</font>
+	
+	<p>
+	<a name=NoCache></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>NoCache</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>Default 0, if set to 1 will make it so that neither script nor
+include compilations are cached by the server.  Using this configuration
+will save on memory but will slow down script execution.  Please
+see the <a href=tuning.html><font size=-1 face=verdana><b>TUNING</b></font></a> section for other strategies on improving site performance.
+<font face="courier new" size=3><pre>
+  PerlSetVar NoCache 0
+</pre></font>
 	
 	<p>
 	<a name=State%20Managedeff2cd7></a>
@@ -1888,7 +1902,7 @@ a 20% performance decrease.
 headers, will be added to the HTTP headers of the request.
 So you could add:
 <font face="courier new" size=3><pre>  Set-Cookie: test=message
-  
+
   &lt;html&gt;...
 </pre></font>to the top of your script, and all the headers preceding a newline
 will be added as if with a call to $Response-&gt;AddHeader().  This

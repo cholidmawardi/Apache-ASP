@@ -138,11 +138,6 @@ sub Run {
 	    $asp->StatINC;
 	}
 
-	if(! $asp->IsChanged()) {
-	    $asp->DESTROY;
-	    return;
-	}
-
 	$asp->CompileInclude($asp->{'basename'});
 	if($asp->{errs}) {
 	    warn("$asp->{errs} errors compiling $file while loading");

@@ -68,6 +68,13 @@ PerlSetVar CacheDB MLDBM::Sync::SDBM_File
 	PerlSetVar Filter On
 </Files>
 
+<Files ~ (\filter.filter)>
+       SetHandler perl-script
+       PerlHandler Apache::ASP Apache::ASP
+       PerlSetVar Global .
+       PerlSetVar Filter On
+</Files>
+
 <Files ~ (session_query_parse.asp$)>
 	SetHandler perl-script
 	PerlHandler Apache::ASP

@@ -50,6 +50,33 @@ sub my::deeptag {
     $Deep++;
 }
 
+sub my::tag_check_value {
+    my $args = shift;
+    if($args->{value}) {
+	$t->ok;
+    } else {
+	$t->not_ok;
+    }
+}
+
+sub my::tag_check_value_ref {
+    my($args) = shift;
+    if(ref $args->{value}) {
+	$t->ok;
+    } else {
+	$t->not_ok;
+    }
+}
+
+sub my::tag_check_value_not_ref {
+    my($args) = shift;
+    if(ref $args->{value}) {
+	$t->not_ok;
+    } else {
+	$t->ok;
+    }
+}
+
 sub my::returnok {
     $t->eok($_[1] eq 'ok', 'String return');
 }

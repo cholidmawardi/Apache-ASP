@@ -17,13 +17,13 @@ halts script execution immediately when the user hits a STOP button,
 so doing $Server-&gt;RegisterCleanup is the only way to consistently
 execute code that you have to for that script.
 <p>
-sleeping for <%=$Sleep %>
+sleeping for <%=$Sleep %> seconds...
 <p>
 <%	
 $Response->Flush();
 $Server->RegisterCleanup( sub { $main::Session->{cleanup_count}++ }); 
 for(1..$Sleep) {
-    print '.<br>';
+    print 'sleeping 1 second...<br>';
     $Response->Flush();
     if(! $Response->{IsClientConnected}) {
 	$Response->Debug("ending script execution since client is no longer connected");

@@ -219,67 +219,79 @@ sub CleanupGroup {
     $internal->LOCK();
     $asp->{dbg} && $asp->Debug("checking group ids", $ids);
     for my $id (@$ids) {
-#	if($id eq $_) {
-#	    $asp->{dbg} && $asp->Debug("skipping delete self", {id => $id});
-#	    next;
-#	}
-	
-	# we lock the internal, so a session isn't being initialized
-	# while we are garbage collecting it... we release it every
-	# time so we don't starve session creation if this is a large
-	# directory that we are garbage collecting
-	my $idata = $internal->{$id};
-	my $timeout = $idata->{timeout} || 0;
-	
-	unless($timeout) {
-	    # we don't have the timeout always, since this session
-	    # may just have been created, just in case this is 
-	    # a corrupted session (does this happen still ??), we give it
-	    # a timeout now, so we will be sure to clean it up 
-	    # eventualy
-	    $idata->{timeout} = time() + $asp->{session_timeout};
-	    $internal->{$id} = $idata;
-	    $asp->Debug("resetting timeout for $id to $idata->{timeout}");
-	    next;
-	}	
-	# only delete sessions that have timed out
-	unless($timeout < time()) {
-	    $asp->{dbg} && $asp->Debug("not timed out with $timeout");
-	    next;
-	}
-	
-	# UPDATE & UNLOCK, as soon as we update internal, we may free it
-	# definately don't lock around SessionOnEnd, as it might take
-	# a while to process	
-	
-	# set the timeout for this session forward so it won't
-	# get garbage collected by another process
-	$asp->{dbg} && $asp->Debug("resetting timeout for deletion lock on $id");
-	$internal->{$id} = {
-			   %{$internal->{$id}},
-			   'timeout' => time() + $asp->{session_timeout},
-			   'end' => 1,
+	eval {
+
+	    #	if($id eq $_) {
+	    #	    $asp->{dbg} && $asp->Debug("skipping delete self", {id => $id});
+	    #	    next;
+	    #	}
+	    
+	    # we lock the internal, so a session isn't being initialized
+	    # while we are garbage collecting it... we release it every
+	    # time so we don't starve session creation if this is a large
+	    # directory that we are garbage collecting
+	    my $idata = $internal->{$id};
+	    
+	    # do this check in case this data is corrupt, and not deserialized, correctly
+	    unless(ref($idata) && (ref($idata) eq 'HASH')) {
+		$idata = {};
+	    }
+
+	    my $timeout = $idata->{timeout} || 0;
+	    
+	    unless($timeout) {
+		# we don't have the timeout always, since this session
+		# may just have been created, just in case this is 
+		# a corrupted session (does this happen still ??), we give it
+		# a timeout now, so we will be sure to clean it up 
+		# eventualy
+		$idata->{timeout} = time() + $asp->{session_timeout};
+		$internal->{$id} = $idata;
+		$asp->Debug("resetting timeout for $id to $idata->{timeout}");
+		return; # no next in eval {}
+	    }	
+	    # only delete sessions that have timed out
+	    unless($timeout < time()) {
+		$asp->{dbg} && $asp->Debug("not timed out with $timeout");
+		return; # no next in eval {}
+	    }
+	    
+	    # UPDATE & UNLOCK, as soon as we update internal, we may free it
+	    # definately don't lock around SessionOnEnd, as it might take
+	    # a while to process	
+	    
+	    # set the timeout for this session forward so it won't
+	    # get garbage collected by another process
+	    $asp->{dbg} && $asp->Debug("resetting timeout for deletion lock on $id");
+	    $internal->{$id} = {
+				%{$internal->{$id}},
+				'timeout' => time() + $asp->{session_timeout},
+				'end' => 1,
 			  };
-	
-	
-	# unlock many times in case we are locked above this loop
-	for (1..3) { $internal->UNLOCK() }
-	$asp->{GlobalASA}->SessionOnEnd($id);
-	$internal->LOCK;
-	
-	# set up state
-	my($member_state) = Apache::ASP::State::new($asp, $id);	
-	if(my $count = $member_state->Delete()) {
-	    $asp->{dbg} && 
-	      $asp->Debug("deleting session", {
-					       session_id => $id, 
-					       files_deleted => $count,
-					      });
-	    $deleted++;
-	    delete $internal->{$id};
-	} else {
-	    $asp->Error("can't delete session id: $id");
-	    next;
+	    
+	    
+	    # unlock many times in case we are locked above this loop
+	    for (1..3) { $internal->UNLOCK() }
+	    $asp->{GlobalASA}->SessionOnEnd($id);
+	    $internal->LOCK;
+	    
+	    # set up state
+	    my($member_state) = Apache::ASP::State::new($asp, $id);	
+	    if(my $count = $member_state->Delete()) {
+		$asp->{dbg} && 
+		  $asp->Debug("deleting session", {
+						   session_id => $id, 
+						   files_deleted => $count,
+						  });
+		$deleted++;
+		delete $internal->{$id};
+	    } else {
+		$asp->Error("can't delete session id: $id");
+		return; # no next in eval {}
+	    }
+	};
+	if($@) {
+	    $asp->Error("error for cleanup of session id $id: $@");
 	}
     }
     $internal->UNLOCK();

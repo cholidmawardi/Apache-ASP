@@ -6,6 +6,7 @@ sub ProcessErrors {
     my $r = $self->{r};
     my $status;
 
+    # just to make sure we have everything we need for the errors templates
     $self->InitPackageGlobals;
     
     if($self->{dbg} >= 2) {

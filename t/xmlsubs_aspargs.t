@@ -9,7 +9,7 @@ use Apache::ASP::CGI;
 
 __END__
 
-<% my $ref = { ok => 1 } ; %>
+<% my $ref = { ok => 1, ref => \'data' } ; %>
 <my:tag>
   <my:deeptag hello="<%= $ref->{ok} %>"/>
   <my:deeptag></my:deeptag>
@@ -24,6 +24,14 @@ __END__
 
 <my:args ok="<%= $ref->{ok} %>" />
 <my:args ok="1<%= $ref->{ok} %>"></my:args>
+
+<my:tag_check_value value="<%= $ref %>" />
+<my:tag_check_value value="<%= '' %><%= 1 %>" />
+<my:tag_check_value value="<%= '' %><%= 1 %><%= '' %>" />
+<my:tag_check_value_ref value="<%= $ref %>" />
+<my:tag_check_value_ref value='<%= $ref->{ref} %>' />
+<my:tag_check_value_not_ref value='<%= $ref->{ref} %> ' />
+<my:tag_check_value_not_ref value='<%= $ref->{ref} %><%= $ref %>' />
 
 <my:deeptag />
 <% $t->eok($Deep == 3, "Deep tag to call twice"); %>

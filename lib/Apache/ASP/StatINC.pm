@@ -71,28 +71,35 @@ sub StatINCRun {
 
 	    my $function;
 	    my $is_global_package = $class eq $self->{GlobalASA}{'package'} ? 1 : 0;
-	    for $function ($sym->functions()) { 
+	    my @global_events_list = $self->{GlobalASA}->EventsList;
+
+	    for $function ($sym->functions()) {
 		my $code = \&{$function};
 
 		if($function =~ /::O_[^:]+$/) {
-		    $self->{dbg} && $self->Debug("skipping undef of troublesome $function");
+		    $self->Debug("skipping undef of troublesome $function");
 		    next;
 		}
 
 		if($Apache::ASP::Codes{$code}{count} > 1) {
-		    $self->{dbg} && $self->Debug("skipping undef of multiply defined $function: $code");
+		    $self->Debug("skipping undef of multiply defined $function: $code");
 		    next;
-		}	       
+		}
 
 		if($is_global_package) {
 		    # skip undef if id is an include or script 
 		    if($function =~ /::__ASP_/) {
-			$self->{dbg} && $self->Debug("skipping undef compiled ASP sub $function");
+			$self->Debug("skipping undef compiled ASP sub $function");
+			next;
+		    }
+
+		    if(grep($function eq $class."::".$_, @global_events_list)) {
+			$self->Debug("skipping undef global event $function");
 			next;
 		    }
 
 		    if($Apache::ASP::ScriptSubs{$function}) {
-			$self->{dbg} && $self->Debug("$function is a script sub");
+			$self->Debug("skipping undef script subroutine $function");
 			next;
 		    }
 

@@ -7,8 +7,6 @@ sub new {
     bless {asp => $_[0]};
 }
 
-sub DESTROY {}
-
 sub CreateObject {
     my($self, $name) = @_;
     my $asp = $self->{asp};

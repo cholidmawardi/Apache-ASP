@@ -1,57 +1,110 @@
-$MODULE=Apache::ASP; $VERSION = 2.45; $DATE="TBD"
+$MODULE=Apache::ASP; $VERSION = 2.47; $DATE="TBD"
 
 Please see README for changes for past versions.
 
  + = improvement;    - = bug fix;    (d) = documentation
 
- ++New XMLSubsPerlArgs config, default 1, indicates how 
-  XMLSubs arguments have always been parsed.  If set to 0,
-  will enable new XMLSubs args that are more ASP like with
-  <%= %> for dynamic interpolation, such as:
+ ++ Runtime speed enhancements for 15-20% improvement including:
+   + INTERNAL API ReadFile() now returns scalar ref as memory optimization
+   + cache InodeNames config setting in ASP object now for common lookups
+   + removed CompileChecksum() INTERNAL API, since it was an unnecesary
+     method decomposition along a common code path
+   + removed IsChanged() INTERNAL API since compiling of scripts
+     is now handled by CompileInclude() which does this functionality already
+   + removed unnecessary decomp of IncludesChanged() INTERNAL API, which was along
+     critical code path
+   + do not call INTERNAL SearchDirs() API when compiling base script
+     since we have already validated its path earlier
+   + Use stat(_) type shortcut for stat() & -X calls where possible
+   + Optimized rendering of static bits in dynamic scripts for script compilation 
+     by going straight to the output buffer instead of through $Response->Write
+   + Moved @INC initilization up to handler() & consolidated with $INCDir lib
+   + removed useless Apache::ASP::Collection::DESTROY
+   + removed useless Apache::ASP::Server::DESTROY
+   + removed useless Apache::ASP::GlobalASA::DESTROY
+   + removed useless Apache::ASP::Response::DESTROY
 
-    <my:xmlsub arg="<%= $data %>" arg2="text <%= $data2 %>" />
- 
-  Settings XMLSubsPerlArgs to 0 is experimental for now, but
-  will become the default by Apache::ASP version 3.0
+ - Default path for $Response->{Cookies} was from CookiePath
+   config, but this was incorrect as CookiePath config is only
+   for $Session cookie, so now path for $Response->{Cookies}
+   defaults to /
 
- ++Optimization for static HTML/XML files that are served up 
-  via Apache::ASP so that they are not compiled into perl subroutines
-  first.  This makes especially native XSLT both faster & take
-  less memory to serve, before XSL & XML files being transformed
-  by XSLT would both be compiled as normal ASP script first, so 
-  now this will happen if they really are ASP scripts with embedded
-  <% %> code blocks & XMLSubs being executed.
+ - Fixed bug where global.asa events would get undefined with
+   StatINC and GlobalPackage set when the GlobalPackage library
+   changed & get reloaded.
 
- +Consolidate some config data for Apache::ASP->Loader to use
-  globals in @Apache::ASP::CompileChecksumKeys to know which 
-  config data is important for precompiling ASP scripts.
+ (d) Documented long time config NoCache.
 
- +Further streamlined code compilation.  Now both base
-  scripts and includes use the internal CompileInclude() API
-  to generate code.
+ -- Fixed use with Apache::Filter, capable as both source
+    and destination filter.  Added ./site/eg/filter.filter example
+    to demonstrate these abilities.
 
- -Fixed runtime HTML error output when Debug is set to -2/2,
-  so that script correctly again gets rendered in final perl form.
-  Added compile time error output to ./site/eg/syntax_error.htm
-  when a special link is clicked for a quick visual test.
+ + Use $r->err_headers_out->add Apache::Table API for cookies 
+   now instead of $r->cgi_header_out.  Added t/cookies.t test to 
+   cover new code path as well as general $Response->Cookies API.
+   Also make cookies headers sorted by cookie and dictionary key 
+   while building headers for repeatable behavior, this latter was 
+   to facilitate testing.
 
- -Cleaned up some bad coding practices in ./site/eg/global.asa
-  associated changes in other example files.  Comment example
-  global.asa some for the first time reader
+ - fixed $Server->Mail error_log output when failing to connect
+   to SMTP server.
 
- -DemoASP.pm examples module needed "use strict" fix, thanks
-  to Allan Vest for bug report
+ + added tests to cover UniquePackages & NoCache configs since this
+   config logic was updated
 
- --$rv = $Response->Include({ File => ..., Cache => 1});
-  now works to get the first returned value fetched from
-  the cache.  Before, because a list was always returned,
-  $rv would have been equal to the number of items returned,
-  even if the return value list has just one element.
+ + made deprecated warnings for use of certain $Response->Member
+   calls more loadly write to error_log, so I can remove the AUTOLOAD
+   for Response one day
 
- (d) added site/robots.txt file with just a comment for
-     search engine indexing
+ - Probably fixed behavior in CgiHeaders, at least under perl 5.8.0, and
+   added t/cgi_headers.t to cover this config.
 
- -fixed ./site/eg/binary_write.htm to not use 
-  $Response->{ContentLength} because it does not exist.
-  Fixed it to use $Response->AddHeader now instead  
+ + removed $Apache::ASP::CompressGzip setting ability, used to possibly
+   set CompressGzip in the module before, not documented anyway
+
+ + removed $Apache::ASP::Filter setting ability to set Filter globally, 
+   not documented anyway
+
+ + removed old work around for setting ServerStarting to 0
+   at runtime, which was bad for Apache::DBI on win32 a long
+   time ago:
+
+    $Apache::ServerStarting and $Apache::ServerStarting = 0;
+
+   If this code is still needed in Apache::ASP->handler() let
+   me know.
+
+ + check to make sure data in internal database is a HASH ref
+   before using it for session garbage collection.  This is to
+   help prevent against internal database corruption in a 
+   network share that does not support flock() file locking.
+
+ + For new XMLSubs ASP type <%= %> argument interpolation
+   activated with XMLSubsPerlArgs 0, data references can now
+   be passed in addition to SCALAR/string references, so one
+   can pass an object reference like so:
+
+     <my:tag value="<%= $Object %>" />
+
+   This will only work as long as the variable interpolation <%= %>
+   are flushed against the containing " " or ' ', or else the object
+   reference will be stringified when it is concatenated with 
+   the rest of the data.
+
+   Testing for this feature was added to ./t/xmlsubs_aspargs.t
+
+   This feature is still experimental, and its interface may change.
+   However it is slated for the 3.0 release as default method,
+   so feedback is appreciated.
+
+ + For new XMLSubs ASP type <%= %> argument interpolation
+   activated with XMLSubsPerlArgs 0, <% %> will no longer work,
+   just <%= %>, as in 
+
+     <my:tag value="some value <%= $value %> more data" />
+
+   This feature is still experimental, and its interface may change.
+   However it is slated for the 3.0 release as default method,
+   so feedback is appreciated.
+
 

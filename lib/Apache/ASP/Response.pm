@@ -5,21 +5,12 @@ use Apache::ASP::Collection;
 
 use strict;
 no strict qw(refs);
-use vars qw(@ISA %Members %LinkTags);
+use vars qw(@ISA @Members %LinkTags);
 @ISA = qw(Apache::ASP::Collection);
 use Carp qw(confess);
 use Data::Dumper qw(DumperX);
 
-%Members = 
-    (
-     Buffer => 1,
-     Clean => 1,
-     ContentType => 1,
-     Expires => 1,
-     ExpiresAbsolute => 1,
-     IsClientConnected => 1,
-     Status => 1,
-     );
+@Members = qw( Buffer Clean ContentType Expires ExpiresAbsolute Status );
 
 # used for session id auto parsing
 %LinkTags = (
@@ -47,7 +38,7 @@ sub new {
        # to end the same response
        #       Ended => 0, 
        CacheControl => 'private',
-       CH => $r->dir_config('CgiHeaders') || 0, 
+       CH => $r->dir_config('CgiHeaders') || 0,
        #       Charset => undef,
        Clean => $r->dir_config('Clean') || 0,
        Cookies => bless({}, 'Apache::ASP::Collection'),
@@ -57,7 +48,7 @@ sub new {
        IsClientConnected => 1,
        #       PICS => undef,
        #       Status => 200,
-       #       header_buffer => '', 
+       #       header_buffer => '',
        #       header_done => 0,
        Buffer => defined $r->dir_config('BufferingOn') ? $r->dir_config('BufferingOn') : 1,
        BinaryRef => \$out,
@@ -70,37 +61,35 @@ sub new {
     $self;
 }
 
-sub DESTROY {}; # autoload doesn't have to skip it
+sub DeprecatedMemberAccess {
+    my($self, $member, $value) = @_;
+    $self->{asp}->Out(
+		      "\$Response->$member() deprecated.  Please access member ".
+		      "directly with \$Response->{$member} notation"
+		     );
+    $self->{$member} = $value;
+}
 
-# allow for deprecated use of routines that should be direct member access
-sub AUTOLOAD {
-    my($self, $value) = @_;
-    my $AUTOLOAD = $Apache::ASP::Response::AUTOLOAD;
-
-    $AUTOLOAD =~ /::([^:]*)$/o;
-    $AUTOLOAD = $1;
-    
-    if($Members{$AUTOLOAD}) {
-	$self->{asp}->Debug
-	    (
-	     "\$Response->$AUTOLOAD() deprecated.  Please access member ".
-	     "directly with \$Response->{$AUTOLOAD} notation"
-	     );
-	$self->{$AUTOLOAD} = $value;
-    } else {
-	confess "Response::$AUTOLOAD not defined"; 
+# defined the deprecated subs now, so we can loose the AUTOLOAD method
+# the AUTOLOAD was forcing us to keep the DESTROY around
+for my $member ( @Members ) {
+    my $subdef = "sub $member { shift->DeprecatedMemberAccess('$member', shift); }";
+    eval $subdef;
+    if($@) {
+	die("error definiing Apache::ASP::Response sub -- $subdef -- $@");
     }
 }
 
 sub AddHeader { 
     my($self, $name, $value) = @_;   
 
-    if($name =~ /^set\-cookie$/io) {
-	$self->{r}->cgi_header_out($name, $value);
+    my $lc_name = lc($name);
+
+    if($lc_name eq 'set-cookie') {
+	$self->{r}->err_headers_out->add($name, $value);
     } else {
 	# if we have a member API for this header, set that value instead 
 	# to avoid duplicate headers from being sent out
-	my $lc_name = lc($name);
 	if($lc_name eq 'content-type') {
 	    $self->{ContentType} = $value;
 	} elsif($lc_name eq 'cache-control') {
@@ -169,7 +158,7 @@ sub End {
 sub EndSoft {
     my $self = shift;
     return if $self->{Ended}++;
-    $self->Flush();
+    &Flush($self);
 }
 
 sub Flush {
@@ -374,7 +363,7 @@ sub IsClientConnected {
     # up the upload, so not to check the outbound client connection yet
     # 
     unless($self->{asp}{Request}) {
-	$self->{asp}->Debug("need to init Request object before running Response->IsClientConnected");
+	$self->{asp}->Out("need to init Request object before running Response->IsClientConnected");
 	return 1;
     }
 
@@ -525,7 +514,7 @@ sub SendHeaders {
 		# we have taken in cgi headers
 		$r->send_cgi_header($self->{header_buffer} . "\n");
 		$self->{header_buffer} = undef;
-	    } else {	
+	    } else {
 		$r->send_http_header();
 	    }
 	}
@@ -540,8 +529,10 @@ sub AddCookieHeaders {
     my $cookies = $self->{'Cookies'};
     my $dbg = $self->{asp}{dbg};
 
+#    print STDERR Data::Dumper::DumperX($cookies);
+
     my($cookie_name, $cookie);
-    for $cookie_name (keys %{$cookies}) {
+    for $cookie_name (sort keys %{$cookies}) {
 	# skip key used for session id
 	if($Apache::ASP::SessionCookieName eq $cookie_name) {
 	    confess("You can't use $cookie_name for a cookie name ".
@@ -555,13 +546,15 @@ sub AddCookieHeaders {
 	unless(ref $cookie) {
 	    $cookie->{Value} = $cookie;
 	} 
-	$cookie->{Path} ||= $self->{asp}{cookie_path};
+	$cookie->{Path} ||= '/';
 	
 	for $k (sort keys %$cookie) {
 	    $v = $cookie->{$k};
 	    $old_k = $k;
 	    $k = lc $k;
 	    
+#	    print STDERR "$k ---> $v\n\n";
+
 	    if($k eq 'secure' and $v) {
 		$data[4] = 'secure';
 	    } elsif($k eq 'domain') {
@@ -609,12 +602,12 @@ sub AddCookieHeaders {
 	    $cookie->{Value} = $server->URLEncode($cookie->{Value});
 	} else {
 	    my @dict;
-	    while(($k, $v) = each %{$cookie->{Value}}) {
-		push(@dict, $server->URLEncode($k) 
-		     . '=' . $server->URLEncode($v));
+	    for my $k ( sort keys %{$cookie->{Value}} ) {
+		my $v = $cookie->{Value}{$k};
+		push(@dict, $server->URLEncode($k) . '=' . $server->URLEncode($v));
 	    }
 	    $cookie->{Value} = join('&', @dict);
-	} 
+	}
 	$data[0] = $server->URLEncode($cookie_name) . "=$cookie->{Value}";
 	
 	# have to clean the data now of undefined values, but
@@ -625,7 +618,8 @@ sub AddCookieHeaders {
 	    push(@cookie, $data[$_]);
 	}		
 	my $cookie_header = join('; ', @cookie);
-	$self->{r}->cgi_header_out("Set-Cookie", $cookie_header);
+
+	$self->{r}->err_headers_out->add('Set-Cookie', $cookie_header);
 	$dbg && $self->{asp}->Debug({cookie_header=>$cookie_header});
     }
 }
@@ -647,7 +641,11 @@ sub Write {
     }
 
     &WriteRef($self, $dataref);
+
+    1;
 }
+
+# \'';
 
 *Apache::ASP::WriteRef = *WriteRef;
 sub WriteRef {
@@ -656,54 +654,17 @@ sub WriteRef {
     # allows us to end a response, but still execute code in event
     # handlers which might have output like Script_OnStart / Script_OnEnd
     return if $self->{Ended};
-    my $content_out = $self->{out};
+#    my $content_out = $self->{out};
 
-    # work on the headers while the header hasn't been done
-    # and while we don't have anything in the buffer yet
-    #
-    # also added a test for the content type being text/html or
-    # 
-    if($self->{CH} && ! $self->{header_done} && ! $$content_out 
-       && ($self->{ContentType} eq 'text/html')) 
-    {
-	# -1 to catch the null at the end maybe
-	my @headers = split(/\n/, $$dataref, -1); 
-
-	# first do status line
-	my $status = $headers[0];
-	if($status =~ m|HTTP/\d\.\d\s*(\d*)|o) {
-	    $self->{Status} = $1; 
-	    shift @headers;
-	}
-
-	while(@headers) {
-	    my $out = shift @headers;
-	    next unless $out; # skip the blank that comes after the last newline
-
-	    if($out =~ /^[^\s]+\: /) { # we are a header
-		unless(defined $self->{header_buffer}) {
-		    $self->{header_buffer} .= '';
-		}
-		$self->{header_buffer} .= "$out\n";
-	    } else {
-		unshift(@headers, $out);
-		last;
-	    }
-	}
-	
-	# if we found some headers, pop the first entry off 
-	# what to send @_ and continue
-	if($self->{header_buffer}) {
-	    if(defined $headers[0]) {
-		$$dataref = join("\n", @headers);
-	    } else {
-		shift @_;
-	    }
-	}
+    if($self->{CH}) {
+	# CgiHeaders may change the reference to the dataref, because
+	# dataref is a read-only scalar ref of static data, and CgiHeaders
+	# may need to change it
+	$dataref = $self->CgiHeaders($dataref);
     }
 
     # add dataref to buffer
-    $$content_out .= $$dataref;
+    ${$self->{out}} .= $$dataref;
     
     # do we flush now?  not if we are buffering
     if(! $self->{'Buffer'} && ! $self->{'FormFill'}) {
@@ -723,9 +684,53 @@ sub TIEHANDLE { $_[1]; }
 sub PRINTF {
     my($self, $format, @list) = @_;   
     my $output = sprintf($format, @list);
-    $self->Write($output);
+    $self->WriteRef(\$output);
 }
 
+sub CgiHeaders {
+    my($self, $dataref) = @_;
+    my $content_out = $self->{out};
+
+    # work on the headers while the header hasn't been done
+    # and while we don't have anything in the buffer yet
+    #
+    # also added a test for the content type being text/html or
+    # 
+    if($self->{CH} && ! $self->{header_done} && ! $$content_out 
+       && ($self->{ContentType} eq 'text/html')) 
+      {
+	  # -1 to catch the null at the end maybe
+	  my @headers = split(/\n/, $$dataref, -1); 
+	  
+	  # first do status line
+	  my $status = $headers[0];
+	  if($status =~ m|HTTP/\d\.\d\s*(\d*)|o) {
+	      $self->{Status} = $1; 
+	      shift @headers;
+	  }
+	  
+	  while(@headers) {
+	      my $out = shift @headers;
+	      next unless $out; # skip the blank that comes after the last newline
+	      
+	      if($out =~ /^[^\s]+\: /) { # we are a header
+		  unless(defined $self->{header_buffer}) {
+		      $self->{header_buffer} .= '';
+		  }
+		  $self->{header_buffer} .= "$out\n";
+	      } else {
+		  unshift(@headers, $out);
+		  last;
+	      }
+	  }
+	  
+	  # take remaining non-headers & set the data to them joined back up
+	  my $data_left = join("\n", @headers);
+	  $dataref = \$data_left;
+      }
+
+    $dataref;
+}
 
 sub Null {};
 sub TrapInclude {

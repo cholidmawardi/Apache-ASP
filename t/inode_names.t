@@ -7,7 +7,6 @@ use File::Basename qw(basename);
 use strict;
 
 my $ASP = $Server->{asp};
-$ASP->{r}->dir_config('InodeNames', 0);
 my $file_id1 = $ASP->FileId(basename($Server->File));
 $t->eok(sub { $file_id1 =~ /^__ASP_inode_names_tx.{32}$/ }, "basename FileId()");
 
@@ -16,13 +15,15 @@ $t->eok(sub { $file_id2 =~ /abcx/ and length($file_id1) < 120 }, "long name File
 
 my $file_id3 = '';
 if(my $stat = (stat('.'))[1]) {
+
+    # need both here, inode_names is not cached at new() time
     $ASP->{r}->dir_config('InodeNames', 1);
+    $ASP->{inode_names} = 1;
+
     $file_id3 = $ASP->FileId(basename($Server->File));
     $t->eok(sub { $file_id3 =~ /DEV.+_INODE.+/ }, "InodeNames FileId()");
 }
 
-my $file_id4 = $ASP->{id};
-$t->eok(sub { $file_id4 =~ /^__ASP_t_inode_names_tx/ }, "Script FileId()");
 $t->eok(length($ASP->{compile_checksum}) == 32, "Compile Checksum");
 
 %>	

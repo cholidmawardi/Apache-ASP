@@ -44,7 +44,6 @@ INSTALL
     Win32 Install.
 
   Need Help
-
     Often, installing the mod_perl part of the Apache server can be the hardest
     part. If this is the case for you, check out the FAQ and SUPPORT sections
     for further help, as well as the "Build Apache" notes in this section.
@@ -53,7 +52,6 @@ INSTALL
     ought to give a good read before undertaking a mod_perl project.
 
   Download and CPAN Install
-
     You may download the latest Apache::ASP from your nearest CPAN, and also:
 
       http://cpan.org/modules/by-module/Apache/
@@ -87,7 +85,6 @@ INSTALL
       cpan> install Bundle::Apache::ASP::Extra
 
   Regular Perl Module Install
-
     If not doing the CPAN install, download Apache::ASP and install it using the
     make or nmake commands as shown below. Otherwise, just copy ASP.pm to
     $PERLLIB/site/Apache
@@ -104,7 +101,6 @@ INSTALL
     mode for building static html at ./cgi/asp may be used with just perl.
 
   Win32 / Windows Install
-
     If you are on a Win32 platform, like WinNT or Windows 2000, you can download
     the win32 binaries linked to from:
 
@@ -125,7 +121,6 @@ INSTALL
     compile it for installation.
 
   WinME / 98 / 95 flock() workaround
-
     For those on desktop Windows operation systems, Apache::ASP v2.25 and later
     needs a special work around for the lack of flock() support on these
     systems. Please add this to your Apache httpd.conf to fix this problem after
@@ -140,7 +135,6 @@ INSTALL
     PerlModule, or a PerlRequire statement.
 
   Linux DSO Distributions
-
     If you have a linux distribution, like a RedHat Linux server, with an RPM
     style Apache + mod_perl, seriously consider building a static version of the
     httpd server yourself, not DSO. DSO is marked as experimental for mod_perl,
@@ -149,7 +143,6 @@ INSTALL
     of things that can go wrong.
 
   Build Apache and mod_perl
-
     For a quick build of apache, there is a script in the distribution at
     ./make_httpd/build_httpds.sh that can compile a statically linked Apache
     with mod_ssl and mod_perl. Just drop the sources into the make_httpd
@@ -170,7 +163,6 @@ INSTALL
     great success.
 
   Quick Start
-
     Once you have successfully built the Apache Web Server with mod_perl, copy
     the ./site/eg/ directory from the Apache::ASP installation to your Apache
     document tree and try it out! You must put "AllowOverride All" in your
@@ -230,7 +222,6 @@ CONFIG
     <VirtualHost> sections, the latter being better for performance.
 
   Core
-
     Global
     Global is the nerve center of an Apache::ASP application, in which the
     global.asa may reside defining the web application's event handlers.
@@ -264,19 +255,15 @@ CONFIG
       PerlSetVar GlobalPackage Some::Package
 
     UniquePackages
-    default 0. Set to 1 to emulate pre-v.10 ASP script compilation behavior,
-    which compiles each script into its own perl package.
+    default 0. Set to 1 to compile each script into its own perl package, so
+    that subroutines defined in one script will not collide with another.
 
-    Before v.10, ASP scripts were compiled into their own perl package
-    namespace. This allowed ASP scripts in the same ASP application to defined
-    subroutines of the same name without a problem.
-
-    As of v.10, ASP scripts in a web application are compiled into the *same*
-    perl package by default, so these scripts, their includes, and the
-    global.asa events all share common globals & subroutines defined by each
-    other. The problem for some developers was that they would at times define a
-    subroutine of the same name in 2+ scripts, and one subroutine definition
-    would redefine the other one because of the namespace collision.
+    By default, ASP scripts in a web application are compiled into the *same*
+    perl package, so these scripts, their includes, and the global.asa events
+    all share common globals & subroutines defined by each other. The problem
+    for some developers was that they would at times define a subroutine of the
+    same name in 2+ scripts, and one subroutine definition would redefine the
+    other one because of the namespace collision.
 
       PerlSetVar UniquePackages 0
 
@@ -312,8 +299,15 @@ CONFIG
     then the Global directory in which the global.asa resides, and finally the
     IncludesDir setting.
 
-  State Management
+    NoCache
+    Default 0, if set to 1 will make it so that neither script nor include
+    compilations are cached by the server. Using this configuration will save on
+    memory but will slow down script execution. Please see the TUNING section
+    for other strategies on improving site performance.
 
+      PerlSetVar NoCache 0
+
+  State Management
     NoState
     default 0, if true, neither the $Application nor $Session objects will be
     created. Use this for a performance increase. Please note that this setting
@@ -415,7 +409,6 @@ CONFIG
       PerlSetVar StateSerializer Data::Dumper
 
   Sessions
-
     CookiePath
     URL root that client responds to by sending the session cookie. If your asp
     application falls under the server url "/asp", then you would set this
@@ -487,7 +480,6 @@ CONFIG
       PerlSetVar SessionCount 1
 
   Cookieless Sessions
-
     SessionQueryParse
     default 0, if true, will automatically parse the $Session session id into
     the query string of each local URL found in the $Response buffer. For this
@@ -550,7 +542,6 @@ CONFIG
       PerlSetVar SessionQueryForce 1
 
   Developer Environment
-
     UseStrict
     default 0, if set to 1, will compile all scripts, global.asa and includes
     with "use strict;" inserted at the head of the file, saving you from the
@@ -636,7 +627,6 @@ CONFIG
     which you would do if you _really_ needed the speed.
 
   XML / XSLT
-
     XMLSubsMatch
     default not defined, set to some regexp pattern that will match all XML and
     HTML tags that you want to have perl subroutines handle. The is
@@ -723,7 +713,6 @@ CONFIG
     as of version 2.11, this config is no longer supported.
 
   Caching
-
     The output caching layer is a file dbm based output cache that runs on top
     of the MLDBM::Sync so inherits its performance characteristics. With CacheDB
     set to MLDBM::Sync::SDBM_File, the cache layer is very fast at caching
@@ -796,7 +785,6 @@ CONFIG
     cache.
 
   Miscellaneous
-
     AuthServerVariables
     default 0. If you are using basic auth and would like
     $Request->ServerVariables set like AUTH_TYPE, AUTH_USER, AUTH_NAME,
@@ -988,7 +976,6 @@ CONFIG
     in the Apache error log with the other system messages.
 
   Mail Administration
-
     Apache::ASP has some powerful administrative email extensions that let you
     sleep at night, knowing full well that if an error occurs at the web site,
     you will know about it immediately. With these features already enabled, it
@@ -1053,7 +1040,6 @@ CONFIG
       PerlSetVar MailAlertPeriod 20
 
   File Uploads
-
     FileUploadMax
     default 0, if set will limit file uploads to this size in bytes. This is
     currently implemented by setting $CGI::POST_MAX before handling the file
@@ -1078,7 +1064,6 @@ CONFIG
 
 SYNTAX
   General
-
     ASP embedding syntax allows one to embed code in html in 2 simple ways. The
     first is the <% xxx %> tag in which xxx is any valid perl code. The second
     is <%= xxx %> where xxx is some scalar value that will be inserted into the
@@ -1102,7 +1087,6 @@ SYNTAX
     iterates over the html without any special syntax.
 
   XMLSubs
-
     XMLSubs allows a developer to define custom handlers for HTML & XML tags,
     which can extend the natural syntax of the ASP environment. Configured like:
 
@@ -1142,7 +1126,6 @@ SYNTAX
     also supported by Apache::ASP.
 
   Editors
-
     As Apache::ASP supports a mixing of perl and HTML, any editor which supports
     development of one or the other would work well. The following editors are
     known to work well for developing Apache::ASP web sites:
@@ -1164,7 +1147,6 @@ SYNTAX
 
 EVENTS
   Overview
-
     The ASP platform allows developers to create Web Applications. In
     fulfillment of real software requirements, ASP allows event-triggered
     actions to be taken, which are defined in a global.asa file. The global.asa
@@ -1202,7 +1184,6 @@ EVENTS
     the Application_OnEnd event may never occur.
 
   Script_OnStart & Script_OnEnd
-
     The script events are used to run any code for all scripts in an application
     defined by a global.asa. Often, you would like to run the same code for
     every script, which you would otherwise have to add by hand, or add with a
@@ -1216,7 +1197,6 @@ EVENTS
             $Server->RegisterCleanup()
 
   Session_OnStart
-
     Triggered by the beginning of a user's session, Session_OnStart gets run
     before the user's executing script, and if the same session recently timed
     out, after the session's triggered Session_OnEnd.
@@ -1226,7 +1206,6 @@ EVENTS
     being executed.
 
   Session_OnEnd
-
     Triggered by a user session ending, Session_OnEnd can be useful for cleaning
     up and analyzing user data accumulated during a session.
 
@@ -1247,7 +1226,6 @@ EVENTS
     stuff that would be nice to run whenever it gets run.
 
   Script_OnFlush
-
     API extension. This event will be called prior to flushing the $Response
     buffer to the web client. At this time, the $Response->{BinaryRef} buffer
     reference may be used to modify the buffered output at runtime to apply
@@ -1261,19 +1239,16 @@ EVENTS
     Check out the ./site/eg/global.asa for an example of its use.
 
   Application_OnStart
-
     This event marks the beginning of an ASP application, and is run just before
     the Session_OnStart of the first Session of an application. This event is
     useful to load up $Application with data that will be used in all user
     sessions.
 
   Application_OnEnd
-
     The end of the application is marked by this event, which is run after the
     last user session has timed out for a given ASP application.
 
   Server_OnStart ( pseudo-event )
-
     Some might want something like a Server_OnStart event, where some code gets
     runs when the web server starts. In mod_perl, this is easy to achieve
     outside of the scope of an ASP application, by putting some initialization
@@ -1291,7 +1266,6 @@ EVENTS
     So a <Perl> section is your Server_OnStart routine!
 
   mod_perl handlers
-
     If one wants to extend one's environment with mod_perl handlers, Apache::ASP
     does not stop this. Basic use of Apache::ASP in fact only involves the
     content handler phase of mod_perl's PerlHandler, like
@@ -1442,7 +1416,6 @@ OBJECTS
     for common functions.
 
   $Session Object
-
     The $Session object keeps track of user and web client state, in a
     persistent manner, making it relatively easy to develop web applications.
     The $Session state is stored across HTTP connections, in database files in
@@ -1529,7 +1502,6 @@ OBJECTS
         $Session will be unlocked automatically at the end of the script.
 
   $Response Object
-
     This object manages the output from the ASP Application and the client web
     browser. It does not store state information like the $Session object but
     does have a wide array of methods to call.
@@ -1947,7 +1919,6 @@ OBJECTS
         point go through this method.
 
   $Request Object
-
     The request object manages the input from the client browser, like posts,
     query strings, cookies, etc. Normal return results are values if an index is
     specified, or a collection / perl hash ref if no index is specified.
@@ -2104,7 +2075,6 @@ OBJECTS
          # %{$env} here would be equivalent to the cgi %ENV in perl.
 
   $Application Object
-
     Like the $Session object, you may use the $Application object to store data
     across the entire life of the application. Every page in the ASP application
     always has access to this object. So if you wanted to keep track of how many
@@ -2160,7 +2130,6 @@ OBJECTS
         associated with an application, usually in the $Global/.state directory.
 
   $Server Object
-
     The server object is that object that handles everything the other objects
     do not. The best part of the server object for Win32 users is the
     CreateObject method which allows developers to create instances of ActiveX
@@ -2485,7 +2454,6 @@ SESSIONS
     $Session generated every request. This is not good for ASP style sessions.
 
   Cookieless Sessions
-
      *** See WARNING Below ***
 
     So we now have more ways to track sessions with the SessionQuery* CONFIG
@@ -2541,7 +2509,6 @@ SESSIONS
 
 XML/XSLT
   Custom Tags with XMLSubsMatch
-
     Before XML, there was the need to make HTML markup smarter. Apache::ASP
     gives you the ability to have a perl subroutine handle the execution of any
     predefined tag, taking the tag descriptors, and the text contained between,
@@ -2621,7 +2588,6 @@ XML/XSLT
     customs tags may be used in other custom tags.
 
   XSLT Tranformations
-
     XML is good stuff, but what can you use it for? The principle is that by
     having data and style separated in XML and XSL files, you can reformat your
     data more easily in the future, and you can render your data in multiple
@@ -2686,7 +2652,6 @@ XML/XSLT
     configure the XSLTCache.
 
   References
-
     For more information about XSLT, please see the standard at:
 
       http://www.w3.org/TR/xslt
@@ -2921,7 +2886,6 @@ STYLE GUIDE
     in the near future.
 
   UseStrict
-
     One of perl's blessings is also its bane, variables do not need to be
     declared, and are by default globally scoped. The problem with this in
     mod_perl is that global variables persist from one request to another even
@@ -2945,7 +2909,6 @@ STYLE GUIDE
     it.
 
   Do not define subroutines in scripts.
-
     DO NOT add subroutine declarations in scripts. Apache::ASP is optimized by
     compiling a script into a subroutine for faster future invocation. Adding a
     subroutine definition to a script then looks like this to the compiler:
@@ -2974,7 +2937,6 @@ STYLE GUIDE
       http://www.perldoc.com/perl5.8.0/pod/perlobj.html
 
   Use global.asa's Script_On* Events
-
     Chances are that you will find yourself doing the same thing repeatedly in
     each of your web application's scripts. You can use Script_OnStart and
     Script_OnEnd to automate these routine tasks. These events are called before
@@ -3018,7 +2980,6 @@ FAQ
     The following are some frequently asked questions about Apache::ASP.
 
   Installation
-
     Examples don't work, I see the ASP script in the browser?
     This is most likely that Apache is not configured to execute the Apache::ASP
     scripts properly. Check the INSTALL QuickStart section for more info on how
@@ -3099,7 +3060,6 @@ FAQ
     Data::Dumper and MLDBM, which are the modules used to write the state files.
 
   Sessions
-
     How can I use $Session to store complex data structures.
     Very carefully. Please read the $Session documentation in the OBJECTS
     section. You can store very complex objects in $Session, but you have to
@@ -3150,7 +3110,6 @@ FAQ
     per process basis, and will work for most cases.
 
   Development
-
     VBScript or JScript supported?
     Yes, but not with this perl module. For ASP with other scripting languages
     besides perl, you will need to go with a commercial vendor in the UNIX
@@ -3214,7 +3173,6 @@ FAQ
     world.
 
   Support and Production
-
     How do I get things I want done?!
     If you find a problem with the module, or would like a feature added, please
     mail support, as listed in the SUPPORT section, and your needs will be
@@ -3237,7 +3195,6 @@ TUNING
     site.
 
   Online Resources
-
     For more tips & tricks on tuning Apache and mod_perl, please see the tuning
     documents at:
 
@@ -3255,7 +3212,6 @@ TUNING
       http://www.chamas.com/asp/articles/perlmonth3_tune.html
 
   Tuning & Benchmarking
-
     When performance tuning, it is important to have a tool to measure the
     impact of your tuning change by change. The program ab, or Apache Bench,
     provides this functionality well, and is freely included in the apache
@@ -3266,7 +3222,6 @@ TUNING
     tuning stops.
 
   $Application & $Session State
-
     Use NoState 1 setting if you don't need the $Application or $Session
     objects. State objects such as these tie to files on disk and will incur a
     performance penalty.
@@ -3286,7 +3241,6 @@ TUNING
     $Application->Lock() in your global.asa's Script_OnStart.
 
   Low MaxClients
-
     Set your MaxClients low, such that if you have that many httpd servers
     running, which will happen on busy site, your system will not start swapping
     to disk because of excessive RAM usage. Typical settings are less than 100
@@ -3294,7 +3248,6 @@ TUNING
     server, mod_proxy front end.
 
   High MaxRequestsPerChild
-
     Set your max requests per child thread or process (in httpd.conf) high, so
     that ASP scripts have a better chance being cached, which happens after they
     are first compiled. You will also avoid the process fork penalty on UNIX
@@ -3304,14 +3257,12 @@ TUNING
     optimally tune MaxRequestsPerChild at runtime.
 
   Precompile Modules
-
     For those modules that your Apache::ASP application uses, make sure that
     they are loaded in your sites startup.pl file, or loaded with PerlModule in
     your httpd.conf, so that your modules are compiled pre-fork in the parent
     httpd.
 
   Precompile Scripts
-
     Precompile your scripts by using the Apache::ASP->Loader() routine
     documented below. This will at least save the first user hitting a script
     from suffering compile time lag. On UNIX, precompiling scripts upon server
@@ -3374,7 +3325,6 @@ TUNING
     scripts being cached.
 
   No .htaccess or StatINC
-
     Don't use .htaccess files or the StatINC setting in a production system as
     there are many more files touched per request using these features. I've
     seen performance slow down by half because of using these. For eliminating
@@ -3387,7 +3337,6 @@ TUNING
     all, as each module needs to be checked for changes on a per request basis.
 
   Turn off Debugging
-
     Turn off system debugging by setting Debug to 0-3. Having the system debug
     config option on slows things down immensely, but can be useful when
     troubleshooting your application. System level debugging is settings -3
@@ -3395,18 +3344,14 @@ TUNING
     much more light weight depending on how many $Reponse->Debug() statements
     you use in your program, and you may want to leave it on.
 
-  RAM Sparing
-
+  Memory Sparing, NoCache
     If you have a lot (1000's+) of scripts, and limited memory, set NoCache to
     1, so that compiled scripts are not cached in memory. You lose about 10-15%
     in speed for small scripts, but save at least 10K RAM per cached script.
-    These numbers are very rough. If you use includes, you can instead try
-    setting DynamicIncludes to 1, which will share compiled code for includes
-    between scripts by turning an <!--#include file..--> into a
-    $Response->Include().
+    These numbers are very rough and will largely depend on the size of your
+    scripts and includes.
 
   Resource Limits
-
     Make sure your web processes do not use too many resources like CPU or RAM
     with the handy Apache::Resource module. Such a config might look like:
 
@@ -3442,8 +3387,9 @@ NOTES
 
      !! Doug MacEachern, for moral support and of course mod_perl
 
+     :) Broc, for keeping things filter aware & help on the list.
      :) Manabu Higashida, for fixes to work under perl 5.8.0
-     :) Slaven Rezic, for suggestions on smoother CPAN installtion
+     :) Slaven Rezic, for suggestions on smoother CPAN installation
      :) Mitsunobu Ozato, for working on a japanese translation of the site & docs.
      :) Eamon Daly for persistence in resolving a MailErrors bug.
      :) Gert, for help on the mailing list, and pushing the limits of use on Win32 
@@ -3495,8 +3441,8 @@ NOTES
      :) Ryan Whelan, for boldly testing on Unix in the early infancy of ASP
 
 SUPPORT
-  MAILING LIST ARCHIVE
-
+  COMMUNITY
+    MAILING LIST ARCHIVE
     Try the Apache::ASP mailing list archive first when working through an issue
     as others may have had the same question as you, then try the mod_perl list
     archives since often problems working with Apache::ASP are really mod_perl
@@ -3513,8 +3459,7 @@ SUPPORT
      http://www.geocrawler.com/lists/3/web/182/0/
      http://www.egroups.com/group/modperl/
 
-  EMAIL
-
+    EMAIL
     Please subscribe to the Apache::ASP mailing list by sending an email to
     asp-subscribe@perl.apache.org and send your questions or comments to the
     list after your subscription is confirmed.
@@ -3525,10 +3470,67 @@ SUPPORT
     If you think this is a mod_perl specific issue, you can send your question
     to modperl@apache.org
 
+    DONATIONS
+    Apache::ASP is freely distributed under the terms of the GPL license ( see
+    the LICENSE section ). However development time is expensive, and is fueled
+    in part by donations from the user community in the form of patches,
+    debugging, and money. For monetary contributions, please go to:
+
+      http://www.chamas.com/open_source.htm
+
+    and contribute via the PayPal button, or you may send a check to the address
+    listed at:
+
+      http://www.chamas.com/contact.htm
+
+  COMMERCIAL
+    If you would like commercial support for Apache::ASP, please check out any
+    of the following listed companies. Note that this is not an endorsement, and
+    if you would like your company listed here, please email asp@chamas.com with
+    your information.
+
+    Chamas Enterprises Inc.
+    We created Apache::ASP, and we can bring you top notch software engineering
+    solutions! We are experts with open source web and database systems. We
+    offer:
+
+     * Installation support & configuration
+     * System optimization & tuning
+     * Custom development
+     * Apache::ASP core extensions
+     * Advanced support for mod_perl, MySQL, Apache, Perl, & UNIX 
+
+    We will contract for $150 per hour or $1800 per day USD. Please see:
+
+     http://www.chamas.com/consulting.htm
+     http://www.chamas.com/open_source.htm
+
+    TUX IT AG
+    Main business is implementing and maintaining infrastructure for big
+    websites and portals, as well as developing web applications for our
+    customers (Apache, Apache::ASP, PHP, Perl, MySQL, etc.)
+
+    The prices for our service are about 900 EUR per day which is negotiable
+    (for longer projects, etc.).
+
+    http://www.tuxit.de
+
+    AlterCom
+    We use, host and support mod_perl. We would love to be able to help anyone
+    with their mod_perl Apache::ASP needs. Our mod_perl hosting is $24.95 mo.
+
+    http://altercom.com/home.html
+
 SITES USING
     What follows is a list of public sites that are using Apache::ASP. If you
     use the software for your site, and would like to show your support of the
     software by being listed, please send your URL to asp@chamas.com
+
+            WebTime
+            http://webtime-project.net
+
+            Meet-O-Matic
+            http://meetomatic.com/about.asp
 
             Dr. Joel's Computer Shoppe
             http://www.drjoelscomputers.com
@@ -3544,9 +3546,6 @@ SITES USING
 
             SEAWA, Software Engineering Australia
             http://www.seawa.org.au/
-
-            WebTime
-            http://webtime.sourceforge.net
 
             ESSTECwebservices
             http://www.esstec.be/
@@ -3632,17 +3631,14 @@ RESOURCES
     email the Apache::ASP list at asp@perl.apache.org
 
   Articles
-
            Embedded Perl ( part of a series on Perl )
            http://www.wdvl.com/Authoring/Languages/Perl/PerlfortheWeb/index15.html
 
   Benchmarking
-
            Apache Hello World Benchmarks
            http://chamas.com/bench/
 
   Books
-
            mod_perl "Eagle" Book
            http://www.modperl.com
 
@@ -3653,7 +3649,6 @@ RESOURCES
            http://www.oreilly.com/catalog/perldbi/
 
   Presentations
-
            Apache::ASP Tutorial, 2000 Open Source Convention ( PowerPoint )
            http://www.chamas.com/asp/OSS_convention_2000.pps
 
@@ -3664,12 +3659,10 @@ RESOURCES
            http://www.chamas.com/asp/OSS_convention_2001.pdf
 
   Reference Cards
-
             Apache & mod_perl Reference Cards
             http://www.refcards.com/
 
   Web Sites
-
             mod_perl Apache web module
             http://perl.apache.org
 
@@ -3691,7 +3684,6 @@ TODO
     will give it higher priority.
 
   WILL BE DONE
-
      + Database storage of $Session & $Application, so web clusters 
        may scale better than the current NFS/CIFS StateDir implementation
        allows, maybe via Apache::Session.
@@ -3701,7 +3693,6 @@ TODO
      + Caching guide
 
   MAY BE DONE
-
      + VBScript, ECMAScript or JavaScript interpreters
      + Dumping state of Apache::ASP during an error, and being
        able to go through it with the perl debugger.
@@ -3717,6 +3708,58 @@ CHANGES
     the equivalent of a 1.0 release for other kinds of software.
 
      + = improvement   - = bug fix    (d) = documentations
+
+    $VERSION = 2.45; $DATE="10/13/2002"
+     ++New XMLSubsPerlArgs config, default 1, indicates how 
+      XMLSubs arguments have always been parsed.  If set to 0,
+      will enable new XMLSubs args that are more ASP like with
+      <%= %> for dynamic interpolation, such as:
+
+        <my:xmlsub arg="<%= $data %>" arg2="text <%= $data2 %>" />
+ 
+      Settings XMLSubsPerlArgs to 0 is experimental for now, but
+      will become the default by Apache::ASP version 3.0
+
+     ++Optimization for static HTML/XML files that are served up 
+      via Apache::ASP so that they are not compiled into perl subroutines
+      first.  This makes especially native XSLT both faster & take
+      less memory to serve, before XSL & XML files being transformed
+      by XSLT would both be compiled as normal ASP script first, so 
+      now this will happen if they really are ASP scripts with embedded
+      <% %> code blocks & XMLSubs being executed.
+
+     +Consolidate some config data for Apache::ASP->Loader to use
+      globals in @Apache::ASP::CompileChecksumKeys to know which 
+      config data is important for precompiling ASP scripts.
+
+     +Further streamlined code compilation.  Now both base
+      scripts and includes use the internal CompileInclude() API
+      to generate code.
+
+     -Fixed runtime HTML error output when Debug is set to -2/2,
+      so that script correctly again gets rendered in final perl form.
+      Added compile time error output to ./site/eg/syntax_error.htm
+      when a special link is clicked for a quick visual test.
+
+     -Cleaned up some bad coding practices in ./site/eg/global.asa
+      associated changes in other example files.  Comment example
+      global.asa some for the first time reader
+
+     -DemoASP.pm examples module needed "use strict" fix, thanks
+      to Allan Vest for bug report
+
+     --$rv = $Response->Include({ File => ..., Cache => 1});
+      now works to get the first returned value fetched from
+      the cache.  Before, because a list was always returned,
+      $rv would have been equal to the number of items returned,
+      even if the return value list has just one element.
+
+     (d) added site/robots.txt file with just a comment for
+         search engine indexing
+
+     -fixed ./site/eg/binary_write.htm to not use 
+      $Response->{ContentLength} because it does not exist.
+      Fixed it to use $Response->AddHeader now instead  
 
     $VERSION = 2.41; $DATE="09/29/2002"
      -Removed CVS Revision tag from Apache::ASP::Date, which 

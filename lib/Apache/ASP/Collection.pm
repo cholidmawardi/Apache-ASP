@@ -4,8 +4,6 @@ package Apache::ASP::Collection;
 use Apache::ASP::CollectionItem;
 use strict;
 
-sub DESTROY {}
-
 sub Contents { 
     my($self, $key) = @_;
     

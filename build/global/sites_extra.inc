@@ -7,8 +7,25 @@
 <br>
 
 <site:box title="TESTIMONIALS" width=300>
+<site:testimonials>
 
- <site:testimonials>
+ <site:testimonial 
+    title="WebTime"
+    image="webtimelogo.jpg"
+    href="http://webtime-project.net"
+    from=" Grégoire Lejeune"
+    >
+
+  As we have seen with WebTime, Apache::ASP is not only good  for the
+  development of website, but also for the development of webtools. Since
+  I first discoverd it, I made it a must-have in my society by taking
+  traditional PHP users to the world of perl afficionados.
+  <p>
+  Having the possibility to use Apache::ASP with mod_perl or mod_cgi make
+  it constraintless to use because of CGI's universality and perl's
+  portability.
+ </site:testimonial>
+
   <site:testimonial from="David Kulp" >
   First, I just want to say that I am very very impressed with Apache::ASP.  I
   just want to gush with praise after looking at many other implementations of

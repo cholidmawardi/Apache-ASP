@@ -315,7 +315,7 @@ most of your site.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#RAM%20Sparing>RAM Sparing</a>
+			<a href=#Memory%20Sparia73a9626>Memory Sparing, NoCache</a>
 			</font>
 			</td>
 							
@@ -529,16 +529,14 @@ debugging is much more light weight depending on how many $Reponse-&gt;Debug()
 statements you use in your program, and you may want to leave it on.</font>
 	
 	<p>
-	<a name=RAM%20Sparing></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>RAM Sparing</b></font><p>
+	<a name=Memory%20Sparia73a9626></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Memory Sparing, NoCache</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>If you have a lot (1000&#39;s+) of scripts, and limited memory, set NoCache to 1,
 so that compiled scripts are not cached in memory.  You lose about
 10-15% in speed for small scripts, but save at least 10K RAM per cached
-script.  These numbers are very rough.  If you use includes, you
-can instead try setting DynamicIncludes to 1, which will share compiled
-code for includes between scripts by turning an &lt;!--#include file..--&gt;
-into a $Response-&gt;Include().</font>
+script.  These numbers are very rough and will largely depend on the size
+of your scripts and includes.</font>
 	
 	<p>
 	<a name=Resource%20Limfd66f2d8></a>

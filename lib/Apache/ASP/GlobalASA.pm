@@ -29,14 +29,14 @@ sub new {
     my $asp = shift || die("no asp passed to GlobalASA");
 
     my $filename = $asp->{global}.'/global.asa';
-    my $id = $asp->FileId($asp->{global}, undef, 1);
+    my $id = &Apache::ASP::FileId($asp, $asp->{global}, undef, 1);
     my $package = $asp->{global_package} ? $asp->{global_package} : "Apache::ASP::Compiles::".$id;
 
     my $self = bless {
 	asp => $asp,
-#	filename => $filename,
-	id => $id,
 	'package' => $package,
+#	filename => $filename,
+#	id => $id,
     };
 
     # assign early, since something like compiling reference the global asa,
@@ -72,7 +72,7 @@ sub new {
 	# if global.asa reappeared
 	$changed = 1;
     } else {
-	$self->{mtime} = $exists ? (stat($filename))[9] : 0;
+	$self->{mtime} = $exists ? (stat(_))[9] : 0;
 	if($self->{mtime} > $compiled->{mtime}) {
 	    # if the modification time is greater than the compile time
 	    $changed = 1;
@@ -80,7 +80,7 @@ sub new {
     }
     $changed || return($self);
 
-    my $code = $exists ? $asp->ReadFile($filename) : "";
+    my $code = $exists ? ${$asp->ReadFile($filename)} : "";
     my $strict = $asp->{use_strict} ? "use strict" : "no strict";
 
     if($code =~ s/\<script[^>]*\>((.*)\s+sub\s+($match_events).*)\<\/script\>/$1/isg) {
@@ -133,7 +133,7 @@ sub new {
 	# lookups before executing it
 	my $routines = {};
 	local *stash = *{"$self->{'package'}::"};
-	for(@Apache::ASP::GlobalASA::Routines) {
+	for(@Routines) {
 	    if($stash{$_}) {
 		$routines->{$_} = 1;
 	    }
@@ -147,8 +147,6 @@ sub new {
 
     $self;
 }
-
-sub DESTROY {}
 
 sub IsCompiled {
     my($self, $routine) = @_;
@@ -271,6 +269,10 @@ sub ScriptOnFlush {
     my $self = shift;
     $self->{asp}{dbg} && $self->{asp}->Debug("Script_OnFlush");
     $self->ExecuteEvent('Script_OnFlush');
+}
+
+sub EventsList {
+    @Routines;
 }
 
 1;

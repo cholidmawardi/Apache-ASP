@@ -29,7 +29,7 @@ my $optional_modules =
 		   },
    'CGI' => 'Required for file upload, make test, and command line ./cgi/asp script',
    'Compress::Zlib' => "Required for html gzip text compression for browsers that support it",
-   'DB_File' => 'Optional module for StateDB & CacheDB config options',
+#   'DB_File' => 'Optional module for StateDB & CacheDB config options',
    'MLDBM::Sync::SDBM_File' => 'Optional module for StateDB config option that is faster than DB_File on Linux.  Also default CacheDB for XSLT caching, but DB_File may also be used as well as Tie::TextDir.',
    'HTML::Clean' => 'Compress text/html with Clean config or $Response->{Clean} set to 1-9',
    'HTML::FillInForm' => 
@@ -39,7 +39,7 @@ my $optional_modules =
    'Net::SMTP' => 'Runtime errors can be mailed to the webmaster with MailErrorTo config',
    'Net::Config' => 'Config options for use with Net::SMTP',
    'Time::HiRes' => 'Sub second Apache::ASP response timing with Debug 3/-3 turned on.',
-   'Tie::TextDir .04' => 'Fast cache for CacheDB setting for things like large XSLT transformations.',
+#   'Tie::TextDir .04' => 'Fast cache for CacheDB setting for things like large XSLT transformations.',
    'XML::XSLT 0.32' => 'XSLT, written in perl so makes for an easy install after installing Bundle::XML from CPAN.',
    'XML::Sablotron' => 'XSLT that is 10 times faster than XML::XSLT',
    'XML::LibXSLT' => 'XSLT that is 2 times faster than XML::Sablotron',

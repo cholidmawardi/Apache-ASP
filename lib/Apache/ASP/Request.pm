@@ -45,68 +45,67 @@ sub new {
     if($self->{Method} eq 'POST') {	
 	$self->{TotalBytes} = $ENV{CONTENT_LENGTH};
 	if($ENV{CONTENT_TYPE}=~ m|^multipart/form-data|) {
-	    if($asp->{file_upload_temp} = $r->dir_config('FileUploadTemp')) {
-		eval "use CGI;";
-	    } else {
-		# default leaves no temp files for prying eyes
-		eval "use CGI qw(-private_tempfiles);";		
-	    }
-	    if($@) { 
-		$self->{asp}->Error("can't use file upload without CGI.pm: $@");
-		goto ASP_REQUEST_POST_READ_DONE;
-	    }
-
-	    # new behavior for file uploads when FileUploadMax is exceeded,
-	    # before it used to error abruptly, now it will simply skip the file 
-	    # upload data
-	    local $CGI::DISABLE_UPLOADS = $CGI::DISABLE_UPLOADS;
-	    if($asp->{file_upload_max} = $r->dir_config('FileUploadMax')) {
-		if($self->{TotalBytes} > $asp->{file_upload_max} ) {
-		    $CGI::DISABLE_UPLOADS = 1;
+	    # do the logic here so that the normal form POST processing will not
+	    # occur either
+	    $asp->{file_upload_process} = defined $r->dir_config('FileUploadProcess') ? $r->dir_config('FileUploadProcess') : 1;
+	    if($asp->{file_upload_process}) {
+		if($asp->{file_upload_temp} = $r->dir_config('FileUploadTemp')) {
+		    eval "use CGI;";
+		} else {
+		    # default leaves no temp files for prying eyes
+		    eval "use CGI qw(-private_tempfiles);";		
 		}
-	    }
+		if($@) { 
+		    $self->{asp}->Error("can't use file upload without CGI.pm: $@");
+		    goto ASP_REQUEST_POST_READ_DONE;
+		}
 
-	    $asp->{dbg} && $asp->Debug("using CGI.pm version ".(eval { CGI->VERSION } || $CGI::VERSION).
+		# new behavior for file uploads when FileUploadMax is exceeded,
+		# before it used to error abruptly, now it will simply skip the file 
+		# upload data
+		local $CGI::DISABLE_UPLOADS = $CGI::DISABLE_UPLOADS;
+		if($asp->{file_upload_max} = $r->dir_config('FileUploadMax')) {
+		    if($self->{TotalBytes} > $asp->{file_upload_max} ) {
+			$CGI::DISABLE_UPLOADS = 1;
+		    }
+		}
+		
+		$asp->{dbg} && $asp->Debug("using CGI.pm version ".(eval { CGI->VERSION } || $CGI::VERSION).
 				       " for file upload support");
 
-	    my %form;
-	    my $q = $self->{cgi} = new CGI;
-	    for(my @names = $q->param) {
-		my @params = $q->param($_);
-		$form{$_} = @params > 1 ? [ @params ] : $params[0];
-		if(ref($form{$_}) eq 'Fh') {
-		    my $fh = $form{$_};
-		    binmode $fh if $asp->{win32};
-		    $upload{$_} = $q->uploadInfo($fh);
-		    if($asp->{file_upload_temp}) {
-			$upload{$_}{TempFile} = $q->tmpFileName($fh);
-			$upload{$_}{TempFile} =~ s|^/+|/|;
+		my %form;
+		my $q = $self->{cgi} = new CGI;
+		for(my @names = $q->param) {
+		    my @params = $q->param($_);
+		    $form{$_} = @params > 1 ? [ @params ] : $params[0];
+		    if(ref($form{$_}) eq 'Fh') {
+			my $fh = $form{$_};
+			binmode $fh if $asp->{win32};
+			$upload{$_} = $q->uploadInfo($fh);
+			if($asp->{file_upload_temp}) {
+			    $upload{$_}{TempFile} = $q->tmpFileName($fh);
+			    $upload{$_}{TempFile} =~ s|^/+|/|;
+			}
+			$upload{$_}{BrowserFile} = $fh;
+			$upload{$_}{FileHandle} = $fh;
+			$upload{$_}{ContentType} = $upload{$_}{'Content-Type'};
+			# tie the file upload reference to a collection... %upload
+			# may be many file uploads note.
+			$upload{$_} = bless $upload{$_}, 'Apache::ASP::Collection';
+			$asp->{dbg} && $asp->Debug("file upload field processed for \$Request->{FileUpload}{$_}", $upload{$_});
 		    }
-		    $upload{$_}{BrowserFile} = $fh;
-		    $upload{$_}{FileHandle} = $fh;
-		    $upload{$_}{ContentType} = $upload{$_}{'Content-Type'};
-		    # tie the file upload reference to a collection... %upload
-		    # may be many file uploads note.
-		    $upload{$_} = bless $upload{$_}, 'Apache::ASP::Collection';
-		    $asp->{dbg} && $asp->Debug("file upload field processed for \$Request->{FileUpload}{$_}", $upload{$_});
 		}
+		$form = \%form;
+	    } else {
+		$self->{asp}->Debug("FileUploadProcess is disabled, file upload data in \$Request->BinaryRead");
 	    }
-	    $form = \%form;
+
 	} else {
 	    # Only tie to STDIN if we have cached contents
 	    # don't untie *STDIN until DESTROY, so filtered handlers
 	    # have an opportunity to use any cached contents that may exist
 	    if(my $len = $self->{TotalBytes}) {
-		$asp->{dbg} && $asp->Debug("reading in $len bytes from POST");
-		my $buf = '';
-		if(! $ENV{MOD_PERL}) {
-		    my $rv = sysread(\*STDIN, $buf, $len, 0);
-		    $asp->{dbg} && $asp->Debug("read $rv bytes from STDIN for CGI mode");
-		} else {
-		    $r->read($buf, $len);
-		}
-		$self->{content} = $buf;
-		$self->{content} ||= '';
+		$self->{content} = $self->BinaryRead($len) || '';
 		tie(*STDIN, 'Apache::ASP::Request', $self);
 		if($ENV{CONTENT_TYPE} eq 'application/x-www-form-urlencoded') {
 		    $form = &ParseParams($self, \$self->{content});
@@ -201,14 +200,29 @@ sub Params {
 sub BinaryRead {
     my($self, $length) = @_;
     my $data;
-    if($self->{TotalBytes}) {
-	if(defined $length) {
-	    substr($self->{content}, 0, $length);
+
+    if(tied(*STDIN) eq $self) {
+	if($self->{TotalBytes}) {
+	    if(defined $length) {
+		return substr($self->{content}, 0, $length);
+	    } else {
+		return $self->{content}
+	    }
 	} else {
-	    $self->{content}
+	    return undef;
 	}
     } else {
-	undef;
+	defined($length) || ( $length = $self->{TotalBytes} );
+	my $asp = $self->{asp};
+	my $r = $asp->{r};
+	if(! $ENV{MOD_PERL}) {
+	    my $rv = sysread(*STDIN, $data, $length, 0);
+	    $asp->{dbg} && $asp->Debug("read $rv bytes from STDIN for CGI mode, tried $length bytes");
+	} else {
+	    $r->read($data, $length);
+	    $asp->{dbg} && $asp->Debug("read ".length($data)." bytes, tried $length bytes");
+	}
+	return $data;
     }
 }
 
