@@ -1,10 +1,17 @@
-$MODULE=Apache::ASP; $VERSION = 1.91; $DATE="TBA";
+$MODULE=Apache::ASP; $VERSION = 1.93; $DATE="07/03/00";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
 
-$MODULE=Apache::ASP; $VERSION = 1.93; $DATE="TBA";
+- sub second timing with Time::HiRes was adding <!-- -->
+  comments by HTML by default, which would possibly
+  break specific programs looking for precise HTML output.
+  Now this behavior must be explicitly turned on with
+  the TimeHiRes config setting.
 
+  These comments will only appear in HTML only if 
+  Debug is enabled as well.
 
-
+  Timed log entries will only occur is Debug if 
+  system debugging is enabled, with Debug -1 or -2

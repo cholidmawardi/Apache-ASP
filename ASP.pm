@@ -123,7 +123,7 @@ ERROR
 
     # run time tracking
     my $start_time;
-    if($r->dir_config('Debug')) {
+    if($r->dir_config('TimeHiRes')) {
 	# request time tracking
 	eval "use Time::HiRes";
 	unless($@) {
@@ -3075,10 +3075,12 @@ sub Flush {
     # and append to html like Cocoon, per user request
     if($asp->{start_time} && $self->{Ended}) {
 	if($self->{ContentType} eq 'text/html') {
-	    my $total_time = sprintf('%7.2f', (&Time::HiRes::time() - $self->{asp}{start_time})*1000);
+	    my $total_time = sprintf('%7.2f', (&Time::HiRes::time() - $asp->{start_time})*1000);
 	    $asp->{dbg} && $asp->Debug("page served in $total_time milliseconds");
-	    $$out .= "\n<!-- Apache::ASP v".$Apache::ASP::VERSION.
-	      " served page in $total_time milliseconds -->";
+	    if($asp->{r}->dir_config('Debug')) {
+		$$out .= "\n<!-- Apache::ASP v".$Apache::ASP::VERSION.
+		  " served page in $total_time milliseconds -->";
+	    }
 	}
     }
 
@@ -5769,6 +5771,22 @@ own risk.
 
   PerlSetVar CompressGzip 1
 
+=item TimeHiRes
+
+default 0, if set and Time::HiRes is installed, will do 
+sub second timing of the time it takes Apache::ASP to process
+a request.  This will not include the time spent in the 
+session manager, nor modperl or Apache, and is only a 
+rough approximation at best.
+
+If Debug is set also, you will get a comment in your
+HTML output that indicates the time it took to process
+that script.
+
+If system debugging is set with Debug -1 or -2, you will
+also get this time in the Apache error log with the 
+other system messages.
+
 =head2 Mail Administration
 
 Apache::ASP has some powerful administrative email
@@ -6969,7 +6987,7 @@ original web page if only a normal redirect is used.
 =head2 Custom Tags with XMLSubsMatch
 
 Before XML, there was the need to make HTML markup smarter.
-Apache::ASP v.19 gives you the ability to have a perl
+Apache::ASP gives you the ability to have a perl
 subroutine handle the execution of any predefined tag,
 taking the tag descriptors, and the text contained between,
 as arguments of the subroutine.  This custom tag
