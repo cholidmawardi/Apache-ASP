@@ -5,7 +5,9 @@ use vars qw(%FILES %ALIASES %LINKS $ASP);
 $DEBUG = 0;
 %FILES = ('index' => 'INTRO',
 	  'install' => 'INSTALL',
+	  'changes' => 'CHANGES',
 	  'config' => 'CONFIG',
+	  'cookies' => 'COOKIES',
 	  'syntax' => 'SYNTAX',
 	  'events' => 'EVENTS',
 	  'objects' => 'OBJECTS',
@@ -17,6 +19,7 @@ $DEBUG = 0;
 	  'kudos' => 'CREDITS',
 	  'support' => 'SUPPORT',
 	  'sites' => 'SITES USING',
+	  'todo' => 'TODO',
 	 );
 
 %ALIASES = (
@@ -31,6 +34,7 @@ $DEBUG = 0;
 	  'CGI.pm' => 'http://stein.cshl.org/WWW/software/CGI/cgi_docs.html',
 	  'PerlScript' => 'http://www.activestate.com/ActivePerl/',
 	  'IIS' => 'http://www.microsoft.com/iis/',
+	  'MySQL support' => 'http://www.mysql.com/Manual_chapter/manual_Licensing_and_Support.html#Cost'
 	 );
 
 # purify files and add as links
@@ -48,12 +52,12 @@ unshift(@levels, $ASP);
 
 my $level = 0;
 $data =~ s/\n=(over|back)\s*?\n/\n/sg;
-while($data =~ s/\n=(head\d|item) (.*?)\n+(.+?\n+)?(\n\=(head|item)|$)/$4/is) {
+while($data =~ s/\n=(head\d|item) ([^\n]*)\n(.*?)(\n\=|$)/$4/is) {
     my($type, $name, $body) = ($1,$2,$3);
     $body =~ s/\s+$//s;
 
     $name = $ALIASES{$name} || $name;
-#    print "----------- $type $name $body ----------- \n\n";
+#    warn "----------- $type :: $name :: $body ----------- \n\n";
 #    warn substr($data, 0, 200)."\n";
 #    $body =~ s/\n=over\s*$//s;
     my $item = { 
@@ -87,11 +91,13 @@ sub Script_OnStart {
     if($Request->QueryString('ads')) {
 	$Ads = 1;
     }
+# don't clean because white space is important
 #    $Response->{Clean} = 1;
 #    $Response->Include("header.inc");
 }
 
 sub Script_OnEnd {
+    $Response->Write("\n");
 #    $Response->Include("footer.inc");
 }
 
@@ -124,7 +130,7 @@ sub pod2html {
 	if(/^\s+[^\s]/ || /^\s*$/) {
 	    if(! $pre) {
 		#			$_ = "<pre>$_";
-		$pre_tag = "<font face=\"courier new\"><pre>";
+		$pre_tag = "<font face=\"lucida console,courier new\" size=3><pre>";
 		$pre = 1;
 	    }
 	} else {
@@ -142,17 +148,19 @@ sub pod2html {
 	push(@newlines, $_);
     }
     $body = join("\n", @newlines);
-    $pre and $body .= "</pre>";
+    $pre and $body .= " </pre>";
 
     #$body =~ s/\n\s*\n+/<p>/isg;
-    $body =~ s|(http://[\w\.\/\-]+)|<a href=$1>$1</a>|sg;
+    $body =~ s|(http://[\w\.\/\-]+\.[\w\.\/\-\#]+[^\.\s\)])|<a href=$1>$1</a>|sg;
+#    $1 && warn "link: $1\n";
+    $body =~ s|(http://localhost[\S]*[^\.\s\,]?)|<tt>$1</tt>|sg;
     $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<b>$1</b>|sg;
 #    $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<a href=mailto:$1$2>$1</a>|sg;
-    $body =~ s|(\./site/)(eg/[\w\.]+)|<a href=$2>$1$2</a>|sg;
+    $body =~ s|(\./site/)(eg/[\w\.]+[^\.\s])|<a href=$2>$1$2</a>|sg;
 
     $body =~ s|\n\n</pre>|\n</pre>|isg;
     for(keys %LINKS) {
-	$body =~ s|(\s)($_)(\s)|$1<a href=$LINKS{$_}>$2</a>$3|sg;
+	$body =~ s|(\b)($_)(\b)|$1<a href=$LINKS{$_}>$2</a>$3|sg;
     }
 
     '<font face=verdana>'.$title.$body.'</font>';

@@ -2,7 +2,10 @@
 
 use File::Basename;
 #$NavColor = '#ffcccc';
-$NavColor = '#ffbbbb';
+#$NavColor = '#ffbbbb';
+$NavColor = '#c0c0c0';
+$LinkColor = '#003090';
+$NavColSpan = 2;
 
 my $basename = basename($0);
 ($basename) = split(/\./, $basename);
@@ -23,7 +26,7 @@ my %meta = (
 
 $data || die("can't get data for $section");
 my $module = "Apache :: ASP";
-my $title = "$module :: ".uc(lc $data->{name})." [ Active Server Pages for Apache with mod_perl ]";
+my $title = "$module :: ".uc(lc $data->{name})." [ apache + asp + perl = apache::asp ]";
 
 %>
 
@@ -42,42 +45,40 @@ if($0 =~ /index.html$/) {
 %>
 
 </head>
-<body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
+<body bgcolor=<%='black' || $LinkColor%> link=<%=$LinkColor%> alink=#ff5599 vlink=#993399>
 
 <table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
 <tr bgcolor=#ff4488>
 <td colspan=2>
 	<table border=0 cellpadding=0 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=apache_asp.gif alt="<%=$module%>"></td>
-	<td align=right>
-=pod
-		<a href=http://perl.apache.org><img 
-			src=powered_by_modperl.gif border=0
-			alt="Powered by ModPerl & Apache"
-			></a>
-		<a href=http://www.nodeworks.com/asp/><img 
-			src=powered_by_apache_asp.jpg border=0
-			alt="Powered by Apache::ASP"
-			></a>
-=cut
-	</td>
+	<td><img border=0 src=apache_asp.gif alt="<%=$module%>"></td>	
+	<% if($Ads) { %>
+		<form action=apps/search/index.asp>
+		<td align=right>
+		<input type=text name=search size=20>
+		<input type=submit value=Search>
+		</td>
+		</form>		
+	<% } else { %>
+		<td align=right></td>
+	<% } %>
 	</tr>
+	</table>
 </td>
 </tr>
-</table>
 
 <tr>
 
 <td valign=top bgcolor=<%=$NavColor%>>
-	<table border=0 cellpadding=0 cellspacing=0 width=100>
-	<tr><td align=center><hr size=1></td></tr>
+	<table border=0 cellpadding=0 cellspacing=2 width=100>
+	<tr><td align=center colspan=<%=$NavColSpan%>><hr size=1></td></tr>
 
 	<% 
 	my $top;
 	for $top (@{$ASP->{stack}}, '', { name=> 'EXAMPLES', file => 'eg/index'}) { 
 		unless($top) {
-			%><tr><td><hr size=1></td></tr><%
+			%><tr><td colspan=<%=$NavColSpan%>><hr size=1></td></tr><%
 			next;
 		}
 
@@ -92,18 +93,20 @@ if($0 =~ /index.html$/) {
 
 		%>
 		<tr>
-		<td><a href=<%=$file%>><font face=verdana size=-1 color=#3355cc><%=$top->{name}%></font></a></td>
+		<td><font size=2 face="courier new"><b><%=basename($0) eq $file ? $Server->HTMLEncode("-") : "&nbsp;"%></b></font></td>
+		<td><a href=<%=$file%>><font face=verdana size=-1 color=<%=$LinkColor%>><nobr><%=$top->{name}%></nobr></font></a></td>
 		</tr>
 		<%
 	}
 	%>
 	<tr>
-		<td align=center>
+		<td align=center colspan=<%=$NavColSpan%>>
 		<hr size=1>
 		<a href=http://perl.apache.org><img 
 			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl & Apache"
 			></a>
+		<br>
 		<a href=http://www.nodeworks.com/asp/><img 
 			src=powered_by_apache_asp.jpg border=0
 			alt="Powered by Apache::ASP"
@@ -114,11 +117,29 @@ if($0 =~ /index.html$/) {
 	</table>
 </td>
 
-<td valign=top>
-		</center>
+<td valign=top bgcolor=white>
+	<font size=-1 face=verdana>
 	<% if($Ads) { 
 		$PageCount++;
 		%>
+
+=pod
+
+		<!--- Begin HitExchange Code --->
+               <CENTER><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR><TD>
+               <TABLE BORDER=0 BGCOLOR="#0000FF" CELLPADDING=1 CELLSPACING=0>
+               <TR><TD><A HREF="http://gif.hitexchange.net/HX589936/468x60/<%=$PageCount%>" TARGET="_top">
+               <IMG SRC="http://gif.hitexchange.net/HX589936/468x60/<%=$PageCount%>.gif" BORDER=0
+                 HSPACE=0 WIDTH=468 HEIGHT=60 ALT="Banner Ad"></A></TD>
+               </TR></TABLE></TD></TR><TR><TD ALIGN=CENTER>
+               <A HREF="http://gif.hitexchange.net/HX589936/468x15/map" TARGET="_top">
+               <IMG SRC="http://gif.hitexchange.net/logo/468x15.gif" BORDER=0 
+                 HSPACE=0 ISMAP WIDTH=468 HEIGHT=15 ALT="Click!"></A></TD>
+               </TR></TABLE></CENTER>
+               <!--- End HitExchange Code --->
+
+=cut
+
 	<!-- BEGIN LINKEXCHANGE CODE --> 
 	<center><iframe src="http://leader.linkexchange.com/<%=$PageCount%>/X709880/showiframe?" 
 	width=468 height=60 marginwidth=0 marginheight=0 hspace=0 vspace=0 frameborder=0 scrolling=no>
@@ -129,6 +150,20 @@ if($0 =~ /index.html$/) {
 	target="_top"><img src="http://leader.linkexchange.com/<%=$PageCount%>/X709880/showlogo?" 
 	width=468 height=16 border=0 ismap alt=""></a><br></center>
 	<!-- END LINKEXCHANGE CODE -->
+
+=pod
+
+		<center>
+		<!------ Looksmart clicks HTML starts here -------->
+		<SCRIPT LANGUAGE="JavaScript1.1" 
+		SRC="http://banners.looksmart.com/members.js?rid=B1506738&page=<%=$PageCount%>">
+		</SCRIPT>
+		<!------- Looksmart clicks HTML ends here ---------> 
+		</center>
+		<br>
+
+=cut
+
 	<% } %>
 <%
 my @stack;
@@ -145,29 +180,40 @@ print pod2html($data->{body}, $data->{name}, $data->{level});
 my @links;
 $data = shift @order;
 if(@order > 2) {
-	my $last_level = $order[0]->{level};
+	# if any change in levels, then we get some headers going
+	my $last_level;
+	if(grep($order[$_]->{level} != $order[$_ + 1]->{level}, 0..($#order-1))) {
+		$last_level = 100; # really low so first will be a header
+	} else {
+		$last_level = $order[0]->{level};
+	}
+
 	for $data (@order) {
+		warn "$last_level, $data->{level} $data->{name}\n";
 		if($last_level != $data->{level}) {
-			push(@links, '');
+			if($last_level > $data->{level}) {
+				warn "pushing blank\n";
+				push(@links, '');
+			}
 			$last_level = $data->{level};
 		}		
-		push(@links, "<a href=#".$Server->URLEncode($data->{name})."><font color=#3355cc>$data->{name}</font></a>");
+		push(@links, "<a href=#".$Server->URLEncode($data->{name})."><font color=$LinkColor>$data->{name}</font></a>");
 	}
 	%>
 
 	<hr size=1>
-	<table width=100% border=0 cellpadding=2 cellspacing=0>
+	<table width=100% border=0 cellpadding=3 cellspacing=0>
 	<tr>
 	<td valign=top><font face="lucida console" size=-1>
 	<ul>
 	<% 
 	my $half = int((@links+1) / 2);
-	my $index;
-	for(my $i=0; $i<$half; $i++) { 
+	my $index;	
+	for(my $i= $links[0] ? 0 : 1; $i<$half; $i++) { 
 		%>
 		<tr>
-		<% for $index ($i, undef, $i+$half) { 
-			if(! defined $index) {
+		<% for $index ($i, $i+$half) { 
+			if(! defined $links[$index] && $index != 0) {
 				print "<td>&nbsp;</td>";
 				next;
 			}
@@ -176,7 +222,7 @@ if(@order > 2) {
 				unless($links[$index+1]) {
 					$bgcolor = $NavColor;
 				}
-			} elsif(! $links[$index+1] && ! $links[$index-1]) {
+			} elsif(! $links[$index-1]) {
 				$bgcolor = $NavColor;
 			}
 			%>
@@ -205,11 +251,15 @@ for $data (@order) {
 }
 %>
 
+</font>
 </td>
 </tr>
 <tr bgcolor=#555555>
 	<td colspan=2 align=center width=80%>
-	<font face=verdana color=white size=-1><%=$copy->{body}%></font>
+	<font face=verdana color=white size=-1>
+	Copyright &copy; 1998-2000, Joshua Chamas, 
+	<a href=http://www.chamas.com><font color=white>Chamas Enterprises Inc.</font></a>
+	</font>
 	</td>
 </tr>
 </table>

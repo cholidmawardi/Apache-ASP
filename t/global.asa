@@ -1,7 +1,52 @@
+use lib '.';	
+use T;	
+use strict;
+use vars qw($Application $Session $t);
+use Carp qw(confess);
+
+$SIG{__DIE__} = \&confess;
+
+sub Application_OnStart {
+    $Application->{Start} = 1;
+}
+
 sub Session_OnStart {
-	$Session->{Count} = 10;
+    $Session->{Count} = 10;
 }
 
-sub Session_OnEnd {
-
+sub Script_OnStart {
+    $t = T->new();
 }
+
+sub Script_OnEnd {
+    $t->done;
+}
+
+
+# CLEANUP old state files from previous test script runs
+# so things like Application_OnStart may run
+die unless (-e '../t');
+my @dirs = ('.state');
+my @delete_dirs;
+while(@dirs) {
+    my $dir = shift @dirs;
+    next unless -d $dir;
+    opendir(DIR, $dir);
+    for(readdir(DIR)) {	
+	next if /^\.\.?$/;
+	my $file = "$dir/$_";
+	if(-d $file) {
+	    push(@dirs, $file);
+	} elsif(-e $file) {
+	    unlink($file);
+	} else {
+	    die("$file does not exist, but we just read it");
+	}
+    }
+    unshift(@delete_dirs, $dir);
+}
+
+for(@delete_dirs) {
+    rmdir($_);
+}
+

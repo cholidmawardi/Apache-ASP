@@ -9,11 +9,18 @@ AuthType Basic
 	SetHandler perl-script
 	PerlHandler Apache::ASP
 	PerlSetVar Global  .		
-	PerlSetVar Debug  2
+	PerlSetVar Debug  -2
 	PerlSetVar CookiePath  /	
-	PerlSetVar SessionTimeout  .5
+	PerlSetVar SessionTimeout .5
 	PerlSetVar StateDir  ./.state
-	PerlSetVar UniquePackages 1
+#	PerlSetVar UniquePackages 1
+#	PerlSetVar SessionQuery 1
+#	PerlSetVar SessionQueryMatch asp$
+	PerlSetVar SessionQueryParse 1
+#	PerlSetVar SessionQueryParseMatch on
+#	PerlSetVar UseStrict 1
+	PerlSetVar FileUploads 0
+	PerlSetVar XMLSubsMatch myfont
 </Files>
 
 # .htm files for the ASP parsing, but not the $Session object

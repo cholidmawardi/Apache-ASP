@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: SSI [ apache + asp + perl = apache::asp ]</title>
+<title>Apache :: ASP :: COOKIES [ apache + asp + perl = apache::asp ]</title>
 
 
 
@@ -61,7 +61,7 @@
 		</tr>
 		
 		<tr>
-		<td><font size=2 face="courier new"><b>-</b></font></td>
+		<td><font size=2 face="courier new"><b>&nbsp;</b></font></td>
 		<td><a href=ssi.html><font face=verdana size=-1 color=#003090><nobr>SSI</nobr></font></a></td>
 		</tr>
 		
@@ -76,7 +76,7 @@
 		</tr>
 		
 		<tr>
-		<td><font size=2 face="courier new"><b>&nbsp;</b></font></td>
+		<td><font size=2 face="courier new"><b>-</b></font></td>
 		<td><a href=cookies.html><font face=verdana size=-1 color=#003090><nobr>COOKIES</nobr></font></a></td>
 		</tr>
 		
@@ -141,68 +141,86 @@
 <td valign=top bgcolor=white>
 	<font size=-1 face=verdana>
 	
-<font face=verdana><font size=+1 color=#555555><b>SSI</b></font><p>
+<font face=verdana><font size=+1 color=#555555><b>COOKIES</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font><a href=ssi.html>SSI</a> is great!  One of the main features of <a href=ssi.html>SSI</a> is to include
-other files in the script being requested.  In Apache::ASP, this
-is implemented in a couple ways, the most crucial of which
-is implemented in the file include.  Formatted as
+</pre></font>Cookies are used by default for user $Session support ( see <a href=objects.html>OBJECTS</a> ).  
+In order to track a web user and associate server side data 
+with that client, the web server sets, and the web client returns 
+a 32 byte session id identifier cookie.  This implementation 
+is very secure and  may be used in secure HTTPS transactions, 
+and made stronger with SecureSession and ParanoidSession 
+settings (see <a href=config.html>CONFIG</a> ).
 <font face="lucida console,courier new" size=3><pre>
- &lt;!--#include file=filename.inc--&gt;
-</pre></font>,the .inc being merely a convention, text from the included 
-file will be inserted directly into the script being executed
-and the script will be compiled as a whole.  Whenever the 
-script or any of its includes change, the script will be 
-recompiled.
+</pre></font>However good cookies are for this kind of persistent
+state management between HTTP requests, they have long 
+been under fire for security risks associated with
+JavaScript security exploits and privacy abuse by 
+large data tracking companies. 
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Includes go a great length to promote good decomposition
-and code sharing in ASP scripts, but they are still 
-fairly static.  As of version .09, includes may have dynamic
-runtime execution, as subroutines compiled into the global.asa
-namespace.  The first way to invoke includes dynamically is
+</pre></font>Because of these reasons, web users will sometimes turn off
+their cookies, rendering normal ASP session implementations
+powerless, resulting in a new $Session generated every request.
+This is not good for ASP style sessions.</font>
+	<p>
+	<a name=Cookieless%20Sessions></a>
+	<font face=verdana><font size=+0 color=#555555><b>Cookieless Sessions</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
- &lt;!--#include file=filename.inc args=@args--&gt;
-</pre></font>If @args is specified, Apache::ASP knows to execute the 
-include at runtime instead of inlining it directly into 
-the compiled code of the script.  It does this by
-compiling the script at runtime as a subroutine, and 
-caching it for future invocations.  Then the compiled
-subroutine is executed and has @args passed into its
-as arguments.
+ *** See WARNING Below ***
+</pre></font>So we now have more ways to track sessions with the 
+SessionQuery* <a href=config.html>CONFIG</a> settings, that allow a web developer 
+to embed the session id in URL query strings when use 
+of cookies is denied.  The implementations work such that
+if a user has cookies turned on, then cookies will be 
+used, but for those users with cookies turned off,
+the session ids will be parsed into document URLs.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>This is still might be too static for some, as @args
-is still hardcoded into the ASP script, so finally,
-one may execute an include at runtime by utilizing
-this API extension
+</pre></font>The first and easiest method that a web developer may use 
+to implement cookieless sessions are with SessionQueryParse*
+directives which enable Apache::ASP to the parse the session id
+into document URLs on the fly.  Because this is resource
+inefficient, there is also the SessionQuery* directives
+that may be used with the $Server-&gt;URL($url,\%params) method to 
+generate custom URLs with the session id in its query string.
 <font face="lucida console,courier new" size=3><pre>
-   $Response-&gt;Include(&quot;filename.inc&quot;, @args);
-</pre></font>which is a direct translation of the dynamic include above.
+</pre></font>To see an example of these cookieless sessions in action, 
+check out the <a href=eg/cookieless_session.asp>./site/eg/cookieless_session.asp</a> example.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Although inline includes should be a little faster,
-runtime dynamic includes represent great potential
-savings in httpd memory, as includes are shared
-between scripts keeping the size of each script
-to a minimum.  This can often be significant saving
-if much of the formatting occurs in an included 
-header of a www page.
+ *** WARNING ***
+</pre></font>If you do use these methods, then be VERY CAREFUL
+of linking offsite from a page that was accessed with a 
+session id in a query string.  This is because this session
+id will show up in the HTTP_REFERER logs of the linked to 
+site, and a malicious hacker could use this information to
+compromise the security of your site's $Sessions, even if 
+these are run under a secure web server.  
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>By default, all includes will be inlined unless
-called with an args parameter.  However, if you
-want all your includes to be compiled as subs and 
-dynamically executed at runtime, turn the DynamicIncludes
-config option on as documented above.
+</pre></font>In order to shake a session id off an HTTP_REFERER for a link 
+taking a user offsite, you must point that link to a redirect 
+page that will redirect a user, like so:
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>That is not all!  <a href=ssi.html>SSI</a> is full featured.  One of the 
-things missing above is the 
+ &lt;%
+    # &quot;cross site scripting bug&quot; prevention
+    my $sanitized_url =
+	$Server-&gt;HTMLEncode($Response-&gt;QueryString('OffSiteUrl'));
+ %&gt;
+ &lt;html&gt;
+ &lt;head&gt;
+ &lt;meta http-equiv=refresh content='0;URL=&lt;%=$sanitized_url%&gt;'&gt;
+ &lt;/head&gt;
+ &lt;body&gt;
+	Redirecting you offsite to
+	&lt;a href=&lt;%=$sanitized_url%&gt; &gt;here&lt;/a&gt;...
+ &lt;/body&gt;
+ &lt;/html&gt;
+</pre></font>Because the web browser visits a real page before being redirected
+with the &lt;meta&gt; tag, the HTTP_REFERER will be set to this page.
+Just be sure to not link to this page with a session id in its
+query string.  
 <font face="lucida console,courier new" size=3><pre>
- &lt;!--#include virtual=filename.cgi--&gt;
-</pre></font>tag.  This and many other <a href=ssi.html>SSI</a> code extensions are available
-by filtering Apache::ASP output through Apache::<a href=ssi.html>SSI</a> via
-the Apache::Filter and the Filter config options.  For
-more information on how to wire Apache::ASP and Apache::<a href=ssi.html>SSI</a>
-together, please see the Filter config option documented
-above.  Also please see Apache::<a href=ssi.html>SSI</a> for further information
-on the capabilities it offers.</font>
+</pre></font>Unfortunately a simple $Response-&gt;Redirect() will not work here,
+because the web browser will keep the HTTP_REFERER of the 
+original web page if only a normal redirect is used.</font>
+	
 
 </font>
 </td>

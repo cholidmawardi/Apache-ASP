@@ -20,14 +20,8 @@
 %>
 <!--#include file=header.inc-->
 
-This file demonstrates the use of the $Session object, as well
-as one implementantion of cookieless sessions involving the 
-use of the SessionQuery setting, and the <nobr>$Server->URL($url, \%params)</nobr>
-method to add session ids to the form query string.
-<p>
-To demo the cookieless sessions, just turn off your cookies
-and use this form.
-<p>
+<%=Apache->dir_config('Test')%>
+
 <center>
 <table border=1>
 <tr><td colspan=2 align=center><b>Session Object Demonstration</b></td></tr>

@@ -1,4 +1,5 @@
 use DemoASP;
+use vars qw($title %EG);
 
 sub Session_OnStart {
 	$Session->{Count} = 10;
@@ -27,6 +28,10 @@ sub Script_OnStart {
 }
 sub Script_OnEnd {
     $Session->{Ended}++;
+}
+
+sub XML_myfont {
+    $_ = "<font size=+2 color=red>$_</font>";
 }
 
 # you can share globals between scripts as of v.10, as all scripts, including 
@@ -81,13 +86,7 @@ sub Script_OnEnd {
 
        'server_variables.htm' => '$Response->ServerVariables() are the equivalent of %ENV in ASP',
 
-       'session.asp' => 
-       'Shows use of the $Session object, and also demos one implementation '.
-       'of cookieless sessions.',
-
-       'session_query_parse.asp' =>
-       "Demonstrates automatic cookieless session support with the SessionQueryParse* ".
-       "settings.",
+       'session.asp' => 'Shows use of the $Session object',
 
        'source.asp' => 'Handy source code viewer used to let you easily view the source of '.
 		       'the other asp scripts.',

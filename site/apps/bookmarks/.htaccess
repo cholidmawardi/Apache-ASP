@@ -5,6 +5,6 @@ DirectoryIndex index.asp
 	PerlSetVar Global .
 	PerlSetVar GlobalPackage My::Bookmarks
 	PerlSetVar StateDir .state
-	PerlSetVar Debug 2
+	PerlSetVar Debug 1
 	PerlSetVar SessionTimeout 15
 </Files>

@@ -1,6 +1,16 @@
 #!/usr/local/bin/perl5 asp
 
+<!--#include file=header.inc-->
+
 <%
+	use File::Basename;
+	unless($Session->{staged} > 0) {
+		$Session->{staged} = 1;
+		# $Response->{Expires} = 3600; # doesn't work to auto redirect browser later
+		# with time param, so doesn't think it is redirecting to itself
+		$Response->Redirect($Server->URL(basename($0), { params => time() }));
+	}
+
 	my $form = $Request->Form();
 
 	# process form here
@@ -18,16 +28,15 @@
 		 '$Session->{SessionID}'
 		 );
 %>
-<!--#include file=header.inc-->
 
-This file demonstrates the use of the $Session object, as well
-as one implementantion of cookieless sessions involving the 
-use of the SessionQuery setting, and the <nobr>$Server->URL($url, \%params)</nobr>
-method to add session ids to the form query string.
-<p>
-To demo the cookieless sessions, just turn off your cookies
-and use this form.
-<p>
+<%= $Server->URL('http://offsite.html') %><br>
+<%= $Server->URL('http://onsite.asp') %>
+
+This is a hacked up version of the session.asp <b>$Session</b>
+demo that uses a combination of the <b>SessionQueryStringID</b> setting
+and <b>$Server->URL()</b> to enable cookieless sessions.  Just turn
+off your cookies, and enjoy the cookieless session management.
+
 <center>
 <table border=1>
 <tr><td colspan=2 align=center><b>Session Object Demonstration</b></td></tr>

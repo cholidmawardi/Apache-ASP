@@ -8,8 +8,9 @@ sub new {
     my($class, $data, $input) = @_;
     $class ||= 'T';
     bless {
-	'data' => $data, 
-	'input' => $input
+	   'data' => $data, 
+	   'input' => $input,
+	   't' => 0
 	}, $class;
 }    
 
@@ -18,11 +19,12 @@ sub ok {
     $_[0]->{buffer} .= "ok\n";
 }
 
+*not = *not_ok;
 sub not_ok {
     my($self, $warn) = @_;
 
     if($warn) {
-	cluck $warn;
+	die "[failure] $warn";
     }
     
     $self->{t}++;
@@ -49,8 +51,10 @@ sub test {
 }
 
 sub done {
-    print "1..$_[0]->{t}\n";
-    print $_[0]->{buffer};
+    my $self = shift;
+    return if $self->{done}++;
+    print "1..$self->{t}\n";
+    print $self->{buffer};
 }
 
 sub do {
@@ -61,6 +65,21 @@ sub do {
     $self->done();
 
     1;
+}
+
+*eok = *eval_ok;
+sub eval_ok {
+    my($self, $test, $error) = @_;
+
+    my $result = (ref($test) =~ /CODE/) ? eval { &$test } : eval { $test };
+    if($result) {
+	$self->ok();
+    } else {
+	my $tail = $@ ? ", $@" : '';
+	$self->not($error.$tail);
+    }
+
+    $result;
 }
 
 1;

@@ -4,6 +4,7 @@
 # split the page in 2 for nice formatting and english style sorting
 my(@col1, @col2);
 my @keys = sort keys %EG;
+@keys || die("\%EG is not defined, make sure you copied ./eg/global.asa correctly");
 my $half = int(@keys/2);
 
 for(my $i =0; $i <= $#keys; $i++) {
