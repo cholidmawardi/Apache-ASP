@@ -1,23 +1,17 @@
-<% 
-	use DemoASP; 
-	$demo = &DemoASP::new($Request);
-%>
-<html>
-<head><title><%=$demo->{title}%></title></head>
-<body bgcolor=<%=$demo->{bgcolor}%>>
+<!--#include file=header.inc-->
 
 <% 
-	use DemoASP;
 	use File::Basename;
-	use CGI;
 
 	$file = $Request->QueryString('file');
-	$cgi = new CGI;
 	if($file) {
 		## print contents of file here	
-		my($fh) = new FileHandle(&File::Basename::basename($file));
-		my $data = join("", $fh->getlines());	
-		$data = $cgi->escapeHTML($data);
+		local *FILE;
+		open(FILE, &File::Basename::basename($file)) || die("can't read $file");
+		local $/ = undef;
+		my $data = <FILE>;
+		$data = $Server->HTMLEncode($data);
+		close FILE;
 %>
 
 <h3>Source of file <%=$file%>:</h3>
@@ -31,9 +25,4 @@
 	}
 %>
 
-<p>
-<a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
-view this file's source
-</a>
-</body>
-</html>
+<!--#include file=footer.inc-->

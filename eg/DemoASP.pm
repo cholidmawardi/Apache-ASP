@@ -7,12 +7,13 @@ sub new {
     my($request) = $main::Request;
     my($env) = $request->ServerVariables();
 
-    my($title) = "Demo ASP: ".&File::Basename::basename($env->{"SCRIPT_NAME"});
-    my($self) = bless {
+    my $basename = &File::Basename::basename($0);
+    my($title) = "Demo ASP: ". $basename;
+	my($self) = bless {
 	bgcolor => white,
 	env => $env,
 	title => $title,
-	file => $env->{SCRIPT_NAME}
+	file => $basename
 	};
 
     $self;

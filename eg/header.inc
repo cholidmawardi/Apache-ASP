@@ -1,7 +1,7 @@
 <% 
 	use DemoASP; 
-	$demo = &DemoASP::new($Request);
+	$demo = &DemoASP::new;
 %>
 <html>
 <head><title><%=$demo->{title}%></title></head>
-<body bgcolor=<%=$demo->{bgcolor}%>>
+<body bgcolor=<%=$_[0] || $demo->{bgcolor}%>>

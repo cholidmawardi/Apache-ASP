@@ -1,6 +1,7 @@
 #!perl -w
 
 package T;
+use Carp qw(cluck);
 no strict 'vars';
 
 sub new {
@@ -21,7 +22,7 @@ sub not_ok {
     my($self, $warn) = @_;
 
     if($warn) {
-	warn $warn;
+	cluck $warn;
     }
     
     $self->{t}++;

@@ -1,11 +1,4 @@
-<% 
-	use DemoASP; 
-	$demo = &DemoASP::new($Request);
-%>
-<html>
-<head><title><%=$demo->{title}%></title></head>
-<body bgcolor=<%=$demo->{bgcolor}%>>
-
+<!--#include file=header.inc-->
 <center>
 <table border=1>
 <tr><th colspan=2>Server Variables / CGI Environment</th></tr>
@@ -26,8 +19,4 @@
 <% } %>
 </table>
 </center>
-<a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
-view this file's source
-</a>
-</body>
-</html>
+<!--#include file=footer.inc-->

@@ -1,16 +1,10 @@
-<% 
-	use DemoASP; 
-	$demo = &DemoASP::new($Request);
-%>
-<html>
-<head><title><%=$demo->{title}%></title></head>
-<body bgcolor=<%=$demo->{bgcolor}%>>
+<!--#include file=header.inc-->
 
 <table>
-<form action="<%=$Request->ServerVariables("SCRIPT_NAME")%>" method=POST>
+<form method=POST>
 <tr>
 	<td>Your Name:</td>
-	<td><input name=name type=text size=40 
+	<td><input name=name type=text size=30 
 		value="<%=$Request->Form('name')%>" >
 	</td>
 	<td><input type=submit value="Submit Name"></td>
@@ -18,13 +12,16 @@
 </table>
 
 <% if($Request->Form('name')) { %>
-	Your name is <%=$Request->Form('name')%>
+	Your name is <tt><%=$Request->Form('name')%></tt>
 <% } %>
 
-<p>
+<hr size=1>
 
-<a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
-view this files source
-</a>
-</body>
-</html>
+The following are the contents of the data returned
+from doing a binary read of the form data:
+<p>
+<tt>
+<%=$Request->BinaryRead($Request->{TotalBytes})%>
+</tt>
+
+<!--#include file=footer.inc-->

@@ -7,7 +7,6 @@ $necessary_modules = {
     'Data::Dumper' => 'Serializes data for MLDBM',
     'File::stat' => 'Nice way of checking modification times for files',
     'File::Basename' => 'Nice way of parsing directory and file paths',
-    'FileHandle' => 'Nice object interface to file handles',
     'Fcntl' => 'Used for file locking constants',
     'MD5' => '32 byte hash algorithm for cookie session-id',
     'HTTP::Date' => 'Provides mapping between Perl time() and HTTP dates',
@@ -20,7 +19,8 @@ $optional_modules = {
 	test => '$^O eq \'MSWin32\'',
 	message => 'Required for access to ActiveX objects on Win32, like ADO.',
     },
-    'CGI' => 'Required for file upload.',
+    'CGI' => 'Required for file upload, make test, and command line ./cgi/asp script',
+    'DB_File' => 'Optional module for StateDB config option'
 };
 	    
 print "Checking for the prerequisite modules...\n";

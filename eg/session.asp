@@ -1,7 +1,4 @@
-<% 
-	use strict;
-	use DemoASP; 
-	my $demo = &DemoASP::new($Request);
+<%
 	my $form = $Request->Form();
 
 	# process form here
@@ -12,10 +9,14 @@
 	} elsif($form->{abandon}) {
 		$Session->Abandon();
 	}
+	
+	@rows = (
+		 '$Session->{Count}',
+		 '$Session->{Timeout}',
+		 '$Session->{SessionID}'
+		 );
 %>
-<html>
-<head><title><%=$demo->{title}%></title></head>
-<body bgcolor=<%=$demo->{bgcolor}%>>
+<!--#include file=header.inc-->
 
 <center>
 <table border=1>
@@ -29,27 +30,18 @@
 	<td>
 </tr>
 </form>
-<tr>
-	<td>Value of $Session->{Count} </td>
-	<td><%=$Session->{Count}%> </td>
-</tr>
-<tr>
-	<td>Session Timeout (in minutes) </td>
-	<td><%=$Session->Timeout()%> </td>
-</tr>
-<tr>
-	<td>SessionID Value </td>
-	<td><%=$Session->SessionID()%> </td>
-</tr>
+<% for (@rows){ %>
+	<tr>
+		<td><tt><%=$Server->HTMLEncode($_)%></tt></td>		 
+		<td><%=eval($_) || $@%></td>
+	</tr>
+<% } %>
 </table>
 </center>
 <p>
 The value for $Session->{Count} gets reset to 10 on every session start
 in the global.asa file.
-<p>
-<a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
-view this file's source
-</a>
-</body>
-</html>
+
+<!--#include file=footer.inc-->
+
 

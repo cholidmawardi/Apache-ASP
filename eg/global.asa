@@ -18,3 +18,13 @@ sub Application_OnStart {
 sub Application_OnEnd {
 	$Response->AppendToLog("Application Ending :) in ./eg/global.asa");
 }
+
+sub Script_OnStart {
+	$Session->{Started}++;
+}
+sub Script_OnEnd {
+	$Session->{Ended}++;
+}
+
+
+

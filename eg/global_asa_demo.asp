@@ -1,4 +1,11 @@
-<!--#include file="header.inc"-->
+<!--#include file="header.inc" args=""-->
+
+This example serves as how one may use the global.asa 
+file event handlers.  Please see the global.asa file
+for the code relevant to this example.
+
+<p>
+
 The following table lists the sessions that have been
 recorded in the global.asa file into $Application.  When
 a session ends, its time lived is recorded and displayed
@@ -51,10 +58,24 @@ the browser you are using to view this file, or
 you may also open a 2nd kind of browser to create this 2nd
 session.  There is only one session-id generated
 per browser session for an asp application.
-<p>
-This example serves as how one may use the global.asa 
-file Session_OnStart and Session_OnEnd commands to
-keep track of sessions in $Application.
 
-<p>
+<hr size=1>
+
+Here is a simple use of the Script_OnStart & Script_OnEnd
+event handlers, keeping track of the number of scripts
+executed this session:
+
+<center>
+<table>
+<tr>
+	<td align=right>Scripts Started This Session:</td>
+	<td><tt><%=$Session->{Started}%></tt></td>
+</tr>
+<tr>
+	<td align=right>Scripts Ended This Session:</td>
+	<td><tt><%=$Session->{Ended} || 0 %></tt></td>
+</tr>
+</table>
+</center>
+
 <!--#include file="footer.inc"-->

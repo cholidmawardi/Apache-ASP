@@ -1,6 +1,6 @@
-
-<a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
-view this files source
+<p>
+<a href="source.asp?file=<%=DemoASP->new->{file}%>">
+view this file's source
 </a>
 </body>
 </html>

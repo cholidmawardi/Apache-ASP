@@ -1,0 +1,46 @@
+<!--#include file=header.inc args="$Request->Form('color'),5"-->
+<h3> Demonstration of compiled includes. </h3>
+<table border=0>
+<tr>
+	<td>
+		<form name=color method=post>
+		<input type=text name=color value="<%=$Request->Form('color')%>">
+		</form>
+	</td>
+	<td>
+	This first example demonstrates compiled includes SSI style.
+	First try entering a color in the box to be passed as a runtime argument to the
+	included header for this file.  Just hit enter after typing in the color.
+	</td>
+</tr>
+</table>
+
+<table border=0>
+<tr>
+	<td>
+		<form method=post>
+		<input type=text name=size value="<%=$Request->Form('size')%>">
+		</form>
+	</td>
+	<td>
+	Now to show you how to access dynamic includes through the API
+	extension $Response->Include($filename, @args)... please
+	enter a number of columns less than 10 in the text box, and a grid will
+	be produce below of that size.
+	</td>
+</tr>
+<tr>
+	<td colspan=2>
+	<%
+	my $size = $Request->Form('size');
+	if($size > 0 and $size <= 10) {		
+		$Response->Include('table.inc', $size);
+	} else {
+		print "Please enter a valid number from 1 to 10 in the form.\n";
+	}    
+	%>
+	</td>
+</tr>
+</table>
+
+<!--#include file=footer.inc-->

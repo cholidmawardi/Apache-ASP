@@ -1,42 +1,44 @@
 <%
 	# This code was ripped almost straight out of CGI.pm, by Lincoln Stein.
 	# The code was the bulk of the SYNOPSIS section of CGI.pm v2.46
+    ;
+use strict;
+use CGI qw/:standard :html2/;
 
-      use strict;
-      use CGI qw/:standard :html2/;
+my $query = new CGI;
+my $cookie;
+my $name;
 
-	my $query = new CGI({ %{$Request->Form}, %{$Request->QueryString} });
-	my $cookie;
+if($name = $query->param('name')) {
+    $cookie = $query->cookie(-name=>'name',
+			     -value=>$name,
+			     -expires=>'+1h',
+			     );
+}
+$name ||= $query->cookie('name');
 
-	if(my $name = $query->param('name')) {
-		$cookie = $query->cookie(-name=>'CookieName',
-					    -value=>$name,
-					    -expires=>'+1h',
-					    );
-	}
+print header(-cookie=>$cookie),
+    start_html('A Simple Example'),
+    h1('A Simple Example'),
+    start_form,
+    "What's your name? ",textfield('name'),p,
+    "What's the combination?", p,
+    checkbox_group(-name=>'words',
+		   -values=>['eenie','meenie','minie','moe'],
+		   -defaults=>['eenie','minie']), p,
+    "What's your favorite color? ",
+    popup_menu(-name=>'color',
+	       -values=>['red','green','blue','chartreuse']),p,
+    submit,
+    end_form,
+    hr;
 
-	print header(-cookie=>$cookie),
-            start_html('A Simple Example'),
-            h1('A Simple Example'),
-            start_form,
-            "What's your name? ",textfield('name'),p,
-            "What's the combination?", p,
-            checkbox_group(-name=>'words',
-                           -values=>['eenie','meenie','minie','moe'],
-                           -defaults=>['eenie','minie']), p,
-            "What's your favorite color? ",
-            popup_menu(-name=>'color',
-                       -values=>['red','green','blue','chartreuse']),p,
-            submit,
-            end_form,
-            hr;
-
-       if ($query->param()) {
-           print "Your name is ",em($query->param('name')),p,
-                 "The keywords are: ",em(join(", ",$query->param('words'))),p,
-                 "Your favorite color is ",em($query->param('color')),
-                 hr;
-       }
+if ($query->param()) {
+    print "Your name is ",em($name),p,
+    "The keywords are: ",em(join(", ",$query->param('words'))),p,
+    "Your favorite color is ",em($query->param('color')),
+    hr;
+}
 
 %>
 
@@ -44,10 +46,13 @@ This script is a demonstration of using the CGI.pm library
 in an ASP script.  Please remember that using CGI.pm will 
 probably NOT be portable with PScript and PerlScript.
 <p>
-At the time of writing this help page, CGI.pm can only be
-used for output under Apache.  Input, as in reading from forms,
-query string, etc., will not work, unless you initialize a 
-CGI query object appropriately (see code for above).
+As of version 0.09, you may use CGI for reading form input
+without any change to regular use of CGI.  Before, you couldn't
+do a <pre> use CGI; </pre> by itself, as it would try to read
+form input that had already been loaded into $Request->Form().
+Form input is now cached, and may be loaded into CGI as well.
+In short, use of CGI.pm is now transparent in Apache::ASP,
+as both output and input have been merged seemlessly.
 <p>    
 <a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
 view this file's source

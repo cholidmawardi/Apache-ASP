@@ -1,6 +1,91 @@
-$MODULE=Apache::ASP; $VERSION = .08;
+$MODULE=Apache::ASP; $VERSION = .09;
 
 + = improvement; - = bug fix
+
++ Updated Makefile.PL optional modules output for CGI & DB_File
++ Improved docs on $Response->Cookies() and $Request->Cookies()
++ Added PERFORMANCE doc to main README, and added sub section
+  on precompiling scripts with Apache::ASP->Loader()
++ Naming of CompileIncludes switched over to DynamicIncludes 
+  for greater clarity.
++ Dynamic includes can now reference ASP objects like $Session
+  w/o the $main::* syntax.  These subs are no longer anonymous
+  subs, and are now compiled into the namespace of the global.asa package.
++ Apache::ASP->Loader() precompiles dynamic includes too. Making this work
+  required fixing some subtle bugs / dependencies in the compiling process.
++ Added Apache::ASP->Loader() similar to Apache::RegistryLoader for
+  precompiling ASP scripts.  Precompile a whole site at server 
+  startup with one function call.
++ Prettied the error messaging with Debug 2.
++ $Response->Debug(@args) debugging extension, which
+  allows a developer to hook into the module's debugging,
+  and only have @args be written to error_log when Debug is greater
+  than 0.
+- Put write locking code around State writes, like $Session
+  and $Application.  I thought I fixed this bug a while ago.
+- API change: converted $Session->Timeout() and $Session->SessionID() 
+  methods into $Session->{Timeout} and $Session->{SessionID} properties.
+  The use of these properties as methods is deprecated, but 
+  backwards compatibility will remain.  Updated ./eg/session.asp
+  to use these new properties.
++ Implemented $Response->{PICS} which if set sends out a PICS-Label
+  HTTP header, useful for ratings.
++ Implemented $Response->{CacheControl} and $Response->{Charset} members.
+  By default, CacheControl is 'private', and this value gets sent out
+  every request as HTTP header Cache-Control.  Charset appends itself
+  onto the content type header.
++ Implemented $Request->BinaryRead(), $Request->{TotalBytes},
+  documented them, and updated ./eg/form.asp for an example usage. 
++ Implemented $Response->BinaryWrite(), documented, and created
+  and example in ./eg/binary_write.htm
++ Implemented $Server->MapPath() and created example of its use
+  in ./eg/server.htm
+- $Request->Form() now reads file uploads correctly with 
+  the latest CGI.pm, where $Request->Form('file_field') returns
+  the actual file name uploaded, which can be used as a file handle
+  to read in the data.  Before, $Request->Form('file_field') would
+  return a glob that looks like *Fh::filename, so to get the file
+  name, you would have to parse it like =~ s/^\*Fh\:\://,
+  which you no longer have to do.  As long as parsing was done as
+  mentioned, the change should be backwards compatible.
++ Updated + enhanced documentation on file uploads.  Created extra
+  comments about it as an FAQ, and under $Response->Form(), the latter
+  being an obvious place for a developer to look for it.
++ Updated ./eg/file_upload.asp to show use of non file form data, 
+  with which we had a bug before.
++ Finished retieing *STDIN to cached STDIN contents, so that 
+  CGI input routines may be used transparently, along side with
+  use of $Request->Form()
++ Cleaned up and optimized $Request code
++ Updated documentation for CGI input & file uploads.  Created
+  file upload FAQ.
++ Reworked ./eg/cgi.htm example to use CGI input routines
+  after doing a native read of STDIN.
+++ Added dynamic includes with <!--include file=file args=@args-->
+  extension.  This style of include is compiled as an anonymous sub & 
+  cached, and then executed with @args passed to the subroutine for 
+  execution.  This is include may also be rewritten as a new API 
+  extension: $Response->Include('file', @args)
++ Added ./eg/compiled_includes.htm example documenting new dynamic includes.
++ Documented SSI: native file includes, and the rest with filtering 
+  to Apache::SSI
++ Turned the documentation of Filter config to value of Off so 
+  people won't cut and paste the On config by default.
++ Added SecureSession config option, which forces session cookie to 
+  be sent only under https secured www page requests.
++ Added StateDB config option allows use of DB_File for $Session, since 
+  default use of SDBM_File is limited.  See StateDB in README.
++ file include syntax w/o quotes supported like <!--#include file=test.inc-->
++ Nested includes are supported, with includes including each other.
+  Recursive includes are detected and errors out when an include has been 
+  included 100 times for a script.  Better to quit early than 
+  have a process spin out of control. (PORTABLE ? probably not)
++ Allow <!--include file=file.inc--> notation w/o quotes around file names
+- PerlSetEnv apache conf setting now get passed through to $Request->ServerVariables.
+  this update has ServerVariables getting data from %ENV instead of $r->cgi_env
++ README FAQ for PerlHandler errors
+
+$MODULE=Apache::ASP; $VERSION = .08; $DATE="2/6/99";
 
 ++SSI with Apache::Filter & Apache::SSI, see config options & ./eg files
   Currently filtering only works in the direction Apache::ASP -> Apache::SSI,
@@ -32,7 +117,7 @@ $VERSION = .06
 
 + Application_OnStart & Application_OnEnd event handlers support.
 - Compatible with CGI.pm 2.46 headers() 
-- Compatible with CGI.pm $q = new CGI(), caveat: does not set params 
+- Compatible with CGI.pm $q = new CGI({}), caveat: does not set params 
 + use strict; followed by use of objects like $Session is fine.
 - Multiple cookies may be set per script execution.
 + file upload implemented via CGI.pm

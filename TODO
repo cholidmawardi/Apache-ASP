@@ -6,24 +6,16 @@ interest to you, and I will give it higher priority.
 
 WILL BE DONE 
 ============
-- Extend internal SSI include handling
+- $Request->ClientCertificate()
 - asp.pl, CGI method of doing asp
-- Full ASP API, let me know what features you need, and they will be 
-  priority over misc API work.
+- Investigating possibility of hooking $Session timeout into 
+  client/server 401 authentication failure.  Seems like IE 
+  caches passwords which makes things tough
 
 MAY BE DONE
 ===========
-- Get filtering to work for Apache::SSI -> Apache::ASP, it only
-  works the other way around right now.
 - VBScript, ECMAScript interpreters
 - allow use of Http::Session for session management
 - Integration with HTML::Embed
-- Cache Scripts LRU style, so large sites won't choke server
-	: NoCache setting might be enough.
-- General PerlScript porting work.
-	: I have already done much porting work.  Please read the 
-	  the PerlScript section of the README.  If you are having
-	  problems with a port, or forsee any, please let me know
-	  and we'll work things out.
-
-
+- Dumping state of Apache::ASP during an error, and being
+  able to go through it with the perl debugger.

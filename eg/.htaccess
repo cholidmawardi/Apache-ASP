@@ -13,8 +13,8 @@
 </Files>
 
 # .htm files for the ASP parsing, but not the $Session object
-# AllowSessionState 0 turns Session state off
-<Files ~ (\.htm|\.inc)>
+# NoState turns off $Session & $Application
+<Files ~ (\.htm)>
 	SetHandler perl-script
 	PerlHandler Apache::ASP
 	PerlSetVar Debug  2
@@ -31,5 +31,6 @@
 	PerlHandler Apache::ASP Apache::SSI
 	PerlSetVar Filter On
 	PerlSetVar Debug  2
+	PerlSetVar NoCache 1
 </Files>
 
