@@ -1,6 +1,6 @@
 #!/usr/bin/perl /usr/bin/asp-perl
 
-<% $Response->Include('header.inc', $Request->Form('color') || 'white',5); %>
+<% $Response->Include('header.inc', bgcolor => $Request->Form('color') || 'white'); %>
 <h3> Demonstration of dynamic includes. </h3>
 <table border=0>
 <tr>

@@ -36,6 +36,12 @@ This pod comment will be yanked upon compilation
 
    print "Try this script also with <a href=".basename($0)."?buffer=1>buffering on.</a>";
 %>
+
+<p>
+
+This script by default does a runtime syntax error.  If you would like
+to see a script <b>compile error, <a href="<%= basename($0) %>?compile_error=1">click here</a></b>.
+
 <p>
 <a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
 view this file's source
@@ -45,9 +51,13 @@ view this file's source
 <br>
 
 <% 
+if($Request->QueryString('compile_error')) {
+  $Response->Include("compile_error.inc");
+} else {
         my $Object;
 	# create a run-time syntax error
 	$Object->SyntaxError(); 
+}
 %>
 
 

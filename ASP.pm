@@ -3,7 +3,8 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.41;
+
+$VERSION = 2.45;
 
 use Digest::MD5 qw(md5_hex);
 use Cwd qw(cwd);
@@ -77,7 +78,7 @@ $ServerPID  = $$;
 
 # DEFAULT VALUES
 $Apache::ASP::CompileErrorSize = 500;
-@CompileChecksumKeys = qw ( Global DynamicIncludes UseStrict XMLSubsMatch XMLSubsStrict GlobalPackage UniquePackages IncludesDir InodeNames PodComments );
+@CompileChecksumKeys = qw ( Global DynamicIncludes UseStrict XMLSubsMatch XMLSubsPerlArgs XMLSubsStrict GlobalPackage UniquePackages IncludesDir InodeNames PodComments );
 
 %ScriptLanguages = (
 		    'PerlScript' => 1,
@@ -395,7 +396,7 @@ sub DESTROY {
     my $self = shift;
     return unless $self->{r}; # still active object
 
-    $self->{dbg} && $self->Debug("destroying ASP = $self");
+    $self->{dbg} && $self->Debug("destroying ASP", 'self' => $self);
     $self->{DESTROY} = 1;
 
     # do before undef'ing the object references in main
@@ -660,7 +661,11 @@ sub Parse {
 	$self->{pod_comments} = defined($r->dir_config('PodComments')) ? 
 	  $r->dir_config('PodComments') : 1;
 	$self->{xml_subs_strict} = $r->dir_config('XMLSubsStrict');
-	
+
+	# default XMLSubsPerlArgs to 1 for now, until 3.0
+	$self->{xml_subs_perl_args} = defined($r->dir_config('XMLSubsPerlArgs')) ? 
+	  $r->dir_config('XMLSubsPerlArgs') : 1;
+
 	# reduce (pattern) patterns to (?:pattern) to not create $1 side effect
 	if($self->{xml_subs_match} = $r->dir_config('XMLSubsMatch')) {
 	    $self->{xml_subs_match} =~ s/\(\?\:([^\)]*)\)/($1)/isg;
@@ -689,13 +694,7 @@ sub Parse {
 
     my $comment = $self->{lang_comment};
     if($r->dir_config('CgiDoSelf')) {
-	$data =~ s,^(.*?)__END__,
-	  {
-	   my $head = $1;
-	   $head =~ s/(^|\n)/$1$comment/sg;
-	   "<%$head%>";
-	  }
-	    ,eso;
+	$data =~ s,^(.*?)__END__,,so;
     }
 
     # do both before and after, so =pods can span includes with =pods
@@ -722,8 +721,9 @@ sub Parse {
     $data =~ s/^\#\![^\n]+(\n\s*)/\<\%$1\%\>/s; #X cgi compat ?
     $data =~ s/^(\s*)\<\%(\s*)\@([^\n]*?)\%\>/$1\<\%$2 ; \%\>/so; 
 
-    my $munge = $file_exists ? "<%\n#line 1 $file\n%>" : '';
-    $munge .= $data;
+    my $root_file = $file;
+    my $line1_added = 0;
+    my $munge = $data;
     $data = '';
     my($file_context, $file_line_number, $code_block);
     while($munge =~ s/^(.*?)\<!--\#include\s+file\s*=\s*\"?([^\s\"]*?)\"?(\s+args\s*=\s*\"?.*?)?\"?\s*--\>//so) {
@@ -734,6 +734,12 @@ sub Parse {
 	my $head_data;
 	if (! $self->{compile_includes}) {
 	    $head_data = $1;
+
+	    unless($line1_added) {
+		$line1_added = 1;
+		$head_data = ($file_exists ? "<% \n#line 1 $root_file\n %>" : '').$head_data;
+	    }
+
 	    if ($head_data =~ s/.*\n\#line (\d+) ([^\n]+)\n(\%\>)?//s) {
 		$file_line_number = $1;
 		$file_context = $2;
@@ -855,24 +861,29 @@ sub Parse {
     $data =~ s/\015?\012/\n/sgo;
     $data =~ s/\s+$//so; # strip trailing white space
 
-    my $script = &ParseHelper($self, \$data);
-
-    my $strict = $self->{use_strict} ? "use strict" : "no strict";
-    $$script = join(";;", 
-		    $strict,
-		    "use vars qw(\$".join(" \$",@Apache::ASP::Objects).')',
-		    "use lib qw($self->{global});",
-		    $$script,
-		    "no lib qw($self->{global});",
-		    );
-
-#    print STDERR "-----$file-----\n\n$$script\n\n";
-
-    $script;
+    my $script = &ParseHelper($self, \$data, 1);
+    if($script) {
+	my $strict = $self->{use_strict} ? "use strict;" : "no strict";
+	$$script = join(";;", 
+			$strict,
+			"use vars qw(\$".join(" \$",@Apache::ASP::Objects).')',
+			($file_exists ? "\n#line 1 $root_file\n" : ''),
+			$$script,
+		       );
+	return {
+		is_perl => 1,
+		data => $script,
+	       };
+    } else {
+	return {
+		is_raw => 1,
+		data => \$data,
+	       };
+    }
 }
 
 sub ParseHelper {
-    my($self, $data) = @_;
+    my($self, $data, $check_static_file) = @_;
     my($script, $text, $perl);
 
     if($self->{xml_subs_match}) {
@@ -882,6 +893,13 @@ sub ParseHelper {
 #	print STDERR "START $start\n\n";
 #	print STDERR "END $$data\n\n";
     }
+
+    # we only do this check the first time we call ParseHelper() from
+    # Parse() with $check_static_file set.  Calls from ParseXMLSubs()
+    # will leave this off.  This is where we start to throw data 
+    # back that lets the system render a static file as is instead
+    # of executing it as a per subroutine.
+    return if ($check_static_file && $$data !~ /\<\%.*?\%\>/s);
 
     my(@out, $perl_block, $last_perl_block);
     $$data .= "<%;;;%>"; # always end with some perl code for parsing.
@@ -951,6 +969,8 @@ sub ParseHelper {
 sub ParseXMLSubs {
     my($self, $data) = @_;
 
+    $data = &CodeTagEncode($self, $data);
+
     unless($self->{xslt}) {
 	$data =~ s|\s*\<\?xml\s+version\s*\=[^\>]+\?\>||is;
     }
@@ -958,6 +978,7 @@ sub ParseXMLSubs {
     $data =~ s@\<\s*($self->{xml_subs_match})(\s+[^\>]*)?/\>
 	  @ {
 	     my($func, $args) = ($1, $2);
+	     $args = &CodeTagDecode($self, $args);
 	     $func =~ s/\:+/\:\:/g;
 	     $args && ($args = &ParseXMLSubsArgs($self, $args));
 	     $args ||= '';
@@ -971,15 +992,17 @@ sub ParseXMLSubs {
 	  \<\s*($self->{xml_subs_match})(\s+[^\>]*)?\>(?!.*?\<\s*\1[^\>]*\>)(.*?)\<\/\1\s*>
           @ {
 	      my($func, $args, $text) = ($1, $2, $3);
-		$func =~ s/\:+/\:\:/g;
-		$args && ($args = &ParseXMLSubsArgs($self, $args));
-		$args ||= '';
+	      $args = &CodeTagDecode($self, $args);
+	      $func =~ s/\:+/\:\:/g;
+	      $args && ($args = &ParseXMLSubsArgs($self, $args));
+	      $args ||= '';
 	      $self->{xmlsubs_compiled_tag_long}++;
-		
+	      $text = &CodeTagDecode($self, $text);
+
 		if($text =~ m/\<\%|\<($self->{xml_subs_match})/) {
 		    # parse again, and control output buffer for this level
 		    $self->{xmlsubs_compiled_tag_recurse_parse}++;
-		    my $sub_script = &ParseHelper($self, \$text);
+		    my $sub_script = &ParseHelper($self, \$text, 0);
 		    #		    my $sub_script = \$text;
 		    $text = (
 			     ' &{sub{ my $out = ""; '.
@@ -999,6 +1022,41 @@ sub ParseXMLSubs {
 	  } @sgex;
     }
 
+    $data = &CodeTagDecode($self, $data);
+
+#    print STDERR "\n\n$data\n\n";
+
+    $data;
+}
+
+sub CodeTagEncode {
+    my($self, $data) = @_;
+#    return $data;
+
+    if(defined $data) {
+       $data =~ s@\<\%(.*?)\%\>@
+         {
+             my $temp = $self->{Server}->HTMLEncode($1);
+             "[-AsP-[".$temp."]-AsP-]";
+         }
+           @esgx;
+    }
+    $data;
+}
+
+sub CodeTagDecode {
+    my($self, $data) = @_;
+#    return $data;
+
+    if(defined $data) {
+       $data =~ s@\[\-AsP\-\[(.*?)\]\-AsP\-\]@
+         {
+             my $temp = $self->{Server}->HTMLDecode($1);
+             "<%".$temp."%>";
+         }
+           @esgx;
+    }
+
     $data;
 }
 
@@ -1008,30 +1066,21 @@ sub ParseXMLSubsArgs {
 
     if ($self->{xml_subs_strict}) {
 	my %args;
-#	$self->Debug("args $args");
 	while ($args =~ s/(\s*)([^\s]+)(\s*)\=\s*([\'\"])(.*?)(\4)\s*//s) {
 	    $args{$2} = $5;
 	}
 	$args = join(', ', map { "'$_' => '$args{$_}'" } keys %args);
-#	$self->Debug("args $args", \%args);
-    } else {
-#	$args =~ s/<\%\=(.*?)\%\>/$1/isg;
-#	my $new_args = '';
-#	while($args =~ s/^.*?(\s*)([^\s=]+)(\s*)\=//so) {
-#	    my $key = $1."'$2'".$3;
-#	    my $value;
-#	    if($args =~ s/^(\s*)([\"\'])([^\"\'\\]*?\2)(\s+|$)//so) {
-#		$value = $1.$2.$3.$4;
-#	    } elsif($args =~ s/^(\s*[^\s]*?)(\s+|$)//so) {
-#		$value = $1.$2;
-#	    }
-#
-#	    $new_args .= " $key => $value,";
-#	}
-#	$args = $new_args;
-
+    } elsif($self->{xml_subs_perl_args}) {
 	$args =~ s/(\s*)([^\s]+?)(\s*)\=(\s*[^\s]+)/,$1'$2'$3\=\>$4/sg;
 	$args =~ s/^(\s*),/$1/s;
+    } else {
+	my %args;
+	while ($args =~ s/(\s*)([^\s]+)(\s*)\=\s*([\'\"])(.*?)(\4)\s*//s) {
+	    my($key, $value) = ($2, $5);
+	    $value =~ s/<\%\=?(.*?)\%\>/\'.$1.\'/isg;
+	    $args{$key} = $value;
+	}
+	$args = join(', ', map { "'$_' => '$args{$_}'" } keys %args);
     }
 
     $args;
@@ -1181,23 +1230,35 @@ sub CompileInclude {
 	}
     }
     
-    my $perl = $self->Parse($include);
-    my $sub = $self->CompilePerl($perl, $subid);
-    
-    if ($sub) {
-	my $data = { 
+    my $parse_data = $self->Parse($include);
+    my $data;
+    if ($parse_data->{is_perl}) {
+       my $sub = $self->CompilePerl($parse_data->{data}, $subid);
+
+       if ($sub) {
+	   $data = { 
 		    mtime => time(), 
 		    code => $sub,
-		    perl => $perl, 
+                    perl => $parse_data->{data},
 		    file => $include_ref || $include,
 		   };
-	if ($subid) { # for a returned code ref, don't cache
-	    $Apache::ASP::CompiledIncludes{$subid} = $data;
-	}
-	$data;
+       }
+    } elsif($parse_data->{is_raw}) {
+       $data = {
+                mtime => time(),
+                code => $parse_data->{data},
+                perl => $parse_data->{data},
+                file => $include_ref || $include,
+               };
     } else {
-	undef;
+	$data = undef;
     }
+
+    if ($data && $subid && ! $self->{no_cache}) { # for a returned code ref, don't cache
+	$Apache::ASP::CompiledIncludes{$subid} = $data;
+    }
+
+    $data;
 }
 
 sub UndefRoutine {
@@ -1301,19 +1362,6 @@ sub CompilePerl {
     $rv;
 }
 
-sub Compile {
-    my($self, $script, $subid) = @_;
-    $subid ||= $self->{subid};
-    my $package = $self->{'package'};
-
-    my $compiled_sub = $self->CompilePerl($script, $subid, $package);
-    unless($compiled_sub) {
-	$self->Error("could not compile script: $@");
-    }
-
-    $compiled_sub;
-}
-
 sub CompileChecksum {
     my $self = shift;
 
@@ -1387,12 +1435,15 @@ sub Run {
 
     ($self->{stat_inc_match} || $self->{stat_inc}) && $self->StatINC;
 
-    # there could be runtime errors in StatINC
+    my $compiled;
     if(! $self->{errs} && &IsChanged($self)) {
-	my $script = $self->Parse($self->{filehandle} || $self->{basename});
-	! $self->{errs} && $self->Compile($script);
+	$compiled = $self->CompileInclude($self->{basename});
+	unless($compiled) {
+	    $self->Error("error compiling $self->{basename}: $@");
+	    return;
+	}
+	$self->{run_perl_script} = $compiled->{perl};
     }
-    return if $self->{errs};
 
     # must have all the variabled defined outside the scope
     # of the eval in case End() jumps to the goto below, since
@@ -1402,23 +1453,27 @@ sub Run {
 
     eval { 
 	$global_asa->{'exists'} && $global_asa->ScriptOnStart;
-	$self->{errs} || $self->Execute($self->{id});
+	$self->{errs} || $self->Execute($compiled->{code});
 
       APACHE_ASP_EXECUTE_END:
 	$self->{errs} || ( $global_asa->{'exists'} && $global_asa->ScriptOnEnd() );
 	$self->{errs} || $self->{Response}->EndSoft();
     };
 
-    $@ && $self->Error($@);
+    if($@) {
+	# its not really a compile time error, but might be useful
+	# to render for a runtime error anyway
+	# $self->CompileError($compiled->{perl});
+	$self->Error("error executing $self->{basename}: $@");
+    }
 
     ! $@;
 }
 
 sub Execute {
-    my($self, $id) = @_;
-    $id || die("no subroutine \$id passed to Execute()");
-    my $subid = $self->{GlobalASA}{'package'}.'::'.$id;
-    $self->{dbg} && $self->Debug("executing $id");
+    my($self, $code) = @_;
+    $code || die("no subroutine passed to Execute()");
+    $self->{dbg} && $self->Debug("executing $code");
 
     # call this every Execute() instead of in Run() so that if the 
     # globals have changed they will be refreshed, this might allow
@@ -1428,8 +1483,22 @@ sub Execute {
 
     # for runtime use/require library loads from global
     local @INC = ($self->{global}, @INC);
-    eval { &$subid(); };
-    
+
+    if(my $ref = ref $code) {
+	if($ref eq 'CODE') {
+	    eval { &$code(); };
+	} elsif($ref eq 'SCALAR') {
+	    $self->{dbg} && $self->Debug("writing cached static file data $code, length: ".length($$code));
+	    $self->{Response}->WriteRef($code);
+	} else {
+	    $self->Error("$code is a ref, but not CODE or SCALAR!");
+	}
+    } else {
+	# if absolute package already, then no need to set to package namespace
+	my $subid = ( $code =~ /::/ ) ? $code : $self->{GlobalASA}{'package'}.'::'.$code;
+	eval { &$subid(); };
+    }
+
     if($@) { 
 	$self->Error($@); 
     }
@@ -1560,9 +1629,10 @@ sub XSLT {
     my($self, $xsl_data, $xml_data) = @_;
     my $asp = $self;
 
-    my $cache;
-    if($cache = $self->{r}->dir_config('XSLTCache')) {
-	my $cache_data = $$xsl_data.$$xml_data;
+    my $cache = $self->{r}->dir_config('XSLTCache');
+    my $cache_data = $$xsl_data.$$xml_data;
+
+    if($cache) {
 	if(my $data = $self->Cache('XSLT', \$cache_data)) {
 	    return $data;
 	}
@@ -1604,7 +1674,7 @@ sub XSLT {
     }
 
     if($cache) {
-	$self->Cache('XSLT', \($$xsl_data.$$xml_data), \$xslt_data);
+	$self->Cache('XSLT', \$cache_data, \$xslt_data);
     }
 
     \$xslt_data;
@@ -1905,6 +1975,8 @@ ERROR
 
 	500;
 }
+
+sub CompileChecksumKeys { \@CompileChecksumKeys };
 
 1;
 
@@ -2680,6 +2752,26 @@ argument values:
 
 which is not always wanted or expected.  Set
 XMLSubsStrict to 1 if this is the case.
+
+  PerlSetVar XMLSubsStrict 1
+
+=item XMLSubsPerlArgs
+
+default 1, when set attribute values will be interpreted
+as raw perl code so that these all would execute as one
+would expect:
+
+ <my:xmlsubs arg='1' arg2="2" arg3=$value arg4="1 $value" />
+
+With the 2.45 release, 0 may be set for this configuration
+or a more ASP style variable interpolation:
+
+ <my:xmlsubs arg='1' arg2="2" args3="<%= $value %>" arg4="1 <%= $value %>" />
+
+This configuration is being introduced experimentally in version 2.45,
+as it will become the eventual default in the 3.0 release.
+
+  PerlSetVar XMLSubsPerlArgs 1
 
 =item XSLT
 
@@ -5197,6 +5289,109 @@ Several incompatibilities exist between PerlScript and Apache::ASP:
  > Win32::OLE::in may not be used.  Use keys() to iterate over.
  > The ->{Item} property does not work, use the ->Item() method.
 
+=head1 STYLE GUIDE
+
+Here are some general style guidelines.  Treat these as tips for
+best practices on Apache::ASP development if you will.
+
+This is a new section as of 8/2002, and will sure to be fleshed 
+out better in the near future.
+
+=head2 UseStrict
+
+One of perl's blessings is also its bane, variables do not need to be
+declared, and are by default globally scoped.  The problem with this in 
+mod_perl is that global variables persist from one request to another
+even if a different web browser is viewing a page.  
+
+To avoid this problem, perl programmers have often been advised to
+add to the top of their perl scripts:
+
+  use strict;
+
+In Apache::ASP, you can do this better by setting:
+
+  PerlSetVar UseStrict 1
+
+which will cover both script & global.asa compilation and will catch 
+"use strict" errors correctly.  For perl modules, please continue to
+add "use strict" to the top of them.
+
+Because its so essential in catching hard to find errors, this 
+configuration will likely become the default in some future release.
+For now, keep setting it.
+
+=head2 Do not define subroutines in scripts.
+
+DO NOT add subroutine declarations in scripts.  Apache::ASP is optimized
+by compiling a script into a subroutine for faster future invocation.
+Adding a subroutine definition to a script then looks like this to 
+the compiler:
+
+  sub page_script_sub {
+    ...
+    ... some HTML ...
+    ...
+    sub your_sub {
+      ...
+    }
+    ...
+  }
+
+The biggest problem with subroutines defined in subroutines is the 
+side effect of creating closures, which will not behave as usually
+desired in a mod_perl environment.  To understand more about closures,
+please read up on them & "Nested Subroutines" at:
+
+  http://perl.apache.org/docs/general/perl_reference/perl_reference.html
+
+Instead of defining subroutines in scripts, you may add them to your sites
+global.asa, or you may create a perl package or module to share
+with your scripts.  For more on perl objects & modules, please see:
+
+  http://www.perldoc.com/perl5.8.0/pod/perlobj.html
+
+=head2 Use global.asa's Script_On* Events
+
+Chances are that you will find yourself doing the same thing repeatedly
+in each of your web application's scripts.  You can use Script_OnStart
+and Script_OnEnd to automate these routine tasks.  These events are
+called before and after each script request.
+
+For example, let's say you have a header & footer you would like to 
+include in the output of every page, then you might:
+
+ # global.asa
+ sub Script_OnStart {
+   $Response->Include('header.inc');
+ }
+ sub Script_OnEnd {
+   $Response->Include('footer.inc');
+ }
+
+Or let's say you want to initialize a global database connection
+for use in your scripts:
+
+ # global.asa
+ use Apache::DBI;   # automatic persistent database connections
+ use DBI;
+
+ use vars qw($dbh); # declare global $dbh
+
+ sub Script_OnStart {
+   # initialize $dbh
+   $dbh = DBI->connect(...);
+
+   # force you to explicitly commit when you want to save data
+   $Server->RegisterCleanup(sub { $dbh->rollback; });
+ }
+
+ sub Script_OnEnd {
+   # not really necessary when using persistent connections, but
+   # will free this one object reference at least
+   $dbh = undef;
+ }
+
 =head1 FAQ
 
 The following are some frequently asked questions
@@ -5358,6 +5553,19 @@ work for most cases.
 
 =head2 Development
 
+=item VBScript or JScript supported?
+
+Yes, but not with this perl module.  For ASP with other scripting
+languages besides perl, you will need to go with a commercial vendor
+in the UNIX world.  ChiliSoft and Halcyon Software have such solutions.
+Of course on NT, you get this for free with IIS.
+
+  ChiliSoft
+  http://www.chilisoft.com
+
+  Halcyon Software
+  http://www.halcyonsoft.com
+
 =item How is database connectivity handled?
 
 Database connectivity is handled through perl's DBI & DBD interfaces.
@@ -5414,19 +5622,6 @@ Only under Win32 will developers have access to ActiveX objects through
 the perl Win32::OLE interface.  This will remain true until there
 are free COM ports to the UNIX world.  At this time, there is no ActiveX
 for the UNIX world.
-
-=item Can I script in VBScript or JScript ?
-
-Yes, but not with this perl module.  For ASP with other scripting
-languages besides perl, you will need to go with a commercial vendor
-in the UNIX world.  ChiliSoft and Halcyon Software have such solutions.
-Of course on NT, you get this for free with IIS.
-
-  ChiliSoft
-  http://www.chilisoft.com
-
-  Halcyon Software
-  http://www.halcyonsoft.com
 
 =head2 Support and Production
 
@@ -5660,7 +5855,13 @@ Active Server Pages
 =head1 NOTES
 
 Many thanks to those who helped me make this module a reality.
-ASP + Apache, web development could not be better!  Kudos go out to:
+With Apache + ASP + Perl, web development could not be better!
+
+Special thanks go to Kevin Chamas & Karolina Lund for their 
+love and support through it all, and without whom none of it
+would have been possible.
+
+Other honorable mentions include:
 
  !! Doug MacEachern, for moral support and of course mod_perl
 
@@ -5756,6 +5957,12 @@ Apache::ASP.  If you use the software for your site, and
 would like to show your support of the software by being listed, 
 please send your URL to asp@chamas.com
 
+        Dr. Joel's Computer Shoppe
+        http://www.drjoelscomputers.com
+
+        Apache Hello World Benchmarks
+        http://chamas.com/bench/
+
         AlterCom, Advanced Web Hosting
         http://altercom.com/
 
@@ -5846,9 +6053,6 @@ please send your URL to asp@chamas.com
 	USCD Electrical & Computer Engineering
 	http://ece-local.ucsd.edu
 
-	Watthai Net Syndey Australia
-	http://watthai.net
-
 =head1 RESOURCES
 
 Here are some important resources listed related to 
@@ -5863,11 +6067,8 @@ at asp@perl.apache.org
 
 =head2 Benchmarking
 
-       Hello World Web Application Benchmark Suite ( hello.tar.gz )
-       http://www.chamas.com/bench/hello.tar.gz
-
-       Old Hello World Benchmarks
-       http://www.chamas.com/bench/index.html
+       Apache Hello World Benchmarks
+       http://chamas.com/bench/
 
 =head2 Books
 
@@ -5924,7 +6125,6 @@ interest to you, and I will give it higher priority.
  + Database storage of $Session & $Application, so web clusters 
    may scale better than the current NFS/CIFS StateDir implementation
    allows, maybe via Apache::Session.
- + Development style guide
  + Sample Apache::ASP applications beyond ./site/eg
  + More caching options like $Server->Cache for user cache
    and $Response->Cache for page caching
@@ -5935,7 +6135,6 @@ interest to you, and I will give it higher priority.
  + VBScript, ECMAScript or JavaScript interpreters
  + Dumping state of Apache::ASP during an error, and being
    able to go through it with the perl debugger.
- + $Request->ClientCertificate
 
 =head1 CHANGES
 
@@ -5952,21 +6151,81 @@ equivalent of a 1.0 release for other kinds of software.
 
  + = improvement   - = bug fix    (d) = documentations
 
+=item $VERSION = 2.41; $DATE="09/29/2002"
+
+ -Removed CVS Revision tag from Apache::ASP::Date, which 
+  was causing bad revision numbers in CPAN after CVS integration
+  of Apache::ASP
+
+ +removed cgi/asp link to ../asp-perl from distribution.  This
+  link was for the deprecated asp script which is now asp-perl
+
+=item $VERSION = 2.39; $DATE="09/10/2002"
+
+ -Turn off $^W explicitly before reloading global.asa.  Reloading
+  global.asa when $^W is set will trigger subroutine redefinition
+  warnings.  Reloading global.asa should occur without any problems
+  under normal usage of the system, thus this work around.
+
+  This fix is important to UseStrict functionality because warnings
+  automatically become thrown as die() errors with UseStrict enabled,
+  so we have to disable normal soft warnings here.
+
+ -$Response->Include() runtime errors now throw a die() that
+  can be trapped.  This was old functionality that has been restored.
+  Other compile time errors should still trigger a hard error
+  like script compilation, global.asa, or $Response->Include()
+  without an eval()
+
+ +Some better error handling with Debug 3 or -3 set, cleaned
+  up developer errors messages somewhat.
+
+=item $VERSION = 2.37; $DATE="07/03/2002"
+
+ -Fixed the testing directory structures for t/long_names.t
+  so that tar software like Archive::Tar & Solaris tar that
+  have problems with long file names will still be able 
+  to untar distribution successfully.  Now t/long_names.t
+  generates its testing directory structures at runtime.
+
+ -Fixes for "make test" to work under perl 5.8.0 RC2, 
+  courtesy of Manabu Higashida
+
+ +SessionQueryForce setting created for disabling use of cookies
+  for $Session session-id passing, rather requiring use of SessionQuery*
+  functionality for session-id passing via URL query string.
+
+  By default, even when SessionQuery* options are used, cookies will
+  be used if available with SessionQuery* functionality acting only
+  as a backup, so this makes it so that cookies will never be used.
+
+ +Escape ' with HTMLEncode() to &#39;
+
+ -Trying to fix t/server_mail.t to work better for platforms
+  that it should skip testing on.  Updated t/server.t test case.
+
+ +Remove exit() from Makefile.PL so CPAN.pm's automatic
+  follow prereq mechanism works correctly.  Thanks to Slaven Rezic
+  for pointing this out.
+
+ +Added Apache::compat loading in mod_perl environment for better
+  mod_perl 2.0 support.
+
 =item $VERSION = 2.35; $DATE="05/30/2002"
 
- +Destroy better $Server & $Response objects so that my closure references
-  to these to not attempt to work in the future against invalid internal data.
-  There was enough data left in these old objects to make debugging the
-  my closure problem confusing, where it looked like the ASP object state 
-  became invalid.
+ +Destroy better $Server & $Response objects so that my 
+  closure references to these to not attempt to work in the future 
+  against invalid internal data. There was enough data left in these 
+  old objects to make debugging the my closure problem confusing, where 
+  it looked like the ASP object state became invalid.
 
  +Added system debug diagnostics to inspect StateManager group cleanup
 
- (d) Documentation update about flock() work around for Win95/Win98/WinMe systems,
-  confirmed by Rex Arul
+ (d) Documentation update about flock() work around for 
+  Win95/Win98/WinMe systems, confirmed by Rex Arul
 
- (d) Documentation/site build bug found by Mitsunobu Ozato, where <% %> 
-  not being escaped correctly with $Server->HTMLEncode().
+ (d) Documentation/site build bug found by Mitsunobu Ozato, 
+  where <% %> not being escaped correctly with $Server->HTMLEncode().
   New japanese documentation project started by him 
   at http://sourceforge.jp/projects/apache-asp-jp/ 
 
@@ -6003,8 +6262,8 @@ equivalent of a 1.0 release for other kinds of software.
    scenario
 
  + Restructure code / core templates for MailErrorsTo funcationality.  
-   Wrote test mail_error.t to cover this.  $ENV{REMOTE_USER} will now be displayed
-   in the MailErrorsTo message when defined from 401 basic auth.
+   Wrote test mail_error.t to cover this.  $ENV{REMOTE_USER} will now 
+   be displayed in the MailErrorsTo message when defined from 401 basic auth.
 
  + $Server->RegisterCleanup should be thread safe now, as it no longer relies
    on access to @Apache::ASP::Cleanup for storing the CODE ref stack.
@@ -6029,8 +6288,8 @@ equivalent of a 1.0 release for other kinds of software.
  - Caching like for XSLTCache now works in CGI mode.  
    This was a bug that it did not before.
 
- + $Server->File() API added, acts as a wrapper around Apache->request->filename
-   Added test in t/server.t
+ + $Server->File() API added, acts as a wrapper around 
+   Apache->request->filename Added test in t/server.t
 
  ++  *** EXPERIMENTAL / ALPHA FEATURE NOTE BEGIN ***
 
@@ -6092,7 +6351,8 @@ equivalent of a 1.0 release for other kinds of software.
  + Added file/directory being used for precompilation in 
    Apache::ASP->Loader($file, ...) to output like:
 
-    [Mon Feb 04 20:19:22 2002] [error] [asp] 4215 (re)compiled 22 scripts of 22 loaded for $file
+    [Mon Feb 04 20:19:22 2002] [error] [asp] 4215 (re)compiled 22 scripts 
+      of 22 loaded for $file
 
    This is so that when precompiling multiple web sites
    each with different directories, one can easier see the 

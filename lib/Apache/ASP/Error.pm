@@ -105,7 +105,8 @@ OUT
 	$error_desc = "Compiled Data with Error";
     } else {
 	$error_desc = "ASP to Perl Script";
-	$script = $Apache::ASP::Compiled{$self->{GlobalASA}{'package'}.'::'.$self->{id}}->{output};
+	my $run_perl_script = $self->{run_perl_script};
+	$script = $run_perl_script ? $$run_perl_script : '';
     }
     $out .= "<b><u>$error_desc</u></b><a name=1>&nbsp;</a>\n\n";
 

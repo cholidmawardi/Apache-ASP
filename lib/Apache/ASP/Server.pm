@@ -63,6 +63,18 @@ sub URLEncode {
     $toencode;
 }
 
+sub HTMLDecode {
+    my($decode) = $_[1];
+
+    $decode=~s/&gt;/>/sg;
+    $decode=~s/&lt;/</sg;
+    $decode=~s/&#39;/'/sg;
+    $decode=~s/&quot;/\"/sg;
+    $decode=~s/&amp;/\&/sg;
+
+    $decode;
+}
+
 sub HTMLEncode {
     my $toencode = $_[1];
     return '' unless defined $toencode;

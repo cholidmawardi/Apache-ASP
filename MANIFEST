@@ -33,6 +33,7 @@ build/resources.html
 build/sessions.html
 build/sites.html
 build/ssi.html
+build/style.html
 build/support.html
 build/syntax.html
 build/todo.html
@@ -91,6 +92,7 @@ site/eg/application.asp
 site/eg/asp.conf
 site/eg/binary_write.htm
 site/eg/cgi.htm
+site/eg/compile_error.inc
 site/eg/cookieless_session.asp
 site/eg/counting.htm
 site/eg/default.htm
@@ -141,9 +143,11 @@ site/powered_by_apache_asp.jpg
 site/powered_by_modperl.gif
 site/rectangle_power_perl.gif
 site/resources.html
+site/robots.txt
 site/sessions.html
 site/sites.html
 site/ssi.html
+site/style.html
 site/support.html
 site/syntax.html
 site/todo.html
@@ -194,6 +198,9 @@ t/loops.t
 t/mail_error.t
 t/null/global.asa
 t/null/ok.inc
+t/raw.t
+t/raw_include.inc
+t/raw_include.t
 t/reload_global_asa.t
 t/req_params_none.t
 t/request.t
@@ -214,4 +221,6 @@ t/strict_error.inc
 t/strict_error.t
 t/taint_check.t
 t/xmlsubs.t
+t/xmlsubs_aspargs.t
+t/xmlsubs_perlargs.t
 t/xmlsubsmatch.t

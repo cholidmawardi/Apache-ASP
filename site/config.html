@@ -142,6 +142,13 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<tr>
 		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>&nbsp;</nobr></b></font></td>
 
+		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><a href="style.html" style="text-decoration:none"><font color=#063678>STYLE GUIDE</font></a></nobr></b></font></td>		
+
+		</tr>
+		
+		<tr>
+		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>&nbsp;</nobr></b></font></td>
+
 		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><a href="faq.html" style="text-decoration:none"><font color=#063678>FAQ</font></a></nobr></b></font></td>		
 
 		</tr>
@@ -278,7 +285,7 @@ better for performance.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#XMLSubsMatch>XMLSubsMatch</a>
+			<a href=#XMLSubsStric8f2f2c03>XMLSubsStrict</a>
 			</font>
 			</td>
 							
@@ -294,7 +301,7 @@ better for performance.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#XMLSubsStriceb376c26>XMLSubsStrict</a>
+			<a href=#XMLSubsPerlAc1711b7e>XMLSubsPerlArgs</a>
 			</font>
 			</td>
 							
@@ -901,6 +908,16 @@ better for performance.</font>
 			</td>
 		<td>&nbsp;</td>					
 		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#XMLSubsMatch>XMLSubsMatch</a>
+			</font>
+			</td>
+		<td>&nbsp;</td>					
+		</tr>
 			
 	</table>
 	<hr size=1>
@@ -1481,7 +1498,7 @@ powerful extensions to your XML and HTML rendering.
 </pre></font>
 	
 	<p>
-	<a name=XMLSubsStriceb376c26></a>
+	<a name=XMLSubsStric8f2f2c03></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>XMLSubsStrict</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, when set XMLSubs will only take arguments
@@ -1493,7 +1510,29 @@ argument values:
 <font face="courier new" size=3><pre>
  &lt;my:sub arg1=1+1 arg2=&amp;perl_sub()/&gt;
 </pre></font>which is not always wanted or expected.  Set
-XMLSubsStrict to 1 if this is the case.</font>
+XMLSubsStrict to 1 if this is the case.
+<font face="courier new" size=3><pre>
+  PerlSetVar XMLSubsStrict 1
+</pre></font>
+	
+	<p>
+	<a name=XMLSubsPerlAc1711b7e></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>XMLSubsPerlArgs</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>default 1, when set attribute values will be interpreted
+as raw perl code so that these all would execute as one
+would expect:
+<font face="courier new" size=3><pre>
+ &lt;my:xmlsubs arg=&#39;1&#39; arg2=&quot;2&quot; arg3=$value arg4=&quot;1 $value&quot; /&gt;
+</pre></font>With the 2.45 release, 0 may be set for this configuration
+or a more ASP style variable interpolation:
+<font face="courier new" size=3><pre>
+ &lt;my:xmlsubs arg=&#39;1&#39; arg2=&quot;2&quot; args3=&quot;&lt;%= $value %&gt;&quot; arg4=&quot;1 &lt;%= $value %&gt;&quot; /&gt;
+</pre></font>This configuration is being introduced experimentally in version 2.45,
+as it will become the eventual default in the 3.0 release.
+<font face="courier new" size=3><pre>
+  PerlSetVar XMLSubsPerlArgs 1
+</pre></font>
 	
 	<p>
 	<a name=XSLT></a>

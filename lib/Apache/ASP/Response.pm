@@ -780,7 +780,8 @@ sub Include {
 		    } else {
 			$asp->{dbg} && $asp->Debug("found include $file output in cache");
 			$self->WriteRef($rv->{OUT});
-			return @{$rv->{RV}};
+			my $rv_data = $rv->{RV};
+			return wantarray ? @$rv_data : $rv_data->[0];
 		    }
 		}
 	    }
@@ -792,7 +793,16 @@ sub Include {
 	die("error including $file, not compiled: $@");
     }
 
+    $asp->{last_compile_include_data} = $_CODE;
     my $eval = $_CODE->{code};
+
+    # exit early for cached static file
+    if(ref $eval eq 'SCALAR') {
+       $asp->{dbg} && $asp->Debug("static file data cached, not compiled, length: ".length($$eval));
+       $self->WriteRef($eval);
+       return;
+    }
+
     $asp->{dbg} && $asp->Debug("executing $eval");    
 
     my @rc;

@@ -1,63 +1,57 @@
-$MODULE=Apache::ASP; $VERSION = 2.41; $DATE="9/29/2002"
-
- -Removed CVS Revision tag from Apache::ASP::Date, which 
-  was causing bad revision numbers in CPAN after CVS integration
-  of Apache::ASP
-
- +removed cgi/asp link to ../asp-perl from distribution.  This
-  link was for the deprecated asp script which is now asp-perl
-
-$MODULE=Apache::ASP; $VERSION = 2.39; $DATE="09/10/2002"
-
- -Turn off $^W explicitly before reloading global.asa.  Reloading
-  global.asa when $^W is set will trigger subroutine redefinition
-  warnings.  Reloading global.asa should occur without any problems
-  under normal usage of the system, thus this work around.
-  
-  This fix is important to UseStrict functionality because warnings
-  automatically become thrown as die() errors with UseStrict enabled,
-  so we have to disable normal soft warnings here.
-
- -$Response->Include() runtime errors now throw a die() that
-  can be trapped.  This was old functionality that has been restored.
-  Other compile time errors should still trigger a hard error
-  like script compilation, global.asa, or $Response->Include()
-  without an eval()
-
- +Some better error handling with Debug 3 or -3 set, cleaned
-  up developer errors messages somewhat.
-
-$MODULE=Apache::ASP; $VERSION = 2.37; $DATE="07/03/2002"
+$MODULE=Apache::ASP; $VERSION = 2.45; $DATE="TBD"
 
 Please see README for changes for past versions.
 
  + = improvement;    - = bug fix;    (d) = documentation
 
- -Fixed the testing directory structures for t/long_names.t
-  so that tar software like Archive::Tar & Solaris tar that
-  have problems with long file names will still be able 
-  to untar distribution successfully.  Now t/long_names.t
-  generates its testing directory structures at runtime.
+ ++New XMLSubsPerlArgs config, default 1, indicates how 
+  XMLSubs arguments have always been parsed.  If set to 0,
+  will enable new XMLSubs args that are more ASP like with
+  <%= %> for dynamic interpolation, such as:
 
- -Fixes for "make test" to work under perl 5.8.0 RC2, 
-  courtesy of Manabu Higashida
+    <my:xmlsub arg="<%= $data %>" arg2="text <%= $data2 %>" />
+ 
+  Settings XMLSubsPerlArgs to 0 is experimental for now, but
+  will become the default by Apache::ASP version 3.0
 
- +SessionQueryForce setting created for disabling use of cookies
-  for $Session session-id passing, rather requiring use of SessionQuery*
-  functionality for session-id passing via URL query string.
+ ++Optimization for static HTML/XML files that are served up 
+  via Apache::ASP so that they are not compiled into perl subroutines
+  first.  This makes especially native XSLT both faster & take
+  less memory to serve, before XSL & XML files being transformed
+  by XSLT would both be compiled as normal ASP script first, so 
+  now this will happen if they really are ASP scripts with embedded
+  <% %> code blocks & XMLSubs being executed.
 
-  By default, even when SessionQuery* options are used, cookies will
-  be used if available with SessionQuery* functionality acting only
-  as a backup, so this makes it so that cookies will never be used.
+ +Consolidate some config data for Apache::ASP->Loader to use
+  globals in @Apache::ASP::CompileChecksumKeys to know which 
+  config data is important for precompiling ASP scripts.
 
- +Escape ' with HTMLEncode() to &#39;
+ +Further streamlined code compilation.  Now both base
+  scripts and includes use the internal CompileInclude() API
+  to generate code.
 
- -Trying to fix t/server_mail.t to work better for platforms
-  that it should skip testing on.  Updated t/server.t test case.
+ -Fixed runtime HTML error output when Debug is set to -2/2,
+  so that script correctly again gets rendered in final perl form.
+  Added compile time error output to ./site/eg/syntax_error.htm
+  when a special link is clicked for a quick visual test.
 
- +Remove exit() from Makefile.PL so CPAN.pm's automatic
-  follow prereq mechanism works correctly.  Thanks to Slaven Rezic
-  for pointing this out.
+ -Cleaned up some bad coding practices in ./site/eg/global.asa
+  associated changes in other example files.  Comment example
+  global.asa some for the first time reader
 
- +Added Apache::compat loading in mod_perl environment for better
-  mod_perl 2.0 support.
+ -DemoASP.pm examples module needed "use strict" fix, thanks
+  to Allan Vest for bug report
+
+ --$rv = $Response->Include({ File => ..., Cache => 1});
+  now works to get the first returned value fetched from
+  the cache.  Before, because a list was always returned,
+  $rv would have been equal to the number of items returned,
+  even if the return value list has just one element.
+
+ (d) added site/robots.txt file with just a comment for
+     search engine indexing
+
+ -fixed ./site/eg/binary_write.htm to not use 
+  $Response->{ContentLength} because it does not exist.
+  Fixed it to use $Response->AddHeader now instead  
+

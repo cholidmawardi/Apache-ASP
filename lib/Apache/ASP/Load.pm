@@ -113,19 +113,15 @@ sub Run {
        return;
     }
 
-
     my $r = Apache::ASP::Load::new($file);
+    for my $key ( 
+		 qw( Debug StatINC StatINCMatch ), 
+		 @{Apache::ASP->CompileChecksumKeys} 
+		) 
+      {
+	  $r->dir_config($key, $args{$key});
+      }
     $r->dir_config('NoState', 1);
-    $r->dir_config('Debug', $args{'Debug'});
-    $r->dir_config('DynamicIncludes', $args{'DynamicIncludes'});
-    $r->dir_config('IncludesDir', $args{'IncludesDir'});
-    $r->dir_config('Global', $args{'Global'});
-    $r->dir_config('GlobalPackage', $args{'GlobalPackage'});
-    $r->dir_config('StatINC', $args{'StatINC'});
-    $r->dir_config('StatINCMatch', $args{'StatINCMatch'});
-    $r->dir_config('UseStrict', $args{'UseStrict'});
-    $r->dir_config('XMLSubsMatch', $args{'XMLSubsMatch'});
-    $r->dir_config('XMLSubsStrict', $args{'XMLSubsStrict'});
 
     # RegisterIncludes created for precompilation, on by default here
     $r->dir_config('RegisterIncludes', 1);
@@ -147,8 +143,7 @@ sub Run {
 	    return;
 	}
 
-	my $script = $asp->Parse($asp->{'basename'});
-	$asp->Compile($script);
+	$asp->CompileInclude($asp->{'basename'});
 	if($asp->{errs}) {
 	    warn("$asp->{errs} errors compiling $file while loading");
 	    $asp->DESTROY;

@@ -140,6 +140,13 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</tr>
 		
 		<tr>
+		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>&nbsp;</nobr></b></font></td>
+
+		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><a href="style.html" style="text-decoration:none"><font color=#063678>STYLE GUIDE</font></a></nobr></b></font></td>		
+
+		</tr>
+		
+		<tr>
 		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>%</nobr></b></font></td>
 
 		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><font color=#993399>FAQ</font></nobr></b></font></td>		
@@ -271,7 +278,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#How%20is%20datab66fe735a>How is database connectivity handled?</a>
+			<a href=#VBScript%20or%201a79dae2>VBScript or JScript supported?</a>
 			</font>
 			</td>
 							
@@ -287,7 +294,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#What%20is%20the%20ffd599fa>What is the best way to debug an ASP application ?</a>
+			<a href=#How%20is%20datab66fe735a>How is database connectivity handled?</a>
 			</font>
 			</td>
 							
@@ -303,7 +310,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#How%20are%20file3e89fb5c>How are file uploads handled?</a>
+			<a href=#What%20is%20the%20ffd599fa>What is the best way to debug an ASP application ?</a>
 			</font>
 			</td>
 							
@@ -319,7 +326,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#How%20do%20I%20acc6523fd95>How do I access the ASP Objects in general?</a>
+			<a href=#How%20are%20file3e89fb5c>How are file uploads handled?</a>
 			</font>
 			</td>
 							
@@ -335,7 +342,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Can%20I%20print%2874ba394b>Can I print() in ASP?</a>
+			<a href=#How%20do%20I%20acc6523fd95>How do I access the ASP Objects in general?</a>
 			</font>
 			</td>
 							
@@ -351,7 +358,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Do%20I%20have%20aca178cfb4>Do I have access to ActiveX objects?</a>
+			<a href=#Can%20I%20print%2874ba394b>Can I print() in ASP?</a>
 			</font>
 			</td>
 							
@@ -367,7 +374,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Can%20I%20script97de8006>Can I script in VBScript or JScript ?</a>
+			<a href=#Do%20I%20have%20aca178cfb4>Do I have access to ActiveX objects?</a>
 			</font>
 			</td>
 							
@@ -643,6 +650,20 @@ work for most cases.</font>
 </font>
 	
 	<p>
+	<a name=VBScript%20or%201a79dae2></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>VBScript or JScript supported?</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>Yes, but not with this perl module.  For ASP with other scripting
+languages besides perl, you will need to go with a commercial vendor
+in the UNIX world.  ChiliSoft and Halcyon Software have such solutions.
+Of course on NT, you get this for free with IIS.
+<font face="courier new" size=3><pre>
+  <a href="http://www.chilisoft.com">ChiliSoft</a>
+
+  <a href="http://www.halcyonsoft.com">Halcyon Software</a>
+</pre></font>
+	
+	<p>
 	<a name=How%20is%20datab66fe735a></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>How is database connectivity handled?</b></font><p>
 <font face="courier new" size=3><pre>
@@ -710,24 +731,6 @@ to the $Response-&gt;Write() method.  Using print() is portable with
 the perl Win32::OLE interface.  This will remain true until there
 are free COM ports to the UNIX world.  At this time, there is no ActiveX
 for the UNIX world.</font>
-	
-	<p>
-	<a name=Can%20I%20script97de8006></a>
-	<font face=verdana><font class=title size=-1 color=#555555><b>Can I script in VBScript or JScript ?</b></font><p>
-<font face="courier new" size=3><pre>
-</pre></font>Yes, but not with this perl module.  For ASP with other scripting
-languages besides perl, you will need to go with a commercial vendor
-in the UNIX world.  ChiliSoft and Halcyon Software have such solutions.
-Of course on NT, you get this for free with IIS.
-<font face="courier new" size=3><pre>
-  <a href="http://www.chilisoft.com">ChiliSoft</a>
-
-  <a href="http://www.halcyonsoft.com">Halcyon Software</a>
-</pre></font>If you are willing to migrate your VBScript ASP to PHP, you might
-also check out:
-<font face="courier new" size=3><pre>
-  <a href="http://www.asp2php.com">asp2php.com site</a>
-</pre></font>
 	
 	<p>
 	<a name=Support%20and%20b4365dac></a>

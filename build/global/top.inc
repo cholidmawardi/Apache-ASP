@@ -15,7 +15,7 @@ $NavColSpan = 2;
 $DarkRowColor = $LinkColor;
 $VLinkColor = '#993399';
 $BodyWidth = '99%';
-$BodyColSpan = 4;
+$BodyColSpan = 3;
 
 my $basename = basename($0);
 my($baseprefix) = split(/\./, $basename);
@@ -37,9 +37,11 @@ my %meta = (
 $data || die("can't get data for $section");
 my $module = "Apache :: ASP";
 
-my $title = "$module :: ".uc(lc $data->{name});
+my $title;
 if($basename eq 'index.html') {
-	$title .= " [ apache+asp+perl = perl::apache::asp ]";	
+    $title = $module;
+} else {
+    $title = $module." - ".ucfirst(lc $data->{name});
 }
 
 %>
@@ -72,7 +74,7 @@ if($0 =~ /index.html$/) {
 
 
 </head>
-<body bgcolor=white link=<%=$LinkColor%> alink=#ff5599 vlink=<%=$VLinkColor%>
+<body bgcolor=black link=<%=$LinkColor%> alink=#ff5599 vlink=<%=$VLinkColor%>
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 <% if($Ads) { %>
@@ -310,7 +312,7 @@ for $data (@order) {
   $basename =~ s/\.\w+$//isg;
   my $extra_include = $basename.'_extra.inc';
   warn $extra_include;
-  if(-e $extra_include) {
+  if($Server->MapInclude($extra_include)) {
      my $data = $Response->TrapInclude($extra_include);
      $$data =~ s/(<td[^>]*>)/$1<font size=-1 face=verdana,helvetica,arial>/isg;
      %>
@@ -321,8 +323,6 @@ for $data (@order) {
   }
 %>
 </td>
-
-<td align=left>&nbsp;</td>
 
 </tr>
 <tr bgcolor=<%=$DarkRowColor%>>

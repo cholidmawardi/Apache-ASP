@@ -1,11 +1,37 @@
+
 use DemoASP;
+
+# import basename() into global.asa namespace
 use File::Basename qw(basename);
 
 # when PerlSetVar UseStrict setting on, need to declare
 # global variables with "use vars"
 use vars qw($FontFace $GlobalFont %EG $title);
 
+# static read only global
 $GlobalFont = 'face=verdana,helvetica';
+
+# this is run every request for all scripts that share this global.asa
+sub Script_OnStart {
+    $Response->Debug("Script_OnStart $0 in global.asa");
+    $Session->{Started}++;
+    $title = '';
+}
+
+sub Script_OnEnd {
+    $Response->Debug("Script_OnEnd $0 in global.asa");
+    $Session->{Ended}++;
+}
+
+# modify data on the way out
+sub Script_OnFlush {
+    if($Response->{ContentType} eq 'text/html') {
+	my $data = $Response->{BinaryRef};
+	$$data =~ s/(\<(body|td).*?\>)/$1\<font $GlobalFont\>/isg;
+    }
+    my $data = $Response->{BinaryRef};
+    $Response->Debug("Script_OnFlush: about to flush ".length($$data)." bytes to client");
+}
 
 sub Session_OnStart {
 	$Session->{Count} = 10;
@@ -27,25 +53,6 @@ sub Application_OnStart {
 
 sub Application_OnEnd {
 	$Response->AppendToLog("Application_OnEnd! in ./eg/global.asa");
-}
-
-sub Script_OnStart {
-    $Response->Debug("Script_OnStart $0 in global.asa");
-    $Session->{Started}++;
-    $title = '';
-}
-sub Script_OnEnd {
-    $Response->Debug("Script_OnEnd $0 in global.asa");
-    $Session->{Ended}++;
-}
-
-sub Script_OnFlush {
-    if($Response->{ContentType} eq 'text/html') {
-	my $data = $Response->{BinaryRef};
-	$$data =~ s/(\<(body|td).*?\>)/$1\<font $GlobalFont\>/isg;
-    }
-    my $data = $Response->{BinaryRef};
-    $Response->Debug("Script_OnFlush: about to flush ".length($$data)." bytes to client");
 }
 
 # you can share globals between scripts as of v.10, as all scripts, including 
@@ -142,13 +149,17 @@ sub Script_OnFlush {
 
 $SIG{__DIE__} = \&Carp::confess;
 
+# note if you include XMLSubs in the global.asa, make sure to 
+# switch the package context to the XMLSubs namespace to avoid
+# any odd variable scoping problems
+package my;
+
 sub my::include {
     my($args, $text) = @_;
-    if($args->{title}) {
-      use vars qw($title);
-      $title = $args->{title};
-    }
-    $Response->Include($args->{src});
+
+    # reference the $Response object in the package namespace 
+    # since we are in the my:: package and not the GlobalPackage/global.asa
+    $main::Response->Include($args->{src}, title => $args->{title});
 }
 
 sub my::ttb {

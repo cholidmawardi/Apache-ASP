@@ -1,6 +1,7 @@
 
 package DemoASP;
 use File::Basename;
+use strict;
 
 sub new {
     my($request) = $main::Request;
@@ -9,7 +10,7 @@ sub new {
     my $basename = &File::Basename::basename($0);
     my($title) = "Demo ASP: ". $basename;
     my($self) = bless {
-	bgcolor => white,
+	bgcolor => 'white',
 	env => $env,
 	title => $title,
 	file => $basename

@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Apache::ASP::License</title>
+<title>Apache::ASP::Style guide</title>
 
 
 
@@ -140,9 +140,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</tr>
 		
 		<tr>
-		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>&nbsp;</nobr></b></font></td>
+		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>%</nobr></b></font></td>
 
-		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><a href="style.html" style="text-decoration:none"><font color=#063678>STYLE GUIDE</font></a></nobr></b></font></td>		
+		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><font color=#993399>STYLE GUIDE</font></nobr></b></font></td>		
 
 		</tr>
 		
@@ -203,9 +203,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</tr>
 		
 		<tr>
-		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>%</nobr></b></font></td>
+		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>&nbsp;</nobr></b></font></td>
 
-		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><font color=#993399>LICENSE</font></nobr></b></font></td>		
+		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><a href="license.html" style="text-decoration:none"><font color=#063678>LICENSE</font></a></nobr></b></font></td>		
 
 		</tr>
 		<tr><td colspan=2><hr size=1></td></tr>
@@ -241,32 +241,148 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td valign=top bgcolor=white>
 <font size=+0 face=verdana,arial>
 
-<font face=verdana><font class=title size=+1 color=#555555><b>LICENSE</b></font><p>
+<font face=verdana><font class=title size=+1 color=#555555><b>STYLE GUIDE</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Copyright (c) 1998-2002, Joshua Chamas, Chamas Enterprises Inc. 
-All rights reserved.
+</pre></font>Here are some general style guidelines.  Treat these as tips for
+best practices on Apache::ASP development if you will.
 <font face="courier new" size=3><pre>
-</pre></font>Apache::ASP is a perl native port of Active Server Pages for Apache
-and <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>.  This software is licensed under the GPL.
+</pre></font>This is a new section as of 8/2002, and will sure to be fleshed 
+out better in the near future.</font>
+
+	<hr size=1>
+	<table width=100% border=0 cellpadding=1 cellspacing=3>
+	<tr>
+	<td valign=top><font face="lucida console" size=-1>
+	<ul>
+	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#UseStrict>UseStrict</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Use%20global.ae21f52dc>Use global.asa's Script_On* Events</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Do%20not%20definc430b103>Do not define subroutines in scripts.</a>
+			</font>
+			</td>
+		<td>&nbsp;</td>					
+		</tr>
+			
+	</table>
+	<hr size=1>
+	<p>
+
+	<p>
+	<a name=UseStrict></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>UseStrict</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+</pre></font>One of perl&#39;s blessings is also its bane, variables do not need to be
+declared, and are by default globally scoped.  The problem with this in 
+<a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> is that global variables persist from one request to another
+even if a different web browser is viewing a page.  
 <font face="courier new" size=3><pre>
-</pre></font>This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+</pre></font>To avoid this problem, perl programmers have often been advised to
+add to the top of their perl scripts:
 <font face="courier new" size=3><pre>
-</pre></font>For the full text of the GPL, see the license file in the 
-distribution of this software, visit the GPL site at 
-<a href=http://www.gnu.org/copyleft/gpl.html>http://www.gnu.org/copyleft/gpl.html</a> or write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+  use strict;
+</pre></font>In Apache::ASP, you can do this better by setting:
 <font face="courier new" size=3><pre>
-</pre></font>For general licensing questions, please see the <a href=support.html><font size=-1 face=verdana><b>SUPPORT</b></font></a> section.
+  PerlSetVar UseStrict 1
+</pre></font>which will cover both script &amp; global.asa compilation and will catch 
+&quot;use strict&quot; errors correctly.  For perl modules, please continue to
+add &quot;use strict&quot; to the top of them.
 <font face="courier new" size=3><pre>
-</pre></font>To contact us about licensing terms, please email <b>asp@chamas.com.</b></font>
+</pre></font>Because its so essential in catching hard to find errors, this 
+configuration will likely become the default in some future release.
+For now, keep setting it.</font>
+	
+	<p>
+	<a name=Do%20not%20definc430b103></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Do not define subroutines in scripts.</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>DO NOT add subroutine declarations in scripts.  Apache::ASP is optimized
+by compiling a script into a subroutine for faster future invocation.
+Adding a subroutine definition to a script then looks like this to 
+the compiler:
+<font face="courier new" size=3><pre>
+  sub page_script_sub {
+    ...
+    ... some HTML ...
+    ...
+    sub your_sub {
+      ...
+    }
+    ...
+  }
+</pre></font>The biggest problem with subroutines defined in subroutines is the 
+side effect of creating closures, which will not behave as usually
+desired in a <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> environment.  To understand more about closures,
+please read up on them &amp; &quot;Nested Subroutines&quot; at:
+<font face="courier new" size=3><pre>
+  <a href=http://perl.apache.org/docs/general/perl_reference/perl_reference.html>http://perl.apache.org/docs/general/perl_reference/perl_reference.html</a>
+</pre></font>Instead of defining subroutines in scripts, you may add them to your sites
+global.asa, or you may create a perl package or module to share
+with your scripts.  For more on perl objects &amp; modules, please see:
+<font face="courier new" size=3><pre>
+  <a href=http://www.perldoc.com/perl5.8.0/pod/perlobj.html>http://www.perldoc.com/perl5.8.0/pod/perlobj.html</a>
+</pre></font>
+	
+	<p>
+	<a name=Use%20global.ae21f52dc></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Use global.asa's Script_On* Events</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>Chances are that you will find yourself doing the same thing repeatedly
+in each of your web application&#39;s scripts.  You can use Script_OnStart
+and Script_OnEnd to automate these routine tasks.  These events are
+called before and after each script request.
+<font face="courier new" size=3><pre>
+</pre></font>For example, let&#39;s say you have a header &amp; footer you would like to 
+include in the output of every page, then you might:
+<font face="courier new" size=3><pre>
+ # global.asa
+ sub Script_OnStart {
+   $Response-&gt;Include(&#39;header.inc&#39;);
+ }
+ sub Script_OnEnd {
+   $Response-&gt;Include(&#39;footer.inc&#39;);
+ }
+</pre></font>Or let&#39;s say you want to initialize a global database connection
+for use in your scripts:
+<font face="courier new" size=3><pre>
+ # global.asa
+ use Apache::DBI;   # automatic persistent database connections
+ use DBI;
+
+ use vars qw($dbh); # declare global $dbh
+
+ sub Script_OnStart {
+   # initialize $dbh
+   $dbh = DBI-&gt;connect(...);
+
+   # force you to explicitly commit when you want to save data
+   $Server-&gt;RegisterCleanup(sub { $dbh-&gt;rollback; });
+ }
+
+ sub Script_OnEnd {
+   # not really necessary when using persistent connections, but
+   # will free this one object reference at least
+   $dbh = undef;
+ }
+</pre></font>
+	
 
 </font>
 </td>

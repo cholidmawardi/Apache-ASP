@@ -15,6 +15,7 @@ $DUMP = "/tmp/aspbuilddumpdata";
 	  'config' => 'CONFIG',
 	  'sessions' => 'SESSIONS',
 	  'syntax' => 'SYNTAX',
+          'style' => 'STYLE GUIDE',
 	  'events' => 'EVENTS',
 	  'objects' => 'OBJECTS',
 	  'resources' => 'RESOURCES',

@@ -9,10 +9,10 @@ if($Request->QueryString('type') eq 'gif') {
     binmode FILE;
     $/ = undef;
     my $data = <FILE>;
-    $Response->{ContentLength} = length $data;
     $Response->Clear;
+    $Response->AddHeader('Content-Length', length $data);
     $Response->BinaryWrite($data);
-    $Response->End();
+    $Response->End;
 } else {
 %>
 
