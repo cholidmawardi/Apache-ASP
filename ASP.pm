@@ -4,7 +4,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 0.11;
+$VERSION = 0.12;
 
 srand(time()); 
 
@@ -13,7 +13,6 @@ srand(time());
 use MLDBM;
 use SDBM_File;
 use Data::Dumper;
-#use File::stat;
 use File::Basename;
 use Fcntl qw( O_RDWR O_CREAT );
 use MD5;
@@ -110,7 +109,7 @@ sub handler {
     # there could be errors in IsChanged() is we are using StatINC
     if(! $self->{errors} && $self->IsChanged()) {
 	my $script = $self->Parse();
-	$self->Compile($script);
+	! $self->{errors} && $self->Compile($script);
 
 	# stat inc after a fresh compile since we might have 
 	# some new symbols to register
@@ -274,60 +273,64 @@ sub new {
        
        'basename'     => $basename,
 
-	# buffer output on by default
-	buffering_on   => (defined $r->dir_config('BufferingOn')) ? $r->dir_config('BufferingOn') : 1, 
-	    
-	# if this is set we are parsing ourself through cgi
-	cgi_do_self        => $r->dir_config('CgiDoSelf') || 0, # parse self
-	cgi_headers        => $r->dir_config('CgiHeaders'), 
-
-	clean          => $r->dir_config('Clean') || 0,
-	# this is the server path that the client responds to 
-	cookie_path    => $r->dir_config('CookiePath') || '/',
-	
-	# set for when we are executing from command line
-	command_line   => $r->dir_config('CommandLine'),
-
-	# these are set by the Compile routine
-	compile_error  => undef, 
-	compile_includes => $r->dir_config('DynamicIncludes'),
-	
-	debug          => $r->dir_config('Debug') || 0,  # debug level
-	'dirname'      => $dirname,
-	errors         => 0,
-	errors_output  => [],
-	filehandle     => undef,
-	filename       => $r->filename(),
-	filter         => 0,
-	id             => undef, # parsed version of filename
-	
-	# where all the state and config files lie
-	global         => $global,
-	global_package => $r->dir_config('GlobalPackage'),
-	
-	# refresh group by some increment smaller than session timeout
-	# to withstand DoS, bruteforce guessing attacks
-	# defaults to checking the group once every 2 minutes
-	group_refresh  => int($session_timeout / $state_manager),
-	groups_refresh => int($session_timeout / $state_manager),
+       # buffer output on by default
+       buffering_on   => (defined $r->dir_config('BufferingOn')) ? $r->dir_config('BufferingOn') : 1, 
+       
+       # if this is set we are parsing ourself through cgi
+       cgi_do_self        => $r->dir_config('CgiDoSelf') || 0, # parse self
+       cgi_headers        => $r->dir_config('CgiHeaders'), 
+       
+       clean          => $r->dir_config('Clean') || 0,
+       # this is the server path that the client responds to 
+       cookie_path    => $r->dir_config('CookiePath') || '/',
+       
+       # set for when we are executing from command line
+       command_line   => $r->dir_config('CommandLine'),
+       
+       # these are set by the Compile routine
+       compile_error  => undef, 
+       compile_includes => $r->dir_config('DynamicIncludes'),
+       
+       debug          => $r->dir_config('Debug') || 0,  # debug level
+       'dirname'      => $dirname,
+       errors         => 0,
+       errors_output  => [],
+       filehandle     => undef,
+       filename       => $r->filename(),
+       filter         => 0,
+       id             => undef, # parsed version of filename
+       
+       # where all the state and config files lie
+       global         => $global,
+       global_package => $r->dir_config('GlobalPackage'),
+       
+       # refresh group by some increment smaller than session timeout
+       # to withstand DoS, bruteforce guessing attacks
+       # defaults to checking the group once every 2 minutes
+       group_refresh  => int($session_timeout / $state_manager),
+       groups_refresh => int($session_timeout / $state_manager),
+       
+       # name spaces which will have ASP objects initialized into
+       init_packages => undef,
 
        mail_alert_to     => $r->dir_config(MailAlertTo),
        mail_alert_period => $r->dir_config(MailAlertPeriod) || 20,
        mail_errors_to => $r->dir_config(MailErrorsTo),
        mail_host => $r->dir_config(MailHost),
-
-	# assume we already chdir'd to where the file is
-	mtime          => (stat($basename))[9],  # better than -M
-		
-	no_cache       => $r->dir_config(NoCache),
-	no_headers     => $r->dir_config(NoHeaders) || 0,
-	no_session     => ((defined $r->dir_config('AllowSessionState')) ? (! $r->dir_config('AllowSessionState')) : 0),
-
-	# set this if you don't want an Application or Session object
-	# available to your scripts
-	no_state       => $r->dir_config('NoState'),
-	paranoid_session => $r->dir_config('ParanoidSession') || 0,
-
+       
+       # assume we already chdir'd to where the file is
+       mtime          => (stat($basename))[9],  # better than -M
+       
+       no_cache       => $r->dir_config(NoCache),
+       no_headers     => $r->dir_config(NoHeaders) || 0,
+       no_session     => ((defined $r->dir_config('AllowSessionState')) ? (! $r->dir_config('AllowSessionState')) : 0),
+       
+       # set this if you don't want an Application or Session object
+       # available to your scripts
+       no_state       => $r->dir_config('NoState'),
+       'package'      => undef,
+       paranoid_session => $r->dir_config('ParanoidSession') || 0,
+       
 	# default 1, should we parse out pod style commenting ?
 	pod_comments   => defined($r->dir_config('PodComments')) ? $r->dir_config('PodComments') : 1, 
 
@@ -347,7 +350,8 @@ sub new {
 	state_dir      => $state_dir,
 	state_manager  => $state_manager,
 
-	'ua' => $ENV{HTTP_USER_AGENT} || "UNKNOWN UA",
+       'ua' => $ENV{HTTP_USER_AGENT} || "UNKNOWN UA",
+       unique_packages => $r->dir_config('UniquePackages') || 0,
 
 	# special objects for ASP app
 	Application    => undef,
@@ -459,7 +463,7 @@ sub DESTROY {
     # undef objects in main set up in execute, do after cleanup,
     # so cleanup routine can still access objects
     for $object (@Apache::ASP::Objects) {
-	for $package ('main', $self->{GlobalASA}{'package'}) {
+	for $package (@{$self->{init_packages}}) {
 	    my $init_var = $package.'::'.$object;
 	    undef $$init_var;
 	}
@@ -506,6 +510,21 @@ sub InitObjects {
     $self->{Response}  = &Apache::ASP::Response::new($self);
     $self->{Request}   = &Apache::ASP::Request::new($self);
     $self->{Server}    = &Apache::ASP::Server::new($self);
+
+    # After GlobalASA Init, init the package that this script will execute in
+    # must be here, and not end of new before things like Application_OnStart
+    # get run
+    if($self->{unique_packages}) {
+	$self->{id} .= "::handler";
+	my $subid = $self->{GlobalASA}{'package'}.'::'.$self->{id};
+	my $package = $subid;
+	$package =~ s/::[^:]+$//;
+	$self->{'package'} = $package;
+	$self->{init_packages} = ['main', $self->{GlobalASA}{'package'}, $self->{'package'}];	
+    } else {
+	$self->{'package'} = $self->{GlobalASA}{'package'};
+	$self->{init_packages} = ['main', $self->{GlobalASA}{'package'}];	
+    }
 
     # cut out now before we get to the big objects
     return if ($self->{errors});
@@ -617,6 +636,7 @@ sub Parse {
 	    local $/ = undef;
 	    $data = <$filehandle>;
 	} else {
+	    $self->Debug("parsing $self->{'basename'}");
 	    $data = $self->ReadFile($self->{'basename'});
 	}
     }
@@ -666,7 +686,9 @@ sub Parse {
 		$data .= "<% \$Response->Include('$include', $args); %>";
 
 		# compile include now, so Loading() works for dynamic includes too
-		$self->CompileInclude($include);
+		unless($self->CompileInclude($include)) {
+		    $self->Error("compiling include $include failed when compiling script");
+		}
 	    } else {
 		$self->Debug("inlining include $include");
 		# DEFAULT, not compile includes, or inline includes,
@@ -695,6 +717,8 @@ sub Parse {
     }
     $data .= $munge; # append what's left   
 
+#    $self->Debug("parsing includes done $self->{'basename'}");
+
     # strip carriage returns; do this as early as possible, but after includes
     # since we want to rip out the carriage returns from them too
     my $CRLF = "\015\012";
@@ -713,8 +737,9 @@ sub Parse {
     $data .= "<%;;;%>"; # always end with some perl code for parsing.
     my(@out, $perl_block, $last_perl_block);
     while($data =~ s/^(.*?)\<\%(.*?)\%\>//so) {
-#    while($data =~ s/^(.*?)\<\%(?:\s*\n)?(.*?\s*)\%\>//so) {
 	($text, $perl) = ($1,$2);
+#	$self->Debug("parsing inversion loop begin $self->{'basename'}");
+
 #	$perl =~ s/^\s+$//gso;
 #	$text =~ s/^\s$//gso;
 	$perl_block = ($perl =~ /^\s*\=(.*)$/so) ? 0 : 1;
@@ -750,9 +775,9 @@ sub Parse {
 	    # like a Collections class.
 	    #
 	    # PerlScript compatibility
-	    if($perl =~ s/(\$.*?\(.*?\))\-\>\{item\}/$1/isgo) {
-		$self->Debug('parsing out ->{item} for PerlScript compatibility');
-	    }
+#	    if($perl =~ s/(\$.*?\(.*?\))\-\>\{item\}/$1/isgo) {
+#		$self->Debug('parsing out ->{item} for PerlScript compatibility');
+#	    }
 	    
 	    if(! $perl_block) {
 		# we have a scalar assignment here
@@ -769,7 +794,10 @@ sub Parse {
 		# it to still exist, with the lines now being sync'd up
 		# if these old comments still exist, they perl script
 		# will be off by one line from the asp script
-		$perl =~ s/(\#[^\n]*?)$/$1\n/so;
+		if($perl =~ /\#[^\n]*?$/so) {
+		    $perl .= "\n";
+		}
+#		$self->Debug("parsing inversion after # newline compat $self->{'basename'}");
 
 		# skip if the perl code is just a placeholder		
 		unless($perl eq ';;;') {
@@ -785,6 +813,9 @@ sub Parse {
 	    }
 	}
     }
+
+#    $self->Debug("parsing inversion done $self->{'basename'}");
+
 
     $script;
 }
@@ -831,21 +862,42 @@ sub CompileInclude {
 
     my $perl = $self->Parse($include);
 
-    my $eval = join("\n","package $self->{GlobalASA}{'package'};",
-		    "sub $id {\n$perl\n} ",
-		    "1");
     $self->UndefRoutine($subid);
-    my $code = eval $eval;
-    if($@) {
+
+    # COMPILE STRICT ODDITIES: use strict won't throw an error, but will
+    # destroy a compilation of a sub routine, returning an invalid reference
+    # we create the sub with a way to do a dummy execution of it, no args, 
+    # and then do a null execute, testing for eval error.
+    # use strict seems to print to STDERR directly w/o throwing an error,
+    # if it just triggered a die(), we wouldn't have a problem
+#    local $SIG{__WARN__} = \&die;
+    my $eval = join(" ","package $self->{GlobalASA}{'package'};",
+		    "sub $id { if (shift) { $perl } 1; }",
+#		    "sub $id {\n$perl\n} ",
+		    "1");
+
+
+    my $name = "$self->{GlobalASA}{'package'}::$id";    
+    eval $eval;
+    my $create_err = $@;
+    eval { &$name() }; # null execute of routine
+    my $test_err = $@; # see if routine was created successfully
+
+    if($create_err || $test_err) {
 	# since this routine should only run when the script is executing in 
 	# eval context already
-	$self->Error("error compiling include $include: $@");
-	$self->Error("compiled perl for $include: $eval");
+	$create_err ||= "Probably use strict error, please see error log for more info";
+	$self->Error("error compiling include $include: $create_err");
+	$self->{compile_error} .= "\n$create_err\n";
+	$self->{compile_eval} = $perl;
+
+	# we don't want to cache the compiled routine, so jump out here
+	# this will make ASP keep trying to recompile it
+	return;
     }
-    
-    $self->Debug("compiled $include with id $self->{GlobalASA}{'package'}::$id");
+
     $CompiledIncludes{$subid} = { mtime => $mtime, 
-			       code => "$self->{GlobalASA}{'package'}::$id", 
+			       code => $name, 
 			       perl => $perl, 
 			       file => $include 
 			       };
@@ -903,13 +955,13 @@ sub Compile {
     $id ||= $self->{id};
     $subid = $self->{GlobalASA}{'package'}.'::'.$id;
     
-    $self->Debug("compiling $id") if $self->{debug};
     $self->UndefRoutine($subid);
+    $self->Debug("compiling into package $self->{'package'}") if $self->{debug};
 
     my($eval) = 
 	join(" ;; ", 
-	     "package $self->{GlobalASA}{'package'}; ",
-	     "sub $id { ",
+	     "package $self->{'package'}; ",
+	     "sub $subid { ",
 	     ' @_ = ();',
 	     $script,
 	     '}',
@@ -950,7 +1002,7 @@ sub Execute {
     # init objects
     my($object, $import_package);
     for $object (@Apache::ASP::Objects) {
-	for $import_package ('main', "$self->{GlobalASA}{'package'}") {
+	for $import_package (@{$self->{init_packages}}) {
 	    my $init_var = $import_package.'::'.$object;	    
 	    $$init_var = $self->{$object};	    
 	}
@@ -2019,7 +2071,7 @@ sub Unescape {
     my($self, $todecode) = @_;
     $todecode =~ tr/+/ /;       # pluses become spaces
     $todecode =~ s/%([0-9a-fA-F]{2})/pack("c",hex($1))/ge;
-    return $todecode;
+    $todecode;
 }
 
 1;
@@ -2036,6 +2088,7 @@ use Carp qw(confess);
      ContentType => 1,
      Expires => 1,
      ExpiresAbsolute => 1,
+     IsClientConnected => 1,
      Status => 1,
      );
 
@@ -2044,23 +2097,25 @@ sub new {
     my $r = $asp->{r};
     $, ||= '';
 
-    return bless {
-	asp => $asp,
-	buffer => '',
-	# internal extension allowing various scripts like Session_OnStart
-	# to end the same response
-	Ended => 0, 
-	CacheControl => 'private',
-	Charset => undef,
-	Clean => $asp->{clean},
-	Cookies => bless({}, 'Apache::ASP::Collection'),
-	ContentType => 'text/html',
-	PICS => undef,
-	header_buffer => '', 
-	header_done => 0,
-	Buffer => $asp->{buffering_on},
-	r => $r,
-    };
+    return bless 
+      {
+       asp => $asp,
+       buffer => '',
+       # internal extension allowing various scripts like Session_OnStart
+       # to end the same response
+       Ended => 0, 
+       CacheControl => 'private',
+       Charset => undef,
+       Clean => $asp->{clean},
+       Cookies => bless({}, 'Apache::ASP::Collection'),
+       ContentType => 'text/html',
+       IsClientConnected => 1,
+       PICS => undef,
+       header_buffer => '', 
+       header_done => 0,
+       Buffer => $asp->{buffering_on},
+       r => $r,
+      };
 }
 
 sub DESTROY {}; # autoload doesn't have to skip it
@@ -2171,8 +2226,6 @@ sub Flush {
     }
     return unless $self->{'buffer'};
 
-#    $self->{asp}->Debug("flushing $self->{buffer}");
-
     if($self->{Clean} and $self->{ContentType} eq 'text/html') {
 	# by checking defined, we just check once
 	unless(defined $Apache::ASP::CleanSupport) {
@@ -2188,10 +2241,9 @@ sub Flush {
 
 	# if we can't clean, we simply ignore	
 	if($Apache::ASP::CleanSupport) {
-	    /{/; my $h = HTML::Clean->new(\$self->{'buffer'}, $self->{Clean});
+	    my $h = HTML::Clean->new(\$self->{'buffer'}, $self->{Clean});
 	    if($h) {
 		$h->strip();
-		/{/; $self->{'buffer'} = ${$h->data()};	
 	    } else {
 		$self->{asp}->Error("clean error: $! $@");
 	    }
@@ -2202,10 +2254,13 @@ sub Flush {
 	print STDOUT $self->{buffer};
     } else {
 	#        unless($self->{r}->connection->aborted) {
-	$self->{r}->print($self->{buffer});	
+	$self->{r}->print($self->{buffer});		
 	#	}
     }
-    $self->{buffer} = '';
+
+    # supposedly this is more efficient than undeffing, since
+    # the string does not let go of its allocated memory buffer
+    $self->{buffer} = ''; 
     
     1;
 }
@@ -2321,7 +2376,7 @@ sub AddCookieHeaders {
 	    $old_k = $k;
 	    $k = lc $k;
 	    
-	    if($k eq 'secure') {
+	    if($k eq 'secure' and $v) {
 		$data[4] = 'secure';
 	    } elsif($k eq 'domain') {
 		$data[3] = "$k=$v";
@@ -2465,10 +2520,17 @@ sub PRINTF {
 sub Include {    
     my $self = shift;
     my $file = shift;
-    my $_CODE = $self->{asp}->CompileInclude($file);
 
-    $self->{asp}->Debug("executing $_CODE->{code}");
-    my $rc = eval { &{$_CODE->{code}}(@_) };
+    my $_CODE = $self->{asp}->CompileInclude($file);
+    unless(defined $_CODE) {
+	$self->{asp}->Error("error including $file, not compiled");
+	return;
+    }
+
+    my $eval = $_CODE->{code};
+    $self->{asp}->Debug("executing $eval");
+
+    my $rc = eval { &$eval(1, @_) };
     if($@) {
 	my $code = $_CODE;
 	die "error executing code for include $code->{file}: $@; compiled to $code->{perl}";
@@ -3712,7 +3774,7 @@ can set.  Set the optional ones if you want, the defaults are fine...
   # Global directory for this purpose.
   # 
   # Includes, specified with <!--#include file=somefile.inc--> 
-  # or $Respose->Include() syntax, may also be in this directory, 
+  # or $Response->Include() syntax, may also be in this directory, 
   # please see section on includes for more information.
   #
   PerlSetVar Global /tmp
@@ -3744,6 +3806,24 @@ can set.  Set the optional ones if you want, the defaults are fine...
   #   in apache conf: PerlModule Some::Package
   #
   PerlSetVar GlobalPackage Some::Package
+
+  # UniquePackages
+  # --------------
+  # default 0.  Set to 1 to emulate pre-v.10 ASP script compilation 
+  # behavior, which compiles each script into its own perl package.
+  #
+  # Before v.10, ASP scripts were compiled into their own perl package
+  # namespace.  This allowed ASP scripts in the same ASP application
+  # to defined subroutines of the same name without a problem.  
+  # 
+  # As of v.10, ASP scripts in a web application are compiled into the 
+  # *same* perl package by default, so these scripts, their includes, and the 
+  # global.asa events all share common globals & subroutines defined by each other.
+  # The problem for some developers was that they would at times define a 
+  # subroutine of the same name in 2+ scripts, and one subroutine definition would
+  # redefine the other one because of the namespace collision.
+  # 
+  PerlSetVar UniquePackages 0
   
   # AllowSessionState
   # -----------------
@@ -3801,6 +3881,9 @@ can set.  Set the optional ones if you want, the defaults are fine...
   # A known bug is that any functions that are exported, e.g. confess 
   # Carp qw(confess), will not be refreshed by StatINC.  To refresh
   # these, you must restart the www server.  
+  #
+  # This setting should be used in development only because it is so slow.
+  # For a production version of StatINC, see StatINCMatch.
   #
   PerlSetVar StatINC 1
   
@@ -4361,9 +4444,10 @@ HTTP::Date::str2time(), e.g.
 
 =item $Response->{IsClientConnected}
 
-Not implemented.  May never be.  When a client connection drops,
-the currently running code is aborted, so there is not any relevant
-time that you would use this property.
+Not implemented, but returns 1 currently for portability.  This is 
+value is not yet relevant, and may not be until apache 1.3.6, which will 
+be tested shortly.  Apache versions less than 1.3.6 abort the perl code 
+immediately upon the client dropping the connection.
 
 =item $Response->{PICS}
 
@@ -5264,6 +5348,9 @@ ASP + Apache, web development could not be better!  Kudos go out to:
  :) Greg Stark, for endless enthusiasm, pushing the module to its limits.
  :) Richard Rossi, for his need for speed & bravely testing dynamic includes.
  :) Bill McKinnon, who understands the finer points of running a web site.
+ :) Russell Weiss, for being every so "strict" about his code.
+ :) Paul Linder, who is Mr. Clean... not just the code, its faster too !
+ :) Tony Merc Mobily, inspirating tweaks to compile scripts  * 10 * times faster
 
 =head1 SUPPORT
 

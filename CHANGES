@@ -1,4 +1,56 @@
-$MODULE=Apache::ASP; $VERSION = .11;
+$MODULE=Apache::ASP; $VERSION = .12; $DATE="07/01/99";
+
++ = improvement; - = bug fix
+
+- Compiles are now 10+ times faster for scripts with lots of big
+  embedded perl blocks <% #perl %>
+
+  Compiles were slow because of an old PerlScript compatibility
+  parsing trick where $Request->QueryString('hi')->{item}
+  would be parsed to $Request->QueryString('hi') which works.
+  I think the regexp that I was using had O(n^2) characteristics
+  and it took a really big perl block to 10+ seconds to parse
+  to understand there was a problem :(
+
+  I doubt anyone needed this compatibility, I don't even see
+  any code that looks like this in the online PerlScript examples,
+  so I've commented out this parsing trick for now.  If you 
+  need me to bring back this functionality, it will be in the 
+  form of a config setting.
+
+  For information on PerlScript compatibility, see the PerlScript
+  section in the ASP docs.
+
+- Added UniquePackages config option, that if set brings back 
+  the old method of compiling each ASP script into its own
+  separate package.  As of v.10, scripts are compiled by default
+  into the same package, so that scripts, dynamic includes & global.asa
+  can share globals.  This BROKE scripts in the same ASP Application
+  that defined the same sub routines, as their subs would redefine
+  each other.  
+
+  UniquePackages has scripts compiled into separate perl packages,
+  so they may define subs with the same name, w/o fear of overlap.
+  Under this settings, scripts will not be able to share globals.  
+
+- Secure field for cookies in $Response->Cookies() must be TRUE to 
+  force cookie to be secure.  Before, it just had to be defined, 
+  which gave wrong behavior for Secure => 0. 
+
++ $Response->{IsClientConnected} set to one by default.  Will
+  work out a real value when I upgrade to apache 1.3.6.  This
+  value has no meaning before, as apache aborts the perl code
+  when a client drops its connection in earlier versions.
+
++ better compile time debugging of dynamic includes, with 
+  Debug 2 setting
+
++ "use strict" friendly handling of compiling dynamic includes
+  with errors
+
+$MODULE=Apache::ASP; $VERSION = .11; $DATE="6/24/99";
+
++ Lots of documentation updates
 
 + The MailHost config option is the smtp server used for 
   relay emails for the Mail* config options.
@@ -50,8 +102,6 @@ $MODULE=Apache::ASP; $VERSION = .11;
 
 + Reoptimized pod comment parsing.  I slowed it down to sync
   lines numbers in the last version, but found another corner I could cut.
-
-+ = improvement; - = bug fix
 
 $MODULE=Apache::ASP; $VERSION = .10; $DATE="5/24/99";
 

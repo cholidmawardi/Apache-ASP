@@ -91,7 +91,7 @@ DESCRIPTION
       # Global directory for this purpose.
       # 
       # Includes, specified with <!--#include file=somefile.inc--> 
-      # or $Respose->Include() syntax, may also be in this directory, 
+      # or $Response->Include() syntax, may also be in this directory, 
       # please see section on includes for more information.
       #
       PerlSetVar Global /tmp
@@ -123,6 +123,24 @@ DESCRIPTION
       #   in apache conf: PerlModule Some::Package
       #
       PerlSetVar GlobalPackage Some::Package
+
+      # UniquePackages
+      # --------------
+      # default 0.  Set to 1 to emulate pre-v.10 ASP script compilation 
+      # behavior, which compiles each script into its own perl package.
+      #
+      # Before v.10, ASP scripts were compiled into their own perl package
+      # namespace.  This allowed ASP scripts in the same ASP application
+      # to defined subroutines of the same name without a problem.  
+      # 
+      # As of v.10, ASP scripts in a web application are compiled into the 
+      # *same* perl package by default, so these scripts, their includes, and the 
+      # global.asa events all share common globals & subroutines defined by each other.
+      # The problem for some developers was that they would at times define a 
+      # subroutine of the same name in 2+ scripts, and one subroutine definition would
+      # redefine the other one because of the namespace collision.
+      # 
+      PerlSetVar UniquePackages 0
       
       # AllowSessionState
       # -----------------
@@ -180,6 +198,9 @@ DESCRIPTION
       # A known bug is that any functions that are exported, e.g. confess 
       # Carp qw(confess), will not be refreshed by StatINC.  To refresh
       # these, you must restart the www server.  
+      #
+      # This setting should be used in development only because it is so slow.
+      # For a production version of StatINC, see StatINCMatch.
       #
       PerlSetVar StatINC 1
       
@@ -711,9 +732,10 @@ The Object Model
          "Feb  3 17:03"      -- Unix 'ls -l' format
 
     $Response->{IsClientConnected}
-        Not implemented. May never be. When a client connection drops, the
-        currently running code is aborted, so there is not any relevant time
-        that you would use this property.
+        Not implemented, but returns 1 currently for portability. This is
+        value is not yet relevant, and may not be until apache 1.3.6, which
+        will be tested shortly. Apache versions less than 1.3.6 abort the
+        perl code immediately upon the client dropping the connection.
 
     $Response->{PICS}
         If this property has been set, a PICS-Label HTTP header will be sent
@@ -1530,6 +1552,9 @@ NOTES
      :) Greg Stark, for endless enthusiasm, pushing the module to its limits.
      :) Richard Rossi, for his need for speed & bravely testing dynamic includes.
      :) Bill McKinnon, who understands the finer points of running a web site.
+     :) Russell Weiss, for being every so "strict" about his code.
+     :) Paul Linder, who is Mr. Clean... not just the code, its faster too !
+     :) Tony Merc Mobily, inspirating tweaks to compile scripts  * 10 * times faster
 
 SUPPORT
     Please send any questions or comments to the Apache modperl mailing list

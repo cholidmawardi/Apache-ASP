@@ -5,7 +5,7 @@
 	# The code was the bulk of the SYNOPSIS section of CGI.pm v2.46
     ;
 use strict;
-use CGI qw/:standard :html2/;
+use CGI qw(:standard);
 
 my $query = new CGI;
 my $cookie;
@@ -13,15 +13,18 @@ my $name;
 
 if($name = $query->param('name')) {
     $cookie = $query->cookie(-name=>'name',
-			     -value=>$name,
+    			     -value=>$name,
 			     -expires=>'+1h',
 			     );
 }
+#use Data::Dumper;
 $name ||= $query->cookie('name');
 
 print header(-cookie=>$cookie),
     start_html('A Simple Example'),
     h1('A Simple Example'),
+#    "<br>TEST ($query) TEST <br>\n",
+#    Data::Dumper->Dump([$query]),
     start_form,
     "What's your name? ",textfield('name'),p,
     "What's the combination?", p,
@@ -36,9 +39,9 @@ print header(-cookie=>$cookie),
     hr;
 
 if ($query->param()) {
-    print "Your name is ",em($name),p,
-    "The keywords are: ",em(join(", ",$query->param('words'))),p,
-    "Your favorite color is ",em($query->param('color')),
+    print "Your name is ",em($name),p,"\n",
+    "The keywords are: ",em(join(", ",$query->param('words'))),p,"\n",
+    "Your favorite color is ",em($query->param('color')),"\n",
     hr;
 }
 

@@ -10,6 +10,7 @@
 	PerlSetVar CookiePath  /	
 	PerlSetVar SessionTimeout  .5
 	PerlSetVar StateDir  ./.state
+	PerlSetVar UniquePackages 1
 </Files>
 
 # .htm files for the ASP parsing, but not the $Session object
