@@ -2,15 +2,19 @@
 
 use File::Basename;
 use strict;
-use vars qw( $NavColor $LinkColor $NavColSpan $Ads $PageCount $DarkRowColor $VLinkColor );
+use vars qw( 
+    $NavColor $LinkColor $NavColSpan $Ads $PageCount $DarkRowColor $VLinkColor 
+    $BodyWidth
+    );
 
 #$NavColor = '#ffcccc';
 #$NavColor = '#ffbbbb';
-$NavColor = '#c0c0c0';
-$LinkColor = '#003090';
+$NavColor = '#005196';
+$LinkColor = '#063678';
 $NavColSpan = 2;
-$DarkRowColor = '#555555';
+$DarkRowColor = $LinkColor;
 $VLinkColor = '#993399';
+$BodyWidth = '98%';
 
 my $basename = basename($0);
 my($baseprefix) = split(/\./, $basename);
@@ -54,31 +58,36 @@ if($0 =~ /index.html$/) {
 %>
 
 </head>
-<body bgcolor=#bb4488 link=<%=$LinkColor%> alink=#ff5599 vlink=<%=$VLinkColor%> 
- marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
-
+<body bgcolor=black link=<%=$LinkColor%> alink=#ff5599 vlink=<%=$VLinkColor%>
+marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 <% if($Ads) { %>
 <center>
-<table bgcolor=#bb4488 border=0 cellpadding=2 cellspacing=5 width=100%>
+<table border=0 cellpadding=3 cellspacing=0 width=100%>
 <tr>
-<td bgcolor=<%=$DarkRowColor%>><!--#include file=ad.inc--></td>
+<td><!--#include file=ad.inc--></td>
 </tr></table>
 </center>
 <% } %>
 
 
-<table border=0 cellpadding=0 cellspacing=0 width=100%>
-<tr bgcolor=#ff4488>
-<td colspan=2>
-	<table border=0 cellpadding=5 cellspacing=0 width=100%>
+<center>
+<table border=0 cellpadding=0 width=<%=$BodyWidth%> cellspacing=8>
+<tr><td align=center>
+
+<table border=0 cellpadding=3 width=100% cellspacing=0>
+<tr bgcolor=<%=$LinkColor%>>
+<td>
+	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=apache_asp.gif alt="<%=$module%>"></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="<%=$module%>"></td>	
 	<% if($Ads) { %>
 		<form action=apps/search/index.asp>
-		<td align=right>
-		<input type=text name=search size=20>
-		<input type=submit value=Search>
+		<td align=right valign=center>
+		  <input type=text name=search size=20>
+		</td>
+		<td align=left valign=center>
+  		  <input type=submit value=Search>
 		</td>
 		</form>		
 	<% } else { %>
@@ -88,18 +97,30 @@ if($0 =~ /index.html$/) {
 	</table>
 </td>
 </tr>
+<tr>
+  <td bgcolor=<%=$NavColor%> align=center>
+    <b>
+    <font size=-1 face=verdana color=#f0e800>Web applications with Apache + mod_perl</font>  
+    </b>
+  </td>
+</tr>
 </table>
 
-<table border=0 cellpadding=8 cellspacing=0 height=90% width=100%>
+<table border=0 cellpadding=10 cellspacing=0 width=100% bgcolor=<%=$NavColor%>>
 <tr>
-<td valign=top width=100 bgcolor=<%=$NavColor%>>
-	<table border=0 cellpadding=0 cellspacing=0 width=100>
+<td valign=top width=120 bgcolor=<%=$NavColor%>>
+    
+        <table cellpadding=5 cellspacing=0 border=1 bgcolor=white><tr><td>
 
+	<table border=0 cellpadding=0 cellspacing=0 width=105 bgcolor=white>
+	
 	<% 
-	my $top;
-	for $top (@{$ASP->{stack}}, '', { name=> 'EXAMPLES', file => 'eg/index'}) { 
-		unless($top) {
+	for my $top (@{$ASP->{stack}}, 'hr', { name=> 'EXAMPLES', file => 'eg/index'}) { 
+		if($top eq 'hr') {
 			%><tr><td colspan=<%=$NavColSpan%>><hr size=1></td></tr><%
+			next;
+		} elsif(! $top) {
+			%><tr><td colspan=<%=$NavColSpan%>>&nbsp;</td></tr><%
 			next;
 		}
 
@@ -126,7 +147,7 @@ if($0 =~ /index.html$/) {
 				$here ? $Server->HTMLEncode("%") : "&nbsp;"
 				%></nobr></b></font></td>
 
-		<td bgcolor=<%=$NavColor%>><font face="verdana,arial" size=-1><b><nobr><%=
+		<td bgcolor=white><font face="verdana,arial" size=-1><b><nobr><%=
 			$link
 		%></nobr></b></font></td>		
 
@@ -134,9 +155,12 @@ if($0 =~ /index.html$/) {
 		<%
 	}
 	%>
-	<tr>
-		<td align=center colspan=<%=$NavColSpan%>>
-		<hr size=1>
+	</table>
+
+	</td></tr>
+	</table>
+
+		<br>
 		<center>
 		<a href=http://www.nodeworks.com/asp/><img 
 			src=powered_by_apache_asp.jpg border=0
@@ -153,16 +177,14 @@ if($0 =~ /index.html$/) {
 			alt="Links Checked by NodeWorks"
 			></a>
 		</center>
-		<hr size=1>
-		</td>
-	</tr>
-	</table>
+
+
 </td>
 
 
 <% # BODY OF DOC %>
 <td valign=top bgcolor=white>
-<font size=-1 face=verdana>
+<font size=+0 face=verdana,arial>
 
 <%
 
@@ -197,7 +219,7 @@ if(@order > 1) {
 			}
 			$last_level = $data->{level};
 		}		
-		push(@links, "<a href=#".$Server->URLEncode($data->{name})."><font color=$LinkColor>$data->{name}</font></a>");
+		push(@links, "<a href=#".$Server->URLEncode($data->{name}).">$data->{name}</a>");
 	}
 	%>
 
@@ -240,7 +262,8 @@ if(@order > 1) {
 			<font face="lucida console" size=-1>
 			<% 
 			if(($index == 0 and $hilite_first) || ! $links[$index-1]) {
-				print "<b>$links[$index]</b>";
+			        $links[$index] =~ s|\>(.*?)\<|><font color=white>$1</font><|i;
+				print "<font color=white><b>$links[$index]</b></font>";
 			} else {
 				print $links[$index];
 			}
@@ -279,5 +302,10 @@ for $data (@order) {
 	</td>
 </tr>
 </table>
+
+</td></tr>
+</table>
+</center>
+
 </body>
 </html>

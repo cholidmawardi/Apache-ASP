@@ -3,12 +3,12 @@
 <!--#include file=header.inc-->
 
 <% 
-	$form = $Request->QueryString();
+	my $form = $Request->QueryString();
 
 	# Expires
 	$form->{expires} ||= 0;
 	$Response->{Expires} = $form->{expires};
-	$update_time = &HTTP::Date::time2str(time()+$form->{expires});
+	my $update_time = &HTTP::Date::time2str(time()+$form->{expires});
 
 	# Buffer
 	(defined $Session->{buffer}) 
@@ -16,7 +16,7 @@
 	if($form->{buffer}) {
 		$Session->{buffer} = ! $Session->{buffer};
 	}
-	$buffer_display = $Session->{buffer} 
+	my $buffer_display = $Session->{buffer} 
 		? "Set Buffer Off" : "Set Buffer On";
 	$Response->{Buffer} = $Session->{buffer};
 
@@ -69,7 +69,7 @@
 	<td><b>Cookies*</b></td>
 	<td>
 	<%
-	while(($k, $v) = each %{$Request->Cookies()}) {
+	while(my($k, $v) = each %{$Request->Cookies()}) {
 		if(ref $v) {
 			print "$k:<br>\n";
 			for(keys %$v) {

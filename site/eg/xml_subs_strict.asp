@@ -8,10 +8,10 @@ to render entire XML documents, or even simply give some nice
 short cuts for use when site building.
 <p>
 
-=pod
-  This part just to demo embedding normal ASP constructs
-  in the XMLsubs, which was no easy trick to implement!
-=cut
+<% if(Apache->dir_config('XMLSubsStrict')) { %>
+  Further, the <b>XMLSubsStrict</b> setting has been set.
+  <p>
+<% } %>
 
 Currently, XMLSubsMatch is set to:
 <my:ttb> 
@@ -19,6 +19,7 @@ Currently, XMLSubsMatch is set to:
   <%=$Server->Config('XMLSubsMatch')%> 
   <% $Response->Write(']'); %>
 </my:ttb>
+
 <p>
 Whatever tags XMLSubsMatch matches of the form
 <pre><%=
@@ -35,9 +36,9 @@ arguments and text passed in, so these subs would be called
 respectively for the above XMLMatchSubs:
 
 <pre><%=$Server->HTMLEncode('
-&matchtag( { param1 => "value1", param2=>"value2" }, \'text\' );
+&matchtag( { param1 =>"value1", param2=>"value2" }, \'text\' );
   -- and --
-&matchtag( { param1 => "value1", param2=>"value2" }, \'\');
+&matchtag( { param1 =>"value1", param2=>"value2" }, \'\');
 ')
 %></pre>
 
@@ -46,33 +47,16 @@ call to <my:ttb>&foo::bar()</my:ttb>, so that the XML concept of tag prefix
 namespaces is translated to the concept of perl packages.
 <p>
 
-<my:table width=200 title="Title Box" border=3>
+<my:table width="400" title="Title Box" border='3' bgcolor=red>
   <h3>XML Subs Demo</h3>
-
-  Another table here to demo embedded XMLSubs tags:
-  <my:table border=1>
-    Double Table to Show Embedded Tags
-  </my:table>
-
-  <p>
-
-  And another embedded:
-  <my:table border=1>
-    Another table.
-      <my:table border=1>
-        Triply embedded XMLSubs <my:ttb>my:table</my:ttb> table.
-      </my:table>  
-  </my:table>  
-
+  The bgcolor=red param should have been skipped because it was
+  not surrounded with quotes like bgcolor="red" or bgcolor='red'
 </my:table>
 <p>
-
-<% for("yellow", "red", "blue") { %>
-	<my:table bgcolor=$_ width=200 title=ucfirst($_)." Box" border=5>
-		Colored Box
-	</my:table>
-	<p>
-<% } %>
+<my:table width="400" title="Title Box" border='3' 
+	  bgcolor = 'red' >
+  The color='red' param is OK here as it had the correct syntax.  
+</my:table>
 
 <p>
 The my::* perl subs defining the XMLSubs are located in the 
@@ -80,3 +64,4 @@ global.asa.
 <p>
 
 <my:include src="footer.inc"/>
+

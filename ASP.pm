@@ -4,7 +4,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.07;
+$VERSION = 2.09;
 
 use MLDBM;
 use SDBM_File;
@@ -32,9 +32,9 @@ $MD5 = new MD5();
 $SessionCookieName = 'session-id';
 
 # Some OS's have hashed directory lookups up to 16 bytes, so we leave room
-# for .lock extension
-$SessionIDLength = 11;
-#$SessionIDLength = 32;
+# for .lock extension ... nevermind, security is more important, back to 32
+# $SessionIDLength = 11;
+$SessionIDLength = 32;
 $DefaultStateDB = 'SDBM_File';
 $DefaultStateSerializer = 'Data::Dumper';
 
@@ -75,6 +75,10 @@ $Apache::ASP::StartTime      = time();
    
    HiRes => undef,
 
+   FormFill => 
+   'HTML::FillInForm is needed to use the FormFill feature '.
+   'for auto filling forms with $Response->Form() data',
+
    MailAlert => undef,
    
 #   OrderCollections => 'Ordered collections require the Tie::IxHash '.
@@ -111,7 +115,8 @@ sub handler {
     ref $package and $r = $package;
 
     # rarely happens, but just in case
-    unless($r && $r->can('filename')) {
+    unless(UNIVERSAL::can($r, 'can')) {
+#    unless($r && $r->can('filename')) {
 	# this could happen with a bad filtering sequence
 	warn(<<ERROR);
 No valid request object ($r) passed to ASP handler; if you are getting
@@ -250,7 +255,7 @@ sub Loader {
 	my @files = readdir(DIR);
 	close DIR;
 	unless(@files) {
-	    Apache::ASP::Loader->log_error("[asp] $$ [WARN] can't read files in $file");
+	    Apache::ASP::Load->log_error("[asp] $$ [WARN] can't read files in $file");
 	    return;
 	}
 
@@ -267,7 +272,7 @@ sub Loader {
 	    &Loader("$file/$_", $match, %args);
 	}
 	if($top) {
-	    Apache::ASP::Loader->log_error("[asp] $$ (re)compiled $LOADED scripts of $COUNT loaded");
+	    Apache::ASP::Load->log_error("[asp] $$ (re)compiled $LOADED scripts of $COUNT loaded");
 	}
 	return;
     } 
@@ -275,7 +280,7 @@ sub Loader {
     # now the real work
     unless($file =~ /$match/) {
 	if($args{Debug} and $args{Debug} < 0) {
-	    Apache::ASP::Loader->log_error("skipping compile of $file no match $match");
+	    Apache::ASP::Load->log_error("skipping compile of $file no match $match");
 	}
 	return;
     }
@@ -288,7 +293,7 @@ sub Loader {
     }
 
 
-    my $r = Apache::ASP::Loader::new($file);
+    my $r = Apache::ASP::Load::new($file);
     $r->dir_config('NoState', 1);
     $r->dir_config('Debug', $args{Debug});
     $r->dir_config('DynamicIncludes', $args{DynamicIncludes});
@@ -481,6 +486,8 @@ sub new {
 #       'ua' => $ENV{HTTP_USER_AGENT} || "UNKNOWN UA",
        unique_packages => $r->dir_config('UniquePackages'),
        use_strict      => $r->dir_config('UseStrict'),
+
+       win32           => ($^O eq 'MSWin32') ? 1 : 0,
 
 # moved to parse_config
 #       xml_subs_match  => $r->dir_config('XMLSubsMatch'),
@@ -938,7 +945,8 @@ sub Parse {
 	$self->{pod_comments} = defined($r->dir_config('PodComments')) ? 
 	  $r->dir_config('PodComments') : 1;
 	$self->{xml_subs_match} = $r->dir_config('XMLSubsMatch');
-    }    
+	$self->{xml_subs_strict} = $r->dir_config('XMLSubsStrict');
+    }
 
     # do both before and after, so =pods can span includes with =pods
     if($self->{pod_comments}) {
@@ -1071,48 +1079,8 @@ sub ParseHelper {
     my($script, $text, $perl);
 
     if($self->{xml_subs_match}) {
-	unless($self->{asp}{xslt}) {
-	    $$data =~ s|\s*\<\?xml\s+version\s*\=[^\>]+\?\>||is;
-	}
-	$self->{xml_subs_match} =~ s/[\(\)]//sg;
-	$$data =~ s|\<\s*($self->{xml_subs_match})([^\>]*)/\>
-	  | {
-	     my($func, $args) = ($1, $2);
-	     $func =~ s/\:+/\:\:/g;
-	     $args =~ s/(\s[^\s]+\s*)\=/,$1\=\>/sg;
-	     $args =~ s/^(\s*),/$1/s;
-             "<% $func({ $args }, ''); %>"
-	    } |sgex;	    
-	$$data =~ s@
-	  \<\s*($self->{xml_subs_match})([^\>]*)\>(.*?)\<\/\1\s*\>
-	    @ {
-	       my($func, $args, $text) = ($1, $2, $3);
-	       
-	       $func =~ s/\:+/\:\:/g;
-	       $args =~ s/(\s[^\s]+\s*)\=/,$1\=\>/sg;
-	       $args =~ s/^(\s*),/$1/s;
-	       #	       $args =~ s/\'/\\'/g;
-	       #	       $args =~ s/\"/\'/g;	     
-	       
-	       if($text =~ m/\<\%|\<($self->{xml_subs_match})/) {
-		   # parse again, and control output buffer for this level
-		   my $sub_script = &ParseHelper($self, \$text);
-		   $text = (
-			    ' &{sub{ my $out = ""; '.
-			    'local $Response->{out} =  local $Response->{BinaryRef} = \$out; '.
-			    'local *Apache::ASP::Response::Flush = *Apache::ASP::Response::Null; '.
-			    $$sub_script .
-			    ' ; ${$Response->{out}}; }} '
-			   );
-	       } else {
-		   # raw text
-		   $text =~ s/\\/\\\\/gso;
-		   $text =~ s/\'/\\\'/gso;	
-		   $text = "'$text'";
-	       }
-	       
-	       "<% $func({ $args }, $text); %>"
-	      } @sgex;
+	$self->{dbg} && $self->Debug("start parse of data", length($$data));
+	$$data = $self->ParseXMLSubs($$data);
     }
 
     my(@out, $perl_block, $last_perl_block);
@@ -1169,6 +1137,73 @@ sub ParseHelper {
     }
 
     \$script;
+}
+
+sub ParseXMLSubs {
+    my($self, $data) = @_;
+
+    unless($self->{asp}{xslt}) {
+	$data =~ s|\s*\<\?xml\s+version\s*\=[^\>]+\?\>||is;
+    }
+    $self->{xml_subs_match} =~ s/[\(\)]//sg;
+    $data =~ s|\<\s*($self->{xml_subs_match})([^\>]*)/\>
+	  | {
+	     my($func, $args) = ($1, $2);
+	     $func =~ s/\:+/\:\:/g;
+	     $args = $self->ParseXMLSubsArgs($args);
+             "<% $func({ $args }, ''); %>"
+	    } |sgex;	    
+
+    while (1) {
+	last unless $data =~ s@
+	  \<\s*($self->{xml_subs_match})([^\>]*)\>(?!.*\<\s*\1[^\>]*\>)(.*?)\<\/\1\s*\>
+	    @ {
+		my($func, $args, $text) = ($1, $2, $3);
+		
+		$func =~ s/\:+/\:\:/g;
+		$args = $self->ParseXMLSubsArgs($args);
+		
+		if($text =~ m/\<\%|\<($self->{xml_subs_match})/) {
+		    # parse again, and control output buffer for this level
+		    my $sub_script = &ParseHelper($self, \$text);
+		    $text = (
+			     ' &{sub{ my $out = ""; '.
+			     'local $Response->{out} =  local $Response->{BinaryRef} = \$out; '.
+			     'local *Apache::ASP::Response::Flush = *Apache::ASP::Response::Null; '.
+			     $$sub_script .
+			     ' ; ${$Response->{out}}; }} '
+			    );
+		} else {
+		    # raw text
+		    $text =~ s/\\/\\\\/gso;
+		    $text =~ s/\'/\\\'/gso;	
+		    $text = "'$text'";
+		}
+		
+		"<% $func({ $args }, $text); %>"
+	    } @sgex;
+    }
+
+    $data;
+}
+
+sub ParseXMLSubsArgs {
+    my($self, $args) = @_;
+
+    if ($self->{xml_subs_strict}) {
+	my %args;
+#	$self->Debug("args $args");
+	while ($args =~ s/(\s*[^\s]+\s*)\=\s*([\'\"])(.*?)([\'\"])\s*//s) {
+	    $args{$1} = $3;
+	}
+	$args = join(', ', map { "$_ => '$args{$_}'" } keys %args);
+#	$self->Debug("args $args", \%args);
+    } else {
+	$args =~ s/(\s*[^\s]+\s*)\=/,$1\=\>/sg;
+	$args =~ s/^(\s*),/$1/s;
+    }
+
+    $args;
 }
 
 sub PodComments {
@@ -1523,8 +1558,10 @@ sub CleanupGroup {
 
     ## GET STATE for group
     $state ||= &Apache::ASP::State::new($asp, $group_id);
-    my $ids = $state->GroupMembers();
-    return unless scalar(@$ids);
+    my $ids = $state->GroupMembers() || [];
+
+    # don't return so we can't delete the empty group later
+#    return unless scalar(@$ids);
 
     $asp->{dbg} && $asp->Debug("group check $group_id, next in $next_check sec");
     my $id = $self->{Session}->SessionID();
@@ -1595,20 +1632,25 @@ sub CleanupGroup {
     }
     $internal->UNLOCK();
 
-    
     #### LEAVE DIRECTORIES, NASTY RACE CONDITION POTENTIAL
+    ## NOW PRUNE ONLY DIRECTORIES THAT WE DON'T NEED TO KEEP
+    ## FOR PERFORMANCE
     # REMOVE DIRECTORY, LOCK 
     # if the directory is still empty, remove it, lock it 
     # down so no new sessions will be created in it while we 
     # are testing
-    #    if($deleted == $total) {
-    #	$asp->{Internal}->LOCK();
-    #	my $ids = $state->GroupMembers();
-    #	if(@{$ids} == 0) {
-    #	    $state->DeleteGroupId();
-    #	}
-    #	$asp->{Internal}->UNLOCK();
-    #    }
+    if($deleted == @$ids) {
+	if ($state->GroupId !~ /^[01]/) {
+	    $asp->{Internal}->LOCK();
+	    my $ids = $state->GroupMembers();
+	    if(@{$ids} == 0) {
+		$self->Log("purging stale group ".$state->GroupId.", which should only happen ".
+			   "after Apache::ASP upgrade to beyond 2.09");
+		$state->DeleteGroupId();
+	    }
+	    $asp->{Internal}->UNLOCK();
+	}
+    }
 
     $deleted;
 }
@@ -1648,6 +1690,7 @@ sub CleanupGroups {
     # only one process doing CleanupGroup at a time now, so OK
     # lock around, necessary when keeping empty group directories
     my $groups = $self->{Session}{_SELF}{'state'}->DefaultGroups();
+    $self->{dbg} && $self->Debug("groups ", $groups);
     my($sum_active, $sum_deleted);
     $internal->LOCK();
     my $start_cleanup = time;
@@ -1992,9 +2035,9 @@ sub Secret {
       $Apache::ASP::MD5 . $self->{global} . $self->{'r'} . $self->{'filename'}. rand() . 
 	$$ . $ServerID;
     my $secret = substr($self->Digest(\$data), 0, $SessionIDLength);
-    # by having [0-3][0-f] as the first 2 chars, only 64 groups now, which remains
+    # by having [0-1][0-f] as the first 2 chars, only 32 groups now, which remains
     # efficient for inactive sites, even with empty groups
-    $secret =~ s/^(.)/ord($1)%4/e; 
+    $secret =~ s/^(.)/ord($1)%2/e; 
     $secret;
 }
 
@@ -2780,16 +2823,18 @@ sub new {
     # set up the environment, including authentication info
     # only copy %ENV if we are changing anything
     my $env; 
-    if(defined $r->get_basic_auth_pw) {
-	$env = { %ENV };
-	my $c = $r->connection;
-	#X: this needs to be extended to support Digest authentication
-	$env->{AUTH_TYPE} = $c->auth_type;
-	$env->{AUTH_USER} = $c->user;
-	$env->{AUTH_NAME} = $r->auth_name;
-	$env->{REMOTE_USER} = $c->user;
-	$env->{AUTH_PASSWD} = $r->get_basic_auth_pw;
-    } 
+    if($r->dir_config('AuthServerVariables')) {
+	if(defined $r->get_basic_auth_pw) {
+	    $env = { %ENV };
+	    my $c = $r->connection;
+	    #X: this needs to be extended to support Digest authentication
+	    $env->{AUTH_TYPE} = $c->auth_type;
+	    $env->{AUTH_USER} = $c->user;
+	    $env->{AUTH_NAME} = $r->auth_name;
+	    $env->{REMOTE_USER} = $c->user;
+	    $env->{AUTH_PASSWD} = $r->get_basic_auth_pw;
+	}
+    }
     $env ||= \%ENV;
     $self->{'ServerVariables'} = bless $env, 'Apache::ASP::Collection';
 
@@ -2797,6 +2842,7 @@ sub new {
     my $form = {};
     my %upload;
     if(($r->method() || '') eq 'POST') {	
+	$self->{TotalBytes} = $ENV{CONTENT_LENGTH};
 	if($ENV{CONTENT_TYPE}=~ m|^multipart/form-data|) {
 	    if($asp->{file_upload_max} = $r->dir_config('FileUploadMax')) {
 		$CGI::POST_MAX = $r->dir_config('FileUploadMax');		
@@ -2817,7 +2863,7 @@ sub new {
 		    $form{$_} = $q->param($_);
 		    if(ref($form{$_}) eq 'Fh') {
 			my $fh = $form{$_};
-			binmode $fh if ($^O =~ /Win32/);
+			binmode $fh if $asp->{win32};
 			$upload{$_} = $q->uploadInfo($fh);
 			if($asp->{file_upload_temp}) {
 			    $upload{$_}{TempFile} = $q->tmpFileName($fh);
@@ -2837,19 +2883,31 @@ sub new {
 	    # Only tie to STDIN if we have cached contents
 	    # don't untie *STDIN until DESTROY, so filtered handlers
 	    # have an opportunity to use any cached contents that may exist
-	    $self->{content} = $r->content();
-	    tie(*STDIN, 'Apache::ASP::Request', $self)
-	      if defined($self->{content});	    
-	    $form = $self->{content} ? $self->ParseParams(\$self->{content}) : {};
+	    if(my $len = $self->{TotalBytes}) {
+		$asp->{dbg} && $asp->Debug("reading in $len bytes from POST");
+		my $buf;
+		$r->read($buf, $len);
+		$self->{content} = $buf;
+		$self->{content} ||= '';
+		tie(*STDIN, 'Apache::ASP::Request', $self);
+		if($ENV{CONTENT_TYPE} eq 'application/x-www-form-urlencoded') {
+		    $form = $self->ParseParams(\$self->{content});
+		} else {
+		    $form = {};
+		}
+	    }
 	}
-	$self->{TotalBytes} = $ENV{CONTENT_LENGTH};
-    } 
+    }
 
     $self->{'Form'} = bless $form, 'Apache::ASP::Collection';
     $self->{'FileUpload'} = bless \%upload, 'Apache::ASP::Collection';
     my $query = $r->args();
     my $parsed_query = $query ? $self->ParseParams(\$query) : {};
     $self->{'QueryString'} = bless $parsed_query, 'Apache::ASP::Collection';
+
+    if($r->dir_config('RequestParams')) {
+	$self->{'Params'} = bless { %$parsed_query, %$form }, 'Apache::ASP::Collection';
+    } 
 
     # do cookies now
     my %cookies; 
@@ -2907,14 +2965,11 @@ sub READ {
 
 # COLLECTIONS, normal, Cookies are special, with the dictionary lookup
 # directly aliased as this should be faster than autoloading
-sub Form 
-  { shift->{Form}->Item(@_) }
-sub FileUpload 
-  { shift->{FileUpload}->Item(@_) }
-sub QueryString 
-  { shift->{QueryString}->Item(@_) }
-sub ServerVariables 
-  { shift->{ServerVariables}->Item(@_) }
+sub Form { shift->{Form}->Item(@_) }
+sub FileUpload { shift->{FileUpload}->Item(@_) }
+sub QueryString { shift->{QueryString}->Item(@_) }
+sub ServerVariables { shift->{ServerVariables}->Item(@_) }
+sub Params { shift->{Params}->Item(@_) }
 
 sub BinaryRead {
     my($self, $length) = @_;
@@ -2964,7 +3019,14 @@ sub ParseParams {
     # the same param, say from a multiple select statement
     my $pair;
     for $pair (@params) {
-	my($key, $value) = map { &Unescape($self, $_) } split (/\=/, $pair, 2);
+	my($key, $value) = map { 
+	    # inline for greater efficiency
+	    # &Unescape($self, $_) 
+	    my $todecode = $_;
+	    $todecode =~ tr/+/ /;       # pluses become spaces
+	    $todecode =~ s/%([0-9a-fA-F]{2})/pack("c",hex($1))/ge;
+	    $todecode;
+	} split (/\=/, $pair, 2);
 	if(defined $params{$key}) {
 	    my $collect = $params{$key};
 
@@ -3044,6 +3106,7 @@ sub new {
        Clean => $r->dir_config('Clean') || 0,
        Cookies => bless({}, 'Apache::ASP::Collection'),
        ContentType => 'text/html',
+       FormFill => $r->dir_config('FormFill'),
        IsClientConnected => 1,
        #       PICS => undef,
        #       Status => 200,
@@ -3152,9 +3215,15 @@ sub Flush {
     $asp->{GlobalASA}{'exists'} &&
       $asp->{GlobalASA}->ScriptOnFlush();
     
-    # XSLT Processing
+    # XSLT Processing, check for errors so PrettyError() can call Flush()
     if($asp->{xslt} && ! $asp->{errs}) {
 	$self->FlushXSLT;
+	return if $asp->{errs};
+    }
+
+    # FormFill
+    if ($self->{FormFill} && ! $asp->{errs}) {
+	$self->FormFill;
 	return if $asp->{errs};
     }
 
@@ -3187,7 +3256,7 @@ sub Flush {
        $asp->{Session} 
        and ! $asp->{session_cookie} 
        and $asp->{session_url_parse} 
-       and $self->{ContentType} eq 'text/html'
+       and ($self->{ContentType} =~ /^text/i)
       ) 
       {
 	  $self->SessionQueryParse();
@@ -3244,6 +3313,39 @@ sub Flush {
     # the string does not let go of its allocated memory buffer
     $$out = ''; 
     
+    1;
+}
+
+sub FormFill {
+    my $self = shift;
+    my $asp = $self->{asp};
+
+    $asp->{dbg} && $asp->Debug("form fill begin");
+    $asp->LoadModule('FormFill', 'HTML::FillInForm') || return;
+    my $fif = HTML::FillInForm->new();
+    my $ref = $self->{BinaryRef};
+
+    $$ref =~ s/(\<form[^\>]*\>.*?\<\/form\>)/
+	     {
+		 my $form = $1;
+		 my $start_length = $asp->{dbg} ? length($form) : undef;
+		 eval {
+		     $form = $fif->fill(
+					scalarref => \$form,
+					fdat =>	$asp->{Request}{Form},
+					);
+		 };
+		 if($@) {
+		     $asp->CompileError($form, "form fill failed: $@");
+		 } else {
+		     $asp->{dbg} && 
+			 $asp->Debug("form fill for form of start length $start_length ".
+				     "end length ".length($form));
+		 }
+		 $form;
+	     }		
+	     /iexsg;
+
     1;
 }
 
@@ -3598,7 +3700,7 @@ sub WriteRef {
     $$content_out .= $$dataref;
     
     # do we flush now?  not if we are buffering
-    if(! $self->{Buffer}) {
+    if(! $self->{'Buffer'} && ! $self->{'FormFill'}) {
 	# we test for whether anything is in the buffer since
 	# this way we can keep reading headers before flushing
 	# them out
@@ -4462,28 +4564,30 @@ sub new {
 #    push(@{$self->{'ext'}}, @{$DB{$self->{state_db}}});    
 #    $self->{asp}->Debug("db ext: ".join(",", @{$self->{'ext'}}));
 
-    # create state directory
-    my $umask = umask(0000);
+    # create state directories
+    my @create_dirs;
     unless(-d $state_dir) {
-	my $rv = mkdir($state_dir, $self->{dir_perms});
-	unless (($rv)) {
-	    my $error = $!;
-	    -d $state_dir || $self->{asp}->Error("can't create state dir $state_dir: $error");
-	}
+	push(@create_dirs, $state_dir);
     }
-
     if(! $permissions || $permissions ne O_RDWR) {		    
 	# create group directory
 	unless(-d $group_dir) {
-	    if(mkdir($group_dir, $self->{dir_perms})) {
-		$self->{asp}->Debug("creating group dir $group_dir");
+	    push(@create_dirs, $group_dir);
+	}
+    }
+    if(@create_dirs) {
+	$self->UmaskClear;
+	for my $create_dir (@create_dirs) {
+	    if(mkdir($create_dir, $self->{dir_perms})) {
+		$self->{asp}->Debug("creating state dir $create_dir");
 	    } else {
 		my $error = $!;
-		-d $group_dir || $self->{asp}->Error("can't create group dir $group_dir: $error");
+		-d $create_dir || $self->{asp}->Error("can't create group dir $create_dir: $error");
 	    }
-	}    	
+	}
+	$self->UmaskRestore;
     }
-    umask($umask);
+
 
     # open lock file now, and once for performance
     # we skip this for $group_id eq $id since then this is 
@@ -4544,9 +4648,17 @@ sub Do {
     # clear current tied relationship first, if any
     $self->{dbm} = undef; 
     local $SIG{__WARN__} = sub {};
-    my $umask = umask(0000);
-    $self->{dbm} = &MLDBM::TIEHASH('MLDBM', $self->{file}, $permissions, $self->{file_perms});
-    umask($umask);
+
+    my $error;
+    if($self->{asp}{win32}) {
+	$self->{dbm} = &MLDBM::TIEHASH('MLDBM', $self->{file}, $permissions, $self->{file_perms});
+	$error = $! || '';
+    } else {
+	$self->UmaskClear;
+	$self->{dbm} = &MLDBM::TIEHASH('MLDBM', $self->{file}, $permissions, $self->{file_perms});
+	$error = $! || '';
+	$self->UmaskRestore;
+    }
 
     if($self->{dbm}) {
 	# used to have locking code here
@@ -4555,7 +4667,7 @@ sub Do {
 #	}
     } else {
 	unless($no_error) {
-	    $self->{asp}->Error("Can't tie to file $self->{file}, $permissions, $! !! \n".
+	    $self->{asp}->Error("Can't tie to file $self->{file}, $permissions, $error !! \n".
 				"Make sure you have the permissions on the \n".
 				"directory set correctly, and that your \n".
 				"version of Data::Dumper is up to date. \n".
@@ -4600,21 +4712,20 @@ sub Delete {
     $count;
 }
 
+sub DeleteGroupId {
+    my $self = shift;
 
-#### LEAVE GROUP CONTAINERS AFTER CREATION, NASTY RACE CONDITION OTHERWISE
-
-#sub DeleteGroupId {
-#    my $self = shift;
-#  
-#    my $group_dir = $self->{group_dir};
-#    if(-d $group_dir) {
-#	if(rmdir($group_dir)) {
-#	    $self->{asp}->Debug("deleting group dir $group_dir");
-#	} else {
-#	    $self->{asp}->Log("cannot delete group dir $group_dir: $!");
-#	}
-#    }
-#}    
+    my $group_dir = $self->{group_dir};
+    if(-d $group_dir) {
+	$self->{asp}{Internal}->LOCK;
+	if(rmdir($group_dir)) {
+	    $self->{asp}->Debug("deleting group dir $group_dir");
+	} else {
+	    $self->{asp}->Log("cannot delete group dir $group_dir: $!");
+	}
+	$self->{asp}{Internal}->UNLOCK;
+    }
+}
 
 sub GroupId {
     shift->{group};
@@ -4664,19 +4775,18 @@ sub DefaultGroups {
 	next unless (length($_) eq $DefaultGroupIdLength);
 
 	#### NOT A RACE CONDITION SINCE WE ARE NOT DELETING GROUPS
-	#
-	# skip ones just created, may not check groups 
+	#	# skip ones just created, may not check groups 
 	# within 3 seconds of their creation, allowing 
 	# for enough time for the group to become initialized
 	# obviating a race condition where a group could be
 	# destroyed before being fully initialized, this would
 	# not be necessary to do in a database scenario, but 
 	# with file system it is
-	#	my $ctime = (stat("$self->{state_dir}/$_"))[10];
-	#	if ($ctime < $time and $ctime > $time - 3) {
-	#	    $self->{asp}->Debug("skipping new group $_, created at $ctime");
-	#	    next;
-	#	}
+	#my $ctime = (stat("$self->{state_dir}/$_"))[10];
+	#if ($ctime < $time and $ctime > $time - 3) {
+	#    $self->{asp}->Debug("skipping new group $_, created at $ctime");
+	#    next;
+	#}
 
 	## OPTIMIZATION for not busy sites, no longer necessary,
 	## since there will only be 64 group folders now, instead of 256
@@ -4694,12 +4804,29 @@ sub DefaultGroups {
     closedir STATEDIR;
 
     \@ids;
-}    
+}
+
+sub UmaskClear {
+    my $self = shift;
+    return if $self->{asp}{win32};
+    $self->{umask_restore} = umask(0000);
+}
+
+sub UmaskRestore {
+    my $self = shift;
+    return if $self->{asp}{win32};
+    if(defined $self->{umask_restore}) {
+	umask($self->{umask_restore});
+    }
+}
 
 sub DESTROY {
     my $self = shift;
     return unless %{$self};
     return if $self->{destroyed}++;
+
+    # in case something bad happened earlier & explicity restore failed
+    $self->UmaskRestore();
 
     if($self->{num_locks} > 1) {
 	# we set num locks down to 1, so UnLock
@@ -4823,10 +4950,15 @@ sub OpenLock {
 
     my $lock_file = $self->{lock_file};
     $self->{open_lock} = 1;
-    my $mode = (-e $lock_file) ? "+<" : "+>"; 
+    my $exists = (-e $lock_file) ? 1 : 0;
+    my $mode = ">>";
     $self->{asp}{dbg} && $self->{asp}->Debug("opening lock file $self->{lock_file}");
     open($self->{lock_file_fh}, $mode . $lock_file) 
-      || $self->{asp}->Error("Can't open $self->{lock_file}: $!");
+      || $self->{asp}->Error("Can't open $lock_file with mode $mode: $!");
+    if (! $exists) {
+	chmod($self->{file_perms}, $lock_file)
+	  || $self->{asp}->Error("Can't chmod to $self->{file_perms} $lock_file: $!");
+    }
 }
 
 sub CloseLock { 
@@ -4856,7 +4988,7 @@ sub WriteLock {
 	my $rv = eval { flock($file, LOCK_EX) };
 	if($rv) {
 	    # success, typical, first test for speed
-	} elsif($@ and $^O eq 'MSWin32') {
+	} elsif($@ and $asp->{win32}) {
 	    $asp->Debug("flock() doesn't work on this platform, likely Win95: $!");
 	} else {
 	    $asp->Error("can't write lock $file: $!");    
@@ -4882,7 +5014,7 @@ sub UnLock {
 	} else {
 	    if (-e $file) {
 		local $^W = 0;
-		if($@ and $^O eq 'MSWin32') {
+		if($@ and $self->{asp}{win32}) {
 		    $self->{asp}->Debug("flock() unlocking doesn't work on this platform, likely Win95: $!");
 		} else {
 		    $self->{asp}->Debug("basic unlock of $file failed: $!");
@@ -5210,7 +5342,7 @@ sub Item {
 
 1;
 
-package Apache::ASP::Loader;
+package Apache::ASP::Load;
 use strict;
 no strict qw(refs);
 use vars qw(@Days @Months $AUTOLOAD);
@@ -5281,11 +5413,11 @@ sub connection { shift; }
 =head1 DESCRIPTION
 
 Apache::ASP provides an Active Server Pages port to the 
-Apache Web Server with Perl as the host scripting language. 
-Apache::ASP allows a developer to create dynamic web applications 
+Apache Web Server with Perl scripting only, and enables developing 
+of dynamic web applications 
 with session management and embedded perl code.  There are also 
 many powerful extensions, including XML taglibs, XSLT rendering, 
-and new events not originally part of the ASP API.
+and new events not originally part of the ASP API!
 
 =begin html
 
@@ -5335,6 +5467,8 @@ the source distribution.
 The latest Apache::ASP can be found at your nearest CPAN,
 and also:
 
+  http://download.sourceforge.net/mirrors/CPAN/modules/by-module/Apache/
+  ftp://ftp.duke.edu/pub/perl/modules/by-module/Apache/
   http://www.perl.com/CPAN-local/modules/by-module/Apache/
 
 As a perl user, you should make yourself familiar with 
@@ -5854,6 +5988,21 @@ Please see XML/XSLT section for instructions on its use.
 
   PerlSetVar XMLSubsMatch ^my:
 
+=item XMLSubsStrict
+
+default 0, when set XMLSubs will only take arguments
+that are properly formed XML tag arguments like:
+
+ <my:sub arg1="value" arg2="value"/>
+
+By default, XMLSubs accept arbitrary perl code as
+argument values:
+
+ <my:sub arg1=1+1 arg2=&perl_sub()/>
+
+which is not always wanted or expected.  Set
+XMLSubsStrict to 1 if this is the case.
+
 =item XSLT
 
 default not defined, if set to a file, ASP scripts will
@@ -5902,6 +6051,18 @@ This setting requires that Tie::Cache be first installed.
   PerlSetVar XSLTCacheSize 100
 
 =head2 Miscellaneous
+
+=item AuthServerVariables
+
+default 0. If you are using basic auth and would like 
+$Request->ServerVariables set like AUTH_TYPE, AUTH_USER, 
+AUTH_NAME, REMOTE_USER, & AUTH_PASSWD, then set this and
+Apache::ASP will initialize these values from Apache->*auth* 
+commands.  Use of these environment variables keeps applications
+cross platform compatible as other servers set these too
+when performing basic 401 auth.
+
+  PerlSetVar AuthServerVariables 0
 
 =item BufferingOn
 
@@ -6062,6 +6223,19 @@ No work around has yet been found for this case so use at your
 own risk.
 
   PerlSetVar CompressGzip 1
+
+=item FormFill
+
+default 0, if true will auto fill HTML forms with values
+from $Request->Form().  This functionality is provided
+by use of HTML::FillInForm.  For more information please
+see "perldoc HTML::FillInForm", and the 
+example ./site/eg/formfill.asp.  
+
+This feature can be enabled on a per form basis at runtime
+with $Response->{FormFill} = 1
+
+  PerlSetVar FormFill 1
 
 =item TimeHiRes
 
@@ -6519,6 +6693,16 @@ HTTP::Date::str2time(), e.g.
 
  "Feb  3  1994"    -- Unix 'ls -l' format
  "Feb  3 17:03"    -- Unix 'ls -l' format
+
+=item $Response->{FormFill} = 0|1
+
+If true, HTML forms generated by the script output will
+be auto filled with data from $Request->Form.  This feature
+requires HTML::FillInForm to be installed.  Please see
+the FormFill CONFIG for more information.
+
+This setting overrides the FormFill config at runtime
+for the script execution only.
 
 =item $Response->{IsClientConnected}
 
@@ -8147,7 +8331,7 @@ interest to you, and I will give it higher priority.
 =head2 WILL BE DONE 
 
  + Database storage of $Session & $Application, so web clusters 
-   may scale better than the current NFS StateDir implementation
+   may scale better than the current NFS/CIFS StateDir implementation
    allows, maybe via Apache::Session.
 
 =head2 MAY BE DONE
@@ -8163,9 +8347,119 @@ interest to you, and I will give it higher priority.
 
 =head1 CHANGES
 
+=item $VERSION = 2.07; $DATE="11/26/2000";
+
  + = improvement; - = bug fix
 
-=item $VERSION = 2.03; $DATE="08/01/00";
+ -+-+ Session Manager
+  empty state group directories are not removed, thus alleviating
+  one potential race condition.  This impacted performance
+  on idle sites severely as there were now 256 directories
+  to check, so made many performance enhancements to the 
+  session manager.  The session manager is built to handle
+  up to 20,000 client sessions over a 20 minute period.  It
+  will slow the system down as it approaches this capacity.
+
+  One such enhancement was session-ids now being 11 bytes long 
+  so that its .lock file is only 16 characters in length.  
+  Supposedly some file systems lookup files 16 characters or 
+  less in a fast hashed lookup.  This new session-id has
+  4.4 x 10^12 possible values.  I try to keep this space as
+  large as possible to prevent a brute force attack.
+
+  Another enhancement was to limit the group directories
+  to 64 by only allowing the session-id prefix to be [0-3][0-f]
+  instead of [0-f][0-f], checking 64 empty directories on an
+  idle site takes little time for the session manager, compared
+  to 256 which felt significant from the client end, especially
+  on Win32 where requests are serialized.  
+
+  If upgrading to this version, you would do well to delete
+  empty StateDir group directories while your site is idle.
+  Upgrading during an idle time will have a similar effect,
+  as old Apache::ASP versions would delete empty directories.
+
+ -$Application->GetSession($session_id) now creates
+  an session object that only lasts until the next
+  invocation of $Application->GetSession().  This is 
+  to avoid opening too many file handles at once,
+  where each session requires opening a lock file.
+
+ +added experimental support for Apache::Filter 1.013 
+  filter_register call
+
+ +make test cases for $Response->Include() and 
+  $Response->TrapInclude()
+
+ +Documented CollectionItem config.
+
+ +New $Request->QueryString('multiple args')->Count()
+  interface implemented for CollectionItem config.
+  Also $Request->QueryString('multiple args')->Item(1) method.
+  Note ASP collections start counting at 1.
+
+ --fixed race condition, where multiple processes might 
+  try creating the same state directory at the same time, with
+  one winning, and one generating an error.  Now, web process
+  will recheck for directory existence and error if 
+  it doesn't. 
+
+ -global.asa compilation will be cached correctly, not
+  sure when this broke.  It was getting reloaded every request.
+
+ -StateAllWrite config, when set creates state files
+  with a+rw or 0666 permissions, and state directories
+  with a+rwx or 0777 permissions.  This allows web servers
+  running as different users on the same machine to share a 
+  common StateDir config.  Also StateGroupWrite config
+  with perms 0770 and 0660 respectively.
+
+ -Apache::ASP->Loader() now won't follow links to 
+  directories when searching for scripts to load.
+
+ +New RegisterIncludes config which is on by default only
+  when using Apache::ASP->Loader(), for compiling includes
+  when precompiling scripts.
+
+ +Apache::ASP::CompileInclude path optimized, which underlies
+  $Response->Include()
+
+ +$Request->QueryString->('foo')->Item() syntax enabled
+  with CollectionItem config setting.  Default syntax
+  supported is $Request->QueryString('foo') which is
+  in compatible.  Other syntax like $Request->{Form}{foo}
+  and $Request->Form->Item('foo') will work in either case.
+
+ +New fix suggested for missing Apache reference in 
+  Apache::ASP handler startup for RedHat RPMs.  Added
+  to error message.
+
+ --Backup flock() unlocking try for QNX will not corrupt the 
+  normal flock() LOCK_UN usage, after trying to unlock a file
+  that doesn't exist.  This bug was uncovered from the below 
+  group deletion race condition that existed. 
+
+ -Session garbage collection will not delete new group
+  directories that have just been created but are empty.
+  There was a race condition where a new group directory would
+  be created, but then deleted by a garbage collector before
+  it could be initialized correctly with new state files.
+
+ +Better random session-id checksums for $Session creation.
+  per process srand() initialization, because srand() 
+  may be called once prefork and never called again.
+  Call without arguments to rely on perl's decent rand
+  seeding.  Then when calling rand() in Secret() we have
+  enough random data, that even if someone else calls srand()
+  to something fixed, should not mess things up terribly since
+  we checksum things like $$ & time, as well as perl memory
+  references.
+
+ +XMLSubs installation make test.
+
+ -Fix for multiline arguments for XMLSubs
+
+=item $VERSION = 2.03; $DATE="08/01/2000";
 
  +License change to GPL.  See LICENSE section.
 
@@ -8173,7 +8467,7 @@ interest to you, and I will give it higher priority.
 
  -get rid of Apache::ASP->Loader() warning message for perl 5.6.0
 
-=item $VERSION = 2.01; $DATE="07/22/00";
+=item $VERSION = 2.01; $DATE="07/22/2000";
 
  +$data_ref = $Response->TrapInclude('file.inc') API
   extension which allows for easy post processing of
@@ -8183,14 +8477,14 @@ interest to you, and I will give it higher priority.
 
  +XMLSubsMatch compile time parsing performance improvement
 
-=item $VERSION = 2.00; $DATE="07/15/00";
+=item $VERSION = 2.00; $DATE="07/15/2000";
 
  -UniquePackages config works again, broke a couple versions back
 
  +better error handling for methods called on $Application
   that don't exist, hard to debug before
 
-=item $VERSION = 1.95; $DATE="07/10/00";
+=item $VERSION = 1.95; $DATE="07/10/2000";
 
  !!!!! EXAMPLES SECURITY BUG FOUND & FIXED !!!!!
 
@@ -8215,7 +8509,7 @@ interest to you, and I will give it higher priority.
   to tag sub that was standalone like 
     <Apps:header type="header" title="Moo" foo="moo" />
 
-=item $VERSION = 1.93; $DATE="07/03/00";
+=item $VERSION = 1.93; $DATE="07/03/2000";
 
  -sub second timing with Time::HiRes was adding <!-- -->
   comments by HTML by default, which would possibly
@@ -8229,7 +8523,7 @@ interest to you, and I will give it higher priority.
   Timed log entries will only occur if 
   system debugging is enabled, with Debug -1 or -2
 
-=item $VERSION = 1.91; $DATE="07/02/00";
+=item $VERSION = 1.91; $DATE="07/02/2000";
 
  +Documented XMLSubsMatch & XSLT* configuration
   settings in CONFIG section.
@@ -8414,7 +8708,7 @@ interest to you, and I will give it higher priority.
  -Apache::ASP->Loader() would have a bad error if it didn't load 
   any scripts when given a directory, prints "loaded 0 scripts" now
 
-=item $VERSION = 0.18; $DATE="02/03/00";
+=item $VERSION = 0.18; $DATE="02/03/2000";
 
  +Documented SessionQuery* & $Server->URL() and 
   cleaned up formatting some, as well as redoing
@@ -8677,7 +8971,7 @@ interest to you, and I will give it higher priority.
  -MailErrorsTo should report the right file now that generates
   the error.
 
-=item $VERSION = 0.15; $DATE="08/24/99";
+=item $VERSION = 0.15; $DATE="08/24/1999";
 
  --State databases like $Session, $Application are 
   now tied/untied to every lock/unlock triggered by read/write 
@@ -8763,7 +9057,7 @@ interest to you, and I will give it higher priority.
 
  -Fixed some warnings in DESTROY and ParseParams()
 
-=item $VERSION = 0.14; $DATE="07/29/99";
+=item $VERSION = 0.14; $DATE="07/29/1999";
 
  -CGI & StatINC or StatINCMatch would have bad results
   at times, with StatINC deleting dynamically compiled
@@ -8792,7 +9086,7 @@ interest to you, and I will give it higher priority.
   can be recompiled with the same errors, and work w/o any use strict
   error messaging.  
 
-=item $VERSION = 0.12; $DATE="07/01/99";
+=item $VERSION = 0.12; $DATE="07/01/1999";
 
  -Compiles are now 10 +times faster for scripts with lots of big
   embedded perl blocks <% #perl %>
@@ -8840,7 +9134,7 @@ interest to you, and I will give it higher priority.
  +"use strict" friendly handling of compiling dynamic includes
   with errors
 
-=item $VERSION = 0.11; $DATE="06/24/99";
+=item $VERSION = 0.11; $DATE="06/24/1999";
 
  +Lots of documentation updates
 
@@ -8895,7 +9189,7 @@ interest to you, and I will give it higher priority.
  +Reoptimized pod comment parsing.  I slowed it down to sync
   lines numbers in the last version, but found another corner I could cut.
 
-=item $VERSION = 0.10; $DATE="05/24/99";
+=item $VERSION = 0.10; $DATE="05/24/1999";
 
  += improvement; - = bug fix
 
@@ -8963,7 +9257,7 @@ interest to you, and I will give it higher priority.
   Without an output directory, script output is written to STDOUT
 
 
-=item $VERSION = 0.09; $DATE="04/22/99";
+=item $VERSION = 0.09; $DATE="04/22/1999";
 
  +Updated Makefile.PL optional modules output for CGI & DB_File
 
@@ -9076,19 +9370,21 @@ interest to you, and I will give it higher priority.
 
  +Allow <!--include file=file.inc--> notation w/o quotes around file names
 
- -PerlSetEnv apache conf setting now get passed through to $Request->ServerVariables.
-  this update has ServerVariables getting data from %ENV instead of $r->cgi_env
+ -PerlSetEnv apache conf setting now get passed through to 
+  $Request->ServerVariables. This update has ServerVariables 
+  getting data from %ENV instead of $r->cgi_env
 
  +README FAQ for PerlHandler errors
 
 
-=item $VERSION = 0.08; $DATE="02/06/99";
+=item $VERSION = 0.08; $DATE="02/06/1999";
 
  ++SSI with Apache::Filter & Apache::SSI, see config options & ./eg files
   Currently filtering only works in the direction Apache::ASP -> Apache::SSI,
   will not work the other way around, as SSI must come last in a set of filters
 
- +SSI file includes may reference files in the Global directory, better code sharing
+ +SSI file includes may reference files in the Global directory, better 
+  code sharing
 
  - <% @array... %> no longer dropped from code.
 
@@ -9107,7 +9403,7 @@ interest to you, and I will give it higher priority.
  -Fixed up some config doc errors.
 
 
-=item $VERSION = 0.07; $DATE="01/20/99";
+=item $VERSION = 0.07; $DATE="01/20/1999";
 
  -removed SIG{__WARN__} handler, it was a bad idea.
 
@@ -9124,7 +9420,7 @@ interest to you, and I will give it higher priority.
   improved garbage collection under modperl, esp. w/ file uploads
 
 
-=item $VERSION = 0.06; $DATE="12/21/98";
+=item $VERSION = 0.06; $DATE="12/21/1998";
 
  +Application_OnStart & Application_OnEnd event handlers support.
 
@@ -9174,7 +9470,7 @@ interest to you, and I will give it higher priority.
   without perl choking on the extra \r characters.
 
 
-=item $VERSION = 0.05; $DATE="10/19/98";
+=item $VERSION = 0.05; $DATE="10/19/1998";
 
  +Added PERFORMANCE doc, which includes benchmarks  +hints.
 
@@ -9201,7 +9497,7 @@ interest to you, and I will give it higher priority.
   html includes, and other SSI directives
 
 
-=item $VERSION = 0.04; $DATE="10/14/98";
+=item $VERSION = 0.04; $DATE="10/14/1998";
 
  +Example script eg/cgi.htm demonstrating CGI.pm use for output.
 
@@ -9249,7 +9545,7 @@ interest to you, and I will give it higher priority.
  +POD / README cleanup, formatting and HTML friendly.
 
 
-=item $VERSION = 0.03; $DATE="09/14/98";
+=item $VERSION = 0.03; $DATE="09/14/1998";
 
  +Installation 'make test' now works
 
@@ -9280,7 +9576,7 @@ interest to you, and I will give it higher priority.
   Thus notation like $main::Response->Write() can be used anywhere.
 
 
-=item $VERSION = 0.02; $DATE="07/12/98";
+=item $VERSION = 0.02; $DATE="07/12/1998";
 
  ++Session Manager, won't break under denial of service attack
 
@@ -9299,7 +9595,7 @@ interest to you, and I will give it higher priority.
  -Loads Win32/OLE properly, won't break with UNIX
 
 
-=item $VERSION = 0.01; $DATE="06/26/98";
+=item $VERSION = 0.01; $DATE="06/26/1998";
 
  Syntax Support
  --------------

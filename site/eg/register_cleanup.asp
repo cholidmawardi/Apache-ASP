@@ -2,7 +2,7 @@
 
 <!--#include file=header.inc-->
 
-<% $Sleep = 3; %>
+<% my $Sleep = 3; %>
 We are about to sleep for <%=$Sleep %> seconds.  Before that, 
 this script registers a routine to be executed after this script 
 finishes, which will increment a count.  This count displayed after 

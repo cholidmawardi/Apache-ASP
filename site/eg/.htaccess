@@ -19,6 +19,7 @@ PerlSetVar SessionCount 1
 PerlSetVar TimeHiRes 1
 PerlSetVar CompressGzip 0
 #PerlSetVar StateAllWrite 1
+PerlSetVar UseStrict 1
 
 # .asp files for Session state enabled
 <Files ~ (\.asp)>
@@ -71,4 +72,17 @@ PerlSetVar CompressGzip 0
 	PerlSetVar CookiePath  /	
 	PerlSetVar SessionTimeout  1
 	PerlSetVar SessionQueryParseMatch ^http://localhost
+</Files>
+
+<Files ~ (xml_subs_strict\.asp)>
+	SetHandler perl-script
+	PerlHandler Apache::ASP
+	PerlSetVar CookiePath  /	
+	PerlSetVar SessionTimeout  5
+	PerlSetVar RegisterIncludes 1
+#	PerlSetVar StateSerializer Storable
+#	PerlSetVar StateDB DB_File
+#	PerlSetVar StatScripts 0
+	PerlSetVar XMLSubsMatch my:\w+
+	PerlSetVar XMLSubsStrict 1
 </Files>

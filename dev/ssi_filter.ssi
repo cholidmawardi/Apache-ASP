@@ -1,15 +1,7 @@
-<% $Response->{Buffer} = 1; %>
-
 <!--#include file="header.inc"-->
 <% 
-unless($Request->QueryString('virtual') || $Request->QueryString('redirect')) {
-  $Response->Redirect("$demo->{file}?redirect=1");
-}
-
-if($Request->QueryString('virtual')) { 	
-        # If virtual include of self, print a little, then exit ...			
-        $Response->Clear();
-        %> <hr size=1> SSI Virtual Include <hr size=1> <%
+if($Request->QueryString('virtual')) { 
+	%> <hr size=1> SSI Virtual Include <hr size=1> <%
 	$Response->End();
 } 
 %>

@@ -22,6 +22,8 @@ $optional_modules =
    'Compress::Zlib' => "Required for html gzip text compression for browsers that support it",
    'DB_File' => 'Optional module for StateDB config option',
    'HTML::Clean' => 'Compress text/html with Clean config or $Response->{Clean} set to 1-9',
+   'HTML::FillInForm' => 
+   'Enables FormFill feature which will auto fill forms from $Request->Form data',
    'Apache::Filter' => 'Full SSI support via Apache::Filter & Apache::SSI',
    'Apache::SSI' => 'Full SSI support via Apache::Filter & Apache::SSI',
    'Net::SMTP' => 'Runtime errors can be mailed to the webmaster with MailErrorTo config',

@@ -1,22 +1,22 @@
 #!/usr/local/bin/perl5 asp
 
 <%
-	my $form = $Request->Form();
+    my $form = $Request->Form();
 
-	# process form here
-	if($form->{increment}) {
-		$Session->{Count}++;
-	} elsif($form->{timeout}) {
-		$Session->Timeout(.25);
-	} elsif($form->{abandon}) {
-		$Session->Abandon();
-	}
-	
-	@rows = (
-		 '$Session->{Count}',
-		 '$Session->{Timeout}',
-		 '$Session->{SessionID}'
-		 );
+# process form here
+if($form->{increment}) {
+    $Session->{Count}++;
+} elsif($form->{timeout}) {
+    $Session->Timeout(.25);
+} elsif($form->{abandon}) {
+    $Session->Abandon();
+}
+
+my @rows = (
+	 '$Session->{Count}',
+	 '$Session->{Timeout}',
+	 '$Session->{SessionID}'
+	 );
 %>
 <!--#include file=header.inc-->
 

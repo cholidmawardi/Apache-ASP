@@ -1,6 +1,9 @@
 use DemoASP;
 use File::Basename qw(basename);
-use vars qw($FontFace);
+
+# when PerlSetVar UseStrict setting on, need to declare
+# global variables with "use vars"
+use vars qw($FontFace $GlobalFont %EG $title);
 
 $GlobalFont = 'face=verdana,helvetica';
 
@@ -66,6 +69,10 @@ sub Script_OnFlush {
        'form.asp' => 'Shows simple use of $Request->Form() and how to get raw input data '.
 			' from $Request->BinaryRead()',
 
+       'formfill.asp' =>
+       'Shows use of FormFill feature, which auto fills HTML forms from '.
+       '$Request->Form() data.  One must install HTML::FillInForm to use this feature. ',
+
        'global.asa' => 'The global.asa is the nervous system of an ASP application and '.
 			'is where you define your event handlers.',
 
@@ -119,6 +126,51 @@ sub Script_OnFlush {
        'XMLSubsMatch XML Extensions demonstrated, which all custom tags '.
        'to be created by the developer.',
 
+       'xml_subs_strict.asp' =>
+       'XMLSubsStrict setting causes XMLSubs to accept only string literals '.
+       'for arguments, conforming to XML standard more strictly, and '.
+       'controlling XMLSubs execution to compile time arguments.',
+       
+
        'xslt.xml' => 'XSLT transformation of XML script, powered by XML::XSLT and Tie::Cache',
 );
 
+$SIG{__DIE__} = \&Carp::confess;
+
+sub my::include {
+    my($args, $text) = @_;
+    if($args->{title}) {
+      use vars qw($title);
+      $title = $args->{title};
+    }
+    $Response->Include($args->{src});
+}
+
+sub my::ttb {
+    my($args, $text) = @_;
+    print "<font face=courier size=-1><b>$text</b></font>";
+}
+
+sub my::table {
+    my($args, $text) = @_;
+    my $title = delete $args->{title};
+
+    my %args = (
+	     # set defaults, and override with %$args
+	     border => 0,
+	     bgcolor => 'white',
+	     width => '300',
+	     cellpadding => 3,
+	     cellspacing => 0,
+	     %$args
+	    );
+
+    print '<table '.join(' ', 
+			 map { "$_=$args{$_}" } keys %args,
+			). '>';
+    print ($title ? "<tr><td bgcolor=black><font color=white>$title</font></td></tr>" : '');
+    print "\n";
+    print "<tr><td>";
+    print $text;
+    print "</td></tr></table>";
+}

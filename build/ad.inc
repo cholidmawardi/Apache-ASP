@@ -6,7 +6,6 @@ if($Ads) {
 	$PageCount++;
 	%>
 
-
 		<!--- Begin HitExchange Code --->
                <CENTER><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR><TD>
                <TABLE BORDER=0 BGCOLOR="#0000FF" CELLPADDING=1 CELLSPACING=0>
@@ -33,6 +32,10 @@ if($Ads) {
 	width=468 height=16 border=0 ismap alt=""></a><br></center>
 	<!-- END LINKEXCHANGE CODE -->
 
+=cut
+
+=pod
+
 		<center>
 		<!------ Looksmart clicks HTML starts here -------->
 		<SCRIPT LANGUAGE="JavaScript1.1" 
@@ -40,7 +43,6 @@ if($Ads) {
 		</SCRIPT>
 		<!------- Looksmart clicks HTML ends here ---------> 
 		</center>
-		<br>
 
 =cut
 
