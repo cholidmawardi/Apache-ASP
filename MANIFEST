@@ -80,6 +80,10 @@ site/apps/search/.htaccess
 site/apps/search/global.asa
 site/apps/search/index.asp
 site/apps/search/source.asp
+site/articles/flow.gif
+site/articles/perlmonth1_intro.html
+site/articles/perlmonth2_build.html
+site/articles/perlmonth3_tune.html
 site/asptitlelogo.gif
 site/cgi.html
 site/changes.html
@@ -145,6 +149,7 @@ site/planetofmusic.com.gif
 site/powered_by_apache_asp.jpg
 site/powered_by_modperl.gif
 site/rectangle_power_perl.gif
+site/redhat_logo.gif
 site/resources.html
 site/robots.txt
 site/sessions.html
@@ -170,6 +175,7 @@ t/asp_object.t
 t/cache.t
 t/cache_test.inc
 t/cgi_headers.t
+t/closure.inc
 t/closure.t
 t/collection.t
 t/collectionitem.t
@@ -201,6 +207,7 @@ t/inline_include_change.inc
 t/inode_names.t
 t/load.inc
 t/load.t
+t/load_error.inc
 t/long_names.t
 t/loops.t
 t/mail_error.t

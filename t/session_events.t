@@ -23,6 +23,7 @@ my %config = (
 	      'Debug' => 0,
 	      'SessionCount' => 1,
 	      'Global' => 'session_events',
+	      'SessionQuery' => 1,
 	      );
 
 my $r = Apache::ASP::CGI->init($0);
@@ -64,6 +65,33 @@ $ASP->Session->Abandon;
 $ASP->CleanupGroups('PURGE');
 &session_count_ok($ASP, 10);
 $ASP->DESTROY;
+
+# Session_OnEnd test repeat on expired session
+{
+    my $abandon_session_id;
+    $ASP = Apache::ASP->new($r);
+    $ASP->Session->{WriteMark}++;
+    $ASP->Session->Abandon();
+    $abandon_session_id = $ASP->Session->SessionID;
+#    print STDERR $ASP->Session->SessionID."\n";
+    # do not PURGE cleanup here, let next script get initialized with old session id
+    $ASP->DESTROY;
+
+    local $ENV{QUERY_STRING} = 'session-id='.$abandon_session_id;
+    $ASP = Apache::ASP->new($r);
+    $t->eok($abandon_session_id ne $ASP->Session->SessionID, "abandoned session restored");
+    $ASP->Session->Abandon();
+#    print STDERR $ASP->Session->SessionID."\n";
+    $ASP->CleanupGroups('PURGE');
+    $ASP->DESTROY;
+
+    $ASP = Apache::ASP->new($r);
+    $t->eok($abandon_session_id ne $ASP->Session->SessionID, "abandoned session restored");
+    $ASP->Session->Abandon();
+#    print STDERR $ASP->Session->SessionID."\n";
+    $ASP->CleanupGroups('PURGE');
+    $ASP->DESTROY;
+}
 
 $t->done;
 

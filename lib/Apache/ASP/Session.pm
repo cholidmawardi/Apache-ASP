@@ -78,11 +78,15 @@ sub new {
 		$internal->{$id} = { %{$internal->{$id}}, 'end' => 1 };
 		$internal->UNLOCK();	      
 
-		$asp->Debug("session $id timed out, clearing");
-		$asp->{GlobalASA}->SessionOnEnd($id);
-		$internal->LOCK();
-		delete $internal->{$id};
-		$internal->UNLOCK();
+		# remove this section, allow lazy cleanup, this caused a bug 
+		# in which sessions cleared in this way, but didn't have their files cleaned up 
+		# would have their timeout restored later
+		#
+#		$asp->Debug("session $id timed out, clearing");
+#		$asp->{GlobalASA}->SessionOnEnd($id);
+#		$internal->LOCK();
+#		delete $internal->{$id};
+#		$internal->UNLOCK();
 		
 		# we need to create a new state now after the clobbering
 		# with SessionOnEnd

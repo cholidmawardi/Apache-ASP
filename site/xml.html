@@ -248,7 +248,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td valign=top bgcolor=white>
 <font size=+0 face=verdana,arial>
 
-<font face=verdana><font class=title size=+1 color=#555555><b>XML/XSLT</b></font><p>
+<font face=verdana><font class=title size=+1 color=#555555><b>XML/XSLT</b></font>
 </font>
 
 	<hr size=1>
@@ -261,7 +261,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Custom%20Tags%202d10f1a2>Custom Tags with XMLSubsMatch</a>
+			<a href=#Custom%20Tags%20343d11d8>Custom Tags with XMLSubsMatch</a>
 			</font>
 			</td>
 		
@@ -278,8 +278,8 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<p>
 
 	<p>
-	<a name=Custom%20Tags%202d10f1a2></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>Custom Tags with XMLSubsMatch</b></font><p>
+	<a name=Custom%20Tags%20343d11d8></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Custom Tags with XMLSubsMatch</b></font>
 <font face="courier new" size=3><pre>
 </pre></font>Before XML, there was the need to make HTML markup smarter.
 Apache::ASP gives you the ability to have a perl
@@ -294,28 +294,32 @@ to add dynamic pieces without having to visibly use
 you want to insert for an employee with contact 
 info and the like, you could set up a tag like:
 <font face="courier new" size=3><pre>
- &lt;my:employee name=&quot;Jane&quot; last=&quot;Doe&quot; phone=&quot;555-2222&quot;&gt;
+ &lt;my:new-employee name=&quot;Jane&quot; last=&quot;Doe&quot; phone=&quot;555-2222&quot;&gt;
    Jane Doe has been here since 1998.
- &lt;/my:employee&gt;
+ &lt;/my:new-employee&gt;
 </pre></font>To render it with a custom tag, you would tell 
 the Apache::ASP parser to render the tag with a 
 subroutine:
 <font face="courier new" size=3><pre>
-  PerlSetVar XMLSubsMatch my:employee
+  PerlSetVar XMLSubsMatch my:new-employee
 </pre></font>Any colons, &#39;:&#39;, in the XML custom tag will turn
 into &#39;::&#39;, a perl package separator, so the my:employee
 tag would translate to the my::employee subroutine, or the 
-employee subroutine in the my package.
+employee subroutine in the my package.  Any dash &quot;-&quot; will 
+also be translated to an underscore &quot;_&quot;, as dash is not valid
+in the names of perl subroutines.
 <font face="courier new" size=3><pre>
 </pre></font>Then you would create the my::employee subroutine in the my 
-perl package or whereever like so
+perl package or whereever like so:
 <font face="courier new" size=3><pre>
-  sub my::employee {
+  package my;
+  sub new_employee {
     my($attributes, $body) = @_;
-    $main::Response-&gt;Include(&#39;employee.inc&#39;, $attributes, $body);
+    $main::Response-&gt;Include(&#39;new_employee.inc&#39;, $attributes, $body);
   }
+  1;
 
-  &lt;!-- # employee.inc file somewhere else --&gt;
+  &lt;!-- # new_employee.inc file somewhere else, maybe in Global directory --&gt;
   &lt;% my($attributes, $body) = @_; %&gt;
   <table>
   &lt;% for('name', 'last', 'phone') { %&gt;
@@ -326,9 +330,9 @@ perl package or whereever like so
   &lt;% } %&gt;
   <tr><td colspan=2>&lt;%= $body %&gt;</td></tr>
   </table>
-  &lt;!-- # end employee.inc file --&gt;
+  &lt;!-- # end new_employee.inc file --&gt;
 </pre></font>The $main::Response-&gt;Include() would then delegate the rendering
-of the employee to the employee.inc ASP script include.
+of the new-employee to the new_employee.inc ASP script include.
 <font face="courier new" size=3><pre>
 </pre></font>Though XML purists would not like this custom tag technology
 to be related to XML, the reality is that a careful
@@ -339,30 +343,27 @@ otherwise do with XSLT.
 </pre></font>Custom tags defined in this way can be used as XML tags
 are defined with both a body and without as it
 <font face="courier new" size=3><pre>
-  &lt;my:employee&gt;...&lt;/my:employee&gt;
+  &lt;my:new-employee&gt;...&lt;/my:new-employee&gt;
 </pre></font>and just
 <font face="courier new" size=3><pre>
-  &lt;my:employee/&gt;
+  &lt;my:new-employee /&gt;
 </pre></font>These tags are very powerful in that they can also
 enclose normal ASP logic, like:
 <font face="courier new" size=3><pre>
-  &lt;my:employee&gt;
+  &lt;my:new-employee&gt;
     &lt;!-- normal ASP logic --&gt;
     &lt;% my $birthday = &amp;HTTP::Date::time2str(time - 25 * 86400 * 365); %&gt;
 
     &lt;!-- ASP inserts --&gt;
     This employee has been online for &lt;%= int(rand()*600)+1 %&gt;
     seconds, and was born near &lt;%= $birthday %&gt;.
-  &lt;/my:employee&gt;   
+  &lt;/my:new-employee&gt;   
 </pre></font>For an example of this custom XML tagging in action, please check 
-out the <a href=eg/xml_subs.asp>./site/eg/xml_subs.asp</a> script.  Note the one limitation
-that currently exists is that tags of the same name may not 
-be used in each other, but otherwise customs tags may
-be used in other custom tags.</font>
+out the <a href=eg/xml_subs.asp>./site/eg/xml_subs.asp</a> script.</font>
 	
 	<p>
 	<a name=XSLT%20Tranfor41f72a4d></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>XSLT Tranformations</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>XSLT Tranformations</b></font>
 <font face="courier new" size=3><pre>
 </pre></font>XML is good stuff, but what can you use it for? The principle is
 that by having data and style separated in XML and XSL files, you
@@ -422,7 +423,7 @@ more about how to configure the XSLTCache.</font>
 	
 	<p>
 	<a name=References></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>References</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>References</b></font>
 <font face="courier new" size=3><pre>
 </pre></font>For more information about XSLT, please see the standard at:
 <font face="courier new" size=3><pre>

@@ -1,57 +1,45 @@
-$MODULE=Apache::ASP; $VERSION = '2.51'; $DATE="TBD"
+$MODULE=Apache::ASP; $VERSION = '2.53'; $DATE="TBD"
 
 Please see README for changes for past versions.
 
  + = improvement;    - = bug fix;    (d) = documentation
 
- + added t/session_query_parse.t test to cover use of SessionQueryParse
-   and $Server->URL APIs
+ + XMLSubs tags with "-" in them will have "-" replaced with "_" or underscore, so a
+   tag like <my:render-table /> will be translated to &my::render_table() ... tags with
+   - in them are common in extended XML syntaxes, but perl subs cannot have - in them only.
 
- - Fixed duplicate "&" bug associated with using $Server->URL 
-   and SessionQueryParse together
+ + Clean setting now works on output when $Response->{ContentType} begins with text/html;
+   like "text/html; charset=iso-8859-2" ... before Clean would only work on output marked
+   with ContentType text/html.  Thanks to Szymon Juraszczyk for recommending fix.
 
- + Patch to allow $Server->URL() to be called multiple times on the same URL
-   as in $Server->URL($Server->URL($url, \%params), \%more_params)
+ --Fixed a bug which would cause Session_OnEnd to be called twice on sessions in a certain case,
+   particularly when an old expired session gets reused by and web browser... this bug was
+   a result of a incomplete session cleanup method in this case.  Thanks to Oleg Kobyakovskiy 
+   for reporting this bug.  Added test in t/session_events.t to cover this problem going forward.
 
- (d) Added new testimonials & sites & created a separate testimonials page.
+ - Compile errors from Apache::ASP->Loader() were not being reported.  They will
+   be reported again now.  Thanks to Thanos Chatziathanassiou for discovering and
+   documenting this bug.  Added test in t/load.t to cover this problem going forward.
 
- - SessionQueryParse will now add to &amp; to the query strings
-   embedded in the HTML, instead of & for proper HTML generation.
-   Thanks to Peter Galbavy for pointing out and Thanos Chatziathanassiou
-   for suggesting the fix.
+ + use of chr(hex($1)) to decode URI encoded parameters instead of pack("c",hex($1))
+   faster & more correct, thanks to Nikolay Melekhin for pointing out this need.
 
- - $Response->{ContentType} set to text/html for developer error reporting,
-   in case this was set to something else before the error occured.
-   Thanks to Philip Mak for reporting.
+ (d) Added old perlmonth.com articles to ./site/articles in distribution
+   and linked to them from the docs RESOURCES section
 
- - Couple of minor bug fixes under PerlWarn use, thanks Peter Galbavy
-   for reporting.
+ (d) Updated documention for the $Application->SessionCount API
 
- + Added automatic load of "use Apache2" for compat with mod_perl2 
-   request objects when Apache::ASP is loaded via "PerlModule Apache::ASP"
-   Thanks to Richard Curtis for reporting bug & subsequent testing.
+ + Scripts with named subroutines, which is warned against in the style guide,
+   will not be cached to help prevent my closure problems that often
+   hurt new developers working in mod_perl environments.  The downside
+   is that these script will have a performance penalty having to be
+   recompiled each invocation, but this will kill many closure caching 
+   bugs that are hard to detect.
 
- - When GlobalPackage config changes, but global.asa has not, global.asa
-   will be recompiled anyway to update the GlobalPackage correctly.
-   Changing GlobalPackage before would cause errors if global.asa was
-   already compiled.
+ - $Request->FileUpload('upload_file', 'BrowserFile') would return
+   a glob before that would be the file name in scalar form.  However
+   this would be interpreted as a reference incorrectly.  The fix
+   is to make sure this is always a scalar by stringifying 
+   this data internally.  Thanks to Richard Curtis for pointing
+   out this bug.
 
- ++ For ANY PerlSetVar type config, OFF/Off/off will be assumed 
-    to have value of 0 for that setting.  Before, only a couple settings
-    had this semantics, but they all do now for consistency.
-
- - Fix for InodeNames config on OpenBSD, or any OS that might have
-   a device # of 0 for the file being stat()'d, thanks to Peter Galbavy
-   for bug report.
-
- ++ Total XSLT speedups, 5-10% on large XSLT, 10-15% on small XSLT
-
- + bypass meta data check like expires for XSLT Cache() API use
-   because XSLT tranformations don't expire, saves hit to cache dbm
-   for meta data
-
- + use of direct Apache::ASP::State methods like FETCH/STORE
-   in Cache() layer so we don't have to go through slower tied interface.
-   This will speed up XSLT & and include output caching mostly.
-
- + minor optimizations for speed & memory usage

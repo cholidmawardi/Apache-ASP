@@ -60,7 +60,7 @@ sub connection { shift; }
 sub Run {
     shift if(ref $_[0] or $_[0] eq 'Apache::ASP');
 
-    local $SIG{__WARN__} = \&Warn;
+    local $SIG{__WARN__} = \&Apache::ASP::Warn;
     my($file, $match, %args) = @_;
     unless(-e $file) {
 	warn("$file does not exist for loading");
@@ -138,19 +138,15 @@ sub Run {
 	    $asp->StatINC;
 	}
 
-	$asp->CompileInclude($asp->{'basename'});
-	if($asp->{errs}) {
-	    warn("$asp->{errs} errors compiling $file while loading");
-	    $asp->DESTROY;
-	    return 0;
-	} else {
-	    if($args{'Execute'}) {
-		local *Apache::ASP::Response::Flush = sub {};
-		$asp->Run;
-	    }
-	    $asp->DESTROY;
-	    $LOADED++;
+	my $rv = $asp->CompileInclude($asp->{'basename'})
+	  || die($@);
+
+	if($args{'Execute'}) {
+	    local *Apache::ASP::Response::Flush = sub {};
+	    $asp->Run;
 	}
+	$asp->DESTROY;
+	$LOADED++;
     };
     $@ && warn($@);
 

@@ -90,7 +90,7 @@ sub new {
 			    $upload{$_}{TempFile} = $q->tmpFileName($fh);
 			    $upload{$_}{TempFile} =~ s|^/+|/|;
 			}
-			$upload{$_}{BrowserFile} = $fh;
+			$upload{$_}{BrowserFile} = "$fh";
 			$upload{$_}{FileHandle} = $fh;
 			$upload{$_}{ContentType} = $upload{$_}{'Content-Type'};
 			# tie the file upload reference to a collection... %upload
@@ -267,7 +267,7 @@ sub ParseParams {
 	    # &Unescape($self, $_) 
 	    my $todecode = $_;
 	    $todecode =~ tr/+/ /;       # pluses become spaces
-	    $todecode =~ s/%([0-9a-fA-F]{2})/pack("c",hex($1))/ge;
+	    $todecode =~ s/%([0-9a-fA-F]{2})/chr(hex($1))/ge;
 	    $todecode;
 	} split (/\=/, $pair, 2);
 	if(defined $params{$key}) {

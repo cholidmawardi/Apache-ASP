@@ -4,7 +4,7 @@
 
 package Apache::ASP;
 
-$VERSION = 2.51;
+$VERSION = 2.53;
 
 use Digest::MD5 qw(md5_hex);
 use Cwd qw(cwd);
@@ -28,7 +28,7 @@ no strict qw(refs);
 use vars qw($VERSION
 	    %NetConfig %LoadedModules %LoadModuleErrors 
 	    %Codes %includes %Includes %CompiledIncludes
-	    @Objects %Register %ScriptSubs %XSLT
+	    @Objects %Register %XSLT
 	    $ServerID $ServerPID $SrandPid 
             $CompileErrorSize $CacheSize @CompileChecksumKeys
 	    %ScriptLanguages $ShareDir $INCDir $AbsoluteFileMatch
@@ -948,6 +948,7 @@ sub ParseXMLSubs {
 	     my($func, $args) = ($1, $2);
 	     $args = &CodeTagDecode($self, $args);
 	     $func =~ s/\:+/\:\:/g;
+             $func =~ s/\-/\_/g;
 	     $args && ($args = &ParseXMLSubsArgs($self, $args));
 	     $args ||= '';
 	     $self->{xmlsubs_compiled_tag_short}++;
@@ -1235,9 +1236,24 @@ sub CompileInclude {
 COMPILE_INCLUDE_PARSE:
     
     my $parse_data = $self->Parse($include);
+    my $no_cache = $self->{no_cache};
     my $data;
+
+#    use Data::Dumper qw(Dumper);
+#    print STDERR Dumper($include, $parse_data);
+#    $self->Debug($self);
+
     if ($parse_data->{is_perl}) {
        my $sub = $self->CompilePerl($parse_data->{data}, $subid, $package);
+
+       # for perl with subs in it, do not cache the code compilation
+       # to help prevent my closure problems for newbies, --jc 2/11/2003
+       unless($no_cache) {
+	   $no_cache = $self->TestForSubs($parse_data->{data});
+	   if($no_cache) {
+	       $self->Debug("test for subs returned $no_cache, no_cache = $no_cache");
+	   }
+       }
 
        if ($sub) {
 	   $data = { 
@@ -1258,7 +1274,7 @@ COMPILE_INCLUDE_PARSE:
 	$data = undef;
     }
 
-    if ($data && $subid && ! $self->{no_cache}) { # for a returned code ref, don't cache
+    if ($data && $subid && ! $no_cache) { # for a returned code ref, don't cache
 	$Apache::ASP::CompiledIncludes{$subid} = $data;
     }
 
@@ -1315,6 +1331,8 @@ sub CompilePerl {
     $subid && $self->UndefRoutine($subid);
     $self->{dbg} && $self->Debug("compiling into package $package subid [$subid]");    
 
+    $self->{compile_perl_count}++; # counter used in test case closure.t
+
     my $eval = 
       join(" ;; ", 
 	   "package $package;", # for no sub closure
@@ -1328,6 +1346,7 @@ sub CompilePerl {
     $eval = $1;
 
     my $sub_ref;
+
     if($self->{use_strict}) { 
 	local $SIG{__WARN__} = sub { die("maybe use strict error: ", @_) };
 
@@ -1342,6 +1361,7 @@ sub CompilePerl {
 
     my $rv; # for readability
     my $error = $@;
+
     if($@) {
 	$self->CompileError($eval); # don't throw error, so we can throw die later
 	$subid && $self->UndefRoutine($subid);
@@ -1350,9 +1370,6 @@ sub CompilePerl {
 	if($subid) {
 	    if(&config($self, 'RegisterIncludes')) {
 		$self->RegisterIncludes($script);
-	    }
-	    if($package eq $self->{GlobalASA}{'package'}) {
-		$self->RegisterSubs($subid, $eval);
 	    }
 	    $rv = $subid;
 	} else {
@@ -1364,29 +1381,9 @@ sub CompilePerl {
     $rv;
 }
 
-sub RegisterSubs {
-    my($self, $id, $script) = @_;
-    
-    my $global_package = $self->{GlobalASA}{'package'};
-    while($script =~ s/(^|\n)sub\s+([^\s\{]+)\s*\{//s) {
-	my $sub = $2;
-	if($sub =~ /\:\:/) {
-	    # absolute sub, don't touch it
-	} else {
-	    # else defined in global package
-	    $sub = $global_package.'::'.$sub;
-	}
-	$self->{dbg} && $self->Debug("registering sub $sub at $id");
-	if($ScriptSubs{$sub}) {
-	    if($ScriptSubs{$sub} ne $id) {
-		$self->Log("[WARN] redefinition of subroutine $sub at $id, ".
-			   "originally defined at $ScriptSubs{$sub}");
-		$ScriptSubs{$sub} = $id;
-	    }
-	} else {
-	    $ScriptSubs{$sub} = $id;
-	}
-    }
+sub TestForSubs {
+    my($self, $script) = @_;
+    $$script =~ /(^|\n)\s*sub\s+([^\s\{]+)\s*\{/ ? 1 : 0;
 }
 
 sub InitPackageGlobals {
@@ -2024,7 +2021,7 @@ __END__
 Apache::ASP provides an Active Server Pages port to the 
 Apache Web Server with Perl scripting only, and enables developing 
 of dynamic web applications 
-with session management and embedded perl code.  There are also 
+with session management and embedded Perl code.  There are also 
 many powerful extensions, including XML taglibs, XSLT rendering, 
 and new events not originally part of the ASP API!
 
@@ -2073,7 +2070,7 @@ the source distribution.
 =head1 INSTALL
 
 The installation process for Apache::ASP is geared towards those
-with experience with perl, Apache, and unix systems.  For those
+with experience with Perl, Apache, and unix systems.  For those
 without this experience, please understand that the learning curve 
 can be significant.  But what you have at the end will be a web site
 running on superior open source software.
@@ -2100,10 +2097,10 @@ and also:
   http://cpan.org/modules/by-module/Apache/
   ftp://ftp.duke.edu/pub/perl/modules/by-module/Apache/
 
-As a perl user, you should make yourself familiar with 
+As a Perl developer, you should make yourself familiar with 
 the CPAN.pm module, and how it may be used to install
 Apache::ASP, and other related modules.  The easiest way
-to install Apache::ASP for the first time from perl is to 
+to install Apache::ASP for the first time from Perl is to 
 fire up the CPAN shell like:
 
  shell prompt> perl -MCPAN -e shell
@@ -2571,7 +2568,7 @@ STOP button should safely quit the session however.
 
 default 0, if true enables the $Application->SessionCount API
 which returns how many sessions are currently active in 
-the application.  As of v.19, this config was created 
+the application.  This config was created 
 because there is a performance hit associated with this
 count tracking, so it is disabled by default.
 
@@ -2765,14 +2762,14 @@ powerful extensions to your XML and HTML rendering.
 
 Please see XML/XSLT section for instructions on its use.
 
-  PerlSetVar XMLSubsMatch my:\w+
+  PerlSetVar XMLSubsMatch my:[\w\-]+
 
 =item XMLSubsStrict
 
 default 0, when set XMLSubs will only take arguments
 that are properly formed XML tag arguments like:
 
- <my:sub arg1="value" arg2="value"/>
+ <my:sub arg1="value" arg2="value" />
 
 By default, XMLSubs accept arbitrary perl code as
 argument values:
@@ -2800,7 +2797,7 @@ or a more ASP style variable interpolation:
 This configuration is being introduced experimentally in version 2.45,
 as it will become the eventual default in the 3.0 release.
 
-  PerlSetVar XMLSubsPerlArgs 1
+  PerlSetVar XMLSubsPerlArgs Off
 
 =item XSLT
 
@@ -4480,16 +4477,12 @@ to display all the data in current user sessions.
 
 =item $Application->SessionCount()
 
-This NON-PORTABLE method returns the current number of active sessions,
-in the application.  This method is not implemented as part of the ASP
+This NON-PORTABLE method returns the current number of active sessions
+in the application, and is enabled by the SessionCount configuration setting.
+This method is not implemented as part of the original ASP
 object model, but is implemented here because it is useful.  In particular,
 when accessing databases with license requirements, one can monitor usage
 effectively through accessing this value.
-
-This is a new feature as of v.06, and if run on a site with previous 
-versions of Apache::ASP, the count may take a while to synch up.  To ensure
-a correct count, you must delete all the current state files associated
-with an application, usually in the $Global/.state directory.
 
 =back
 
@@ -4932,30 +4925,34 @@ So, lets say that you have a table that
 you want to insert for an employee with contact 
 info and the like, you could set up a tag like:
 
- <my:employee name="Jane" last="Doe" phone="555-2222">
+ <my:new-employee name="Jane" last="Doe" phone="555-2222">
    Jane Doe has been here since 1998.
- </my:employee>
+ </my:new-employee>
 
 To render it with a custom tag, you would tell 
 the Apache::ASP parser to render the tag with a 
 subroutine:
 
-  PerlSetVar XMLSubsMatch my:employee
+  PerlSetVar XMLSubsMatch my:new-employee
 
 Any colons, ':', in the XML custom tag will turn
 into '::', a perl package separator, so the my:employee
 tag would translate to the my::employee subroutine, or the 
-employee subroutine in the my package.
+employee subroutine in the my package.  Any dash "-" will 
+also be translated to an underscore "_", as dash is not valid
+in the names of perl subroutines.
 
 Then you would create the my::employee subroutine in the my 
-perl package or whereever like so
+perl package or whereever like so:
 
-  sub my::employee {
+  package my;
+  sub new_employee {
     my($attributes, $body) = @_;
-    $main::Response->Include('employee.inc', $attributes, $body);
+    $main::Response->Include('new_employee.inc', $attributes, $body);
   }
+  1;
 
-  <!-- # employee.inc file somewhere else -->
+  <!-- # new_employee.inc file somewhere else, maybe in Global directory -->
   <% my($attributes, $body) = @_; %>
   <table>
   <% for('name', 'last', 'phone') { %>
@@ -4966,10 +4963,10 @@ perl package or whereever like so
   <% } %>
   <tr><td colspan=2><%= $body %></td></tr>
   </table>
-  <!-- # end employee.inc file -->
+  <!-- # end new_employee.inc file -->
 
 The $main::Response->Include() would then delegate the rendering
-of the employee to the employee.inc ASP script include.
+of the new-employee to the new_employee.inc ASP script include.
 
 Though XML purists would not like this custom tag technology
 to be related to XML, the reality is that a careful
@@ -4980,29 +4977,26 @@ otherwise do with XSLT.
 Custom tags defined in this way can be used as XML tags
 are defined with both a body and without as it
 
-  <my:employee>...</my:employee>
+  <my:new-employee>...</my:new-employee>
 
 and just
 
-  <my:employee/>
+  <my:new-employee />
 
 These tags are very powerful in that they can also
 enclose normal ASP logic, like:
 
-  <my:employee>
+  <my:new-employee>
     <!-- normal ASP logic -->
     <% my $birthday = &HTTP::Date::time2str(time - 25 * 86400 * 365); %>
 
     <!-- ASP inserts -->
     This employee has been online for <%= int(rand()*600)+1 %>
     seconds, and was born near <%= $birthday %>.
-  </my:employee>   
+  </my:new-employee>   
 
 For an example of this custom XML tagging in action, please check 
-out the ./site/eg/xml_subs.asp script.  Note the one limitation
-that currently exists is that tags of the same name may not 
-be used in each other, but otherwise customs tags may
-be used in other custom tags.
+out the ./site/eg/xml_subs.asp script.  
 
 =head2 XSLT Tranformations
 
@@ -5589,16 +5583,16 @@ work for most cases.
 
 =item VBScript or JScript supported?
 
-Yes, but not with this perl module.  For ASP with other scripting
-languages besides perl, you will need to go with a commercial vendor
-in the UNIX world.  ChiliSoft and Halcyon Software have such solutions.
-Of course on NT, you get this for free with IIS.
+Yes, but not with this Perl module.  For ASP with other scripting
+languages besides Perl, you will need to go with a commercial vendor
+in the UNIX world.  Sun and Stryon have such solutions.
+Of course on Windows NT and Windows 2000, you get VBScript for free with IIS.
 
-  ChiliSoft
+  Sun ONE Active Server Pages (formerly Sun Chili!Soft ASP)
   http://www.chilisoft.com
 
-  Halcyon Software
-  http://www.halcyonsoft.com
+  Instant ASP from Stryon (formerly Halcyon Software)
+  http://www.stryon.com
 
 =item How is database connectivity handled?
 
@@ -5690,9 +5684,6 @@ documents at:
 
   Stas Bekman's mod_perl guide
   http://perl.apache.org/guide/
-
-  Vivek Khera's mod_perl performance tuning
-  http://perl.apache.org/tuning/ 
 
 Written in late 1999 this article provides an early look at 
 how to tune your Apache::ASP web site.  It has since been
@@ -6035,6 +6026,12 @@ anyone with their mod_perl Apache::ASP needs.  Our mod_perl hosting is $24.95 mo
 
 http://altercom.com/home.html
 
+=item The Cyberchute Connection
+
+Our hosting services support Apache:ASP along with Mod_Perl, PHP and MySQL.
+
+   http://www.Cyberchute.com
+
 =item OmniTI
 
 OmniTI supports Apache and mod_perl (including Apache::ASP) and offers competitive pricing for both hourly and project-based jobs. OmniTI has extensive experience managing and maintaining both large and small projects. Our services range from short-term consulting to project-based development, and include ongoing maintenance and hosting.
@@ -6177,6 +6174,25 @@ support please send your testimonial to asp@chamas.com
 
 For a list of sites using Apache::ASP, please see the SITES USING section.
 
+=item Red Hat
+
+=begin html
+
+<a href=http://www.redhat.com><img src=redhat_logo.gif border=0></a>
+
+=end html
+
+We're using Apache::ASP on www.redhat.com. We find Apache::ASP very
+easy to use, and it's quick for new developers to get up to speed with
+it, given that many people have already been exposed to the ASP object
+model that Apache::ASP is based on. 
+
+The documentation is comprehensive and easy to understand, and the
+community and maintainer have been very helpful whenever we've had
+questions.
+
+  -- Tom Lancaster, Red Hat
+
 =item Concept Online Ltd.
 
 =begin html
@@ -6297,6 +6313,15 @@ at asp@perl.apache.org
 
 =head2 Articles
 
+       Apache::ASP Introduction ( #1 in 3 part series )
+       http://www.apache-asp.org/articles/perlmonth1_intro.html
+
+       Apache::ASP Site Building ( #2 in 3 part series )
+       http://www.apache-asp.org/articles/perlmonth2_build.html
+
+       Apache::ASP Site Tuning ( #3 in 3 part series )
+       http://www.apache-asp.org/articles/perlmonth3_tune.html
+
        Embedded Perl ( part of a series on Perl )
        http://www.wdvl.com/Authoring/Languages/Perl/PerlfortheWeb/index15.html
 
@@ -6340,9 +6365,6 @@ at asp@perl.apache.org
 	mod_perl Guide
 	http://perl.apache.org/guide/
 
-        Take23: news and resources for the mod_perl world
-        http://www.take23.org
-
 	Perl Programming Language
 	http://www.perl.com
 
@@ -6385,6 +6407,60 @@ means first production ready release, this would be the
 equivalent of a 1.0 release for other kinds of software.
 
  + = improvement   - = bug fix    (d) = documentations
+
+=item $VERSION = 2.51; $DATE="02/10/2003"
+
+ + added t/session_query_parse.t test to cover use of SessionQueryParse
+   and $Server->URL APIs
+
+ - Fixed duplicate "&" bug associated with using $Server->URL 
+   and SessionQueryParse together
+
+ + Patch to allow $Server->URL() to be called multiple times on the same URL
+   as in $Server->URL($Server->URL($url, \%params), \%more_params)
+
+ (d) Added new testimonials & sites & created a separate testimonials page.
+
+ - SessionQueryParse will now add to &amp; to the query strings
+   embedded in the HTML, instead of & for proper HTML generation.
+   Thanks to Peter Galbavy for pointing out and Thanos Chatziathanassiou
+   for suggesting the fix.
+
+ - $Response->{ContentType} set to text/html for developer error reporting,
+   in case this was set to something else before the error occured.
+   Thanks to Philip Mak for reporting.
+
+ - Couple of minor bug fixes under PerlWarn use, thanks Peter Galbavy
+   for reporting.
+
+ + Added automatic load of "use Apache2" for compat with mod_perl2 
+   request objects when Apache::ASP is loaded via "PerlModule Apache::ASP"
+   Thanks to Richard Curtis for reporting bug & subsequent testing.
+
+ - When GlobalPackage config changes, but global.asa has not, global.asa
+   will be recompiled anyway to update the GlobalPackage correctly.
+   Changing GlobalPackage before would cause errors if global.asa was
+   already compiled.
+
+ ++ For ANY PerlSetVar type config, OFF/Off/off will be assumed 
+    to have value of 0 for that setting.  Before, only a couple settings
+    had this semantics, but they all do now for consistency.
+
+ - Fix for InodeNames config on OpenBSD, or any OS that might have
+   a device # of 0 for the file being stat()'d, thanks to Peter Galbavy
+   for bug report.
+
+ ++ Total XSLT speedups, 5-10% on large XSLT, 10-15% on small XSLT
+
+ + bypass meta data check like expires for XSLT Cache() API use
+   because XSLT tranformations don't expire, saves hit to cache dbm
+   for meta data
+
+ + use of direct Apache::ASP::State methods like FETCH/STORE
+   in Cache() layer so we don't have to go through slower tied interface.
+   This will speed up XSLT & and include output caching mostly.
+
+ + minor optimizations for speed & memory usage
 
 =item $VERSION = 2.49; $DATE="11/10/2002"
 

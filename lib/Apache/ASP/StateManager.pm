@@ -248,7 +248,7 @@ sub CleanupGroup {
 	    }	
 	    # only delete sessions that have timed out
 	    unless($timeout < time()) {
-		$asp->{dbg} && $asp->Debug("not timed out with $timeout");
+		$asp->{dbg} && $asp->Debug("$id not timed out with $timeout");
 		return; # no next in eval {}
 	    }
 	    

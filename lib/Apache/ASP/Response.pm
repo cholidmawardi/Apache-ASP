@@ -5,7 +5,7 @@ use Apache::ASP::Collection;
 
 use strict;
 no strict qw(refs);
-use vars qw(@ISA @Members %LinkTags);
+use vars qw(@ISA @Members %LinkTags $TextHTMLRegexp);
 @ISA = qw(Apache::ASP::Collection);
 use Carp qw(confess);
 use Data::Dumper qw(DumperX);
@@ -23,6 +23,8 @@ use Data::Dumper qw(DumperX);
 	     'input' => 'src',
 	     'link' => 'href',
 	    );
+
+$TextHTMLRegexp = '^text/html(;|$)';
 
 sub new {
     my $asp = shift;
@@ -185,7 +187,7 @@ sub Flush {
 	return if $asp->{errs};
     }
 
-    if($self->{Clean} and $self->{ContentType} eq 'text/html') {
+    if($self->{Clean} and $self->{ContentType} =~ /$TextHTMLRegexp/o) {
 	# by checking defined, we just check once
 	unless(defined $Apache::ASP::CleanSupport) {
 	    eval 'use HTML::Clean';
@@ -228,7 +230,7 @@ sub Flush {
 	$asp->{total_time} = $total_time;
 
 	if(&config($asp, 'TimeHiRes')) {
-	    if($self->{ContentType} eq 'text/html') {
+	    if($self->{ContentType} =~ /$TextHTMLRegexp/o) {
 		if(&config($asp, 'Debug')) {
 		    $$out .= "\n<!-- Apache::ASP v".$Apache::ASP::VERSION." served page in $total_time seconds -->";
 		}
@@ -697,7 +699,7 @@ sub CgiHeaders {
     # also added a test for the content type being text/html or
     # 
     if($self->{CH} && ! $self->{header_done} && ! $$content_out 
-       && ($self->{ContentType} eq 'text/html')) 
+       && ($self->{ContentType} =~ /$TextHTMLRegexp/o)) 
       {
 	  # -1 to catch the null at the end maybe
 	  my @headers = split(/\n/, $$dataref, -1); 

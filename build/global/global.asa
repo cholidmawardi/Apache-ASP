@@ -170,10 +170,10 @@ sub pod2html {
 	my $size = 2 - $depth;
 	$size = ($size > -1) ? "+$size" : $size;
 	
-	$title = "<font class=title size=$size color=#555555><b>$title</b></font><p>\n";
+	$title = "<font class=title size=$size color=#555555><b>$title</b></font>\n";
     }
 
-    if (($body =~ /^(.*?)(<(a|table)[^\>]*>.*?<\/(\3)>)(.*)$/is)) {
+    if (($body =~ /^(.*?)(<(a|table)[^\<\>]*>.*?<\/(\3)>)(.*)$/is)) {
 	my($pre,$html,$post) = ($1, $2, $5);
 #	$html =~ s/\s+/ /isg;
 	$body = $Server->HTMLEncode($pre).$html.$Server->HTMLEncode($post);

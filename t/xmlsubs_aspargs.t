@@ -1,6 +1,6 @@
 use Apache::ASP::CGI;
 &Apache::ASP::CGI::do_self(
-	XMLSubsMatch => 'my:\w+',
+	XMLSubsMatch => 'my:[\w\-]+',
 	NoState => 1,
 	UseStrict => 1,
 	Debug => 0,
@@ -32,6 +32,7 @@ __END__
 <my:tag_check_value_ref value='<%= $ref->{ref} %>' />
 <my:tag_check_value_not_ref value='<%= $ref->{ref} %> ' />
 <my:tag_check_value_not_ref value='<%= $ref->{ref} %><%= $ref %>' />
+<my:tag-check-value value="1" />
 
 <my:deeptag />
 <% $t->eok($Deep == 3, "Deep tag to call twice"); %>

@@ -248,7 +248,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td valign=top bgcolor=white>
 <font size=+0 face=verdana,arial>
 
-<font face=verdana><font class=title size=+1 color=#555555><b>CHANGES</b></font><p>
+<font face=verdana><font class=title size=+1 color=#555555><b>CHANGES</b></font>
 <font face="courier new" size=3><pre>
 </pre></font>Apache::ASP has been in development since 1998, and 
 was production ready since its .02 release.  Releases
@@ -270,6 +270,22 @@ equivalent of a 1.0 release for other kinds of software.
 	<td valign=top><font face="lucida console" size=-1>
 	<ul>
 	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%2025b84bf7e>$VERSION = 2.51; $DATE="02/10/2003"</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%202727b0736>$VERSION = 2.01; $DATE="07/22/2000";</a>
+			</font>
+			</td>
+							
+		</tr>
+		
 		<tr>
 		
 			<td valign=top >
@@ -605,30 +621,71 @@ equivalent of a 1.0 release for other kinds of software.
 			</td>
 							
 		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#%24VERSION%20%3D%202727b0736>$VERSION = 2.01; $DATE="07/22/2000";</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#%24VERSION%20%3D%2009faee67f>$VERSION = 0.01; $DATE="06/26/1998";</a>
-			</font>
-			</td>
-							
-		</tr>
 			
 	</table>
 	<hr size=1>
 	<p>
 
 	<p>
+	<a name=%24VERSION%20%3D%2025b84bf7e></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.51; $DATE="02/10/2003"</b></font>
+<font face="courier new" size=3><pre>
+ + added t/session_query_parse.t test to cover use of SessionQueryParse
+   and $Server-&gt;URL APIs
+
+ - Fixed duplicate &quot;&amp;&quot; bug associated with using $Server-&gt;URL 
+   and SessionQueryParse together
+
+ + Patch to allow $Server-&gt;URL() to be called multiple times on the same URL
+   as in $Server-&gt;URL($Server-&gt;URL($url, \%params), \%more_params)
+
+ (d) Added new testimonials &amp; sites &amp; created a separate testimonials page.
+
+ - SessionQueryParse will now add to &amp;amp; to the query strings
+   embedded in the HTML, instead of &amp; for proper HTML generation.
+   Thanks to Peter Galbavy for pointing out and Thanos Chatziathanassiou
+   for suggesting the fix.
+
+ - $Response-&gt;{ContentType} set to text/html for developer error reporting,
+   in case this was set to something else before the error occured.
+   Thanks to Philip Mak for reporting.
+
+ - Couple of minor bug fixes under PerlWarn use, thanks Peter Galbavy
+   for reporting.
+
+ + Added automatic load of &quot;use Apache2&quot; for compat with mod_perl2 
+   request objects when Apache::ASP is loaded via &quot;PerlModule Apache::ASP&quot;
+   Thanks to Richard Curtis for reporting bug &amp; subsequent testing.
+
+ - When GlobalPackage config changes, but global.asa has not, global.asa
+   will be recompiled anyway to update the GlobalPackage correctly.
+   Changing GlobalPackage before would cause errors if global.asa was
+   already compiled.
+
+ ++ For ANY PerlSetVar type config, OFF/Off/off will be assumed 
+    to have value of 0 for that setting.  Before, only a couple settings
+    had this semantics, but they all do now for consistency.
+
+ - Fix for InodeNames config on OpenBSD, or any OS that might have
+   a device # of 0 for the file being stat()&#39;d, thanks to Peter Galbavy
+   for bug report.
+
+ ++ Total XSLT speedups, 5-10% on large XSLT, 10-15% on small XSLT
+
+ + bypass meta data check like expires for XSLT Cache() API use
+   because XSLT tranformations don&#39;t expire, saves hit to cache dbm
+   for meta data
+
+ + use of direct Apache::ASP::State methods like FETCH/STORE
+   in Cache() layer so we don&#39;t have to go through slower tied interface.
+   This will speed up XSLT &amp; and include output caching mostly.
+
+ + minor optimizations for speed &amp; memory usage
+</pre></font>
+	
+	<p>
 	<a name=%24VERSION%20%3D%202eaeef6e0></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.49; $DATE="11/10/2002"</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.49; $DATE="11/10/2002"</b></font>
 <font face="courier new" size=3><pre>
  -- bug introduced in 2.47 cached script compilations for executing
     scripts ( not includes ) of the same name in different directories
@@ -639,7 +696,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%202a705193b></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.47; $DATE="11/06/2002"</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.47; $DATE="11/06/2002"</b></font>
 <font face="courier new" size=3><pre>
  ++ Runtime speed enhancements for 15-20% improvement including:
    + INTERNAL API ReadFile() now returns scalar ref as memory optimization
@@ -745,7 +802,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2029e470448></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.45; $DATE="10/13/2002"</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.45; $DATE="10/13/2002"</b></font>
 <font face="courier new" size=3><pre>
  ++New XMLSubsPerlArgs config, default 1, indicates how 
   XMLSubs arguments have always been parsed.  If set to 0,
@@ -801,7 +858,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2022337f806></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.41; $DATE="09/29/2002"</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.41; $DATE="09/29/2002"</b></font>
 <font face="courier new" size=3><pre>
  -Removed CVS Revision tag from Apache::ASP::Date, which 
   was causing bad revision numbers in CPAN after CVS integration
@@ -813,7 +870,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%20252d85c29></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.39; $DATE="09/10/2002"</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.39; $DATE="09/10/2002"</b></font>
 <font face="courier new" size=3><pre>
  -Turn off $^W explicitly before reloading global.asa.  Reloading
   global.asa when $^W is set will trigger subroutine redefinition
@@ -836,7 +893,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%202c1fa6b38></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.37; $DATE="07/03/2002"</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.37; $DATE="07/03/2002"</b></font>
 <font face="courier new" size=3><pre>
  -Fixed the testing directory structures for t/long_names.t
   so that tar software like Archive::Tar &amp; Solaris tar that
@@ -870,7 +927,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%202af464d94></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.35; $DATE="05/30/2002"</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.35; $DATE="05/30/2002"</b></font>
 <font face="courier new" size=3><pre>
  +Destroy better $Server &amp; $Response objects so that my 
   closure references to these to not attempt to work in the future 
@@ -896,7 +953,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%20276381ac3></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.33; $DATE="04/29/2002"</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.33; $DATE="04/29/2002"</b></font>
 <font face="courier new" size=3><pre>
  - fixed up t/server_mail.t test to skip if a sendmail server
    is not available on localhost.  We only want the test to run
@@ -1041,7 +1098,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%202a77480eb></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.31; $DATE="01/22/2002";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.31; $DATE="01/22/2002";</b></font>
 <font face="courier new" size=3><pre>
  + $Server-&gt;MapInclude() API extension created to wrap up Apache::ASP::SearchDirs 
    functionality so one may do an conditional check for an include existence befor 
@@ -1086,7 +1143,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%202be948898></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.29; $DATE="11/19/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.29; $DATE="11/19/2001";</b></font>
 <font face="courier new" size=3><pre>
  +Added some extra help text to the ./cgi/asp --help message
   to clarify how to pass arguments to a script from the command line.
@@ -1171,7 +1228,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%20211fd057b></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.27; $DATE="10/31/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.27; $DATE="10/31/2001";</b></font>
 <font face="courier new" size=3><pre>
  + Wrapped call to $r-&gt;connection-&gt;fileno in eval {} so to 
    preserve backwards compatibility with older mod_perl versions
@@ -1219,7 +1276,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%20276d7fe30></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.25; $DATE="10/11/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.25; $DATE="10/11/2001";</b></font>
 <font face="courier new" size=3><pre>
  + Improved ./site/apps/search application, for better
    search results at Apache::ASP site.  Also, reengineered
@@ -1234,7 +1291,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2024674da9c></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.23; $DATE="10/11/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.23; $DATE="10/11/2001";</b></font>
 <font face="courier new" size=3><pre>
  +Make sure a couple other small standard modules get loaded
   upon &quot;PerlModule Apache::ASP&quot;, like Time::HiRes, Class::Struct,
@@ -1380,7 +1437,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%202c37caa32></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.21; $DATE="8/5/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.21; $DATE="8/5/2001";</b></font>
 <font face="courier new" size=3><pre>
  +Documented RequestParams config in CONFIG misc section.
 
@@ -1436,7 +1493,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2029e6581ab></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.19; $DATE="7/10/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.19; $DATE="7/10/2001";</b></font>
 <font face="courier new" size=3><pre>
  +update docs in various parts
 
@@ -1470,7 +1527,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%20282c9e25e></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.17; $DATE="6/17/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.17; $DATE="6/17/2001";</b></font>
 <font face="courier new" size=3><pre>
  +Added ASP perl mmm-mode subclass and configuration
   in editors/mmm-asp-perl.el file for better emacs support.
@@ -1497,7 +1554,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%202d4094038></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.15; $DATE="06/12/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.15; $DATE="06/12/2001";</b></font>
 <font face="courier new" size=3><pre>
  -Fix for running under perl 5.6.1 by removing parser optimization
   introduced in 2.11.
@@ -1510,7 +1567,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2023614edca></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.11; $DATE="05/29/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.11; $DATE="05/29/2001";</b></font>
 <font face="courier new" size=3><pre>
  +Parser optimization from Dariusz Pietrzak
 
@@ -1616,7 +1673,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%202023e855d></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.09; $DATE="01/30/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.09; $DATE="01/30/2001";</b></font>
 <font face="courier new" size=3><pre>
  +Examples in ./site/eg are now UseStrict friendly.  
   Also fixed up <a href=eg/ssi_filter.ssi>./site/eg/ssi_filter.ssi</a> example.
@@ -1670,7 +1727,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2021002eb7e></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.07; $DATE="11/26/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.07; $DATE="11/26/2000";</b></font>
 <font face="courier new" size=3><pre>
  -+-+ Session Manager
   empty state group directories are not removed, thus alleviating
@@ -1783,7 +1840,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%202909e81ef></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.03; $DATE="08/01/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.03; $DATE="08/01/2000";</b></font>
 <font face="courier new" size=3><pre>
  +License change to GPL.  See LICENSE section.
 
@@ -1794,7 +1851,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%202727b0736></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.01; $DATE="07/22/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.01; $DATE="07/22/2000";</b></font>
 <font face="courier new" size=3><pre>
  +$data_ref = $Response-&gt;TrapInclude(&#39;file.inc&#39;) API
   extension which allows for easy post processing of
@@ -1807,7 +1864,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%202784583b1></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.00; $DATE="07/15/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.00; $DATE="07/15/2000";</b></font>
 <font face="courier new" size=3><pre>
  -UniquePackages config works again, broke a couple versions back
 
@@ -1817,7 +1874,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%201716f16ef></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 1.95; $DATE="07/10/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 1.95; $DATE="07/10/2000";</b></font>
 <font face="courier new" size=3><pre>
  !!!!! EXAMPLES SECURITY BUG FOUND &amp; FIXED !!!!!
 
@@ -1845,7 +1902,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%201b231718a></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 1.93; $DATE="07/03/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 1.93; $DATE="07/03/2000";</b></font>
 <font face="courier new" size=3><pre>
  -sub second timing with Time::HiRes was adding &lt;!-- --&gt;
   comments by HTML by default, which would possibly
@@ -1862,7 +1919,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2010d8c7b1b></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 1.91; $DATE="07/02/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 1.91; $DATE="07/02/2000";</b></font>
 <font face="courier new" size=3><pre>
  +Documented XMLSubsMatch &amp; XSLT* configuration
   settings in CONFIG section.
@@ -1896,7 +1953,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%200f0c93549></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.19; $DATE="NOT RELEASED";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.19; $DATE="NOT RELEASED";</b></font>
 <font face="courier new" size=3><pre>
  +XMLSubsMatch and XSLT* settings documented in 
   the XML/XSLT section of the site/README.
@@ -2053,7 +2110,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2004a1da04f></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.18; $DATE="02/03/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.18; $DATE="02/03/2000";</b></font>
 <font face="courier new" size=3><pre>
  +Documented SessionQuery* &amp; $Server-&gt;URL() and 
   cleaned up formatting some, as well as redoing
@@ -2184,7 +2241,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%200792d4e8d></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.17; $DATE="11/15/99";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.17; $DATE="11/15/99";</b></font>
 <font face="courier new" size=3><pre>
  ++20%+ faster startup script execution, as measured by the 
   HelloWorld bench.  I cut a lot of the fat out of 
@@ -2259,7 +2316,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2003dd1597d></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.16; $DATE="09/22/99";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.16; $DATE="09/22/99";</b></font>
 <font face="courier new" size=3><pre>
  -$Response-&gt;{Buffer} and PerlSetVar BufferingOn
   configs now work when set to 0, to unbuffer output,
@@ -2325,7 +2382,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%200a2fa9027></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.15; $DATE="08/24/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.15; $DATE="08/24/1999";</b></font>
 <font face="courier new" size=3><pre>
  --State databases like $Session, $Application are 
   now tied/untied to every lock/unlock triggered by read/write 
@@ -2414,7 +2471,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%200b667e0c4></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.14; $DATE="07/29/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.14; $DATE="07/29/1999";</b></font>
 <font face="courier new" size=3><pre>
  -CGI &amp; StatINC or StatINCMatch would have bad results
   at times, with StatINC deleting dynamically compiled
@@ -2446,7 +2503,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%200fcc7c76f></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.12; $DATE="07/01/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.12; $DATE="07/01/1999";</b></font>
 <font face="courier new" size=3><pre>
  -Compiles are now 10 +times faster for scripts with lots of big
   embedded perl blocks &lt;% #perl %&gt;
@@ -2497,7 +2554,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%200bd024b52></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.11; $DATE="06/24/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.11; $DATE="06/24/1999";</b></font>
 <font face="courier new" size=3><pre>
  +Lots of documentation updates
 
@@ -2555,7 +2612,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%200c7f99fbe></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.10; $DATE="05/24/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.10; $DATE="05/24/1999";</b></font>
 <font face="courier new" size=3><pre>
  += improvement; - = bug fix
 
@@ -2624,7 +2681,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2005ee189f2></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.09; $DATE="04/22/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.09; $DATE="04/22/1999";</b></font>
 <font face="courier new" size=3><pre>
  +Updated Makefile.PL optional modules output for CGI &amp; DB_File
 
@@ -2746,7 +2803,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%200ea85a09a></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.08; $DATE="02/06/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.08; $DATE="02/06/1999";</b></font>
 <font face="courier new" size=3><pre>
  ++SSI with Apache::Filter &amp; Apache::SSI, see config options &amp; ./eg files
   Currently filtering only works in the direction Apache::ASP -&gt; Apache::SSI,
@@ -2774,7 +2831,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2003960e08a></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.07; $DATE="01/20/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.07; $DATE="01/20/1999";</b></font>
 <font face="courier new" size=3><pre>
  -removed SIG{__WARN__} handler, it was a bad idea.
 
@@ -2793,7 +2850,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%200394bbc7f></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.06; $DATE="12/21/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.06; $DATE="12/21/1998";</b></font>
 <font face="courier new" size=3><pre>
  +Application_OnStart &amp; Application_OnEnd event handlers support.
 
@@ -2845,7 +2902,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2003a5fe2db></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.05; $DATE="10/19/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.05; $DATE="10/19/1998";</b></font>
 <font face="courier new" size=3><pre>
  +Added PERFORMANCE doc, which includes benchmarks  +hints.
 
@@ -2874,7 +2931,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2009ffce1f9></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.04; $DATE="10/14/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.04; $DATE="10/14/1998";</b></font>
 <font face="courier new" size=3><pre>
  +Example script eg/cgi.htm demonstrating CGI.pm use for output.
 
@@ -2924,7 +2981,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%200ec664faf></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.03; $DATE="09/14/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.03; $DATE="09/14/1998";</b></font>
 <font face="courier new" size=3><pre>
  +Installation &#39;make test&#39; now works
 
@@ -2957,7 +3014,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%20055b248f9></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.02; $DATE="07/12/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.02; $DATE="07/12/1998";</b></font>
 <font face="courier new" size=3><pre>
  ++Session Manager, won&#39;t break under denial of service attack
 
@@ -2978,7 +3035,7 @@ equivalent of a 1.0 release for other kinds of software.
 	
 	<p>
 	<a name=%24VERSION%20%3D%2009faee67f></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.01; $DATE="06/26/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.01; $DATE="06/26/1998";</b></font>
 <font face="courier new" size=3><pre>
  Syntax Support
  --------------
