@@ -277,7 +277,7 @@ technology can be used to extend a web developer's abilities
 to add dynamic pieces without having to visibly use 
 <% %> style code entries.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>So, lets say that you have table that 
+</pre></font>So, lets say that you have a table that 
 you want to insert for an employee with contact 
 info and the like, you could set up a tag like:
 <font face="lucida console,courier new" size=3><pre>
@@ -360,12 +360,14 @@ a PDA, or a cell phone just as easily as to a browser, and all
 you have to do is set up the right XSL stylesheets to do the
 transformation (XSLT).
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>In the first release of <a href=xml.html><font size=-1 face=verdana><b>XML/XSLT</b></font></a> support, Apache::ASP v.19,
-ASP scripts may be the source of XML data that the XSL
-file transforms.  This transformation is handled by <a href=http://xmlxslt.sourceforge.net/><font size=-1 face=verdana><b>XML::XSLT</b></font></a>,
-a perl module, and you can see an example of it in action at
-the <a href=eg/xslt.xml>./site/eg/xslt.xml</a> XML script.  To specify a XSL stylesheet, 
-use the setting:
+</pre></font>In the first release of <a href=xml.html><font size=-1 face=verdana><b>XML/XSLT</b></font></a> support, ASP scripts may be the 
+source of XML data that the XSL file transforms, and the XSL file
+itself will be first executed as an ASP script also.  The XSLT 
+transformation is handled by <a href=http://xmlxslt.sourceforge.net/><font size=-1 face=verdana><b>XML::XSLT</b></font></a>, a perl module, and you can 
+see an example of it in action at the <a href=eg/xslt.xml>./site/eg/xslt.xml</a> XML script.  
+Because both the XML and XSL datasources are executed first 
+<font face="lucida console,courier new" size=3><pre>
+</pre></font>To specify a XSL stylesheet, use the setting:
 <font face="lucida console,courier new" size=3><pre>
   PerlSetVar XSLT template.xsl
 </pre></font>where template.xsl could be any file.  By default this will

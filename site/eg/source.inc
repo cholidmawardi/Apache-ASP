@@ -9,9 +9,11 @@ use File::Basename;
 my $file = $Request->QueryString('file');
 if($file) {
     ## print contents of file here	
-    local *FILE;    
-    unless(open(FILE, &File::Basename::basename($file))) {
-	print "Can't read $file\n";
+    local *FILE;
+    my $basefile = &File::Basename::basename($file);
+    $basefile =~ s/[^a-z\.\_]//sg;
+    unless(open(FILE, $basefile)) {
+	print "Can't read $basefile\n";
 	$Response->End();
     }
     local $/ = undef;

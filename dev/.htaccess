@@ -21,8 +21,8 @@ PerlSetVar DynamicIncludes 1
 	SetHandler perl-script
 	PerlHandler Apache::ASP
 	PerlSetVar Global  .		
-	PerlSetVar Debug  -1
-#	PerlSetVar Debug  -2
+#	PerlSetVar Debug  -1
+	PerlSetVar Debug  -2
 	PerlSetVar CookiePath  /	
 	PerlSetVar SessionTimeout .5
 	PerlSetVar StateDir  ./.state
@@ -35,7 +35,7 @@ PerlSetVar DynamicIncludes 1
 	PerlSetVar FileUploads 0
 	PerlSetVar StatINC 1
 #	PerlSetVar StatINCMatch 0
-	PerlSetVar XMLSubsMatch my:\w+
+	PerlSetVar XMLSubsMatch my:\w+|Apps:\w+|msg
 	PerlSetVar GlobalPackage DemoASP
 	PerlSetVar MailErrorsTo joshua@chamas.com,admin@chamas.com
 	PerlSetVar MailAlertTo joshua@chamas.com,admin@chamas.com

@@ -4,7 +4,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 1.91;
+$VERSION = 1.95;
 
 use MLDBM;
 use SDBM_File;
@@ -1046,7 +1046,9 @@ sub ParseHelper {
 	  | {
 	     my($func, $args) = ($1, $2);
 	     $func =~ s/\:/\:\:/g;
-	     $args =~ s/([^\s]+\s*)\=(\s*)([\s\'\"]?)([^\3]*)(\3)/$1\=\>$2$3$4$5/sg;
+	     $args =~ s/( [^\s]+\s*)\=/,$1\=\>/sg;
+	     $args =~ s/^,//s;
+#	     $args =~ s/([^\s]+\s*)\=(\s*)([\"\'\b]?)([^\3]*?)(\3)(\s*)/$1\=\>$2$3$4$5,$6/sg;
 	     "<% $func({ $args }, ''); %>"
 	    } |sgex;	    
 	$$data =~ s|
@@ -3690,7 +3692,24 @@ sub Execute {
 }
 
 sub Transfer {
-    shift->Execute(shift);
+    my($self, $file) = @_;
+    my $asp = $self->{'asp'};
+    
+    my $_CODE = eval { $asp->CompileInclude($file) };
+    if(! $_CODE || $@) {
+	die("error compiling transfer $file: $@");
+    } else {	
+	local *0 = \$_CODE->{file};
+	my $eval = $_CODE->{code};
+	$asp->{dbg} && $asp->Debug("executing $eval");    
+	
+	my $rc = eval { &$eval(@_) };
+	if($@) {
+	    my $code = $_CODE;
+	    die("error executing code for transfer $code->{file}: $@");
+	}
+    }
+
     goto APACHE_ASP_EXECUTE_END;
 }
 
@@ -6995,7 +7014,7 @@ technology can be used to extend a web developer's abilities
 to add dynamic pieces without having to visibly use 
 <% %> style code entries.
 
-So, lets say that you have table that 
+So, lets say that you have a table that 
 you want to insert for an employee with contact 
 info and the like, you could set up a tag like:
 
@@ -7082,12 +7101,14 @@ a PDA, or a cell phone just as easily as to a browser, and all
 you have to do is set up the right XSL stylesheets to do the
 transformation (XSLT).
 
-In the first release of XML/XSLT support, Apache::ASP v.19,
-ASP scripts may be the source of XML data that the XSL
-file transforms.  This transformation is handled by XML::XSLT,
-a perl module, and you can see an example of it in action at
-the ./site/eg/xslt.xml XML script.  To specify a XSL stylesheet, 
-use the setting:
+In the first release of XML/XSLT support, ASP scripts may be the 
+source of XML data that the XSL file transforms, and the XSL file
+itself will be first executed as an ASP script also.  The XSLT 
+transformation is handled by XML::XSLT, a perl module, and you can 
+see an example of it in action at the ./site/eg/xslt.xml XML script.  
+Because both the XML and XSL datasources are executed first 
+
+To specify a XSL stylesheet, use the setting:
 
   PerlSetVar XSLT template.xsl
 
@@ -7819,6 +7840,45 @@ interest to you, and I will give it higher priority.
 =head1 CHANGES
 
  + = improvement; - = bug fix
+
+=item $VERSION = 1.95; $DATE="07/10/00";
+
+ !!!!! EXAMPLES SECURITY BUG FOUND & FIXED !!!!!
+
+ --FIXED: distribution example ./site/eg/source.asp now parses 
+  out special characters of the open() call when reading local 
+  files.
+
+  This bug would allow a malicious user possible writing
+  of files in the same directory as the source.asp script.  This
+  writing exploit would only have effect if the web server user
+  has write permission on those files.
+
+  Similar bug announced by openhack.org for minivend software
+  in story at: 
+    http://www.zdnet.com/eweek/stories/general/0,11011,2600258,00.html
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+ -$0 now set to transfered file, when using $Server->Transfer
+
+ -Fix for XMLSubMatch parsing on cases with 2 or more args passed
+  to tag sub that was standalone like 
+    <Apps:header type="header" title="Moo" foo="moo" />
+
+=item $VERSION = 1.93; $DATE="07/03/00";
+
+ -sub second timing with Time::HiRes was adding <!-- -->
+  comments by HTML by default, which would possibly
+  break specific programs looking for precise HTML output.
+  Now this behavior must be explicitly turned on with
+  the TimeHiRes config setting.
+
+  These comments will only appear in HTML only if 
+  Debug is enabled as well.
+
+  Timed log entries will only occur if 
+  system debugging is enabled, with Debug -1 or -2
 
 =item $VERSION = 1.91; $DATE="07/02/00";
 

@@ -1,5 +1,5 @@
 
-<my:include src='header.inc' />
+<my:include src='header.inc' title="XMLSubsMatch Demo"/>
 
 This is a demonstration of the XMLSubsMatch extension which
 allows for the developer to construct a set of custom XML style
@@ -73,6 +73,10 @@ namespaces is translated to the concept of perl packages.
 
 sub my::include {
     my($args, $text) = @_;
+    if($args->{title}) {
+      use vars qw($title);
+      $title = $args->{title};
+    }
     $main::Response->Include($args->{src});
 }
 

@@ -1763,8 +1763,8 @@ XML/XSLT
     be used to extend a web developer's abilities to add dynamic pieces
     without having to visibly use <% %> style code entries.
 
-    So, lets say that you have table that you want to insert for an employee
-    with contact info and the like, you could set up a tag like:
+    So, lets say that you have a table that you want to insert for an
+    employee with contact info and the like, you could set up a tag like:
 
      <my:employee name="Jane" last="Doe" phone="555-2222">
        Jane Doe has been here since 1998.
@@ -1844,11 +1844,14 @@ XML/XSLT
     browser, and all you have to do is set up the right XSL stylesheets to
     do the transformation (XSLT).
 
-    In the first release of XML/XSLT support, Apache::ASP v.19, ASP scripts
-    may be the source of XML data that the XSL file transforms. This
-    transformation is handled by XML::XSLT, a perl module, and you can see
-    an example of it in action at the ./site/eg/xslt.xml XML script. To
-    specify a XSL stylesheet, use the setting:
+    In the first release of XML/XSLT support, ASP scripts may be the source
+    of XML data that the XSL file transforms, and the XSL file itself will
+    be first executed as an ASP script also. The XSLT transformation is
+    handled by XML::XSLT, a perl module, and you can see an example of it in
+    action at the ./site/eg/xslt.xml XML script. Because both the XML and
+    XSL datasources are executed first
+
+    To specify a XSL stylesheet, use the setting:
 
       PerlSetVar XSLT template.xsl
 
@@ -2532,6 +2535,43 @@ TODO
 
 CHANGES
      + = improvement; - = bug fix
+
+    $VERSION = 1.95; $DATE="07/10/00";
+     !!!!! EXAMPLES SECURITY BUG FOUND & FIXED !!!!!
+
+     --FIXED: distribution example ./site/eg/source.asp now parses 
+      out special characters of the open() call when reading local 
+      files.
+
+      This bug would allow a malicious user possible writing
+      of files in the same directory as the source.asp script.  This
+      writing exploit would only have effect if the web server user
+      has write permission on those files.
+
+      Similar bug announced by openhack.org for minivend software
+      in story at: 
+        http://www.zdnet.com/eweek/stories/general/0,11011,2600258,00.html
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+     -$0 now set to transfered file, when using $Server->Transfer
+
+     -Fix for XMLSubMatch parsing on cases with 2 or more args passed
+      to tag sub that was standalone like 
+        <Apps:header type="header" title="Moo" foo="moo" />
+
+    $VERSION = 1.93; $DATE="07/03/00";
+     -sub second timing with Time::HiRes was adding <!-- -->
+      comments by HTML by default, which would possibly
+      break specific programs looking for precise HTML output.
+      Now this behavior must be explicitly turned on with
+      the TimeHiRes config setting.
+
+      These comments will only appear in HTML only if 
+      Debug is enabled as well.
+
+      Timed log entries will only occur if 
+      system debugging is enabled, with Debug -1 or -2
 
     $VERSION = 1.91; $DATE="07/02/00";
      +Documented XMLSubsMatch & XSLT* configuration
