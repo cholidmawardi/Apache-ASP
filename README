@@ -7,12 +7,12 @@ SYNOPSIS
       PerlSetVar Global /tmp/asp
 
 DESCRIPTION
-    This perl module provides an Active Server Pages port to the Apache Web
-    Server with perl as the host scripting language. Active Server Pages is
-    a web application platform that originated with the Microsoft NT/IIS
-    server. Under Apache for Unix and Win32 platforms it allows a developer
-    to create dynamic web applications with session management and embedded
-    perl code.
+    Apache::ASP provides an Active Server Pages port to the Apache Web
+    Server with Perl as the host scripting language. Apache::ASP allows a
+    developer to create dynamic web applications with session management and
+    embedded perl code. There are also many powerful extensions, including
+    XML taglibs, XSLT rendering, and new events not originally part of the
+    ASP API.
 
     This module works under the Apache Web Server with the mod_perl module
     enabled. See http://www.apache.org and http://perl.apache.org for
@@ -470,6 +470,27 @@ CONFIG
     followed by the end of the line.
 
       PerlSetVar PodComments 1
+
+    CollectionItem
+    Enables PerlScript syntax like:
+
+      $Request->Form('var')->Item;
+      $Request->Form('var')->Item(1);
+      $Request->Form('var')->Count;
+
+    Old PerlScript syntax, enabled with
+
+      use Win32::OLE qw(in valof with OVERLOAD);
+
+    is like native syntax
+
+      $Request->Form('var');
+
+    Only in Apache::ASP, can the above be written as:
+
+      $Request->{Form}{var};
+
+    which you would do if you _really_ needed the speed.
 
   XML / XSLT
 
@@ -2009,6 +2030,11 @@ PERLSCRIPT
     bringing a Win32::OLE Collection interface to many of the objects in
     Apache::ASP, which are natively written as perl hashes.
 
+    New as of verionsion 2.05 is new functionality enabled with the
+    CollectionItem setting, to giver better support to more recent
+    PerlScript syntax. This seems helpful when porting from an
+    IIS/PerlScript code base. Please see the CONFIG section for more info.
+
     The following objects in Apache::ASP respond as Collections:
 
             $Application
@@ -2253,7 +2279,14 @@ TUNING
     cached file system. On WinNT, all files may be cached, and you have no
     control of this. On Solaris, /tmp is cached and would be a good place to
     set the "StateDir" config setting to. When cached file systems are used
-    there is little performance penalty for using state files.
+    there is little performance penalty for using state files. Linux tends
+    to do a good job caching its file systems, so pick a StateDir for ease
+    of system administration.
+
+    On Win32 systems, where mod_perl requests are serialized, you can freely
+    use SessionSerialize to make your $Session requests faster, and you can
+    achieve similar performance benefits for $Application if you call
+    $Application->Lock() in your global.asa's Script_OnStart.
 
   High MaxRequests
 
@@ -2262,6 +2295,19 @@ TUNING
     after they are first compiled. You will also avoid the process fork
     penalty on UNIX systems. Somewhere between 100 - 1000 is probably pretty
     good.
+
+  Low MaxClients
+
+    Set your MaxClients low, such that if you have that many httpd servers
+    running, which will happen on busy site, your system will not start
+    swapping to disk because of excessive RAM usage.
+
+  Precompile Modules
+
+    For those modules that your Apache::ASP application uses, make sure that
+    they are loaded in your sites startup.pl file, or loaded with PerlModule
+    in your httpd.conf, so that your modules are compiled pre-fork in the
+    parent httpd.
 
   Precompile Scripts
 
@@ -2340,12 +2386,13 @@ TUNING
 
   RAM Sparing
 
-    If you have a lot of scripts, and limited memory, set NoCache to 1, so
-    that compiled scripts are not cached in memory. You lose about 10-15% in
-    speed for small scripts, but save at least 10K per cached script. These
-    numbers are very rough. If you use includes, you can instead try setting
-    DynamicIncludes to 1, which will share compiled code for includes
-    between scripts.
+    If you have a lot (1000's+) of scripts, and limited memory, set NoCache
+    to 1, so that compiled scripts are not cached in memory. You lose about
+    10-15% in speed for small scripts, but save at least 10K RAM per cached
+    script. These numbers are very rough. If you use includes, you can
+    instead try setting DynamicIncludes to 1, which will share compiled code
+    for includes between scripts by turning an <!--#include file..--> into a
+    $Response->Include().
 
 SEE ALSO
     perl(1), mod_perl(3), Apache(3), MLDBM(3), HTTP::Date(3), CGI(3),
@@ -2396,6 +2443,8 @@ NOTES
      :) Geert Josten, for his wonderful work on XML::XSLT
      :) Craig Samuel, at LRN, for his faith in open source for his LCEC.
      :) Vee McMillen, for OSS patience & understanding.
+     :) Ged Haywood, for his great help on the list & professionally.
+     :) Brian Wheeler, for keeping up with the Apache::Filter times.
 
 SUPPORT
   MAILING LIST ARCHIVE
@@ -2434,14 +2483,23 @@ SITES USING
     of the software by being listed, please send your URL to me at
     joshua@chamas.com and I'll be sure to add it to the list.
 
+            Alumni.NET
+            http://www.alumni.net
+
             Anime Wallpapers dot com
             http://www.animewallpapers.com/
 
             Chamas Enterprises Inc.         
             http://www.chamas.com
 
+            http://www.condo-mart.com 
+            Condo-Mart Web Service
+
             Direct.it
             http://www.direct.it/
+
+            Discountclick.com
+            http://www.discountclick.com/
 
             HCST
             http://www.hcst.net
@@ -2491,6 +2549,9 @@ SITES USING
             USCD Electrical & Computer Engineering
             http://ece-local.ucsd.edu
 
+            Watthai Net Syndey Australia
+            http://watthai.net
+
 RESOURCES
     Here are some important resources listed related to the use of
     Apache::ASP for publishing web applications:
@@ -2529,23 +2590,17 @@ TODO
      + Database storage of $Session & $Application, so web clusters 
        may scale better than the current NFS StateDir implementation
        allows, maybe via Apache::Session.
-     + Dumping state of Apache::ASP during an error, and being
-       able to go through it with the perl debugger.
-     + Investigating possibility of hooking $Session timeout into 
-       client/server 401 authentication failure.  Seems like IE 
-       caches passwords which makes things tough
-     + $Request->ClientCertificate()
-     + asp.pl, CGI method of doing asp
 
   MAY BE DONE
 
      + VBScript, ECMAScript interpreters
      + allow use of Apache::Session for session management
-     + Close integration with HTML::Embperl
      + BerkeleyDB2 integration for state management, maybe getting
        shared memory to work.
-     + MailErrorsPower, sends duplicate errors every 1,10,100... occurences
-     + MailErrorsPowerPeriod, resets the duplicate errors counter.
+     + asp.pl, CGI method of doing asp
+     + Dumping state of Apache::ASP during an error, and being
+       able to go through it with the perl debugger.
+     + $Request->ClientCertificate()
 
 CHANGES
      + = improvement; - = bug fix

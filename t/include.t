@@ -30,6 +30,14 @@ if(
 	$t->not_ok;
 }
 
+my $trapped = $Response->TrapInclude('include.inc');
+$t->eok($$trapped eq '1', '$Response->TrapInclude()');
+
+$Response->Include('include.inc');
+my $ref = $Response->{BinaryRef};
+$t->eok($$ref =~ /1/, '$Response->Include()');
+$$ref =~ s/1//isg;
+
 $t->done;
 %>
 

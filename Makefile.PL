@@ -68,7 +68,7 @@ for(sort keys %$optional_modules) {
 
 $CPAN = <<CPAN;
 
-#### CPAN HELP
+=-=-= CPAN HELP
 
 There are many modules that have to be installed in order
 to begin using Apache::ASP.  The easiest way to install
@@ -86,7 +86,7 @@ information, please view the CPAN docs with
 
 > perldoc CPAN
 
-####
+=-=-=
 
 CPAN
   ;

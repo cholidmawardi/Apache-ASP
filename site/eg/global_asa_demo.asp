@@ -15,9 +15,11 @@ below.  Active sessions are also listed.
 <p>
 <%
 my $count;
+my @sessions;
 for(keys %{$Application}) {
 	next unless ($_ =~ /^Session/);
 	$count++;
+	push(@sessions, $_);
 }
 %>
 <center>
@@ -29,11 +31,17 @@ for(keys %{$Application}) {
 -->
 <%=$Application->SessionCount()%> Active Sessions
 <p>
+<% if($count > 200) { %>
+<center>  First 200 of <%= $count %> displayed. </center>
+<% } %>
+<p>
 <table border=0 width=90%>
 	<tr><td colspan=2><hr size=1></td></tr>
 <%
-for(keys %{$Application}) {
+$count = 0;
+for(sort @sessions) {
 	next unless ($_ =~ /^Session/);
+	last if $count++ >= 200;
 
 	my $session_id = $_;
 	$session_id =~ s/^Session//io;
@@ -45,14 +53,13 @@ for(keys %{$Application}) {
 
 	%>
 	<tr bgcolor="#c0c0c0">
-		<td><%=substr($session_id, 0, 16)."..."%></td>
+		<td><%=substr($session_id, 0, 6)."..."%></td>
 		<td><%=$session_time%></td>
 	</tr>	
 	<tr><td colspan=2><pre><%=$session_data ? Data::Dumper->Dump([$session_data]) : '' %></pre></td></tr>
 
 	<tr><td colspan=2><hr size=1></td></tr>
 	<%
-	$Response->Flush();
 }
 %>
 </table>

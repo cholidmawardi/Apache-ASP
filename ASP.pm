@@ -4,7 +4,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.03;
+$VERSION = 2.07;
 
 use MLDBM;
 use SDBM_File;
@@ -22,7 +22,7 @@ use vars qw($LOADED $COUNT $VERSION %includes $StatINCReady $StatINCInit
 	    %CompiledIncludes $SessionCookieName $SessionIDLength
 	    $DefaultStateDB $DefaultStateSerializer
 	    $MD5 @Objects $Register %ScriptSubs %XSLT
-	    $ServerID
+	    $ServerID %SrandPids $CleanupGroups $CleanupSessions
 	   );
 
 #use integer; # don't use screws up important numeric logic
@@ -30,7 +30,11 @@ use vars qw($LOADED $COUNT $VERSION %includes $StatINCReady $StatINCInit
 $MD5 = new MD5();
 @Objects = ('Application', 'Session', 'Response', 'Server', 'Request');
 $SessionCookieName = 'session-id';
-$SessionIDLength = 32;
+
+# Some OS's have hashed directory lookups up to 16 bytes, so we leave room
+# for .lock extension
+$SessionIDLength = 11;
+#$SessionIDLength = 32;
 $DefaultStateDB = 'SDBM_File';
 $DefaultStateSerializer = 'Data::Dumper';
 
@@ -110,11 +114,12 @@ sub handler {
     unless($r && $r->can('filename')) {
 	# this could happen with a bad filtering sequence
 	warn(<<ERROR);
-no valid request object ($r) passed to ASP handler; if you are getting
+No valid request object ($r) passed to ASP handler; if you are getting
 this error message, you likely have a broken DSO version of mod_perl
-which often occurs when using RedHat RPMs.  The fix here is to compile
-statically the apache + mod_perl build.  Please check FAQ or mod_perl archives
-for more information.
+which often occurs when using RedHat RPMs.  One fix reported is to
+configure "PerlSendHeader On".  Another fix is to compile
+statically the apache + mod_perl build as RedHat RPMs have been trouble.
+Please check FAQ or mod_perl archives for more information.
 ERROR
   ;
        
@@ -125,7 +130,7 @@ ERROR
     my $start_time;
     if($r->dir_config('TimeHiRes')) {
 	# request time tracking
-	eval "use Time::HiRes";
+	eval { require Time::HiRes };
 	unless($@) {
 	    $start_time = &Time::HiRes::time();	    
 	}
@@ -141,12 +146,11 @@ ERROR
     # ASP object creation, a lot goes on in there!    
     my $self = new($r);
     $start_time and $self->{start_time} = $start_time;
-    $self->Debug("start time ".($start_time || ''));
     
     $self->{stat_inc} && &StatINC($self);
 
     # there could be runtime errors in StatINC
-    if(! $self->{errs} &IsChanged($self)) {
+    if(! $self->{errs} && &IsChanged($self)) {
 	my $script = &Parse($self);
 	! $self->{errs} && &Compile($self, $script);
     }
@@ -240,10 +244,11 @@ sub Loader {
     $match ||= '.*'; # compile all by default
 
     # recurse down directories and compile the scripts
-    if(-d $file) {
+    if(-d $file && ! -l $file) {
 	$file =~ s|/$||;
 	opendir(DIR, $file) || die("can't open $file for reading: $!");
 	my @files = readdir(DIR);
+	close DIR;
 	unless(@files) {
 	    Apache::ASP::Loader->log_error("[asp] $$ [WARN] can't read files in $file");
 	    return;
@@ -294,7 +299,13 @@ sub Loader {
     $r->dir_config('StatINCMatch', $args{StatINCMatch});
     $r->dir_config('UseStrict', $args{UseStrict});
     $r->dir_config('XMLSubsMatch', $args{XMLSubsMatch});
-    
+
+    # RegisterIncludes created for precompilation, on by default here
+    $r->dir_config('RegisterIncludes', 1);
+    if ((defined $args{RegisterIncludes})) {
+	$r->dir_config('RegisterIncludes', $args{RegisterIncludes});
+    }
+
     eval {
 	$COUNT++;
 	my $asp = Apache::ASP::new($r);    
@@ -426,7 +437,7 @@ sub new {
        no_cache       => $r->dir_config('NoCache'),
 
 # move to state config
-#       no_session     => ((defined $r->dir_config('AllowSessionState')) ? (! $r->dir_config('AllowSessionState')) : 0),
+#       no_session     => defined($r->dir_config('AllowSessionState')) ? (! $r->dir_config('AllowSessionState')) : 0),
        
        # set this if you don't want an Application or Session object
        # available to your scripts
@@ -507,13 +518,13 @@ sub new {
     
     $self->{stat_inc_match} and $self->{stat_inc} = 1;
 
-    # Ken said no need for seed ;)
-#    unless($Apache::ASP::RandSeed) {
-#	my $seed = $$.time;
-#	$self->Debug("seed srand with $seed");
-#	srand($seed);
-#	$Apache::ASP::RandSeed = 1;
-#    }
+    # Ken said no need for seed ;), now we just make sure its called
+    # post fork
+    unless($SrandPids{$$}) {
+	$self->Debug("call srand() post fork");
+	srand();
+	$SrandPids{$$} = 1;
+    }
 
     if($self->{no_cache}) {
 	# this way subsequent recompiles overwrite each other
@@ -521,6 +532,7 @@ sub new {
     } else {
 	# was call to FileId, removed decomp for speed
 	my $id = $self->{filename}.'x'.($self->{compile_includes} ? 'DYN' : 'INL');
+	$id =~ s|/+|/|sg;
 	$id =~ s/\W/_/g;
 	$self->{id} = $id;
     }
@@ -528,23 +540,28 @@ sub new {
     # filtering support
     my $filter_config = $r->dir_config('Filter') || $Apache::ASP::Filter;
     if($filter_config && ($filter_config !~ /off/io)) {
-        if($self->LoadModules('Filter', 'Apache::Filter') 
-	   && $r->can('filter_input') && $r->can('get_handlers')) 
-	  {
-	      $self->{filter} = 1;
-	      #X: do something with the return code, can't now because
-	      # apache constants aren't working on my win32
-	      my($fh, $rc) = $r->filter_input();
-	      $self->{filehandle} = $fh;
-	  } else {
-	      if(! $r->can('get_handlers')) {
-		  $self->Error("You need at least mod_perl 1.16 to use SSI filtering");
-	      } else {
-		  $self->Error("Apache::Filter was not loaded correctly for using SSI filtering.  ".
-			       "If you don't want to use filtering, make sure you turn the Filter ".
-			       "config option off whereever it's being used");
-	      }
-	  }
+        if($self->LoadModules('Filter', 'Apache::Filter')) {
+	    # new filter_register with Apache::Filter 1.013
+	    if($r->can('filter_register')) {
+		$self->{r} = $r = $r->filter_register;
+	    }
+	    
+	    if ($r->can('filter_input') && $r->can('get_handlers')) {
+		$self->{filter} = 1;
+		#X: do something with the return code, can't now because
+		# apache constants aren't working on my win32
+		my($fh, $rc) = $r->filter_input();
+		$self->{filehandle} = $fh;
+	    }
+	} else {
+	    if(! $r->can('get_handlers')) {
+		$self->Error("You need at least mod_perl 1.16 to use SSI filtering");
+	    } else {
+		$self->Error("Apache::Filter was not loaded correctly for using SSI filtering.  ".
+			     "If you don't want to use filtering, make sure you turn the Filter ".
+			     "config option off whereever it's being used");
+	    }
+	}
     }
     
     # gzip content encoding option by ime@iae.nl 28/4/2000
@@ -617,7 +634,8 @@ sub new {
     $self->{state_dir}   =~ /^(.*)$/; # untaint
     $self->{state_dir}   = $1; # untaint
     $self->{no_session}  = (defined $r->dir_config('AllowSessionState')) ? (! $r->dir_config('AllowSessionState')) : 0;
-    
+    $self->{state_serialize} = $r->dir_config('ApplicationSerialize');
+
     if($self->{state_db}    = $r->dir_config('StateDB')) {
 	# StateDB - Check StateDB module support 
 	$Apache::ASP::State::DB{$self->{state_db}} ||
@@ -639,6 +657,7 @@ sub new {
     tie(%Internal, 'Apache::ASP::State', $self, 'internal', 'server', O_RDWR|O_CREAT)
       || $self->Error("can't tie to internal state");
     my $internal = $self->{Internal} = bless \%Internal, 'Apache::ASP::State';
+    $self->{state_serialize} && $internal->LOCK;
 
     # APPLICATION create application object
     $self->{app_state} = (defined $r->dir_config('AllowApplicationState') ? 
@@ -646,11 +665,16 @@ sub new {
     if($self->{app_state}) {	
 	($self->{Application} = &Apache::ASP::Application::new($self)) 
 	  || $self->Error("can't get application state");
-	if($self->{dbg}) {
-	    $self->{Application}->Lock();
-	    $self->Debug('created $Application', $self->{Application});
-	    $self->{Application}->UnLock();	
-	}
+	$self->{state_serialize} && $self->{Application}->Lock;
+
+       # users should be able to turn on system debugging without logging
+       # potentially sensitive data
+       #       if($self->{dbg}) {
+       #           $self->{Application}->Lock();
+       #           $self->Debug('created $Application', $self->{Application});
+       #           $self->{Application}->UnLock();
+       #       }
+
     } else {
 	$self->{dbg} && $self->Debug("no application allowed config");
     }
@@ -683,6 +707,8 @@ sub new {
 	# Session state is dependent on internal state
 	my $session = $self->{Session} = &Apache::ASP::Session::new($self)
 	  || $self->Die("can't create session");
+	$self->{state_serialize} && $session->Lock();
+
 	my $last_session_timeout;
 	if($session->Started()) {
 	    # we only want one process purging at a time
@@ -810,6 +836,7 @@ sub RefreshSessionId {
 
 sub FileId {
     my $file = $_[1];
+    $file =~ s|/+|/|sg;
     $file =~ s/\W/_/gso;
     $file;
 }
@@ -962,8 +989,9 @@ sub Parse {
 	    # are includes or not, whether we are compiling includes
 	    # need to be part of the script identifier, so the global
 	    # caching does not return a script with different preferences.
+	    $args ||= '';
 	    $self->{dbg} && $self->Debug("runtime exec of dynamic include $file args (".
-					 ($args || '').')');
+					 ($args).')');
 	    $data .= "<% \$Response->Include('$include', $args); %>";
 	    
 	    # compile include now, so Loading() works for dynamic includes too
@@ -1028,10 +1056,12 @@ sub Parse {
 
     my $strict = $self->{use_strict} ? "use strict" : "no strict";
     $$script = join(";;", 
-		   $strict,
-		   "use vars qw(\$".join(" \$",@Apache::ASP::Objects).')',
-		   $$script
-		   );
+		    $strict,
+		    "use vars qw(\$".join(" \$",@Apache::ASP::Objects).')',
+		    "use lib qw($self->{global});",
+		    $$script,
+		    "no lib qw($self->{global});",
+		    );
 
     $script;
 }
@@ -1049,20 +1079,22 @@ sub ParseHelper {
 	  | {
 	     my($func, $args) = ($1, $2);
 	     $func =~ s/\:+/\:\:/g;
-	     $args =~ s/( [^\s]+\s*)\=/,$1\=\>/sg;
-	     $args =~ s/^,//s;
-	     "<% $func({ $args }, ''); %>"
+	     $args =~ s/(\s[^\s]+\s*)\=/,$1\=\>/sg;
+	     $args =~ s/^(\s*),/$1/s;
+             "<% $func({ $args }, ''); %>"
 	    } |sgex;	    
-	$$data =~ s|
+	$$data =~ s@
 	  \<\s*($self->{xml_subs_match})([^\>]*)\>(.*?)\<\/\1\s*\>
-	    | {
-	       my($func, $args, $text) = ($1, $2, $3, $4);
+	    @ {
+	       my($func, $args, $text) = ($1, $2, $3);
 	       
 	       $func =~ s/\:+/\:\:/g;
-	       $args =~ s/( [^\s]+\s*)\=/,$1\=\>/sg;
-	       $args =~ s/^,//s;
+	       $args =~ s/(\s[^\s]+\s*)\=/,$1\=\>/sg;
+	       $args =~ s/^(\s*),/$1/s;
+	       #	       $args =~ s/\'/\\'/g;
+	       #	       $args =~ s/\"/\'/g;	     
 	       
-	       if($text =~ /\<\%/) {
+	       if($text =~ m/\<\%|\<($self->{xml_subs_match})/) {
 		   # parse again, and control output buffer for this level
 		   my $sub_script = &ParseHelper($self, \$text);
 		   $text = (
@@ -1080,7 +1112,7 @@ sub ParseHelper {
 	       }
 	       
 	       "<% $func({ $args }, $text); %>"
-	      } |sgex;
+	      } @sgex;
     }
 
     my(@out, $perl_block, $last_perl_block);
@@ -1158,7 +1190,15 @@ sub PodComments {
 
 sub SearchDirs {
     my($self, $file) = @_;
- 
+
+    # optimization for includes in tight for loops, a typical usage,
+    # to save on the stats per request
+    my $cache_key = join('||', $file, @{$self->{includes_dir}});
+    if(my $path = $self->{search_dirs_cache}{$cache_key}) {
+	# $self->Debug("found $path search cached for $file, key $cache_key");
+	return $path;
+    }
+
     if(defined $file) {
 	# test & return if absolute if absolute
 	if($file =~ m,^/|^[a-z]\:,i) {
@@ -1167,21 +1207,48 @@ sub SearchDirs {
 	
 	for my $dir (@{$self->{includes_dir}}) {
 	    my $path = "$dir/$file";
-	    return $path if -e $path;
+	    if(-e $path) {
+		$self->{search_dirs_cache}{$cache_key} = $path;
+		return $path;
+	    }
         }
     }
     
     undef;
 }
 
+sub RegisterIncludes {
+    my($self, $script) = @_;
+
+    # compile includes at compile time, for prefork parse optimization
+    my $copy = $$script;
+    $copy =~ s/\$Response\-\>Include\([\'\"]([^\$]+?)[\'\"]/
+      {
+       my $include = $1;
+       # prevent recursion
+       unless($self->{register_includes}{$include}) {
+	   $self->{register_includes}{$include} = 1;
+	   local $self->{compile_error} = undef;
+	   local $self->{compile_eval} = undef;
+	   my $code = eval { $self->CompileInclude($include); };
+	   my $debug = $code ? "success" : "error: $@";
+	   $self->{dbg} && $self->Debug("register include $include with $debug");
+       }
+       '';
+      }
+	/exsgi;
+}
+
 sub CompileInclude {
     my($self, $include) = @_;
 
+    # streamlined, SearchDirs now caches
     my $file = $self->SearchDirs($include);
     die("no file $include") unless defined $file;
     $include = $file;
-
-    my $id = $self->FileId($self->AbsPath($include, $self->{global}));    
+    my $id = $self->AbsPath($include, $self->{global});
+    $id =~ s|/+|/|sg;
+    $id =~ s/\W/_/gso;
     my $subid = $self->{GlobalASA}{'package'}."::$id".'_x_INC';
 
     my $compiled = $Apache::ASP::CompiledIncludes{$subid};
@@ -1232,6 +1299,9 @@ sub CompileInclude {
 	return;
     }
 
+    if($self->{r}->dir_config('RegisterIncludes')) {
+        $self->RegisterIncludes(\$eval);
+    }
     $self->RegisterSubs($id, $eval);
     $Apache::ASP::CompiledIncludes{$subid} = 
       { 
@@ -1322,7 +1392,11 @@ sub Compile {
     if($@) {
 	$self->CompileError($eval, $@);
 	$self->UndefRoutine($subid);
-    } 
+    } else {
+	if($self->{r}->dir_config('RegisterIncludes')) {
+	    $self->RegisterIncludes($script);
+	}
+    }
 
     if(! $self->{compile_error}) {
 	$Apache::ASP::Compiled{$subid}->{mtime}  = $self->{mtime};
@@ -1439,30 +1513,35 @@ sub CleanupGroup {
 	return;
     }
     
-    # set the next group_check
-    $internal->{$group_key} = time() + $asp->{group_refresh};
+    # set the next group_check, randomize a bit to unclump the group checks,
+    # for 20 minute session timeout, had rand() / 2 + .5, but it was still
+    # too clumpy, going with pure rand() now, even if a bit less efficient
+
+    my $next_check = int($asp->{group_refresh} * rand()) + 1;
+    $internal->{$group_key} = time() + $next_check;
     $internal->UNLOCK();
-    $asp->{dbg} && $asp->Debug("group check $group_id");
 
     ## GET STATE for group
     $state ||= &Apache::ASP::State::new($asp, $group_id);
+    my $ids = $state->GroupMembers();
+    return unless scalar(@$ids);
 
+    $asp->{dbg} && $asp->Debug("group check $group_id, next in $next_check sec");
     my $id = $self->{Session}->SessionID();
     my $deleted = 0;
-    my $ids = $state->GroupMembers();
-    my $total = @{$ids};
-    for(@{$ids}) {
+    $internal->LOCK();
+    for(@$ids) {
 	if($id eq $_) {
 	    $asp->Debug("skipping delete self", {id => $id});
 	    next;
 	}
-
+	
 	# we lock the internal, so a session isn't being initialized
 	# while we are garbage collecting it... we release it every
 	# time so we don't starve session creation if this is a large
 	# directory that we are garbage collecting
-	$internal->LOCK();
-	my $timeout = $internal->{$_}{timeout} || 0;
+	my $idata = $internal->{$_};
+	my $timeout = $idata->{timeout} || 0;
 	
 	unless($timeout) {
 	    # we don't have the timeout always, since this session
@@ -1470,17 +1549,14 @@ sub CleanupGroup {
 	    # a corrupted session (does this happen still ??), we give it
 	    # a timeout now, so we will be sure to clean it up 
 	    # eventualy
-	    my $idata = $internal->{$_};
 	    $idata->{timeout} = time() + $asp->{session_timeout};
 	    $internal->{$_} = $idata;
 	    $asp->Debug("resetting timeout for $_ to $idata->{timeout}");
-	    $internal->UNLOCK();
 	    next;
 	}	
 	# only delete sessions that have timed out
 	unless($timeout < time()) {
-	    $asp->Debug("not timed out with $timeout");
-	    $internal->UNLOCK();
+	    $asp->{dbg} && $asp->Debug("not timed out with $timeout");
 	    next;
 	}
 	
@@ -1495,11 +1571,13 @@ sub CleanupGroup {
 			   %{$internal->{$_}},
 			   'timeout' => time() + $asp->{session_timeout}
 			  };
-	$internal->UNLOCK();
 	
-	# Run SessionOnEnd
+	
+	# unlock many times in case we are locked above this loop
+	for (1..3) { $internal->UNLOCK() }
 	$asp->{GlobalASA}->SessionOnEnd($_);
-
+	$internal->LOCK;
+	
 	# set up state
 	my($member_state) = Apache::ASP::State::new($asp, $_);	
 	if(my $count = $member_state->Delete()) {
@@ -1515,21 +1593,82 @@ sub CleanupGroup {
 	    next;
 	}
     }
+    $internal->UNLOCK();
+
     
+    #### LEAVE DIRECTORIES, NASTY RACE CONDITION POTENTIAL
     # REMOVE DIRECTORY, LOCK 
     # if the directory is still empty, remove it, lock it 
     # down so no new sessions will be created in it while we 
     # are testing
-    if($deleted == $total) {
-	$asp->{Internal}->LOCK();
-	my $ids = $state->GroupMembers();
-	if(@{$ids} == 0) {
-	    $state->DeleteGroupId();
-	}
-	$asp->{Internal}->UNLOCK();
-    }
+    #    if($deleted == $total) {
+    #	$asp->{Internal}->LOCK();
+    #	my $ids = $state->GroupMembers();
+    #	if(@{$ids} == 0) {
+    #	    $state->DeleteGroupId();
+    #	}
+    #	$asp->{Internal}->UNLOCK();
+    #    }
 
     $deleted;
+}
+
+sub CleanupGroups {
+    my($self, $force) = @_;
+    return unless $self->{Session};
+
+    my $cleanup = 0;
+    my $state_dir = $self->{state_dir};
+    my $internal = $self->{Internal};
+    $force ||= 0;
+
+    $self->Debug("forcing groups cleanup") if ($self->{dbg} && $force);
+
+    # each apache process has an internal time in which it 
+    # did its last check, once we have passed that, we check
+    # $Internal for the last time the check was done.  We
+    # break it up in this way so that locking on $Internal
+    # does not become another bottleneck for scripts
+    if(($Apache::ASP::CleanupGroups{$state_dir} || 0) < time()) {
+	# /8 to keep it less bursty... since we check groups every group_refresh/2
+	# we'll average 1/4 of the groups everytime we check them on a busy server
+	$Apache::ASP::CleanupGroups{$state_dir} = time() + $self->{group_refresh}/8;
+	$self->Debug("testing internal time for cleanup groups");
+	if($self->CleanupMaster) {
+	    $internal->LOCK();
+	    if($force || ($internal->{CleanupGroups} < (time - $self->{group_refresh}/8))) {
+		$internal->{CleanupGroups} = time;
+		$cleanup = 1;
+	    }
+	    $internal->UNLOCK;
+	}
+    }
+    return unless $cleanup;
+
+    # only one process doing CleanupGroup at a time now, so OK
+    # lock around, necessary when keeping empty group directories
+    my $groups = $self->{Session}{_SELF}{'state'}->DefaultGroups();
+    my($sum_active, $sum_deleted);
+    $internal->LOCK();
+    my $start_cleanup = time;
+    for(@{$groups}) {
+	$sum_deleted = $self->CleanupGroup($_, $force);
+	if ($start_cleanup > time) {
+	    # every second, take a breather in the lock management
+	    # so that sessions can be created, and the like, so for 
+	    # long purges, the application will get sticky in 1 second
+	    # bursts
+	    $start_cleanup = time;
+	    $internal->UNLOCK;
+	    $internal->LOCK;
+	    last unless $self->CleanupMaster;
+	}
+    }
+    $internal->UNLOCK();
+    $self->Debug("cleanup groups", { deleted => $sum_deleted }) if $self->{dbg};
+
+    # boolean true at least for master
+    $sum_deleted || 1; 
 }
 
 sub CleanupMaster {
@@ -1544,10 +1683,10 @@ sub CleanupMaster {
        Checked => 0,       
       };
 
-    my $is_master = $master->{ServerID} eq $ServerID 
-      and $master->{PID} eq $$ ? 1 : 0;
-    my $stale_time = $is_master ? $self->{group_refresh} / 4 : $self->{group_refresh} / 2;
-    $stale_time += $stale_time * rand() / 2 + $master->{Checked};
+    my $is_master = (($master->{ServerID} eq $ServerID) and ($master->{PID} eq $$)) ? 1 : 0;
+    my $stale_time = $is_master ? $self->{group_refresh} / 4 : 
+      $self->{group_refresh} / 2 + int($self->{group_refresh} * rand() / 2) + 1;
+    $stale_time += $master->{Checked};
     
     if($stale_time < time()) {
 	$internal->{CleanupMaster} =
@@ -1556,16 +1695,18 @@ sub CleanupMaster {
 	   PID => $$,
 	   Checked => time()
 	  };
-	$internal->UNLOCK;
+	$internal->UNLOCK; # flush write
 	$self->{dbg} && $self->Debug("$stale_time time is stale, is_master $is_master", $master);
 	
 	# we are only worried about multiprocess NFS here
-	sleep(1) unless ($^O =~ /Win/); 
-
-	my $master = $internal->{CleanupMaster};
-	my $is_master = $master->{ServerID} eq $ServerID 
-	  and $master->{PID} eq $$ ? 1 : 0;
-	$self->{dbg} && $self->Debug("is master after update $$");
+	unless($^O =~ /Win/) {
+	    $self->Debug("sleep for acquire master check in case of shared state");
+	    sleep(1);
+	}
+	
+	my $master = $internal->{CleanupMaster}; # recheck after flush
+	my $is_master = (($master->{ServerID} eq $ServerID) and ($master->{PID} eq $$)) ? 1 : 0;
+	$self->{dbg} && $self->Debug("is_master $is_master after update $ServerID - $$");
 	$is_master;
     } elsif($is_master) {
 	$master->{Checked} = time();
@@ -1580,47 +1721,6 @@ sub CleanupMaster {
     }
 }
 
-sub CleanupGroups {
-    my($self, $force) = @_;
-    return unless $self->{Session};
-
-    my $cleanup = 0;
-    my $state_dir = $self->{state_dir};
-    $force ||= 0;
-
-    $self->Debug("forcing groups cleanup") if ($self->{dbg} && $force);
-
-    # each apache process has an internal time in which it 
-    # did its last check, once we have passed that, we check
-    # $Internal for the last time the check was done.  We
-    # break it up in this way so that locking on $Internal
-    # does not become another bottleneck for scripts
-    if(($Apache::ASP::CleanupGroups{$state_dir} || 0) < time()) {
-	$Apache::ASP::CleanupGroups{$state_dir} = time() + $self->{group_refresh}/4;
-	$self->Debug("testing internal time for cleanup groups");
-	my $internal = $self->{Internal};
-	if($self->CleanupMaster) {
-	    $internal->LOCK();
-	    if($force || ($internal->{CleanupGroups} < time())) {
-		$internal->{CleanupGroups} = time() + $self->{group_refresh};
-		$cleanup = 1;
-	    }
-	    $internal->UNLOCK;
-	}
-    }
-    return unless $cleanup;
-
-    my $groups = $self->{Session}{_SELF}{'state'}->DefaultGroups();
-    my($sum_active, $sum_deleted);
-    for(@{$groups}) {	
-	$sum_deleted = $self->CleanupGroup($_, $force);
-    }
-    $self->Debug("cleanup groups", { deleted => $sum_deleted }) if $self->{dbg};
-    
-    # boolean true at least for master
-    $sum_deleted || 1; 
-}
-
 sub PrettyError {
     my($self) = @_;
     my $response = $self->{Response};
@@ -1628,7 +1728,7 @@ sub PrettyError {
     my $out = $response->{out};
     $$out = $self->PrettyErrorHelper();
     $response->Flush();
-	
+
     1;
 }
 
@@ -1803,13 +1903,16 @@ sub Out {
 	
     my $debug = join(' - ', @data);
     my $time = '';
-#    if($self->{dbg} == 3) {
-#	require Time::HiRes;
-#	$time = Time::HiRes::time();
-#	$time = " [$time]";
-#    }
-#    $self->Log("[debug]$time $debug");
-    $self->Log("[debug] $debug");
+    if($self->{dbg} >= 3) {
+	# use require, not LoadModule, so to avoid Debug recursion
+	if(eval { require Time::HiRes; }) {
+	    $time = sprintf("%.4f", Time::HiRes::time());
+	    my $diff = sprintf("%.4f", $time - ($self->{last_time} || $time));
+	    $self->{last_time} = $time;
+	    $time = " [$time;$diff]";	    
+	}
+    }
+    $self->Log("[debug]$time $debug");
     push(@{$self->{debugs_output}}, $debug);
     
     # someone might try to insert a debug as a scalar, better 
@@ -1856,7 +1959,7 @@ sub SessionId {
 
 	# SANTIZE the id against hacking
 	if($id) {
-	    if(length($id) == $SessionIDLength and $id =~ /^[0-9a-z]+$/) {
+	    if((length($id) >= 8 or length($id) <= 32) and $id =~ /^[0-9a-z]+$/) {
 		$self->{session_id} = $id;
 	    } else {
 		$self->Log("passed in session id $id failed checks sanity checks");
@@ -1883,11 +1986,18 @@ sub Digest {
 
 sub Secret {
     my $self = shift;
+    # have enough data in here that even if srand() is seeded for the purpose
+    # of debugging an external program, should have decent behavior.
     my $data = $self . $self->{remote_ip} . rand() . time() . 
-      $Apache::ASP::MD5 . $self->{global} . $self->{'r'} . $self->{'filename'}. rand();
-    $self->Digest(\$data);
+      $Apache::ASP::MD5 . $self->{global} . $self->{'r'} . $self->{'filename'}. rand() . 
+	$$ . $ServerID;
+    my $secret = substr($self->Digest(\$data), 0, $SessionIDLength);
+    # by having [0-3][0-f] as the first 2 chars, only 64 groups now, which remains
+    # efficient for inactive sites, even with empty groups
+    $secret =~ s/^(.)/ord($1)%4/e; 
+    $secret;
 }
-    
+
 sub Escape {
     my($self, $html) = @_;
 
@@ -2417,6 +2527,7 @@ sub new {
 
     my $filename = $asp->{global}.'/global.asa';
     my $id = $filename;
+    $id =~ s|/+|/|sg;
     $id =~ s/\W/_/gs;
     my $package = $asp->{global_package} ? $asp->{global_package} : "Apache::ASP::Compiles".'::'.$id;
 
@@ -2440,7 +2551,10 @@ sub new {
 	return $self;
     }
 
-    unless($compiled) {
+    if($compiled) {
+	$asp->{dbg} && $asp->Debug("global.asa was cached for $id");
+    } else {
+	$asp->{dbg} && $asp->Debug("global.asa was not cached for $id");
 	$compiled = $Apache::ASP::Compiled{$id} = { mtime => 0, 'exists' => 0 };
     }
     $self->{compiled} = $compiled;
@@ -2458,7 +2572,7 @@ sub new {
 	$changed = 1;
     } else {
 	$self->{mtime} = $exists ? (stat($filename))[9] : 0;
-	if($self->{mtime} >= $compiled->{mtime}) {
+	if($self->{mtime} > $compiled->{mtime}) {
 	    # if the modification time is greater than the compile time
 	    $changed = 1;
 	} 
@@ -2475,13 +2589,14 @@ sub new {
 		 "use lib qw($self->{asp}->{global});",
 		 $code,
 		 'sub exit { $main::Response->End(); } ',
+		 "no lib qw($self->{asp}->{global});",
 		 '1;',
 		 );
 
-    $asp->Debug("compiling global.asa $self->{'package'} $id", $self);
+    $asp->{dbg} && $asp->Debug("compiling global.asa $self->{'package'} $id exists $exists", $self, '---', $compiled);
     $code =~ /^(.*)$/s; # untaint
 
-    # only way to catch strict errors here
+    # only way to catch strict errors here    
     if($asp->{use_strict}) { 
 	local $SIG{__WARN__} = sub { die("maybe use strict error: ", @_) };
 	eval $1;
@@ -2574,22 +2689,25 @@ sub SessionOnEnd {
 	$internal->UNLOCK();
     }
 
-    my $old_session = $asp->{Session};
-    my $dead_session;
-    if($id) {
-	$dead_session = &Apache::ASP::Session::new($asp, $id);
-	$asp->{Session} = $dead_session;
-    } else {
-	$dead_session = $old_session;
+    # only retie session if there is a Session_OnEnd event to execute
+    if($self->IsCompiled('Session_OnEnd')) {
+	my $old_session = $asp->{Session};
+	my $dead_session;
+	if($id) {
+	    $dead_session = &Apache::ASP::Session::new($asp, $id);
+	    $asp->{Session} = $dead_session;
+	} else {
+	    $dead_session = $old_session;
+	}
+	
+	$asp->{dbg} && $asp->Debug("Session_OnEnd", {session => $dead_session->SessionID()});
+	$self->Execute('Session_OnEnd');
+	$asp->{Session} = $old_session;
+	
+	if($id) {
+	    untie %{$dead_session};
+	}
     }
-       
-    $asp->Debug("Session_OnEnd", {session => $dead_session->SessionID()});
-    $self->Execute('Session_OnEnd');
-    $asp->{Session} = $old_session;
-    
-    if($id) {
-	untie %{$dead_session};
-    } 
 
     1;
 }
@@ -3841,8 +3959,8 @@ sub GetSession {
 	$asp->Warn("session id not defined");
 	return;
     }
-    unless(length($id) == 32) {
-	$asp->Warn("session id must be of length 32");
+    unless(length($id) >= 8) {
+	$asp->Warn("session id must be of at least 8 in length");
 	return;
     }
 
@@ -3851,7 +3969,16 @@ sub GetSession {
     } else {
 	my $new_session = Apache::ASP::Session::new($asp, $id, O_RDWR, 'NOERR');
 	if($new_session) {
-	    $asp->{r}->register_cleanup(sub { $new_session->DESTROY });
+	    if ($asp->{get_session_last}) {
+		my $session_obj = tied %{$asp->{get_session_last}};
+		$asp->{dbg} && $asp->Debug("freeing last session $asp->{get_session_last} $session_obj");
+		$session_obj && $session_obj->DESTROY;
+	    }
+	    $asp->{get_session_last} = $new_session;
+	    $asp->{r}->register_cleanup(sub {
+					    my $session_obj = tied %$new_session;
+					    $session_obj && $session_obj->DESTROY;
+					});
 	}
 	$new_session;
     }
@@ -3871,11 +3998,13 @@ use vars qw(@ISA);
 sub new {
     my($asp, $id, $perms, $no_error) = @_;
     my($state, %self, $started);
+    my $internal = $asp->{Internal};
 
     # if we are passing in the id, then we are doing a 
     # quick session lookup and can bypass the normal checks
     # this is useful for the session manager and such
     if($id) {
+	$internal->LOCK;
 	$state = Apache::ASP::State::new($asp, $id, undef, $perms, $no_error);
 	#	$state->Set() || $asp->Error("session state get failed");
 	if($state) {
@@ -3885,14 +4014,15 @@ sub new {
 	     asp=>$asp, 
 	     id=>$id,
 	    };
+	    $internal->UNLOCK;
 	    return bless \%self;
 	} else {
+	    $internal->UNLOCK;
 	    return;
 	}
     }
 
     # lock down so no conflict with garbage collection
-    my $internal = $asp->{Internal};
     $internal->LOCK();
     if($id = $asp->SessionId()) {
 	my $idata = $internal->{$id};
@@ -4020,11 +4150,15 @@ sub new {
 	id=>$id,
 	started=>$started,
     };
-    if($asp->{dbg}) {
-	$state->UserLock();
-	$asp->Debug("tied session", \%self);
-	$state->UserUnLock();
-    }
+
+    # users should be able to turn on system debugging without logging
+    # potentially sensitive $Session data
+    #    if($asp->{dbg}) {
+    #  $state->UserLock();
+    #  $asp->Debug("tied session", \%self);
+    #  $state->UserUnLock();
+    #    }
+
     if($started) {
 	$asp->{dbg} && $asp->Debug("clearing starting session");
 	%self = ();
@@ -4041,12 +4175,12 @@ sub TIEHASH {
 # stub so we don't have to test for it in autoload
 sub DESTROY {
     my $self = shift;
-    # avoid odd global destruction errors
-    return unless tied($self->{state}); 
-    $self->{state}->UserUnLock() if $self->{asp}{session_serialize};
-    untie $self->{state};
+    return unless $self->{state};
+#    $self->{asp}->Debug("destroying state $self->{state}");
+    $self->{state}->DESTROY;
     undef $self->{state};
-} 
+    %$self = ();
+}
 
 # don't need to skip DESTROY since we have it here
 # return if ($AUTOLOAD =~ /DESTROY/);
@@ -4177,7 +4311,7 @@ sub UnLock { tied(%{$_[0]})->{state}->UnLock(); }
 package Apache::ASP::State;
 use strict;
 no strict qw(refs);
-use vars qw(%DB %CACHE $UNLOCK $DefaultGroupIdLength);
+use vars qw(%DB %CACHE $DefaultGroupIdLength);
 use Fcntl qw(:flock O_RDWR O_CREAT);
 $DefaultGroupIdLength = 2;
 
@@ -4236,9 +4370,9 @@ sub new {
     if($id eq 'internal') {
 	$state_db = $Apache::ASP::DefaultStateDB;
 	$state_serializer = $Apache::ASP::DefaultStateSerializer;
-    } else {	
+    } elsif (length($id) > $DefaultGroupIdLength) {
 	# don't get data for dummy group id sessions
-	my $internal = length($id) > $DefaultGroupIdLength ? $asp->{Internal} : {};
+	my $internal = $asp->{Internal};
 	my $idata = $internal->{$id};
 	if(! $idata->{state_db} || ! $idata->{state_serializer}) {
 	    $state_db = $idata->{state_db} || $asp->{state_db} || $Apache::ASP::DefaultStateDB;
@@ -4290,7 +4424,7 @@ sub new {
 	     asp=>$asp,
 	     dbm => undef, 
 	     'dir' => $group_dir,
-	     'ext' => ['.lock'],	    
+#	     'ext' => ['.lock'],	    
 	     id => $id, 
 	     file => $file,
 	     group => $group, 
@@ -4306,27 +4440,51 @@ sub new {
 	     total_unlocks => 0,
 	     write_locked => 0,
 	    };
-    
-    push(@{$self->{'ext'}}, @{$DB{$self->{state_db}}});    
+
+    # short circuit before expensive directory tests for group stub
+    if ($group eq $id) {
+	return $self;
+    }
+
+    if($asp->{r}->dir_config('StateAllWrite')) {
+	$asp->{dbg} and $asp->{state_all_write} = 1;
+	$self->{dir_perms} = 0777;
+	$self->{file_perms} = 0666;
+    } elsif($asp->{r}->dir_config('StateGroupWrite')) {
+	$asp->{dbg} and $asp->{state_group_write} = 1;
+	$self->{dir_perms} = 0770;
+	$self->{file_perms} = 0660;
+    } else {
+	$self->{dir_perms} = 0750;
+	$self->{file_perms} = 0640;
+    }
+
+#    push(@{$self->{'ext'}}, @{$DB{$self->{state_db}}});    
 #    $self->{asp}->Debug("db ext: ".join(",", @{$self->{'ext'}}));
 
     # create state directory
+    my $umask = umask(0000);
     unless(-d $state_dir) {
-	mkdir($state_dir, 0750) 
-	    || $self->{asp}->Error("can't create state dir $state_dir");
+	my $rv = mkdir($state_dir, $self->{dir_perms});
+	unless (($rv)) {
+	    my $error = $!;
+	    -d $state_dir || $self->{asp}->Error("can't create state dir $state_dir: $error");
+	}
     }
 
     if(! $permissions || $permissions ne O_RDWR) {		    
 	# create group directory
 	unless(-d $group_dir) {
-	    if(mkdir($group_dir, 0750)) {
+	    if(mkdir($group_dir, $self->{dir_perms})) {
 		$self->{asp}->Debug("creating group dir $group_dir");
 	    } else {
-		$self->{asp}->Error("can't create group dir $group_dir");	    
+		my $error = $!;
+		-d $group_dir || $self->{asp}->Error("can't create group dir $group_dir: $error");
 	    }
 	}    	
     }
-	
+    umask($umask);
+
     # open lock file now, and once for performance
     # we skip this for $group_id eq $id since then this is 
     # just a place holder empty state object used 
@@ -4373,7 +4531,7 @@ sub Do {
 			    );
 	return;
     }
-    
+
     # Tie to MLDBM Database
     # set the params for MLDBM use, and tie to db, possible bug
     # fix to mixing settings for other app uses.
@@ -4381,16 +4539,14 @@ sub Do {
     # so developer can use MLDBM for other things.
     #
 
-#    my @temp = ($MLDBM::UseDB, $MLDBM::Serializer);
-#    $self->{state_db} =~ s/^//; # untaint
-    
     local $MLDBM::UseDB = $self->{state_db};
     local $MLDBM::Serializer = $self->{state_serializer};
     # clear current tied relationship first, if any
     $self->{dbm} = undef; 
     local $SIG{__WARN__} = sub {};
-    $self->{dbm} = &MLDBM::TIEHASH('MLDBM', $self->{file}, $permissions, 0640);
-#    ($MLDBM::UseDB, $MLDBM::Serializer) = @temp;    
+    my $umask = umask(0000);
+    $self->{dbm} = &MLDBM::TIEHASH('MLDBM', $self->{file}, $permissions, $self->{file_perms});
+    umask($umask);
 
     if($self->{dbm}) {
 	# used to have locking code here
@@ -4434,9 +4590,9 @@ sub Delete {
 
 	if(unlink($unlink_file)) {
 	    $count++;
-#	    $self->{asp}->Debug("deleted state file $unlink_file");
+	    #	    $self->{asp}->Debug("deleted state file $unlink_file");
 	} else {
-	    $self->{asp}->Error("can't unlink state file $unlink_file: $!"); 
+	    $self->{asp}->Log("can't unlink state file $unlink_file: $!"); 
 	    return;
 	}
     }
@@ -4444,18 +4600,21 @@ sub Delete {
     $count;
 }
 
-sub DeleteGroupId {
-    my $self = shift;
-  
-    my $group_dir = $self->{group_dir};
-    if(-d $group_dir) {
-	if(rmdir($group_dir)) {
-	    $self->{asp}->Debug("deleting group dir $group_dir");
-	} else {
-	    $self->{asp}->Log("cannot delete group dir $group_dir: $!");
-	}
-    }
-}    
+
+#### LEAVE GROUP CONTAINERS AFTER CREATION, NASTY RACE CONDITION OTHERWISE
+
+#sub DeleteGroupId {
+#    my $self = shift;
+#  
+#    my $group_dir = $self->{group_dir};
+#    if(-d $group_dir) {
+#	if(rmdir($group_dir)) {
+#	    $self->{asp}->Debug("deleting group dir $group_dir");
+#	} else {
+#	    $self->{asp}->Log("cannot delete group dir $group_dir: $!");
+#	}
+#    }
+#}    
 
 sub GroupId {
     shift->{group};
@@ -4466,10 +4625,11 @@ sub GroupMembers {
     local(*DIR);
     my(%ids, @ids);
 
-    unless(-d $self->{group_dir}) {
-	$self->{asp}->Log("no group dir:$self->{group_dir} to get group from");
-	return [];
-    }
+# redundant with opendir()
+#    unless(-d $self->{group_dir}) {
+#	$self->{asp}->Log("no group dir:$self->{group_dir} to get group from");
+#	return [];
+#    }
 
     unless(opendir(DIR, $self->{group_dir})) {
 	$self->{asp}->Log("opening group $self->{group_dir} failed: $!");
@@ -4482,6 +4642,7 @@ sub GroupMembers {
 	next unless $1;
 	$ids{$1}++;
     }
+
     # need to explicitly close directory, or we get a file
     # handle leak on Solaris
     closedir(DIR); 
@@ -4494,12 +4655,40 @@ sub DefaultGroups {
     my $self = shift;
     my(@ids);
     local *STATEDIR;
-    
+
     opendir(STATEDIR, $self->{state_dir}) 
 	|| $self->{asp}->Error("can't open state dir $self->{state_dir}");
+    my $time = time;
     for(readdir(STATEDIR)) {
 	next if /^\./;
 	next unless (length($_) eq $DefaultGroupIdLength);
+
+	#### NOT A RACE CONDITION SINCE WE ARE NOT DELETING GROUPS
+	#
+	# skip ones just created, may not check groups 
+	# within 3 seconds of their creation, allowing 
+	# for enough time for the group to become initialized
+	# obviating a race condition where a group could be
+	# destroyed before being fully initialized, this would
+	# not be necessary to do in a database scenario, but 
+	# with file system it is
+	#	my $ctime = (stat("$self->{state_dir}/$_"))[10];
+	#	if ($ctime < $time and $ctime > $time - 3) {
+	#	    $self->{asp}->Debug("skipping new group $_, created at $ctime");
+	#	    next;
+	#	}
+
+	## OPTIMIZATION for not busy sites, no longer necessary,
+	## since there will only be 64 group folders now, instead of 256
+	## cutting down the total overhead for checking each group
+#	my $group_dir = "$self->{state_dir}/$_";
+#	unless(opendir(STATEDIR, $group_dir)) {
+#	    $self->{asp}->Log("can't read $group_dir: $!");
+#	    next;
+#	}
+#	my @files = readdir(STATEDIR);
+#	next unless (@files > 2);
+
 	push(@ids, $_);
     }
     closedir STATEDIR;
@@ -4529,11 +4718,14 @@ sub DESTROY {
 	$self->CloseLock();    
     }
 
-    $self->{asp}{dbg} &&
-    $self->{asp}->Debug(
-		      "state $self->{id} locks: $self->{total_locks}, ".
-		      "unlocks: $self->{total_unlocks}"
-		     );
+    if($self->{total_locks} || $self->{total_unlocks}) {
+	$self->{asp}{dbg} &&
+	  $self->{asp}->Debug(
+			      "state $self->{id} locks: $self->{total_locks}, ".
+			      "unlocks: $self->{total_unlocks}"
+			     );
+    }
+
     $self->{total_locks} = $self->{total_unlocks} = 0;
 }
 
@@ -4684,24 +4876,30 @@ sub UnLock {
 	$self->{write_locked} = 0;
 	$self->{total_unlocks}++;
 	$self->{dbm} = undef;
-	if(eval { flock($file, ($UNLOCK || LOCK_UN)) }) {
+
+	if(eval { flock($file, LOCK_UN) }) {
 	    # unlock success
 	} else {
-	    local $^W = 0;
-	    if($@ and $^O eq 'MSWin32') {
-		$self->{asp}->Debug("flock() unlocking doesn't work on this platform, likely Win95: $!");
-	    }  else {
-		$self->{asp}->Debug("basic unlock of $file failed: $!");
-		# we try a flock work around here for QNX
-		my $err = $!;
-		eval { $UNLOCK ||=&Fcntl::F_UNLCK; };
-		if($UNLOCK) {
-		    unless(flock($file, $UNLOCK)) {
-			$self->{asp}->Error("Can't unlock $file even with backup flock: $err, $!");
-		    }		
+	    if (-e $file) {
+		local $^W = 0;
+		if($@ and $^O eq 'MSWin32') {
+		    $self->{asp}->Debug("flock() unlocking doesn't work on this platform, likely Win95: $!");
 		} else {
-		    $self->{asp}->Error("Can't unlock $file: $err");		
+		    $self->{asp}->Debug("basic unlock of $file failed: $!");
+		    # we try a flock work around here for QNX
+		    my $err = $!;
+		    my $unlock;
+		    eval { $unlock = &Fcntl::F_UNLCK };
+		    if($unlock) {
+			unless(flock($file, $unlock)) {
+			    $self->{asp}->Error("Can't unlock $file even with backup flock: $err, $!");
+			}
+		    } else {
+			$self->{asp}->Error("Can't unlock $file: $err");
+		    }
 		}
+	    } else {
+		$self->{asp}->Error("file $file no longer exists for unlocking: $!");
 	    }
 	}
     } else {
@@ -4925,27 +5123,41 @@ sub Contents {
 
 sub Item {
     my($self, $key, $value) = @_;
+    my @rv;
+    my $item_config = $Apache::ASP::Register->{r}->dir_config('CollectionItem');
 
     if(defined $value) {
 	if(ref($self->{$key}) and $self->{$key} =~ /HASH/) {
 	    # multi leveled collection go two levels down
-	    $self->{$key}{$value};
+	    $rv[0] = $self->{$key}{$value};
 	} else {
-	    $self->{$key} = $value;	
+	    return $self->{$key} = $value;
 	}
     } elsif(defined $key) {
 	my $value = $self->{$key};	
-	defined($value) || return $value;
-	if(wantarray) {
-	    (ref($value) =~ /ARRAY/o) ? @{$value} : $value;
+	if (defined $value) {
+	    if(wantarray || $item_config) {
+		@rv = (ref($value) =~ /ARRAY/o) ? @{$value} : ($value);
+	    } else {
+		@rv = (ref($value) =~ /ARRAY/o) ? ($value->[0]) : ($value);
+	    }
 	} else {
-	    (ref($value) =~ /ARRAY/o) ? $value->[0] : $value;
+	    $rv[0] = $value;
 	}
     } else {
 	# returns hash to self by default, so compat with 
 	# $Request->Form() & such null collection calls.
-	$self;
+	return $self;
     }
+
+    # coming from the collections we need this like
+    # $Request->QueryString('foo')->Item() syntax, but is incompatible
+    # with $Request->QueryString('foo') syntax
+    if ($item_config) {
+	$rv[0] = Apache::ASP::CollectionItem->new(\@rv);
+    }
+
+    wantarray ? @rv : $rv[0];
 }
 
 sub SetProperty {
@@ -4968,6 +5180,34 @@ sub GetProperty {
     }
 }	
 	
+1;
+
+# for support of $Request->QueryString->('foo')->Item() syntax
+package Apache::ASP::CollectionItem;
+
+sub new {
+    my($package, $rv) = @_;
+    my @items = @$rv;
+    bless {
+	   'Item' => $items[0],
+	   'Items' => \@items,
+	   'Count' => defined $items[0] ? scalar(@items) : 0,
+	  }, $package;
+}
+
+sub Count { shift->{Count} };
+
+sub Item {
+    my($self, $index) = @_;
+    my $items = $self->{Items};
+    
+    if(defined $index) {
+	$items->[$index-1];
+    } else {
+	wantarray ? @$items : $items->[0];
+    }
+}
+
 1;
 
 package Apache::ASP::Loader;
@@ -5040,12 +5280,12 @@ sub connection { shift; }
 
 =head1 DESCRIPTION
 
-This perl module provides an Active Server Pages port to the 
-Apache Web Server with perl as the host scripting language. 
-Active Server Pages is a web application platform that originated 
-with the Microsoft NT/IIS server.  Under Apache for Unix and Win32
-platforms it allows a developer to create dynamic web applications 
-with session management and embedded perl code.
+Apache::ASP provides an Active Server Pages port to the 
+Apache Web Server with Perl as the host scripting language. 
+Apache::ASP allows a developer to create dynamic web applications 
+with session management and embedded perl code.  There are also 
+many powerful extensions, including XML taglibs, XSLT rendering, 
+and new events not originally part of the ASP API.
 
 =begin html
 
@@ -5065,10 +5305,7 @@ with session management and embedded perl code.
 <li> Great Open Source SUPPORT
 </ul>
 
-</td>
-<td width=5>&nbsp;</td>
-<td><a href=http://www.oreillynet.com/pub/w/apache_tutorials.html><img src=oscon2000_speaker.gif border=0></a>
-</td></tr></table>
+</table>
 
 =end html
 
@@ -5580,6 +5817,28 @@ perl directives must be at the beginning of the line, and must
 be followed by the end of the line.
 
   PerlSetVar PodComments 1
+
+=item CollectionItem
+
+Enables PerlScript syntax like:
+
+  $Request->Form('var')->Item;
+  $Request->Form('var')->Item(1);
+  $Request->Form('var')->Count;
+
+Old PerlScript syntax, enabled with
+
+  use Win32::OLE qw(in valof with OVERLOAD);
+
+is like native syntax
+
+  $Request->Form('var');
+
+Only in Apache::ASP, can the above be written as:
+
+  $Request->{Form}{var};
+
+which you would do if you _really_ needed the speed.
 
 =head2 XML / XSLT
 
@@ -7292,6 +7551,11 @@ written in PerlScript under IIS.  Most of that work revolved around
 bringing a Win32::OLE Collection interface to many of the objects
 in Apache::ASP, which are natively written as perl hashes.
 
+New as of verionsion 2.05 is new functionality enabled with the 
+CollectionItem setting, to giver better support to more recent PerlScript syntax.
+This seems helpful when porting from an IIS/PerlScript code base.
+Please see the CONFIG section for more info.
+
 The following objects in Apache::ASP respond as Collections:
 
         $Application
@@ -7552,9 +7816,9 @@ documents at:
 
 =head2 $Application & $Session State
 
-Use NoState 1 setting if you don't need the $Application or $Session objects.
-State objects such as these tie to files on disk and will incur a performance
-penalty.
+Use NoState 1 setting if you don't need the $Application or $Session
+objects. State objects such as these tie to files on disk and will incur a
+performance penalty.
 
 If you need the state objects $Application and $Session, and if 
 running an OS that caches files in memory, set your "StateDir" 
@@ -7562,7 +7826,14 @@ directory to a cached file system.  On WinNT, all files
 may be cached, and you have no control of this.  On Solaris, /tmp is cached
 and would be a good place to set the "StateDir" config setting to.  
 When cached file systems are used there is little performance penalty 
-for using state files.
+for using state files.  Linux tends to do a good job caching its
+file systems, so pick a StateDir for ease of system administration.
+
+On Win32 systems, where mod_perl requests are serialized, you 
+can freely use SessionSerialize to make your $Session requests
+faster, and you can achieve similar performance benefits for
+$Application if you call $Application->Lock() in your 
+global.asa's Script_OnStart.
 
 =head2 High MaxRequests
 
@@ -7570,6 +7841,20 @@ Set your max requests per child thread or process (in httpd.conf) high,
 so that ASP scripts have a better chance being cached, which happens after 
 they are first compiled.  You will also avoid the process fork penalty on 
 UNIX systems.  Somewhere between 100 - 1000 is probably pretty good.
+
+=head2 Low MaxClients
+
+Set your MaxClients low, such that if you have that
+many httpd servers running, which will happen on busy site,
+your system will not start swapping to disk because of 
+excessive RAM usage.
+
+=head2 Precompile Modules
+
+For those modules that your Apache::ASP application uses,
+make sure that they are loaded in your sites startup.pl
+file, or loaded with PerlModule in your httpd.conf, so 
+that your modules are compiled pre-fork in the parent httpd.
 
 =head2 Precompile Scripts
 
@@ -7649,12 +7934,13 @@ on slows things down immensely.
 
 =head2 RAM Sparing
 
-If you have a lot of scripts, and limited memory, set NoCache to 1,
+If you have a lot (1000's+) of scripts, and limited memory, set NoCache to 1,
 so that compiled scripts are not cached in memory.  You lose about
-10-15% in speed for small scripts, but save at least 10K per cached
+10-15% in speed for small scripts, but save at least 10K RAM per cached
 script.  These numbers are very rough.  If you use includes, you
 can instead try setting DynamicIncludes to 1, which will share compiled
-code for includes between scripts.
+code for includes between scripts by turning an <!--#include file..-->
+into a $Response->Include().
 
 =head1 SEE ALSO
 
@@ -7707,6 +7993,8 @@ ASP + Apache, web development could not be better!  Kudos go out to:
  :) Geert Josten, for his wonderful work on XML::XSLT
  :) Craig Samuel, at LRN, for his faith in open source for his LCEC.
  :) Vee McMillen, for OSS patience & understanding.
+ :) Ged Haywood, for his great help on the list & professionally.
+ :) Brian Wheeler, for keeping up with the Apache::Filter times.
 
 =head1 SUPPORT
 
@@ -7751,14 +8039,23 @@ would like to show your support of the software by being listed,
 please send your URL to me at joshua@chamas.com and I'll be 
 sure to add it to the list.
 
+        Alumni.NET
+	http://www.alumni.net
+
         Anime Wallpapers dot com
         http://www.animewallpapers.com/
 
 	Chamas Enterprises Inc.		
 	http://www.chamas.com
 
+	http://www.condo-mart.com 
+	Condo-Mart Web Service
+
         Direct.it
         http://www.direct.it/
+
+        Discountclick.com
+        http://www.discountclick.com/
 
 	HCST
 	http://www.hcst.net
@@ -7808,6 +8105,9 @@ sure to add it to the list.
 	USCD Electrical & Computer Engineering
 	http://ece-local.ucsd.edu
 
+	Watthai Net Syndey Australia
+	http://watthai.net
+
 =head1 RESOURCES
 
 Here are some important resources listed related to 
@@ -7849,23 +8149,17 @@ interest to you, and I will give it higher priority.
  + Database storage of $Session & $Application, so web clusters 
    may scale better than the current NFS StateDir implementation
    allows, maybe via Apache::Session.
- + Dumping state of Apache::ASP during an error, and being
-   able to go through it with the perl debugger.
- + Investigating possibility of hooking $Session timeout into 
-   client/server 401 authentication failure.  Seems like IE 
-   caches passwords which makes things tough
- + $Request->ClientCertificate()
- + asp.pl, CGI method of doing asp
 
 =head2 MAY BE DONE
 
  + VBScript, ECMAScript interpreters
  + allow use of Apache::Session for session management
- + Close integration with HTML::Embperl
  + BerkeleyDB2 integration for state management, maybe getting
    shared memory to work.
- + MailErrorsPower, sends duplicate errors every 1,10,100... occurences
- + MailErrorsPowerPeriod, resets the duplicate errors counter.
+ + asp.pl, CGI method of doing asp
+ + Dumping state of Apache::ASP during an error, and being
+   able to go through it with the perl debugger.
+ + $Request->ClientCertificate()
 
 =head1 CHANGES
 

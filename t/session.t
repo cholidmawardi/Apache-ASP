@@ -7,7 +7,7 @@ __END__
 
 <% 
 $t->eok(sub { $Session->Lock() }, '$Session->Lock');
-$t->eok(length($Session->{SessionID}) > 16, "session id not long enough");
+$t->eok(length($Session->{SessionID}) >= 8, "session id not long enough");
 my $count = 0;
 for(1..3) {
 	$Session->{count}++;

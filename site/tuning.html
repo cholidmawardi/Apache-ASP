@@ -268,7 +268,7 @@ documents at:
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#No%20.htaccess%20or%20StatINC><font color=#003090>No .htaccess or StatINC</font></a>
+			<a href=#Precompile%20Scripts><font color=#003090>Precompile Scripts</font></a>
 			</font>
 			</td>
 							
@@ -284,6 +284,22 @@ documents at:
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
+			<a href=#No%20.htaccess%20or%20StatINC><font color=#003090>No .htaccess or StatINC</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Low%20MaxClients><font color=#003090>Low MaxClients</font></a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
 			<a href=#Turn%20off%20Debugging><font color=#003090>Turn off Debugging</font></a>
 			</font>
 			</td>
@@ -294,7 +310,7 @@ documents at:
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Precompile%20Scripts><font color=#003090>Precompile Scripts</font></a>
+			<a href=#Precompile%20Modules><font color=#003090>Precompile Modules</font></a>
 			</font>
 			</td>
 		
@@ -314,9 +330,9 @@ documents at:
 	<a name=%24Application%20%26%20%24Session%20State></a>
 	<font face=verdana><font size=+0 color=#555555><b>$Application & $Session State</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Use NoState 1 setting if you don't need the $Application or $Session objects.
-State objects such as these tie to files on disk and will incur a performance
-penalty.
+</pre></font>Use NoState 1 setting if you don't need the $Application or $Session
+objects. State objects such as these tie to files on disk and will incur a
+performance penalty.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>If you need the state objects $Application and $Session, and if 
 running an OS that caches files in memory, set your "StateDir" 
@@ -324,7 +340,14 @@ directory to a cached file system.  On WinNT, all files
 may be cached, and you have no control of this.  On Solaris, /tmp is cached
 and would be a good place to set the "StateDir" config setting to.  
 When cached file systems are used there is little performance penalty 
-for using state files.</font>
+for using state files.  Linux tends to do a good job caching its
+file systems, so pick a StateDir for ease of system administration.
+<font face="lucida console,courier new" size=3><pre>
+</pre></font>On Win32 systems, where <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> requests are serialized, you 
+can freely use SessionSerialize to make your $Session requests
+faster, and you can achieve similar performance benefits for
+$Application if you call $Application->Lock() in your 
+global.asa's Script_OnStart.</font>
 	
 	<p>
 	<a name=High%20MaxRequests></a>
@@ -334,6 +357,24 @@ for using state files.</font>
 so that ASP scripts have a better chance being cached, which happens after 
 they are first compiled.  You will also avoid the process fork penalty on 
 UNIX systems.  Somewhere between 100 - 1000 is probably pretty good.</font>
+	
+	<p>
+	<a name=Low%20MaxClients></a>
+	<font face=verdana><font size=+0 color=#555555><b>Low MaxClients</b></font><p>
+<font face="lucida console,courier new" size=3><pre>
+</pre></font>Set your MaxClients low, such that if you have that
+many httpd servers running, which will happen on busy site,
+your system will not start swapping to disk because of 
+excessive RAM usage.</font>
+	
+	<p>
+	<a name=Precompile%20Modules></a>
+	<font face=verdana><font size=+0 color=#555555><b>Precompile Modules</b></font><p>
+<font face="lucida console,courier new" size=3><pre>
+</pre></font>For those modules that your Apache::ASP application uses,
+make sure that they are loaded in your sites startup.pl
+file, or loaded with PerlModule in your httpd.conf, so 
+that your modules are compiled pre-fork in the parent httpd.</font>
 	
 	<p>
 	<a name=Precompile%20Scripts></a>
@@ -419,12 +460,13 @@ on slows things down immensely.</font>
 	<a name=RAM%20Sparing></a>
 	<font face=verdana><font size=+0 color=#555555><b>RAM Sparing</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>If you have a lot of scripts, and limited memory, set NoCache to 1,
+</pre></font>If you have a lot (1000's+) of scripts, and limited memory, set NoCache to 1,
 so that compiled scripts are not cached in memory.  You lose about
-10-15% in speed for small scripts, but save at least 10K per cached
+10-15% in speed for small scripts, but save at least 10K RAM per cached
 script.  These numbers are very rough.  If you use includes, you
 can instead try setting DynamicIncludes to 1, which will share compiled
-code for includes between scripts.</font>
+code for includes between scripts by turning an <!--#include file..-->
+into a $Response->Include().</font>
 	
 
 </font>

@@ -1,6 +1,114 @@
-$MODULE=Apache::ASP; $VERSION = 2.03; $DATE="TBA";
+$MODULE=Apache::ASP; $VERSION = 2.07; $DATE="11/26/00";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
+
+ -+-+ Session Manager
+  empty state group directories are not removed, thus alleviating
+  one potential race condition.  This impacted performance
+  on idle sites severely as there were now 256 directories
+  to check, so made many performance enhancements to the 
+  session manager.  The session manager is built to handle
+  up to 20,000 client sessions over a 20 minute period.  It
+  will slow the system down as it approaches this capacity.
+
+  One such enhancement was session-ids now being 11 bytes long 
+  so that its .lock file is only 16 characters in length.  
+  Supposedly some file systems lookup files 16 characters or 
+  less in a fast hashed lookup.  This new session-id has
+  4.4 x 10^12 possible values.  I try to keep this space as
+  large as possible to prevent a brute force attack.
+
+  Another enhancement was to limit the group directories
+  to 64 by only allowing the session-id prefix to be [0-3][0-f]
+  instead of [0-f][0-f], checking 64 empty directories on an
+  idle site takes little time for the session manager, compared
+  to 256 which felt significant from the client end, especially
+  on Win32 where requests are serialized.  
+
+  If upgrading to this version, you would do well to delete
+  empty StateDir group directories while your site is idle.
+  Upgrading during an idle time will have a similar effect,
+  as old Apache::ASP versions would delete empty directories.
+
+ -$Application->GetSession($session_id) now creates
+  an session object that only lasts until the next
+  invocation of $Application->GetSession().  This is 
+  to avoid opening too many file handles at once,
+  where each session requires opening a lock file.
+
+ +added experimental support for Apache::Filter 1.013 
+  filter_register call
+
+ +make test cases for $Response->Include() and 
+  $Response->TrapInclude()
+
+ +Documented CollectionItem config.
+
+ +New $Request->QueryString('multiple args')->Count()
+  interface implemented for CollectionItem config.
+  Also $Request->QueryString('multiple args')->Item(1) method.
+  Note ASP collections start counting at 1.
+
+ --fixed race condition, where multiple processes might 
+  try creating the same state directory at the same time, with
+  one winning, and one generating an error.  Now, web process
+  will recheck for directory existence and error if 
+  it doesn't. 
+
+ -global.asa compilation will be cached correctly, not
+  sure when this broke.  It was getting reloaded every request.
+
+ -StateAllWrite config, when set creates state files
+  with a+rw or 0666 permissions, and state directories
+  with a+rwx or 0777 permissions.  This allows web servers
+  running as different users on the same machine to share a 
+  common StateDir config.  Also StateGroupWrite config
+  with perms 0770 and 0660 respectively.
+
+ -Apache::ASP->Loader() now won't follow links to 
+  directories when searching for scripts to load.
+
+ +New RegisterIncludes config which is on by default only
+  when using Apache::ASP->Loader(), for compiling includes
+  when precompiling scripts.
+
+ +Apache::ASP::CompileInclude path optimized, which underlies
+  $Response->Include()
+
+ +$Request->QueryString->('foo')->Item() syntax enabled
+  with CollectionItem config setting.  Default syntax
+  supported is $Request->QueryString('foo') which is
+  in compatible.  Other syntax like $Request->{Form}{foo}
+  and $Request->Form->Item('foo') will work in either case.
+
+ +New fix suggested for missing Apache reference in 
+  Apache::ASP handler startup for RedHat RPMs.  Added
+  to error message.
+
+ --Backup flock() unlocking try for QNX will not corrupt the 
+  normal flock() LOCK_UN usage, after trying to unlock a file
+  that doesn't exist.  This bug was uncovered from the below 
+  group deletion race condition that existed. 
+
+ -Session garbage collection will not delete new group
+  directories that have just been created but are empty.
+  There was a race condition where a new group directory would
+  be created, but then deleted by a garbage collector before
+  it could be initialized correctly with new state files.
+
+ +Better random session-id checksums for $Session creation.
+  per process srand() initialization, because srand() 
+  may be called once prefork and never called again.
+  Call without arguments to rely on perl's decent rand
+  seeding.  Then when calling rand() in Secret() we have
+  enough random data, that even if someone else calls srand()
+  to something fixed, should not mess things up terribly since
+  we checksum things like $$ & time, as well as perl memory
+  references.
+
+ +XMLSubs installation make test.
+
+ -Fix for multiline arguments for XMLSubs
 

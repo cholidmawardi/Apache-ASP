@@ -271,14 +271,7 @@ interest to you, and I will give it higher priority.</font>
 <font face="lucida console,courier new" size=3><pre>
  + Database storage of $Session &amp; $Application, so web clusters
    may scale better than the current NFS StateDir implementation
-   allows, maybe via Apache::Session.
- + Dumping state of Apache::ASP during an error, and being
-   able to go through it with the perl debugger.
- + Investigating possibility of hooking $Session timeout into
-   client/server 401 authentication failure.  Seems like IE
-   caches passwords which makes things tough
- + $Request-&gt;ClientCertificate()
- + asp.pl, <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> method of doing asp </pre></font>
+   allows, maybe via Apache::Session. </pre></font>
 	
 	<p>
 	<a name=MAY%20BE%20DONE></a>
@@ -286,11 +279,12 @@ interest to you, and I will give it higher priority.</font>
 <font face="lucida console,courier new" size=3><pre>
  + VBScript, ECMAScript interpreters
  + allow use of Apache::Session for session management
- + Close integration with HTML::Embperl
  + BerkeleyDB2 integration for state management, maybe getting
    shared memory to work.
- + MailErrorsPower, sends duplicate errors every 1,10,100... occurences
- + MailErrorsPowerPeriod, resets the duplicate errors counter. </pre></font>
+ + asp.pl, <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> method of doing asp
+ + Dumping state of Apache::ASP during an error, and being
+   able to go through it with the perl debugger.
+ + $Request-&gt;ClientCertificate() </pre></font>
 	
 
 </font>

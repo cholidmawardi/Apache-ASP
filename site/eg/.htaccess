@@ -12,18 +12,21 @@ PerlSetVar FileUploadMax 25000
 PerlSetVar FileUploadTemp 1
 PerlSetVar SessionQueryParse 0
 PerlSetVar SessionQuery 1
-PerlSetVar Debug -2
+#PerlSetVar Debug 2
+PerlSetVar Debug -3
 PerlSetVar StateCache 0
 PerlSetVar SessionCount 1
 PerlSetVar TimeHiRes 1
 PerlSetVar CompressGzip 0
+#PerlSetVar StateAllWrite 1
 
 # .asp files for Session state enabled
 <Files ~ (\.asp)>
 	SetHandler perl-script
 	PerlHandler Apache::ASP
 	PerlSetVar CookiePath  /	
-	PerlSetVar SessionTimeout  .25
+	PerlSetVar SessionTimeout  5
+	PerlSetVar RegisterIncludes 1
 #	PerlSetVar StateSerializer Storable
 #	PerlSetVar StateDB DB_File
 #	PerlSetVar StatScripts 0
@@ -37,7 +40,7 @@ PerlSetVar CompressGzip 0
 	PerlHandler Apache::ASP
 	PerlSetVar NoState 1 
 	PerlSetVar BufferingOn 1
-	PerlSetVar NoCache 1
+#	PerlSetVar NoCache 1
 	PerlSetVar DebugBufferLength 250
 </Files>
 
@@ -59,7 +62,7 @@ PerlSetVar CompressGzip 0
 	PerlHandler Apache::ASP Apache::SSI
 	PerlSetVar Global .
 	PerlSetVar Filter On
-	PerlSetVar NoCache 1
+#	PerlSetVar NoCache 1
 </Files>
 
 <Files ~ (session_query_parse.asp$)>
