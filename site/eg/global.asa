@@ -1,3 +1,5 @@
+use DemoASP;
+
 sub Session_OnStart {
 	$Session->{Count} = 10;
 	$Session->{onstart} = time();
@@ -21,6 +23,7 @@ sub Application_OnEnd {
 
 sub Script_OnStart {
     $Session->{Started}++;
+    $title = '';
 }
 sub Script_OnEnd {
     $Session->{Ended}++;
@@ -42,6 +45,8 @@ sub Script_OnEnd {
 
        'dynamic_includes.htm' => 'Shows an included file called as a subroutine.',
 
+       'error_document.htm' => 'Shows a custom error message using the $Response->ErrorDocument() API extension',
+
        'file_upload.asp' => 'File upload data can be read from the $Request->Form(), '.
 				'and is implemented via CGI.pm',
 
@@ -59,6 +64,10 @@ sub Script_OnEnd {
        'header.inc' => 'Header include for most of the scripts listed here.',
 
        'include.htm' => 'Shows how you can decompose a script into common included files',
+
+#       'ordered_collections.ixhtm' => 
+#       'Used with Tie::IxHash, shows the natural ordering of the $Request->Form() collection '.
+#       'by how the browser submitted the data, useful for some.',
 
        'register_cleanup.asp' => 'Demonstrates use of the API extension $Server->RegisterCleanup(). '.
 		'Execute code after a response completes in a fail safe way with this routine. ',

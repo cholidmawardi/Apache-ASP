@@ -1,6 +1,8 @@
 <%
 
 use File::Basename;
+#$NavColor = '#ffcccc';
+$NavColor = '#ffbbbb';
 
 my $basename = basename($0);
 ($basename) = split(/\./, $basename);
@@ -43,11 +45,32 @@ if($0 =~ /index.html$/) {
 <body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
 
 <table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
-<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="<%=$module%>"></td></tr>
+<tr bgcolor=#ff4488>
+<td colspan=2>
+	<table border=0 cellpadding=0 cellspacing=0 width=100%>
+	<tr>
+	<td><img border=0 src=apache_asp.gif alt="<%=$module%>"></td>
+	<td align=right>
+=pod
+		<a href=http://perl.apache.org><img 
+			src=powered_by_modperl.gif border=0
+			alt="Powered by ModPerl & Apache"
+			></a>
+		<a href=http://www.nodeworks.com/asp/><img 
+			src=powered_by_apache_asp.jpg border=0
+			alt="Powered by Apache::ASP"
+			></a>
+=cut
+	</td>
+	</tr>
+</td>
+</tr>
+</table>
+
 <tr>
 
-<td valign=top bgcolor=#ffcccc>
-	<table border=0 cellpadding=0 cellspacing=0>
+<td valign=top bgcolor=<%=$NavColor%>>
+	<table border=0 cellpadding=0 cellspacing=0 width=100>
 	<tr><td align=center><hr size=1></td></tr>
 
 	<% 
@@ -78,8 +101,12 @@ if($0 =~ /index.html$/) {
 		<td align=center>
 		<hr size=1>
 		<a href=http://perl.apache.org><img 
-			src=modperl.gif border=0
+			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl & Apache"
+			></a>
+		<a href=http://www.nodeworks.com/asp/><img 
+			src=powered_by_apache_asp.jpg border=0
+			alt="Powered by Apache::ASP"
 			></a>
 		<hr size=1>
 		</td>
@@ -88,6 +115,21 @@ if($0 =~ /index.html$/) {
 </td>
 
 <td valign=top>
+		</center>
+	<% if($Ads) { 
+		$PageCount++;
+		%>
+	<!-- BEGIN LINKEXCHANGE CODE --> 
+	<center><iframe src="http://leader.linkexchange.com/<%=$PageCount%>/X709880/showiframe?" 
+	width=468 height=60 marginwidth=0 marginheight=0 hspace=0 vspace=0 frameborder=0 scrolling=no>
+	<a href="http://leader.linkexchange.com/<%=$PageCount%>/X709880/clickle" target="_top"><img width=468 
+	height=60 border=0 ismap alt="" 
+	src="http://leader.linkexchange.com/<%=$PageCount%>/X709880/showle?"></a></iframe>
+	<br><a href="http://leader.linkexchange.com/<%=$PageCount%>/X709880/clicklogo" 
+	target="_top"><img src="http://leader.linkexchange.com/<%=$PageCount%>/X709880/showlogo?" 
+	width=468 height=16 border=0 ismap alt=""></a><br></center>
+	<!-- END LINKEXCHANGE CODE -->
+	<% } %>
 <%
 my @stack;
 my @order;
@@ -114,18 +156,40 @@ if(@order > 2) {
 	%>
 
 	<hr size=1>
-	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
+	<table width=100% border=0 cellpadding=2 cellspacing=0>
+	<tr>
+	<td valign=top><font face="lucida console" size=-1>
+	<ul>
 	<% 
-	for(my $i=0; $i<@links; $i++) { 
-		if($i == (int((@links+1) / 2))) {
-			print "</font></td><td valign=top><font face=verdana size=-1>";
-		}
-		print $links[$i] . "<br>";	
+	my $half = int((@links+1) / 2);
+	my $index;
+	for(my $i=0; $i<$half; $i++) { 
+		%>
+		<tr>
+		<% for $index ($i, undef, $i+$half) { 
+			if(! defined $index) {
+				print "<td>&nbsp;</td>";
+				next;
+			}
+			my $bgcolor = '';
+			if($index == 0) {
+				unless($links[$index+1]) {
+					$bgcolor = $NavColor;
+				}
+			} elsif(! $links[$index+1] && ! $links[$index-1]) {
+				$bgcolor = $NavColor;
+			}
+			%>
+			<td valign=top <%= $bgcolor ? "bgcolor=$bgcolor" : '' %>>
+			<font face="lucida console" size=-1>
+			<%= $links[$index] %>
+			</font>
+			</td>
+		<% } %>					
+		</tr>
+		<%
 	} 
 	%>	
-	</font>
-	</td>
-	</tr>
 	</table>
 	<hr size=1>
 	<p>

@@ -10,11 +10,32 @@
 <body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
 
 <table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
-<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="Apache :: ASP"></td></tr>
+<tr bgcolor=#ff4488>
+<td colspan=2>
+	<table border=0 cellpadding=0 cellspacing=0 width=100%>
+	<tr>
+	<td><img border=0 src=apache_asp.gif alt="Apache :: ASP"></td>
+	<td align=right>
+
+
+
+
+
+
+
+
+
+
+	</td>
+	</tr>
+</td>
+</tr>
+</table>
+
 <tr>
 
-<td valign=top bgcolor=#ffcccc>
-	<table border=0 cellpadding=0 cellspacing=0>
+<td valign=top bgcolor=#ffbbbb>
+	<table border=0 cellpadding=0 cellspacing=0 width=100>
 	<tr><td align=center><hr size=1></td></tr>
 
 	
@@ -82,8 +103,12 @@
 		<td align=center>
 		<hr size=1>
 		<a href=http://perl.apache.org><img 
-			src=modperl.gif border=0
+			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl & Apache"
+			></a>
+		<a href=http://www.nodeworks.com/asp/><img 
+			src=powered_by_apache_asp.jpg border=0
+			alt="Powered by Apache::ASP"
 			></a>
 		<hr size=1>
 		</td>
@@ -92,6 +117,8 @@
 </td>
 
 <td valign=top>
+		</center>
+	
 <font face=verdana><font size=+1 color=#555555><b>INSTALL</b></font><p>
 The latest Apache::ASP can be found at your nearest CPAN,
 and also:
@@ -114,7 +141,13 @@ copy ASP.pm to $PERLLIB/site/Apache
 </pre></font>Please note that you must first have the <a href=http://www.apache.org>Apache HTTP Server</a>
 &amp; <a href=http://perl.apache.org>mod_perl</a> installed before using this module in a web server
 environment.  The offline mode for building static html may
-be used with just perl.</font>
+be used with just perl.
+<font face="courier new"><pre>
+</pre></font>If you have a RedHat Linux server with an RPM style 
+Apache + mod_perl, seriously consider building a static version 
+of the httpd server yourself, not DSO.  DSO is marked as 
+experimental for mod_perl, and often does not work,
+resulting in &quot;no request object&quot; error messages.</font>
 
 </td>
 </tr>

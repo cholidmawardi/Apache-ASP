@@ -37,15 +37,18 @@ for(keys %{$Application}) {
 
 	my $session_id = $_;
 	$session_id =~ s/^Session//io;
+	my $session_data = { %{ $Application->GetSession($session_id) } };
 
 	my $session_time = ($Application->{$_} eq '?') ?
 		"in session" : "$Application->{$_} seconds";
 
 	%>
 	<tr bgcolor="#c0c0c0">
-		<td><%=$session_id%></td>
+		<td><%=substr($session_id, 0, 16)."..."%></td>
 		<td><%=$session_time%></td>
 	</tr>	
+	<tr><td colspan=2><pre><%=Data::Dumper->Dump([$session_data])%></pre></td></tr>
+
 	<tr><td colspan=2><hr size=1></td></tr>
 	<%
 	$Response->Flush();

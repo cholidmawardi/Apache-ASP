@@ -10,11 +10,32 @@
 <body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
 
 <table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
-<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="Apache :: ASP"></td></tr>
+<tr bgcolor=#ff4488>
+<td colspan=2>
+	<table border=0 cellpadding=0 cellspacing=0 width=100%>
+	<tr>
+	<td><img border=0 src=apache_asp.gif alt="Apache :: ASP"></td>
+	<td align=right>
+
+
+
+
+
+
+
+
+
+
+	</td>
+	</tr>
+</td>
+</tr>
+</table>
+
 <tr>
 
-<td valign=top bgcolor=#ffcccc>
-	<table border=0 cellpadding=0 cellspacing=0>
+<td valign=top bgcolor=#ffbbbb>
+	<table border=0 cellpadding=0 cellspacing=0 width=100>
 	<tr><td align=center><hr size=1></td></tr>
 
 	
@@ -82,8 +103,12 @@
 		<td align=center>
 		<hr size=1>
 		<a href=http://perl.apache.org><img 
-			src=modperl.gif border=0
+			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl & Apache"
+			></a>
+		<a href=http://www.nodeworks.com/asp/><img 
+			src=powered_by_apache_asp.jpg border=0
+			alt="Powered by Apache::ASP"
 			></a>
 		<hr size=1>
 		</td>
@@ -92,6 +117,8 @@
 </td>
 
 <td valign=top>
+		</center>
+	
 <font face=verdana><font size=+1 color=#555555><b>CGI</b></font><p>
 CGI has been the standard way of deploying web applications long before
 ASP came along.  <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> is a very useful module that aids developers in 
@@ -99,7 +126,7 @@ the building of these applications, and Apache::ASP has been made to
 be compatible with function calls in CGI.pm.  Please see cgi.htm in the 
 ./site/eg directory for a sample ASP script written almost entirely in CGI.
 <font face="courier new"><pre>
-</pre></font>As of version 0.09, use of <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> for both input and output is seemless
+</pre></font>As of version 0.09, use of <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> for both input and output is seamless
 when working under Apache::ASP.  Thus if you would like to port existing
 cgi scripts over to Apache::ASP, all you need to do is wrap &lt;% %&gt; around
 the script to get going.  This functionality has been implemented so that
@@ -108,15 +135,47 @@ web applications.
 <font face="courier new"><pre>
 </pre></font>Following are some special notes with respect to compatibility with CGI.
 Use of <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> in any of these ways was made possible through a great
-amount of work, and is not gauranteed to be portable with other perl ASP
+amount of work, and is not guaranteed to be portable with other perl ASP
 implementations, as other ASP implementations will likely be more limited.</font>
 
 	<hr size=1>
-	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
-	<a href=#Query%20Object%20Initialization><font color=#3355cc>Query Object Initialization</font></a><br><a href=#CGI%20headers><font color=#3355cc>CGI headers</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#print%28%29ing%20CGI><font color=#3355cc>print()ing CGI</font></a><br><a href=#File%20Upload><font color=#3355cc>File Upload</font></a><br>	
-	</font>
-	</td>
-	</tr>
+	<table width=100% border=0 cellpadding=2 cellspacing=0>
+	<tr>
+	<td valign=top><font face="lucida console" size=-1>
+	<ul>
+	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Query%20Object%20Initialization><font color=#3355cc>Query Object Initialization</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#print%28%29ing%20CGI><font color=#3355cc>print()ing CGI</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#CGI%20headers><font color=#3355cc>CGI headers</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#File%20Upload><font color=#3355cc>File Upload</font></a>
+			</font>
+			</td>
+							
+		</tr>
+			
 	</table>
 	<hr size=1>
 	<p>
@@ -146,7 +205,7 @@ similar lines to the top of your script, like:
  Some-Other: OtherValue
 
  &lt;html&gt;&lt;body&gt; Script body starts here.
-</pre></font>Once there are no longer any cgi sytle headers, or the 
+</pre></font>Once there are no longer any cgi style headers, or the 
 there is a newline, the body of the script begins. So
 if you just had an asp script like:
 <font face="courier new"><pre>
@@ -173,7 +232,7 @@ affect.
 CGI.pm is used for implementing reading the input from file upload.  You
 may create the file upload form however you wish, and then the 
 data may be recovered from the file upload by using $Request-&gt;Form().
-Data from a file upload gets written to a filehandle, that may in
+Data from a file upload gets written to a file handle, that may in
 turn be read from.  The original file name that was uploaded is the 
 name of the file handle.
 <font face="courier new"><pre>
@@ -184,7 +243,7 @@ name of the file handle.
 		# data from the uploaded file read into $data
 	};
 </pre></font>Please see the docs on <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> (try perldoc CGI) for more information
-on this topic, and ./site/eg/file_upload.asp for an example of its use.</font>
+on this topic, and <a href=eg/file_upload.asp>./site/eg/file_upload.asp</a> for an example of its use.</font>
 	
 
 </td>

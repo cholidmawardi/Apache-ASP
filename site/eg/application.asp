@@ -1,14 +1,6 @@
 #!/usr/local/bin/perl5 asp
 
-<% 
-	use strict;
-	use DemoASP; 
-	my $demo = &DemoASP::new($Request);
-%>
-<html>
-<head><title><%=$demo->{title}%></title></head>
-<body bgcolor=<%=$demo->{bgcolor}%>>
-
+<!--#include file=header.inc-->
 <% 
 	# Locking
 	# --------
@@ -29,9 +21,5 @@ Here is the value of the $Application->{Count} variable... <br>
 <p>
 We reset this value to 20 every Application_OnStart.  Check
 out the global.asa!
-<p>
-<a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
-view this file's source
-</a>
-</body>
-</html>
+
+<!--#include file=footer.inc-->

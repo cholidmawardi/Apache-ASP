@@ -10,11 +10,32 @@
 <body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
 
 <table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
-<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="Apache :: ASP"></td></tr>
+<tr bgcolor=#ff4488>
+<td colspan=2>
+	<table border=0 cellpadding=0 cellspacing=0 width=100%>
+	<tr>
+	<td><img border=0 src=apache_asp.gif alt="Apache :: ASP"></td>
+	<td align=right>
+
+
+
+
+
+
+
+
+
+
+	</td>
+	</tr>
+</td>
+</tr>
+</table>
+
 <tr>
 
-<td valign=top bgcolor=#ffcccc>
-	<table border=0 cellpadding=0 cellspacing=0>
+<td valign=top bgcolor=#ffbbbb>
+	<table border=0 cellpadding=0 cellspacing=0 width=100>
 	<tr><td align=center><hr size=1></td></tr>
 
 	
@@ -82,8 +103,12 @@
 		<td align=center>
 		<hr size=1>
 		<a href=http://perl.apache.org><img 
-			src=modperl.gif border=0
+			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl & Apache"
+			></a>
+		<a href=http://www.nodeworks.com/asp/><img 
+			src=powered_by_apache_asp.jpg border=0
+			alt="Powered by Apache::ASP"
 			></a>
 		<hr size=1>
 		</td>
@@ -92,20 +117,207 @@
 </td>
 
 <td valign=top>
+		</center>
+	
 <font face=verdana><font size=+1 color=#555555><b>FAQ</b></font><p>
 The following are some frequently asked questions
 about Apache::ASP.</font>
 
 	<hr size=1>
-	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
-	<a href=#What%20is%20the%20best%20way%20to%20debug%20an%20ASP%20application%20%3F><font color=#3355cc>What is the best way to debug an ASP application ?</font></a><br><a href=#Apache%20errors%20on%20the%20PerlHandler%20directive%20%3F><font color=#3355cc>Apache errors on the PerlHandler directive ?</font></a><br><a href=#How%20are%20file%20uploads%20handled%3F><font color=#3355cc>How are file uploads handled?</font></a><br><a href=#How%20is%20database%20connectivity%20handled%3F><font color=#3355cc>How is database connectivity handled?</font></a><br><a href=#Do%20I%20have%20access%20to%20ActiveX%20objects%3F><font color=#3355cc>Do I have access to ActiveX objects?</font></a><br><a href=#Can%20I%20script%20in%20VBScript%20or%20JScript%20%3F><font color=#3355cc>Can I script in VBScript or JScript ?</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#How%20do%20I%20get%20things%20I%20want%20done%3F%21><font color=#3355cc>How do I get things I want done?!</font></a><br><a href=#What%20is%20the%20state%20of%20Apache%3A%3AASP%3F%20%20Can%20I%20publish%20a%20web%20site%20on%20it%3F><font color=#3355cc>What is the state of Apache::ASP?  Can I publish a web site on it?</font></a><br><a href=#I%20am%20getting%20a%20tie%20or%20MLDBM%20%2F%20state%20error%20message%2C%20what%20do%20I%20do%3F><font color=#3355cc>I am getting a tie or MLDBM / state error message, what do I do?</font></a><br><a href=#How%20do%20I%20access%20the%20ASP%20Objects%20in%20general%3F><font color=#3355cc>How do I access the ASP Objects in general?</font></a><br><a href=#Can%20I%20print%28%29%20in%20ASP%3F><font color=#3355cc>Can I print() in ASP?</font></a><br>	
-	</font>
-	</td>
-	</tr>
+	<table width=100% border=0 cellpadding=2 cellspacing=0>
+	<tr>
+	<td valign=top><font face="lucida console" size=-1>
+	<ul>
+	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Error%3A%20no%20request%20object%20%28Apache%3DSCALAR%280x%3F%3F%3F%3F%3F%3F%3F%29%3A%29><font color=#3355cc>Error: no request object (Apache=SCALAR(0x???????):)</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Do%20I%20have%20access%20to%20ActiveX%20objects%3F><font color=#3355cc>Do I have access to ActiveX objects?</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#How%20can%20I%20use%20%24Session%20to%20store%20complex%20data%20structures.><font color=#3355cc>How can I use $Session to store complex data structures.</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Can%20I%20script%20in%20VBScript%20or%20JScript%20%3F><font color=#3355cc>Can I script in VBScript or JScript ?</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Insecure%20dependency%20in%20eval%20while%20running%20with%20-T%20switch%20%3F><font color=#3355cc>Insecure dependency in eval while running with -T switch ?</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#How%20do%20I%20get%20things%20I%20want%20done%3F%21><font color=#3355cc>How do I get things I want done?!</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#How%20can%20I%20use%20%24Session%20to%20store%20a%20%24dbh%20database%20handle%20%3F><font color=#3355cc>How can I use $Session to store a $dbh database handle ?</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#What%20is%20the%20state%20of%20Apache%3A%3AASP%3F%20%20Can%20I%20publish%20a%20web%20site%20on%20it%3F><font color=#3355cc>What is the state of Apache::ASP?  Can I publish a web site on it?</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#What%20is%20the%20best%20way%20to%20debug%20an%20ASP%20application%20%3F><font color=#3355cc>What is the best way to debug an ASP application ?</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#I%20am%20getting%20a%20tie%20or%20MLDBM%20%2F%20state%20error%20message%2C%20what%20do%20I%20do%3F><font color=#3355cc>I am getting a tie or MLDBM / state error message, what do I do?</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Apache%20errors%20on%20the%20PerlHandler%20directive%20%3F><font color=#3355cc>Apache errors on the PerlHandler directive ?</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#How%20do%20I%20access%20the%20ASP%20Objects%20in%20general%3F><font color=#3355cc>How do I access the ASP Objects in general?</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#How%20are%20file%20uploads%20handled%3F><font color=#3355cc>How are file uploads handled?</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Can%20I%20print%28%29%20in%20ASP%3F><font color=#3355cc>Can I print() in ASP?</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#How%20is%20database%20connectivity%20handled%3F><font color=#3355cc>How is database connectivity handled?</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			
+			</font>
+			</td>
+							
+		</tr>
+			
 	</table>
 	<hr size=1>
 	<p>
 
+	<p>
+	<a name=Error%3A%20no%20request%20object%20%28Apache%3DSCALAR%280x%3F%3F%3F%3F%3F%3F%3F%29%3A%29></a>
+	<font face=verdana><font size=+0 color=#555555><b>Error: no request object (Apache=SCALAR(0x???????):)</b></font><p>
+Your Apache + <a href=http://perl.apache.org>mod_perl</a> build is not working properly, 
+and is likely a RedHat Linux RPM DSO build.  Make sure
+you statically build your Apache + <a href=http://perl.apache.org>mod_perl</a> httpd,
+recompiled fresh from the sources.</font>
+	
+	<p>
+	<a name=How%20can%20I%20use%20%24Session%20to%20store%20complex%20data%20structures.></a>
+	<font face=verdana><font size=+0 color=#555555><b>How can I use $Session to store complex data structures.</b></font><p>
+Very carefully.  Please read the $Session documentation in 
+the <a href=objects.html>OBJECTS</a> section.  You can store very complex objects
+in $Session, but you have to understand the limits, and 
+the syntax that must be used to make this happen.
+<font face="courier new"><pre>
+</pre></font>In particular, stay away from statements that that have 
+more than one level of indirection on the left side of
+an assignment like:
+<font face="courier new"><pre>
+  $Session-&gt;{complex}{object} = $data;</pre></font>
+	
+	<p>
+	<a name=Insecure%20dependency%20in%20eval%20while%20running%20with%20-T%20switch%20%3F></a>
+	<font face=verdana><font size=+0 color=#555555><b>Insecure dependency in eval while running with -T switch ?</b></font><p>
+If you are running your <a href=http://perl.apache.org>mod_perl</a> with &quot;PerlTaintCheck On&quot;, which 
+is recommended if you are highly concerned about security issues,
+you make get errors like &quot;Insecure dependency ... with -T switch&quot;.
+<font face="courier new"><pre>
+</pre></font>Apache::ASP automatically untaints data internally so that you
+may run scripts with PerlTaintCheck On, but if you are using
+state objects like $Session or $Application, you must also
+notify MLDBM, which Apache::ASP uses internally, to also 
+untaint data read from disk, with this setting:
+<font face="courier new"><pre>
+  $MLDBM::RemoveTaint = 1;
+</pre></font>You could put the above line in your global.asa, which is
+just like a perl module, outside any event handlers
+you define there.</font>
+	
+	<p>
+	<a name=How%20can%20I%20use%20%24Session%20to%20store%20a%20%24dbh%20database%20handle%20%3F></a>
+	<font face=verdana><font size=+0 color=#555555><b>How can I use $Session to store a $dbh database handle ?</b></font><p>
+You cannot use $Session to store a $dbh handle.  This can 
+be awkward for those coming from the IIS/NT world, where
+you could store just about anything in $Session, but this
+boils down to a difference between threads vs. processes.
+<font face="courier new"><pre>
+</pre></font>Database handles often have per process file handles open,
+which cannot be shared between requests, so though you 
+have stored the $dbh data in $Session, all the other 
+initializations are not relevant in another httpd process.
+<font face="courier new"><pre>
+</pre></font>All is not lost! Apache::DBI can be used to cache 
+database connections on a per process basis, and will
+work for most cases.</font>
+	
 	<p>
 	<a name=What%20is%20the%20best%20way%20to%20debug%20an%20ASP%20application%20%3F></a>
 	<font face=verdana><font size=+0 color=#555555><b>What is the best way to debug an ASP application ?</b></font><p>
@@ -138,7 +350,7 @@ through <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> 
 This is the only time that <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> will be loaded by Apache::ASP,
 which implements all other cgi-ish functionality natively.  The
 rationale for not implementing file uploads natively is that 
-the extra 100K in mem for <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> shouldn't be a big deal if you 
+the extra 100K in memory for <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> shouldn't be a big deal if you 
 are working with bulky file uploads.</font>
 	
 	<p>
@@ -150,7 +362,9 @@ In the UNIX world, it seems most databases have cross platform support in perl.
 <font face="courier new"><pre>
 </pre></font>DBD::ODBC is often your ticket on Win32.  On UNIX, commercial vendors
 like OpenLink Software (<a href=http://www.openlinksw.com/>http://www.openlinksw.com/</a>) provide the nuts and 
-bolts for ODBC.</font>
+bolts for ODBC.
+<font face="courier new"><pre>
+</pre></font>Database connections can be cached per process with Apache::DBI.</font>
 	
 	<p>
 	<a name=Do%20I%20have%20access%20to%20ActiveX%20objects%3F></a>

@@ -84,6 +84,9 @@ dbg(dmp($ASP));
 #exit;
 
 sub Script_OnStart {
+    if($Request->QueryString('ads')) {
+	$Ads = 1;
+    }
 #    $Response->{Clean} = 1;
 #    $Response->Include("header.inc");
 }
@@ -142,9 +145,10 @@ sub pod2html {
     $pre and $body .= "</pre>";
 
     #$body =~ s/\n\s*\n+/<p>/isg;
-    $body =~ s|(http://\w+\.[\w\.\/\-]+)|<a href=$1>$1</a>|sg;
+    $body =~ s|(http://[\w\.\/\-]+)|<a href=$1>$1</a>|sg;
     $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<b>$1</b>|sg;
 #    $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<a href=mailto:$1$2>$1</a>|sg;
+    $body =~ s|(\./site/)(eg/[\w\.]+)|<a href=$2>$1$2</a>|sg;
 
     $body =~ s|\n\n</pre>|\n</pre>|isg;
     for(keys %LINKS) {

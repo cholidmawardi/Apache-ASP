@@ -7,7 +7,9 @@ use Apache::ASP;
 use File::Basename;
 use Getopt::Std;
 use Cwd;
+use Carp qw(confess);
 
+$SIG{__DIE__} = \&confess;
 getopts('hsdbo:');
 
 #if($ENV{GATEWAY_INTERFACE} =~ /cgi/i) {

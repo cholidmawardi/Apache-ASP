@@ -1,9 +1,8 @@
 #!/usr/local/bin/perl5 asp
 
-<% 
-	use DemoASP; 
+<!--#include file=header.inc-->
 
-	$demo = &DemoASP::new();
+<% 
 	$form = $Request->QueryString();
 
 	# Expires
@@ -27,9 +26,6 @@
 			$form->{cookie_value};
 	}
 %>
-<html>
-<head><title><%=$demo->{title}%></title></head>
-<body bgcolor=<%=$demo->{bgcolor}%>>
 
 <center>
 <table border=1 cellpadding=2>
@@ -126,10 +122,4 @@
 in the table after setting it because the first time, the header
 is sent to the browser, and the 2nd, the browser sends it back.
 
-<p>
-<a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
-view this file's source
-</a>
-</body>
-</html>
-
+<!--#include file=footer.inc-->

@@ -25,9 +25,10 @@ PerlSetVar StatINCMatch zzz
 	PerlSetVar Debug  2
 	PerlSetVar Global  .		
 	PerlSetVar NoState 1 
-	PerlSetVar BufferingOn 0
+	PerlSetVar BufferingOn 1
 	PerlSetVar NoCache 1
 #	PerlSetVar DynamicIncludes 1
+	PerlSetVar DebugBufferLength 125
 </Files>
 
 <Files ~ (\.inc|\.htaccess)>
@@ -44,3 +45,11 @@ PerlSetVar StatINCMatch zzz
 	PerlSetVar NoCache 1
 </Files>
 
+<Files ~ (\.ixhtm)>
+	SetHandler perl-script
+	PerlHandler Apache::ASP
+	PerlSetVar Debug  2
+	PerlSetVar Global  .		
+	PerlSetVar NoState 1 
+	PerlSetVar OrderCollections 1	
+</Files>

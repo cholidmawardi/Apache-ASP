@@ -10,11 +10,32 @@
 <body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
 
 <table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
-<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="Apache :: ASP"></td></tr>
+<tr bgcolor=#ff4488>
+<td colspan=2>
+	<table border=0 cellpadding=0 cellspacing=0 width=100%>
+	<tr>
+	<td><img border=0 src=apache_asp.gif alt="Apache :: ASP"></td>
+	<td align=right>
+
+
+
+
+
+
+
+
+
+
+	</td>
+	</tr>
+</td>
+</tr>
+</table>
+
 <tr>
 
-<td valign=top bgcolor=#ffcccc>
-	<table border=0 cellpadding=0 cellspacing=0>
+<td valign=top bgcolor=#ffbbbb>
+	<table border=0 cellpadding=0 cellspacing=0 width=100>
 	<tr><td align=center><hr size=1></td></tr>
 
 	
@@ -82,8 +103,12 @@
 		<td align=center>
 		<hr size=1>
 		<a href=http://perl.apache.org><img 
-			src=modperl.gif border=0
+			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl & Apache"
+			></a>
+		<a href=http://www.nodeworks.com/asp/><img 
+			src=powered_by_apache_asp.jpg border=0
+			alt="Powered by Apache::ASP"
 			></a>
 		<hr size=1>
 		</td>
@@ -92,6 +117,8 @@
 </td>
 
 <td valign=top>
+		</center>
+	
 <font face=verdana><font size=+1 color=#555555><b>EVENTS</b></font><p>
 The ASP platform allows developers to create Web Applications.
 In fulfillment of real software requirements, ASP allows 
@@ -129,11 +156,59 @@ When the last user $Session expires, that $Application
 expires also.</font>
 
 	<hr size=1>
-	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
-	<a href=#Script_OnStart%20%26%20Script_OnEnd><font color=#3355cc>Script_OnStart & Script_OnEnd</font></a><br><a href=#Application_OnStart><font color=#3355cc>Application_OnStart</font></a><br><a href=#Application_OnEnd><font color=#3355cc>Application_OnEnd</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#Session_OnStart><font color=#3355cc>Session_OnStart</font></a><br><a href=#Session_OnEnd><font color=#3355cc>Session_OnEnd</font></a><br>	
-	</font>
-	</td>
-	</tr>
+	<table width=100% border=0 cellpadding=2 cellspacing=0>
+	<tr>
+	<td valign=top><font face="lucida console" size=-1>
+	<ul>
+	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Script_OnStart%20%26%20Script_OnEnd><font color=#3355cc>Script_OnStart & Script_OnEnd</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Session_OnStart><font color=#3355cc>Session_OnStart</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Application_OnStart><font color=#3355cc>Application_OnStart</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Session_OnEnd><font color=#3355cc>Session_OnEnd</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Application_OnEnd><font color=#3355cc>Application_OnEnd</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			
+			</font>
+			</td>
+							
+		</tr>
+			
 	</table>
 	<hr size=1>
 	<p>
@@ -148,7 +223,7 @@ otherwise have to add by hand, or add with a file include,
 but with these events, just add your code to the global.asa,
 and it will be run.  
 <font face="courier new"><pre>
-</pre></font>There is one caveat.  Code in Script_OnEnd is not gauranteed 
+</pre></font>There is one caveat.  Code in Script_OnEnd is not guaranteed 
 to be run when the user hits a STOP button, since the program
 execution ends immediately at this event.  To always run critical
 code, use the API extension:
@@ -174,7 +249,7 @@ given ASP application.</font>
 	<a name=Session_OnStart></a>
 	<font face=verdana><font size=+0 color=#555555><b>Session_OnStart</b></font><p>
 Triggered by the beginning of a user's session, Session_OnStart
-get's run before the user's executing script, and if the same
+gets run before the user's executing script, and if the same
 session recently timed out, after the session's triggered Session_OnEnd.
 <font face="courier new"><pre>
 </pre></font>The Session_OnStart is particularly useful for caching database data,

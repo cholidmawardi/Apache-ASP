@@ -19,8 +19,10 @@ if($name = param('name')) {
 }
 $name ||= cookie('name');
 
-print header(-cookie=>$cookie),
-    start_html('A Simple Example'),
+print header(-cookie=>$cookie);
+%>
+<!--#include file=header.inc-->
+<% print
     h1('A Simple Example'),
     start_form,
     "What's your name? ",textfield('name'),p,

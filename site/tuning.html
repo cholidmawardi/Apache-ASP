@@ -10,11 +10,32 @@
 <body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
 
 <table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
-<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="Apache :: ASP"></td></tr>
+<tr bgcolor=#ff4488>
+<td colspan=2>
+	<table border=0 cellpadding=0 cellspacing=0 width=100%>
+	<tr>
+	<td><img border=0 src=apache_asp.gif alt="Apache :: ASP"></td>
+	<td align=right>
+
+
+
+
+
+
+
+
+
+
+	</td>
+	</tr>
+</td>
+</tr>
+</table>
+
 <tr>
 
-<td valign=top bgcolor=#ffcccc>
-	<table border=0 cellpadding=0 cellspacing=0>
+<td valign=top bgcolor=#ffbbbb>
+	<table border=0 cellpadding=0 cellspacing=0 width=100>
 	<tr><td align=center><hr size=1></td></tr>
 
 	
@@ -82,8 +103,12 @@
 		<td align=center>
 		<hr size=1>
 		<a href=http://perl.apache.org><img 
-			src=modperl.gif border=0
+			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl & Apache"
+			></a>
+		<a href=http://www.nodeworks.com/asp/><img 
+			src=powered_by_apache_asp.jpg border=0
+			alt="Powered by Apache::ASP"
 			></a>
 		<hr size=1>
 		</td>
@@ -92,6 +117,8 @@
 </td>
 
 <td valign=top>
+		</center>
+	
 <font face=verdana><font size=+1 color=#555555><b>TUNING</b></font><p>
 A little tuning can go a long way, and can make the difference between
 a web site that gets by, and a site that screams with speed.  With
@@ -111,11 +138,59 @@ documents at:
 	<a href=http://perl.apache.org/guide/>http://perl.apache.org/guide/</a></pre></font>
 
 	<hr size=1>
-	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
-	<a href=#%24Application%20%26%20%24Session%20State><font color=#3355cc>$Application & $Session State</font></a><br><a href=#High%20MaxRequests><font color=#3355cc>High MaxRequests</font></a><br><a href=#Precompile%20Scripts><font color=#3355cc>Precompile Scripts</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#No%20.htaccess%20or%20StatINC><font color=#3355cc>No .htaccess or StatINC</font></a><br><a href=#Turn%20off%20Debugging><font color=#3355cc>Turn off Debugging</font></a><br><a href=#RAM%20Sparing><font color=#3355cc>RAM Sparing</font></a><br>	
-	</font>
-	</td>
-	</tr>
+	<table width=100% border=0 cellpadding=2 cellspacing=0>
+	<tr>
+	<td valign=top><font face="lucida console" size=-1>
+	<ul>
+	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24Application%20%26%20%24Session%20State><font color=#3355cc>$Application & $Session State</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#No%20.htaccess%20or%20StatINC><font color=#3355cc>No .htaccess or StatINC</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#High%20MaxRequests><font color=#3355cc>High MaxRequests</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Turn%20off%20Debugging><font color=#3355cc>Turn off Debugging</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Precompile%20Scripts><font color=#3355cc>Precompile Scripts</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#RAM%20Sparing><font color=#3355cc>RAM Sparing</font></a>
+			</font>
+			</td>
+							
+		</tr>
+			
 	</table>
 	<hr size=1>
 	<p>
@@ -124,7 +199,7 @@ documents at:
 	<a name=%24Application%20%26%20%24Session%20State></a>
 	<font face=verdana><font size=+0 color=#555555><b>$Application & $Session State</b></font><p>
 Use NoState 1 setting if you don't need the $Application or $Session objects.
-State objects such as these tie to files on disk and will incur a performace
+State objects such as these tie to files on disk and will incur a performance
 penalty.
 <font face="courier new"><pre>
 </pre></font>If you need the state objects $Application and $Session, and if 
@@ -167,20 +242,26 @@ PerlModule config directive, which is highly recommended.
 a file, that file will be compiled.  If a directory, that directory
 will be recursed, and all files in it whose file name matches $pattern
 will be compiled.  $pattern defaults to .*, which says that all scripts
-in a directory will be compiled by default.  The %config args, are the 
-config options that you want set that affect compilation.  These options 
-include Global &amp; DynamicIncludes.  If your scripts are later
-run with different config options, your scripts may have to 
-be recompiled.
+in a directory will be compiled by default.  
+<font face="courier new"><pre>
+</pre></font>The %config args, are the config options that you want set that affect 
+compilation.  These options include Debug, Global, GlobalPackage, 
+DynamicIncludes, StatINC, and StatINCMatch.  If your scripts are later 
+run with different config options, your scripts may have to be recompiled.
 <font face="courier new"><pre>
 </pre></font>Here is an example of use in a *.conf file:
 <font face="courier new"><pre>
  &lt;Perl&gt;
 	Apache::ASP-&gt;Loader(
 		'c:/proj/site', &quot;(asp|htm)\$&quot;,
-		Debug =&gt; 1,
 		Global =&gt; '/proj/perllib',
-		GlobalPackage =&gt; SomePackageName
+		Debug =&gt; 1, # see output when starting apache
+
+		# OPTIONAL configs if you use them in your apache configuration
+		# these settings affect how the scripts are compiled and loaded
+		GlobalPackage =&gt; SomePackageName,
+		DynamicIncludes =&gt; 1,
+		StatINC =&gt; 1,
 		);
  &lt;/Perl&gt;
 </pre></font>This config section tells the server to compile all scripts

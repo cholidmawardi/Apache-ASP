@@ -1,6 +1,78 @@
-$MODULE=Apache::ASP; $VERSION = .16; $DATE="TBA";
+$MODULE=Apache::ASP; $VERSION = .17; $DATE="11/15/99";
 
 + = improvement; - = bug fix
+
+++20%+ faster startup script execution, as measured by the 
+  HelloWorld bench.  I cut a lot of the fat out of 
+  the code, and is now at least 20% faster on startup 
+  both with and without state.
+
+  On my dev (NT,apache 1.3.6+mod_perl) machine, I now get:
+
+	42 hits per sec on Apache::ASP HelloWorld bench
+	46 hits per sec on Embperl (1.2b10) and
+	51 hits per sec for CGI Apache::Registry scripts  
+
+  Before Apache::ASP was clocking some 31 hits per sec.
+  Apache::ASP also went from 75 to 102 hits per second 
+  on Solaris.
+
++ PerlTaintCheck On friendly.  This is mod_perl's way 
+  of providing -T taint checking.  When Apache::ASP
+  is used with state objects like $Session or $Application,
+  MLDBM must also be made taint friendly with:
+
+    $MLDBM::RemoveTaint = 1;
+
+  which could be put in the global.asa.  Documented.
+
++ Added $Response->ErrorDocument($error_code, $uri_or_string) 
+  API extension which allows for setting of Apache's error
+  document at runtime.  This is really just a wrapper 
+  for Apache->custom_response() renamed so it syncs with
+  the Apache ErrorDocument config setting.  Updated
+  documentation, and added error_document.htm example.
+
+= OrderCollections setting was added, but then REMOVED
+  because it was not going to be used.  It bound 
+  $Request->* collections/hashes to Tie::IxHash, so that data
+  in those collections would be read in the order the 
+  browser sent it, when eaching through or with keys.
+
+- global.asa will be reloaded when changed.  This broke
+  when I optimized the modification times with (stat($file))[9]
+  rather than "use File::stat; stat($file)->mtime"
+
+- Make Apache::ASP->Loader() PerlRestartHandler safe,
+  had some unstrict code that was doing the wrong thing.
+
+- IncludesDir config now works with DynamicIncludes.
+
++ DebugBufferLength feature added, giving control to 
+  how much buffered output get's shown when debugging errors.
+
+++Tuning of $Response->Write(), which processes all
+  static html internally, to be almost 50% faster for
+  its typical use, when BufferingOn is enabled, and 
+  CgiHeaders are disabled, both being defaults.
+
+  This can show significant speed improvements for tight
+  loops that render ASP output.
+
++ Auto linking of ./site/eg/.* text to example scripts
+  at web site.
+
++ $Application->GetSession($session_id) API extension, useful
+  for managing active user sessions when storing session ids
+  in $Application.  Documented.
+
+- disable use of flock() on Win95/98 where it is unimplemented
+
+- @array context of $Request->Form('name') returns
+  undef when value for 'name' is undefined.  Put extra
+  logic in there to make sure this happens. 
+
+$MODULE=Apache::ASP; $VERSION = .16; $DATE="09/22/99";
 
 - $Response->{Buffer} and PerlSetVar BufferingOn
   configs now work when set to 0, to unbuffer output,

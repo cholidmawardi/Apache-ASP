@@ -10,11 +10,32 @@
 <body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
 
 <table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
-<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="Apache :: ASP"></td></tr>
+<tr bgcolor=#ff4488>
+<td colspan=2>
+	<table border=0 cellpadding=0 cellspacing=0 width=100%>
+	<tr>
+	<td><img border=0 src=apache_asp.gif alt="Apache :: ASP"></td>
+	<td align=right>
+
+
+
+
+
+
+
+
+
+
+	</td>
+	</tr>
+</td>
+</tr>
+</table>
+
 <tr>
 
-<td valign=top bgcolor=#ffcccc>
-	<table border=0 cellpadding=0 cellspacing=0>
+<td valign=top bgcolor=#ffbbbb>
+	<table border=0 cellpadding=0 cellspacing=0 width=100>
 	<tr><td align=center><hr size=1></td></tr>
 
 	
@@ -82,8 +103,12 @@
 		<td align=center>
 		<hr size=1>
 		<a href=http://perl.apache.org><img 
-			src=modperl.gif border=0
+			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl & Apache"
+			></a>
+		<a href=http://www.nodeworks.com/asp/><img 
+			src=powered_by_apache_asp.jpg border=0
+			alt="Powered by Apache::ASP"
 			></a>
 		<hr size=1>
 		</td>
@@ -92,6 +117,8 @@
 </td>
 
 <td valign=top>
+		</center>
+	
 <font face=verdana><font size=+1 color=#555555><b>CONFIG</b></font><p>
 Use with Apache.  Copy the ./site/eg directory from the ASP installation 
 to your Apache document tree and try it out!  You have to put
@@ -122,11 +149,267 @@ in the installation for some good starter .htaccess configs,
 and see them in action on the example scripts.</font>
 
 	<hr size=1>
-	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
-	<a href=#Global><font color=#3355cc>Global</font></a><br><a href=#CookiePath><font color=#3355cc>CookiePath</font></a><br><a href=#GlobalPackage><font color=#3355cc>GlobalPackage</font></a><br><a href=#UniquePackages><font color=#3355cc>UniquePackages</font></a><br><a href=#AllowSessionState><font color=#3355cc>AllowSessionState</font></a><br><a href=#SessionTimeout><font color=#3355cc>SessionTimeout</font></a><br><a href=#SecureSession><font color=#3355cc>SecureSession</font></a><br><a href=#ParanoidSession><font color=#3355cc>ParanoidSession</font></a><br><a href=#Debug><font color=#3355cc>Debug</font></a><br><a href=#BufferingOn><font color=#3355cc>BufferingOn</font></a><br><a href=#StatINC><font color=#3355cc>StatINC</font></a><br><a href=#StatINCMatch><font color=#3355cc>StatINCMatch</font></a><br><a href=#SessionSerialize><font color=#3355cc>SessionSerialize</font></a><br><a href=#SoftRedirect><font color=#3355cc>SoftRedirect</font></a><br><a href=#NoState><font color=#3355cc>NoState</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#StateDir><font color=#3355cc>StateDir</font></a><br><a href=#StateManager><font color=#3355cc>StateManager</font></a><br><a href=#StateDB><font color=#3355cc>StateDB</font></a><br><a href=#StateCache><font color=#3355cc>StateCache</font></a><br><a href=#AllowApplicationState><font color=#3355cc>AllowApplicationState</font></a><br><a href=#Filter><font color=#3355cc>Filter</font></a><br><a href=#PodComments><font color=#3355cc>PodComments</font></a><br><a href=#DynamicIncludes><font color=#3355cc>DynamicIncludes</font></a><br><a href=#IncludesDir><font color=#3355cc>IncludesDir</font></a><br><a href=#CgiHeaders><font color=#3355cc>CgiHeaders</font></a><br><a href=#Clean><font color=#3355cc>Clean</font></a><br><a href=#MailHost><font color=#3355cc>MailHost</font></a><br><a href=#MailErrorsTo><font color=#3355cc>MailErrorsTo</font></a><br><a href=#MailAlertTo><font color=#3355cc>MailAlertTo</font></a><br><a href=#MailAlertPeriod><font color=#3355cc>MailAlertPeriod</font></a><br>	
-	</font>
-	</td>
-	</tr>
+	<table width=100% border=0 cellpadding=2 cellspacing=0>
+	<tr>
+	<td valign=top><font face="lucida console" size=-1>
+	<ul>
+	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Global><font color=#3355cc>Global</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#StateDir><font color=#3355cc>StateDir</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#CookiePath><font color=#3355cc>CookiePath</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#StateManager><font color=#3355cc>StateManager</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#GlobalPackage><font color=#3355cc>GlobalPackage</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#StateDB><font color=#3355cc>StateDB</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#UniquePackages><font color=#3355cc>UniquePackages</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#StateCache><font color=#3355cc>StateCache</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#AllowSessionState><font color=#3355cc>AllowSessionState</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#AllowApplicationState><font color=#3355cc>AllowApplicationState</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#SessionTimeout><font color=#3355cc>SessionTimeout</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Filter><font color=#3355cc>Filter</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#SecureSession><font color=#3355cc>SecureSession</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#PodComments><font color=#3355cc>PodComments</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#ParanoidSession><font color=#3355cc>ParanoidSession</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#DynamicIncludes><font color=#3355cc>DynamicIncludes</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Debug><font color=#3355cc>Debug</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#IncludesDir><font color=#3355cc>IncludesDir</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#BufferingOn><font color=#3355cc>BufferingOn</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#CgiHeaders><font color=#3355cc>CgiHeaders</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#DebugBufferLength><font color=#3355cc>DebugBufferLength</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Clean><font color=#3355cc>Clean</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#StatINC><font color=#3355cc>StatINC</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#MailHost><font color=#3355cc>MailHost</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#StatINCMatch><font color=#3355cc>StatINCMatch</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#MailErrorsTo><font color=#3355cc>MailErrorsTo</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#SessionSerialize><font color=#3355cc>SessionSerialize</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#MailAlertTo><font color=#3355cc>MailAlertTo</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#SoftRedirect><font color=#3355cc>SoftRedirect</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#MailAlertPeriod><font color=#3355cc>MailAlertPeriod</font></a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#NoState><font color=#3355cc>NoState</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			
+			</font>
+			</td>
+							
+		</tr>
+			
 	</table>
 	<hr size=1>
 	<p>
@@ -171,7 +454,7 @@ different user sessions for each application.
 	<font face=verdana><font size=+0 color=#555555><b>GlobalPackage</b></font><p>
 Perl package namespace that all scripts, includes, &amp; global.asa
 events are compiled into.  By default, GlobalPackage is some
-obsure name that is uniquely generated from the file path of 
+obscure name that is uniquely generated from the file path of 
 the Global directory, and global.asa file.  The use of explicitly
 naming the GlobalPackage is to allow scripts access to globals
 and subs defined in a perl module that is included with commands like:
@@ -222,7 +505,7 @@ that session, and the contents of that session are destroyed.
 	<a name=SecureSession></a>
 	<font face=verdana><font size=+0 color=#555555><b>SecureSession</b></font><p>
 default 0.  Sets the secure tag for the session cookie, so that the cookie
-will only be transimitted by the browser under https transmissions.
+will only be transmitted by the browser under https transmissions.
 <font face="courier new"><pre>
   PerlSetVar SecureSession 1</pre></font>
 	
@@ -283,6 +566,24 @@ script errors after sending only some of the output.
   PerlSetVar BufferingOn 1</pre></font>
 	
 	<p>
+	<a name=DebugBufferLength></a>
+	<font face=verdana><font size=+0 color=#555555><b>DebugBufferLength</b></font><p>
+Default 100, set this to the number of bytes of the 
+buffered output's tail you want to see when an error occurs
+and Debug 2 or MailErrorsTo is set, and when 
+BufferingOn is enabled.  
+<font face="courier new"><pre>
+</pre></font>With buffering the script output will not naturally show 
+up when the script errors, as it has been buffered by the 
+$Response object.  It helps to see where in the script
+output an error halted the script, so the last bytes of 
+the buffered output are included with the rest of 
+the debugging information.  
+<font face="courier new"><pre>
+</pre></font>For a demo of this functionality, try the 
+<a href=eg/syntax_error.htm>./site/eg/syntax_error.htm</a> script, and turn buffering on.</font>
+	
+	<p>
 	<a name=StatINC></a>
 	<font face=verdana><font size=+0 color=#555555><b>StatINC</b></font><p>
 default 0, if true, reloads perl libraries that have changed
@@ -326,7 +627,7 @@ a time may run, per user $Session, with sessions allowed.
 </pre></font>Serialized requests to the session object is the Microsoft ASP way, 
 but is dangerous in a production environment, where there is risk
 of long-running or run-away processes.  If these things happen,
-a session may be locked for an indefinate period of time.  A user
+a session may be locked for an indefinite period of time.  A user
 STOP button should safely quit the session however.
 <font face="courier new"><pre>
   PerlSetVar SessionSerialize 0</pre></font>
@@ -363,7 +664,7 @@ ASP application.
 <font face="courier new"><pre>
 </pre></font>The default has not changed since implementing this config directive.
 The reason for this config option is to allow OS's with caching
-file systems like Solaris to specify a state directory separatly
+file systems like Solaris to specify a state directory separately
 from the Global directory, which contains more permanent files.
 This way one may point StateDir to /tmp/myaspapp, and make one's ASP
 application scream with speed.
@@ -389,7 +690,7 @@ StateManager, has dead Sessions being cleaned up every 2 minutes.
 	<a name=StateDB></a>
 	<font face=verdana><font size=+0 color=#555555><b>StateDB</b></font><p>
 default SDBM_File, this is the internal database used for state
-objects like $Application and $Session.  Because an %sdbm_file hash has
+objects like $Application and $Session.  Because an %sdbm_file hash 
 has a limit on the size of a record / key value pair, usually 1024 bytes,
 you may want to use another tied database like DB_File.  
 <font face="courier new"><pre>
@@ -440,11 +741,11 @@ so this parameter should be only used for extreme tuning.
 	<p>
 	<a name=Filter></a>
 	<font face=verdana><font size=+0 color=#555555><b>Filter</b></font><p>
-On/Off,default Off.  With filtering enabled, you can take advantage of 
+On/Off, default Off.  With filtering enabled, you can take advantage of 
 full server side includes (SSI), implemented through Apache::SSI.  
 <a href=ssi.html>SSI</a> is implemented through this mechanism by using Apache::Filter.  
 A sample configuration for full <a href=ssi.html>SSI</a> with filtering is in the 
-./site/eg/.htaccess file, with a relevant example script ./site/eg/ssi_filter.ssi.
+<a href=eg/.htaccess>./site/eg/.htaccess</a> file, with a relevant example script <a href=eg/ssi_filter.ssi.>./site/eg/ssi_filter.ssi.</a>
 <font face="courier new"><pre>
 </pre></font>You may only use this option with modperl v1.16 or greater installed
 and PERL_STACKED_HANDLERS enabled.  Filtering may be used in 
@@ -504,7 +805,7 @@ directory only allows sharing between scripts in an application.
 	<a name=CgiHeaders></a>
 	<font face=verdana><font size=+0 color=#555555><b>CgiHeaders</b></font><p>
 default 0.  When true, script output that looks like HTTP / <a href=cgi.html>CGI</a>
-headers, will be added to to the HTTP headers of the request.
+headers, will be added to the HTTP headers of the request.
 So you could add:
 <font face="courier new"><pre>  Set-Cookie: test=message
 
@@ -574,7 +875,7 @@ and sent via email to the web admin.
 The address configured will have an email sent on any ASP server error 500,
 and the message will be short enough to fit on a text based pager.  This
 config setting would be used to give an administrator a heads up that a www
-server error occured, as opposed to MailErrorsTo would be used for debugging
+server error occurred, as opposed to MailErrorsTo would be used for debugging
 that server error.
 <font face="courier new"><pre>
 </pre></font>This config does not work when Debug 2 is set, as it is a setting for

@@ -16,15 +16,20 @@ DESCRIPTION
 
     This is a portable solution, similar to ActiveState PerlScript and MKS
     PScript implementation of perl for IIS ASP. Work has been done and will
-    continue to make ports to and from these other implementations as
-    seemless as possible.
+    continue to make ports to and from these other implementations as smooth
+    as possible.
 
     This module works under the Apache HTTP Server with the mod_perl module
-    enabled. See http://www.apache.org and http://perl.apache.org for futher
-    information.
+    enabled. See http://www.apache.org and http://perl.apache.org for
+    further information.
 
     For database access, ActiveX, and scripting language issues, please read
     the FAQ section.
+
+WEBSITE
+    For an online version of this REAME, please go to
+    http://www.nodeworks.com/asp/, or the ./site directory of the
+    Apache::ASP distribution.
 
 INSTALL
     The latest Apache::ASP can be found at your nearest CPAN, and also:
@@ -49,6 +54,11 @@ INSTALL
     Please note that you must first have the Apache HTTP Server & mod_perl
     installed before using this module in a web server environment. The
     offline mode for building static html may be used with just perl.
+
+    If you have a RedHat Linux server with an RPM style Apache + mod_perl,
+    seriously consider building a static version of the httpd server
+    yourself, not DSO. DSO is marked as experimental for mod_perl, and often
+    does not work, resulting in "no request object" error messages.
 
 CONFIG
     Use with Apache. Copy the ./site/eg directory from the ASP installation
@@ -112,8 +122,8 @@ CONFIG
 
     GlobalPackage
     Perl package namespace that all scripts, includes, & global.asa events
-    are compiled into. By default, GlobalPackage is some obsure name that is
-    uniquely generated from the file path of the Global directory, and
+    are compiled into. By default, GlobalPackage is some obscure name that
+    is uniquely generated from the file path of the Global directory, and
     global.asa file. The use of explicitly naming the GlobalPackage is to
     allow scripts access to globals and subs defined in a perl module that
     is included with commands like:
@@ -157,7 +167,7 @@ CONFIG
 
     SecureSession
     default 0. Sets the secure tag for the session cookie, so that the
-    cookie will only be transimitted by the browser under https
+    cookie will only be transmitted by the browser under https
     transmissions.
 
       PerlSetVar SecureSession 1
@@ -212,6 +222,20 @@ CONFIG
 
       PerlSetVar BufferingOn 1
 
+    DebugBufferLength
+    Default 100, set this to the number of bytes of the buffered output's
+    tail you want to see when an error occurs and Debug 2 or MailErrorsTo is
+    set, and when BufferingOn is enabled.
+
+    With buffering the script output will not naturally show up when the
+    script errors, as it has been buffered by the $Response object. It helps
+    to see where in the script output an error halted the script, so the
+    last bytes of the buffered output are included with the rest of the
+    debugging information.
+
+    For a demo of this functionality, try the ./site/eg/syntax_error.htm
+    script, and turn buffering on.
+
     StatINC
     default 0, if true, reloads perl libraries that have changed on disk
     automatically for ASP scripts. If false, the www server must be
@@ -249,7 +273,7 @@ CONFIG
     Serialized requests to the session object is the Microsoft ASP way, but
     is dangerous in a production environment, where there is risk of long-
     running or run-away processes. If these things happen, a session may be
-    locked for an indefinate period of time. A user STOP button should
+    locked for an indefinite period of time. A user STOP button should
     safely quit the session however.
 
       PerlSetVar SessionSerialize 0
@@ -278,7 +302,7 @@ CONFIG
 
     The default has not changed since implementing this config directive.
     The reason for this config option is to allow OS's with caching file
-    systems like Solaris to specify a state directory separatly from the
+    systems like Solaris to specify a state directory separately from the
     Global directory, which contains more permanent files. This way one may
     point StateDir to /tmp/myaspapp, and make one's ASP application scream
     with speed.
@@ -300,9 +324,9 @@ CONFIG
 
     StateDB
     default SDBM_File, this is the internal database used for state objects
-    like $Application and $Session. Because an %sdbm_file hash has has a
-    limit on the size of a record / key value pair, usually 1024 bytes, you
-    may want to use another tied database like DB_File.
+    like $Application and $Session. Because an %sdbm_file hash has a limit
+    on the size of a record / key value pair, usually 1024 bytes, you may
+    want to use another tied database like DB_File.
 
     With lightweight $Session and $Application use, you can get away with
     SDBM_File, but if you load it up with complex data like $Session{key} =
@@ -342,7 +366,7 @@ CONFIG
       PerlSetVar AllowApplicationState 1
 
     Filter
-    On/Off,default Off. With filtering enabled, you can take advantage of
+    On/Off, default Off. With filtering enabled, you can take advantage of
     full server side includes (SSI), implemented through Apache::SSI. SSI is
     implemented through this mechanism by using Apache::Filter. A sample
     configuration for full SSI with filtering is in the ./site/eg/.htaccess
@@ -385,11 +409,22 @@ CONFIG
 
       PerlSetVar DynamicIncludes 0
 
+    IncludesDir
+    no defaults. If set, this directory will also be used to look for
+    includes when compiling scripts. By default the directory the script is
+    in, and the Global directory are checked for includes.
+
+    This extension was added so that includes could be easily shared between
+    ASP applications, whereas placing includes in the Global directory only
+    allows sharing between scripts in an application.
+
+      PerlSetVar IncludesDir .
+
     CgiHeaders
     default 0. When true, script output that looks like HTTP / CGI headers,
-    will be added to to the HTTP headers of the request. So you could add:
-    Set-Cookie: test=message <html>... to the top of your script, and all
-    the headers preceding a newline will be added as if with a call to
+    will be added to the HTTP headers of the request. So you could add: Set-
+    Cookie: test=message <html>... to the top of your script, and all the
+    headers preceding a newline will be added as if with a call to
     $Response->AddHeader(). This functionality is here for compatibility
     with raw cgi scripts, and those used to this kind of coding.
 
@@ -445,7 +480,7 @@ CONFIG
     The address configured will have an email sent on any ASP server error
     500, and the message will be short enough to fit on a text based pager.
     This config setting would be used to give an administrator a heads up
-    that a www server error occured, as opposed to MailErrorsTo would be
+    that a www server error occurred, as opposed to MailErrorsTo would be
     used for debugging that server error.
 
     This config does not work when Debug 2 is set, as it is a setting for
@@ -528,7 +563,7 @@ EVENTS
     hand, or add with a file include, but with these events, just add your
     code to the global.asa, and it will be run.
 
-    There is one caveat. Code in Script_OnEnd is not gauranteed to be run
+    There is one caveat. Code in Script_OnEnd is not guaranteed to be run
     when the user hits a STOP button, since the program execution ends
     immediately at this event. To always run critical code, use the API
     extension:
@@ -549,8 +584,8 @@ EVENTS
 
   Session_OnStart
 
-    Triggered by the beginning of a user's session, Session_OnStart get's
-    run before the user's executing script, and if the same session recently
+    Triggered by the beginning of a user's session, Session_OnStart gets run
+    before the user's executing script, and if the same session recently
     timed out, after the session's triggered Session_OnEnd.
 
     The Session_OnStart is particularly useful for caching database data,
@@ -583,7 +618,7 @@ OBJECTS
     The beauty of the ASP Object Model is that it takes the burden of CGI
     and Session Management off the developer, and puts them in objects
     accessible from any ASP script & include. For the perl programmer, treat
-    these objects as globals accesible from anywhere in your ASP
+    these objects as globals accessible from anywhere in your ASP
     application.
 
       Currently the Apache::ASP object model supports the following:
@@ -594,7 +629,7 @@ OBJECTS
         $Response    -      output
         $Request     -      input
         $Application -      application state
-        $Server      -      OLE support + misc
+        $Server      -      OLE support + misc.
 
     These objects, and their methods are further defined in the following
     sections.
@@ -603,7 +638,7 @@ OBJECTS
 
     The $Session object keeps track of user + web client state, in a
     persistent manner, making it relatively easy to develop web
-    applications. The $Session state is stored accross HTTP connections, in
+    applications. The $Session state is stored across HTTP connections, in
     database files in the Global directory, and will persist across server
     restarts.
 
@@ -618,7 +653,7 @@ OBJECTS
     active session, the session is tied to it and returned. This is also
     similar to the Microsoft ASP implementation.
 
-    The $Session refererence is a hash ref, and can be used as such to store
+    The $Session reference is a hash ref, and can be used as such to store
     data as in:
 
         $Session->{count}++;        # increment count by one
@@ -711,7 +746,7 @@ OBJECTS
         Length HTTP header. If $Response->{Charset} = 'ISO-LATIN-1' is set,
         the corresponding header would look like:
 
-          Content-Type:text/html; charset=ISO-LATIN-1
+          Content-Type: text/html; charset=ISO-LATIN-1
 
     $Response->{Clean} = 0-9;
         API extension. Set the Clean level, default 0, on a per script
@@ -773,13 +808,13 @@ OBJECTS
         first, so the data cannot be parsed as an html header. Flushing
         flushes the header if has not already been written.
 
-        If you have set the $Reponse->{ContentType} to something other than
+        If you have set the $Response->{ContentType} to something other than
         text/html, cgi header parsing (see CGI notes), will be automatically
         be turned off, so you will not necessarily need to use BinaryWrite
         for writing binary data.
 
-        For an example of BinaryWrite, see the gif.htm example in
-        ./site/eg/gif.htm
+        For an example of BinaryWrite, see the binary_write.htm example in
+        ./site/eg/binary_write.htm
 
         Please note that if you are on Win32, you will need to call binmode
         on a file handle before reading, if its data is binary.
@@ -861,7 +896,7 @@ OBJECTS
         capabilities of this module.
 
         While developing an app on a production server, it is often useful
-        to have a separate error log for the application to catch debuging
+        to have a separate error log for the application to catch debugging
         output separately. One way of implementing this is to use the Apache
         ErrorLog configuration directive to create a separate error log for
         a virtual host.
@@ -873,7 +908,7 @@ OBJECTS
          $SIG{__WARN__} = \&Carp::cluck; # then warn() will stack trace
 
         The only way at present to see exactly where in your script an error
-        occured is to set the Debug config directive to 2, and match the
+        occurred is to set the Debug config directive to 2, and match the
         error line number to perl script generated from your ASP script.
 
         However, as of version 0.10, the perl script generated from the asp
@@ -882,12 +917,25 @@ OBJECTS
         comments which are entirely yanked out, and <% # comment %> style
         comments which have a \n added to them so they still work.
 
-        If you would like to see the HTML preceeding an error while
+        If you would like to see the HTML preceding an error while
         developing, consider setting the BufferingOn config directive to 0.
 
     $Response->End()
         Sends result to client, and immediately exits script. Automatically
         called at end of script, if not already called.
+
+    $Response->ErrorDocument($error_code, $uri)
+        API extension that allows for the modification the Apache
+        ErrorDocument at runtime. $uri may be a on site document, off site
+        URL, or string containing the error message.
+
+        This extension is useful if you want to have scripts set error codes
+        with $Response->{Status} like 401 for authentication failure, and to
+        then control from the script what the error message looks like.
+
+        For more information on the Apache ErrorDocument mechanism, please
+        see ErrorDocument in the CORE Apache settings, and the Apache-
+        >custom_response() API, for which this method is a wrapper.
 
     $Response->Flush()
         Sends buffered output to client and clears buffer.
@@ -903,7 +951,7 @@ OBJECTS
 
         This API extension was created to allow greater modularization of
         code by allowing includes to be called with runtime arguments. Files
-        included are compiled once, and the anonymous coderef from that
+        included are compiled once, and the anonymous code ref from that
         compilation is cached, thus including a file in this manner is just
         like calling a perl subroutine.
 
@@ -918,23 +966,38 @@ OBJECTS
 
   $Request Object
 
-    The request object manages the input from the client brower, like posts,
-    query strings, cookies, etc. Normal return results are values if an
-    index is specified, or a collection / perl hash ref if no index is
-    specified. WARNING, the latter property is not supported in Activeware
+    The request object manages the input from the client browser, like
+    posts, query strings, cookies, etc. Normal return results are values if
+    an index is specified, or a collection / perl hash ref if no index is
+    specified. WARNING, the latter property is not supported in ActiveState
     PerlScript, so if you use the hashes returned by such a technique, it
     will not be portable.
 
-     # A normal use of this feature would be to iterate through the 
-     # form variables in the form hash...
+    A normal use of this feature would be to iterate through the form
+    variables in the form hash...
 
      $form = $Request->Form();
      for(keys %{$form}) {
             $Response->Write("$_: $form->{$_}<br>\n");
      }
 
-     # Please see the ./site/eg/server_variables.htm asp file for this 
-     # method in action.
+    Please see the ./site/eg/server_variables.htm asp file for this method
+    in action.
+
+    Note that if a form POST or query string contains duplicate values for a
+    key, those values will be returned through normal use of the $Request
+    object:
+
+      @values = $Request->Form('key');
+
+    but you can also access the internal storage, which is an array
+    reference like so:
+
+      $array_ref = $Request->{Form}{'key'};
+      @values = @{$array_ref};
+
+    Please read the PERLSCRIPT section for more information on how things
+    like $Request->QueryString() & $Request->Form() behave as collections.
 
     $Request->{TotalBytes}
         The amount of data sent by the client in the body of the request,
@@ -1021,7 +1084,7 @@ OBJECTS
     $Application->Lock()
         Locks the Application object for the life of the script, or until
         UnLock() unlocks it, whichever comes first. When $Application is
-        locked, this gaurantees that data being read and written to it will
+        locked, this guarantees that data being read and written to it will
         not suddenly change on you between the reads and the writes.
 
         This and the $Session object both lock automatically upon every read
@@ -1033,6 +1096,22 @@ OBJECTS
 
     $Application->UnLock()
         Unlocks the $Application object. If already unlocked, does nothing.
+
+    $Application->GetSession($session_id)
+        This NON-PORTABLE API extension returns a user $Session given a
+        session id. This allows one to easily write a session manager if
+        session ids are stored in $Application during Session_OnStart, with
+        full access to these sessions for administrative purposes.
+
+        Be careful not to expose full session ids over the net, as they
+        could be used by a hacker to impersonate another user. So when
+        creating a session manager, for example, you could create some other
+        id to reference the SessionID internally, which would allow you to
+        control the sessions. This kind of application would best be served
+        under a secure web server.
+
+        The ./site/eg/global_asa_demo.asp script makes use of this routine
+        to display all the data in current user sessions.
 
     $Application->SessionCount()
         This NON-PORTABLE method returns the current number of active
@@ -1093,8 +1172,8 @@ OBJECTS
         Returns the URL-escaped version of the string $string. +'s are
         substituted in for spaces and special characters are escaped to the
         ascii equivalents. Strings encoded in this manner are safe to put in
-        url's... they are especially useful for encoding data used in a
-        query string as in:
+        urls... they are especially useful for encoding data used in a query
+        string as in:
 
          $data = $Server->URLEncode("test data");
          $url = "http://localhost?data=$data";
@@ -1106,7 +1185,7 @@ OBJECTS
          non-portable extension
 
         Sets a subroutine reference to be executed after the script ends,
-        whether normally or abnormally, the latter occuring possibly by the
+        whether normally or abnormally, the latter occurring possibly by the
         user hitting the STOP button, or the web server being killed. This
         subroutine must be a code reference created like:
 
@@ -1158,7 +1237,7 @@ SSI
 
        $Response->Include("filename.inc", @args);
 
-    which is a direct transalation of the dynamic include above.
+    which is a direct translation of the dynamic include above.
 
     Although inline includes should be a little faster, runtime dynamic
     includes represent great potential savings in httpd memory, as includes
@@ -1207,7 +1286,7 @@ CGI
     ./site/eg directory for a sample ASP script written almost entirely in
     CGI.
 
-    As of version 0.09, use of CGI.pm for both input and output is seemless
+    As of version 0.09, use of CGI.pm for both input and output is seamless
     when working under Apache::ASP. Thus if you would like to port existing
     cgi scripts over to Apache::ASP, all you need to do is wrap <% %> around
     the script to get going. This functionality has been implemented so that
@@ -1216,7 +1295,7 @@ CGI
 
     Following are some special notes with respect to compatibility with CGI.
     Use of CGI.pm in any of these ways was made possible through a great
-    amount of work, and is not gauranteed to be portable with other perl ASP
+    amount of work, and is not guaranteed to be portable with other perl ASP
     implementations, as other ASP implementations will likely be more
     limited.
 
@@ -1242,7 +1321,7 @@ CGI
 
          <html><body> Script body starts here.
 
-        Once there are no longer any cgi sytle headers, or the there is a
+        Once there are no longer any cgi style headers, or the there is a
         newline, the body of the script begins. So if you just had an asp
         script like:
 
@@ -1265,7 +1344,7 @@ CGI
         CGI.pm is used for implementing reading the input from file upload.
         You may create the file upload form however you wish, and then the
         data may be recovered from the file upload by using $Request-
-        >Form(). Data from a file upload gets written to a filehandle, that
+        >Form(). Data from a file upload gets written to a file handle, that
         may in turn be read from. The original file name that was uploaded
         is the name of the file handle.
 
@@ -1335,6 +1414,52 @@ PERLSCRIPT
 FAQ
     The following are some frequently asked questions about Apache::ASP.
 
+    Error: no request object (Apache=SCALAR(0x???????):)
+        Your Apache + mod_perl build is not working properly, and is likely
+        a RedHat Linux RPM DSO build. Make sure you statically build your
+        Apache + mod_perl httpd, recompiled fresh from the sources.
+
+    How can I use $Session to store complex data structures.
+        Very carefully. Please read the $Session documentation in the
+        OBJECTS section. You can store very complex objects in $Session, but
+        you have to understand the limits, and the syntax that must be used
+        to make this happen.
+
+        In particular, stay away from statements that that have more than
+        one level of indirection on the left side of an assignment like:
+
+          $Session->{complex}{object} = $data;
+
+    Insecure dependency in eval while running with - T switch ?
+        If you are running your mod_perl with "PerlTaintCheck On", which is
+        recommended if you are highly concerned about security issues, you
+        make get errors like "Insecure dependency ... with -T switch".
+
+        Apache::ASP automatically untaints data internally so that you may
+        run scripts with PerlTaintCheck On, but if you are using state
+        objects like $Session or $Application, you must also notify MLDBM,
+        which Apache::ASP uses internally, to also untaint data read from
+        disk, with this setting:
+
+          $MLDBM::RemoveTaint = 1;
+
+        You could put the above line in your global.asa, which is just like
+        a perl module, outside any event handlers you define there.
+
+    How can I use $Session to store a $dbh database handle ?
+        You cannot use $Session to store a $dbh handle. This can be awkward
+        for those coming from the IIS/NT world, where you could store just
+        about anything in $Session, but this boils down to a difference
+        between threads vs. processes.
+
+        Database handles often have per process file handles open, which
+        cannot be shared between requests, so though you have stored the
+        $dbh data in $Session, all the other initializations are not
+        relevant in another httpd process.
+
+        All is not lost! Apache::DBI can be used to cache database
+        connections on a per process basis, and will work for most cases.
+
     What is the best way to debug an ASP application ?
         There are lots of perl-ish tricks to make your life developing and
         debugging an ASP application easier. For starters, you will find
@@ -1361,8 +1486,8 @@ FAQ
         only time that CGI.pm will be loaded by Apache::ASP, which
         implements all other cgi-ish functionality natively. The rationale
         for not implementing file uploads natively is that the extra 100K in
-        mem for CGI.pm shouldn't be a big deal if you are working with bulky
-        file uploads.
+        memory for CGI.pm shouldn't be a big deal if you are working with
+        bulky file uploads.
 
     How is database connectivity handled?
         Database connectivity is handled through perl's DBI & DBD
@@ -1374,6 +1499,8 @@ FAQ
         DBD::ODBC is often your ticket on Win32. On UNIX, commercial vendors
         like OpenLink Software (http://www.openlinksw.com/) provide the nuts
         and bolts for ODBC.
+
+        Database connections can be cached per process with Apache::DBI.
 
     Do I have access to ActiveX objects?
         Only under Win32 will developers have access to ActiveX objects
@@ -1459,7 +1586,7 @@ TUNING
 
     Use NoState 1 setting if you don't need the $Application or $Session
     objects. State objects such as these tie to files on disk and will incur
-    a performace penalty.
+    a performance penalty.
 
     If you need the state objects $Application and $Session, and if running
     an OS that caches files in memory, set your "StateDir" directory to a
@@ -1499,19 +1626,27 @@ TUNING
     file will be compiled. If a directory, that directory will be recursed,
     and all files in it whose file name matches $pattern will be compiled.
     $pattern defaults to .*, which says that all scripts in a directory will
-    be compiled by default. The %config args, are the config options that
-    you want set that affect compilation. These options include Global &
-    DynamicIncludes. If your scripts are later run with different config
-    options, your scripts may have to be recompiled.
+    be compiled by default.
+
+    The %config args, are the config options that you want set that affect
+    compilation. These options include Debug, Global, GlobalPackage,
+    DynamicIncludes, StatINC, and StatINCMatch. If your scripts are later
+    run with different config options, your scripts may have to be
+    recompiled.
 
     Here is an example of use in a *.conf file:
 
      <Perl> 
             Apache::ASP->Loader(
                     'c:/proj/site', "(asp|htm)\$", 
-                    Debug => 1,
                     Global => '/proj/perllib',
-                    GlobalPackage => SomePackageName
+                    Debug => 1, # see output when starting apache
+
+                    # OPTIONAL configs if you use them in your apache configuration
+                    # these settings affect how the scripts are compiled and loaded
+                    GlobalPackage => SomePackageName,
+                    DynamicIncludes => 1,   
+                    StatINC => 1,           
                     ); 
      </Perl>
 
@@ -1557,9 +1692,11 @@ SEE ALSO
     Win32::OLE(3)
 
 KEYWORDS
-    apache,asp,perl,mod_perl,active server pages,web application,session
-    management, scripting,dynamic html,perlscript,unix,win32,winnt,cgi
-    compatible
+    Apache,ASP,perl,apache,mod_perl,asp,Active Server Pages,perl,asp,web
+    application,ASP, session management,Active Server,scripting,dynamic
+    html,asp,perlscript,Unix,Linux,Solaris,Win32,WinNT, cgi
+    compatible,asp,response,ASP,request,session,application,server,Active
+    Server Pages
 
 NOTES
     Many thanks to those who helped me make this module a reality. ASP +
@@ -1587,6 +1724,9 @@ NOTES
      :) Tony Merc Mobily, inspiring tweaks to compile scripts 10 times faster
      :) Russell Weiss again, for finding the internal session garbage collection 
         behaving badly with DB_File's sensitive i/o flushing requirements.
+     :) Dmitry Beransky, for sharable web application includes, ASP on the big.
+     :) Adi, who thought to have full admin control over sessions
+     :) Matt Arnold, for the excellent graphics !
 
 SUPPORT
     Support is available via email and mailing list archive.
@@ -1617,35 +1757,44 @@ SITES USING
             Chamas Enterprises Inc.         
             http://www.chamas.com
 
+            CertSite
+            http://www.certsite.com/
+
             HCST
-            http://www.hcst.net/
+            http://www.hcst.net
 
             International Telecommunication Union
-            http://www.itu.int/
+            http://www.itu.int
 
             Internetowa Gielda Samochodowa          
             http://www.gielda.szczecin.pl
 
             Multiple Listing Service of Greater Cincinnati
-            http://www.cincymls.com/
+            http://www.cincymls.com
 
             NODEWORKS - web site link monitoring                            
             http://www.nodeworks.com
 
             OnTheWeb Services
-            http://www.ontheweb.nu/
+            http://www.ontheweb.nu
 
-            Polish Ports Handbook                   
-            http://www.link.fnet.pl
+            Provillage
+            http://www.provillage.com
 
             Prices for Antiques
-            http://www.p4a.com/
+            http://www.p4a.com
 
             Sex Shop Online                         
             http://www.sex.shop.pl
             
             Spotlight
-            http://www.spotlight.com.au/
+            http://www.spotlight.com.au
+
+            USCD Electrical & Computer Engineering
+            http://ece-local.ucsd.edu
+
+            Wild Technologies Limited
+            http://wild.com.hk
 
 COPYRIGHT
     Copyright (c) 1998-1999, Joshua Chamas, Chamas Enterprises Inc.

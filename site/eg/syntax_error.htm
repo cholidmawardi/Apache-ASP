@@ -1,12 +1,13 @@
 #!/usr/local/bin/perl5 asp
 
 <% 
+use File::Basename;
+if($Request->QueryString('buffer')) {
+	$Response->{Buffer} = 1;
+} else {
 	$Response->{Buffer} = 0; 
+}
 %>
-=pod
-This pod comment should be yanked upon compilation
-=cut
-
 <!--#include file=header.inc-->
 We are creating a perl syntax error... this should demonstrate 
 how error handling is done.  Please check the error log file if 
@@ -20,6 +21,9 @@ extension $Response->Debug(@args), in your script.  The debug
 output will show up below, and in your error logs.  This user 
 style debugging is turned off with the same Debug setting set to 0.
 <p>
+=pod
+This pod comment will be yanked upon compilation
+=cut
 <% 
    $Response->Debug(
 	"Debugging", 
@@ -30,13 +34,12 @@ style debugging is turned off with the same Debug setting set to 0.
 	"or scalar"
 	);
 %>
+Try this script also with <a href=<%=basename($0)%>?buffer=1>buffering on.</a>
+<p>
 <a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
 view this file's source
 </a>
 <% 
-	# flush output that we have written so far, for prettier error
-	$Response->Flush();
-	
 	# create a run-time syntax error
 	$Object->SyntaxError(); 
 %>

@@ -1,12 +1,12 @@
 #!/usr/local/bin/perl5 asp
 
-<!--#include file=header.inc args="$Request->Form('color'),5"-->
+<!--#include file=header.inc args="$Request->Form('color') || 'white',5"-->
 <h3> Demonstration of dynamic includes. </h3>
 <table border=0>
 <tr>
 	<td>
 		<form name=color method=post>
-		<input type=text name=color value="<%=$Request->Form('color')%>">
+		<input type=text name=color value="<%=$Request->Form('color') || 'white' %>">
 		</form>
 	</td>
 	<td>

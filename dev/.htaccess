@@ -21,12 +21,14 @@ AuthType Basic
 <Files ~ (\.htm|\.inc)>
 	SetHandler perl-script
 	PerlHandler Apache::ASP
-	PerlSetVar Debug  2
+	PerlSetVar Debug  1
 	PerlSetVar Global  .		
 	PerlSetVar NoState 1 
 	PerlSetVar BufferingOn 1
 #	PerlSetVar DynamicIncludes 1
 #	PerlSetVar CgiHeaders 1
+	PerlSetVar MailErrorsTo joshua@chamas.com
+#	PerlSetVar MailDebug 1
 </Files>
 
 # .ssi for full ssi support, with Apache::Filter
