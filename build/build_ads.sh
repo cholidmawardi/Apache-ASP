@@ -5,4 +5,5 @@
 
 #perl ../cgi/asp -b -o ../site ./index.html ads 1 
 perl ../cgi/asp -b -o ../site ./index.html ads 1 ./*.html
+touch ../site/apps/search/index.asp
 rsync -a ../site/ /usr/local/proj/mlink/site/asp/

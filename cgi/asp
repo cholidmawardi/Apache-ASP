@@ -33,11 +33,18 @@ Usage: asp [-hsdb] [-o directory] file1 \@arguments file2 \@arguments ...
 
 This program will run asp scripts from the command line.
 Each file that is specified will be run, and the 
-\$Request->QueryString() and \$Request->Form() data will
-be initialized by the \@arguments following the script file
-name.  The \@arguments will be written as space separated 
+\$Request->QueryString() and \$Request->Form() data will be 
+initialized by the \@arguments following the script file name.  
+
+The \@arguments will be written as space separated 
 words, and will be initialized as an associate array where
-%arguments = \@arguments.
+%arguments = \@arguments.  As an example:
+
+ asp file.asp key1 value1 key2 value2
+
+would be similar to calling the file.asp in a web environment like
+
+ /file.asp?key1=value1&key2=value2
 
 HELP
     ;

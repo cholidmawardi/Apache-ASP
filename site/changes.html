@@ -278,7 +278,23 @@ equivalent of a 1.0 release for other kinds of software.
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%20%24VERSION%20%3D%20ccbdb998> $VERSION = 2.25; $DATE="10/11/2001";</a>
+			<a href=#%24VERSION%20%3D%20211fd057b>$VERSION = 2.27; $DATE="10/31/2001";</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%2004a1da04f>$VERSION = 0.18; $DATE="02/03/2000";</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%20276d7fe30>$VERSION = 2.25; $DATE="10/11/2001";</a>
 			</font>
 			</td>
 		
@@ -529,24 +545,62 @@ equivalent of a 1.0 release for other kinds of software.
 			</td>
 							
 		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#%24VERSION%20%3D%2004a1da04f>$VERSION = 0.18; $DATE="02/03/2000";</a>
-			</font>
-			</td>
-		<td>&nbsp;</td>					
-		</tr>
 			
 	</table>
 	<hr size=1>
 	<p>
 
 	<p>
-	<a name=%20%24VERSION%20%3D%20ccbdb998></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b> $VERSION = 2.25; $DATE="10/11/2001";</b></font><p>
+	<a name=%24VERSION%20%3D%20211fd057b></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.27; $DATE="10/31/2001";</b></font><p>
+<font face="courier new" size=3><pre>
+ + Wrapped call to $r-&gt;connection-&gt;fileno in eval {} so to 
+   preserve backwards compatibility with older mod_perl versions
+   that do not have this method defined.  Thanks to Helmut Zeilinger
+   for catching this.
+
+ + removed ./dev directory from distribution, useless clutter
+
+ + Removed dependency on HTTP::Date by taking code into
+   Apache::ASP as Apache::ASP::Date.  This relieves
+   the dependency of Apache::ASP on libwww LWP libraries.
+   If you were using HTTP::Date functions before without loading
+   &quot;use HTTP::Date;&quot; on your own, you will have to do this now.
+
+ + Streamlined code execution.  Especially worked on 
+   $Response-&gt;IsClientConnected which gets called during
+   a normal request execution, and got rid of IO::Select
+   dependency. Some function style calls instead of OO style 
+   calls where private functions were being invokes that one 
+   would not need to override.
+
+ - Fixed possible bug when flushing a data buffer where there
+   is just a '0' in it.
+
+ + Updated docs to note that StateCache config was deprecated
+   as of 2.23.  Removed remaining code that referenced the config.
+
+ + Removed references to unused OrderCollections code.
+
+ - Better Cache meta key, lower chance of collision with 
+   unrelated data since its using the full MD5 keyspace now
+
+ + Optimized some debugging statements that resulted 
+   from recent development.
+
+ + Tie::TextDir .04 and above is supported for StateDB
+   and CacheDB settings with MLDBM::Sync .21. This is good for 
+   CacheDB where output is larger and there are not many 
+   versions to cache, like for XSLTCache, where the site is 
+   mostly static.
+
+ + Better RESOURCES section to web site, especially with adding
+   some links to past Apache::ASP articles &amp; presentations.
+</pre></font>
+	
+	<p>
+	<a name=%24VERSION%20%3D%20276d7fe30></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.25; $DATE="10/11/2001";</b></font><p>
 <font face="courier new" size=3><pre>
  + Improved ./site/apps/search application, for better
    search results at Apache::ASP site.  Also, reengineered

@@ -1,49 +1,85 @@
-$MODULE=Apache::ASP; $VERSION = 2.27; $DATE="10/31/2001";
+$MODULE=Apache::ASP; $VERSION = 2.29; $DATE="11/19/2001";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
 
- + Wrapped call to $r->connection->fileno in eval {} so to 
-   preserve backwards compatibility with older mod_perl versions
-   that do not have this method defined.  Thanks to Helmut Zeilinger
-   for catching this.
+ +Added some extra help text to the ./cgi/asp --help message
+  to clarify how to pass arguments to a script from the command line.
 
- + removed ./dev directory from distribution, useless clutter
+ +When using $Server->Mail() API, if Content-Type header is set,
+  and MIME-Version is not, then a "MIME-Version: 1.0" header will be sent
+  for the email.  This is correct according to RFC 1521 which specifies
+  for the first time the Content-Type: header for email documents.
+  Thanks to Philip Mak for pointing out this correct behavior.
 
- + Removed dependency on HTTP::Date by taking code into
-   Apache::ASP as Apache::ASP::Date.  This relieves
-   the dependency of Apache::ASP on libwww LWP libraries.
-   If you were using HTTP::Date functions before without loading
-   "use HTTP::Date;" on your own, you will have to do this now.
+ +Made dependent on MLDBM::Sync version .25 to pass the taint_check.t test
 
- + Streamlined code execution.  Especially worked on 
-   $Response->IsClientConnected which gets called during
-   a normal request execution, and got rid of IO::Select
-   dependency. Some function style calls instead of OO style 
-   calls where private functions were being invokes that one 
-   would not need to override.
+ +Improved server_mail.t test to work with mail servers were relaying is denied
 
- - Fixed possible bug when flushing a data buffer where there
-   is just a '0' in it.
+ +Added <html><body> tags to MailErrorsTo email
 
- + Updated docs to note that StateCache config was deprecated
-   as of 2.23.  Removed remaining code that referenced the config.
+ --Fixed SessionCount / Session_OnEnd bug, where these things were not
+  working for $Sessions that never had anything written to them.
+  This bug was introduced in 2.23/2.25 release.
 
- + Removed references to unused OrderCollections code.
+  There was an optimization in 2.23/2.25 where a $Session that was never
+  used does not write its state lock file & dbm files to disk, only if
+  it gets written too like $Session->{MARK}++.  Tracking of these NULL $Sessions 
+  then is handled solely in the internal database.  For $Session garbage 
+  collection though which would fire Session_OnEnd events and update 
+  SessionCount, the Apache::ASP::State->GroupMembers() function was just 
+  looking for state files on disk ... now it looks in the internal database 
+  too for SessionID records for garbage collection.
 
- - Better Cache meta key, lower chance of collision with 
-   unrelated data since its using the full MD5 keyspace now
+  Added a test at ./t/session_events.t for these things.
 
- + Optimized some debugging statements that resulted 
-   from recent development.
+ +Some optimizations for $Session API use.
 
- + Tie::TextDir .04 and above is supported for StateDB
-   and CacheDB settings with MLDBM::Sync .21. This is good for 
-   CacheDB where output is larger and there are not many 
-   versions to cache, like for XSLTCache, where the site is 
-   mostly static.
+ +Added support for XSLT via XML::LibXSLT, patch courtesy of Michael Buschauer
 
- + Better RESOURCES section to web site, especially with adding
-   some links to past Apache::ASP articles & presentations.
+ -Got rid of an warning when recompiling changing includes under perl 5.6.1...
+  undef($code) method did not work for this perl version, rather undef(&$code) does.
+  Stopped using using Apache::Symbol for this when available.
 
+ -Make Apache::ASP script run under perl taint checking -T for perl 5.6.1...
+  $code =~ tr///; does not work to untaint here, so much use the slower:
+  $code =~ /^(.*)$/s; $code = $1; method to untaint.
+
+ -Check for inline includes changing, included in a dynamic included
+  loaded at runtime via $Response->Include().  Added test case for
+  this at t/include_change.t.  If an inline include of a dynamic include
+  changes, the dynamic include should get recompiled now.
+
+ -Make OK to use again with PerlTaintCheck On, with MLDBM::Sync 2.25.
+  Fixed in ASP.pm, t/global.asa, and created new t/taint_check.t test script
+
+ +Load more modules when Apache::ASP is loaded so parent will share more
+  with children httpd: 
+   Apache::Symbol 
+   Devel::Symdump 
+   Config 
+   lib 
+   MLDBM::Sync::SDBM_File
+
+ +When FileUploadMax bytes is exceeded for a file upload, there will not
+  be an odd error anymore resulting from $CGI::POST_MAX being triggered,
+  instead the file upload input will simply be ignored via $CGI::DISABLE_UPLOADS.
+  This gives the developer the opportunity to tell the user the the file upload
+  was too big, as demonstrated by the ./site/eg/file_upload.asp example.
+
+  To not let the web client POST a lot of data to your scripts as a form
+  of a denial of service attack use the apache config LimitRequestBody for the 
+  max limits.  You can think of PerlSetVar FileUploadMax as a soft limit, and 
+  apache's LimitRequestBody as a hard limit.
+
+ --Under certain circumstances with file upload, it seems that IsClientConnected() 
+  would return an aborted client value from $r->connection->aborted, so
+  the buffer output data would not be flushed to the client, and 
+  the HTML page would return to the browser empty.  This would be under
+  normal file upload use.  One work-around was to make sure to initialize
+  the $Request object before $Response->IsClientConnected is called,
+  then $r->connection->aborted returns the right value.
+  
+  This problem was probably introduced with IsClientConnected() code changes
+  starting in the 2.25 release.

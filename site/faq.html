@@ -295,7 +295,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Why%20do%20varia68e97184>Why do variables retain their values between requests?</a>
+			<a href=#Apache%20Expat3f8589db>Apache Expat vs. XML perl parsing causing segfaults, what do I do?</a>
 			</font>
 			</td>
 		
@@ -311,7 +311,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Apache%20errord5510ac4>Apache errors on the PerlHandler directive ?</a>
+			<a href=#Why%20do%20varia68e97184>Why do variables retain their values between requests?</a>
 			</font>
 			</td>
 		
@@ -327,7 +327,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Error%3A%20no%20reb1d13fcf>Error: no request object (Apache=SCALAR(0x???????):)</a>
+			<a href=#Apache%20errord5510ac4>Apache errors on the PerlHandler directive ?</a>
 			</font>
 			</td>
 		
@@ -343,7 +343,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#I%20am%20getting272ca0df>I am getting a tie or MLDBM / state error message, what do I do?</a>
+			<a href=#Error%3A%20no%20reb1d13fcf>Error: no request object (Apache=SCALAR(0x???????):)</a>
 			</font>
 			</td>
 		
@@ -359,13 +359,29 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			
+			<a href=#I%20am%20getting272ca0df>I am getting a tie or MLDBM / state error message, what do I do?</a>
 			</font>
 			</td>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
 			<a href=#Do%20I%20have%20aca178cfb4>Do I have access to ActiveX objects?</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Can%20I%20script2300fcb1>Can I script in VBScript or JScript ?</a>
 			</font>
 			</td>
 							
@@ -381,22 +397,6 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Can%20I%20script2300fcb1>Can I script in VBScript or JScript ?</a>
-			</font>
-			</td>
-							
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#How%20can%20I%20us9eb242f1>How can I use $Session to store complex data structures.</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
 			
 			</font>
 			</td>
@@ -407,7 +407,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#How%20can%20I%20kef206b910>How can I keep search engine spiders from killing the session manager?</a>
+			<a href=#How%20can%20I%20us9eb242f1>How can I use $Session to store complex data structures.</a>
 			</font>
 			</td>
 		
@@ -423,7 +423,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Insecure%20depec6cd400>Insecure dependency in eval while running with - T switch ?</a>
+			<a href=#How%20can%20I%20kef206b910>How can I keep search engine spiders from killing the session manager?</a>
 			</font>
 			</td>
 		
@@ -439,7 +439,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#How%20can%20I%20us50054dc6>How can I use $Session to store a $dbh database handle ?</a>
+			<a href=#Insecure%20depec6cd400>Insecure dependency in eval while running with - T switch ?</a>
 			</font>
 			</td>
 		
@@ -449,6 +449,16 @@ about Apache::ASP.</font>
 			</font>
 			</td>
 							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#How%20can%20I%20us50054dc6>How can I use $Session to store a $dbh database handle ?</a>
+			</font>
+			</td>
+		<td>&nbsp;</td>					
 		</tr>
 		
 		<tr>
@@ -478,6 +488,27 @@ about Apache::ASP.</font>
 the Apache::ASP scripts properly.  Check the <a href=install.html><font size=-1 face=verdana><b>INSTALL</b></font></a> QuickStart
 section for more info on how to quickly set up Apache to 
 execute your ASP scripts.</font>
+	
+	<p>
+	<a name=Apache%20Expat3f8589db></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Apache Expat vs. XML perl parsing causing segfaults, what do I do?</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>Make sure to compile apache with expat disabled.  The
+./make_httpd/build_httpds.sh in the distribution will do 
+this for you, with the --disable-rule=EXPAT in particular:
+<font face="courier new" size=3><pre>
+ cd ../$APACHE
+ echo &quot;Building apache ==============================&quot;
+ ./configure \
+    --prefix=/usr/local/apache \
+    --activate-module=src/modules/perl/libperl.a \
+    --enable-module=ssl \
+    --enable-module=proxy \
+    --enable-module=so \
+    --disable-rule=EXPAT
+
+                   ^^^^^
+</pre></font>keywords: segmentation fault, segfault seg fault</font>
 	
 	<p>
 	<a name=Why%20do%20varia68e97184></a>

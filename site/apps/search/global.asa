@@ -181,7 +181,8 @@ sub search_files {
 	if($word_dict) {
 	    for my $file ( keys %$word_dict ) {
 		$matches{$word}++;
-		$files{$file} += $word_dict->{$file};
+		$files{$file} ||= 1;
+		$files{$file} *= ( $word_dict->{$file} + 2 );
 	    }
 	}
     }

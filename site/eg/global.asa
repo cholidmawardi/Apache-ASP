@@ -44,6 +44,8 @@ sub Script_OnFlush {
 	my $data = $Response->{BinaryRef};
 	$$data =~ s/(\<(body|td).*?\>)/$1\<font $GlobalFont\>/isg;
     }
+    my $data = $Response->{BinaryRef};
+    $Response->Debug("Script_OnFlush: about to flush ".length($$data)." bytes to client");
 }
 
 # you can share globals between scripts as of v.10, as all scripts, including 

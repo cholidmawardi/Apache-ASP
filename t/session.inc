@@ -1,5 +1,7 @@
 <%
 eval { $Session->Lock };
+$t->eok($Session->Timeout > 1, "timeout check > 1");
+$t->eok($Session->{Timeout} > 1, "timeout check > 1");
 $t->eok(! $@, "\$Session->Lock: $@");
 $t->eok(length($Session->{SessionID}) >= 8, "session id not long enough");
 my $count = 0;

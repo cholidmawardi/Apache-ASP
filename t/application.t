@@ -1,3 +1,5 @@
+#!/usr/local/bin/perl
+
 use Apache::ASP;
 
 #use lib qw(. ..);

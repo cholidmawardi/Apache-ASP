@@ -128,15 +128,18 @@ t/cache.t
 t/cache_test.inc
 t/collection.t
 t/collectionitem.t
+t/dynamic_include_change.inc
 t/general.t
 t/global.asa
 t/include.inc
 t/include.t
 t/include_asp.inc
+t/include_change.t
 t/include_code.inc
 t/include_code2.inc
 t/include_return.inc
 t/include_runtime.t
+t/inline_include_change.inc
 t/load.inc
 t/load.t
 t/loops.t
@@ -146,5 +149,8 @@ t/server.t
 t/server_mail.t
 t/session.inc
 t/session.t
+t/session_events/global.asa
+t/session_events.t
 t/session_serialize.t
+t/taint_check.t
 t/xmlsubs.t

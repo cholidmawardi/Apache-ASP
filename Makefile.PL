@@ -6,10 +6,11 @@ my $necessary_modules = {
 #    'Apache' => 'Make sure your installation of mod_perl is complete',
     'Class::Struct' => "Apache::ASP->Loader() precompile scripts functionality",
     'MLDBM' => 'This is used for reading and writing multi-level hashes on disk',
-    'MLDBM::Sync 0.15' => 'Support for State dbms like $Session & $Application',		 
+    'MLDBM::Sync 0.25' => 'Support for State dbms like $Session & $Application',		 
     'SDBM_File' => 'Internal databases used for state files, like $Session',
     'Data::Dumper' => 'Serializes data for MLDBM',
     'Fcntl' => 'Used for file locking constants',
+    'File::Basename' => "Used for tests during 'make test'",
     'Digest::MD5' => '32 byte hash algorithm for cookie session-id',
 #    'HTTP::Date' => 'Provides mapping between Perl time() and HTTP dates',
     'Carp' => 'Provides critical error messaging with confess()',
@@ -43,12 +44,14 @@ print "Checking for the REQUIRED modules...\n";
 my($errors, $warnings);
 for(sort keys %$necessary_modules) {
     eval 'use ' . $_ ;
+    my $module_display = $_;
+    $module_display =~ s/( [\d\.]+)$/ \>\=$1/isg;
     if($@) {
 	$errors++;
-	print " !!! you need the module: $_\n";
+	print " !!! you need the module: $module_display\n";
 	print "     WHY: $necessary_modules->{$_}\n";
     } else {
-	print " ... found $_ !\n";
+	print " ... found $module_display !\n";
     }
 }
 
@@ -64,13 +67,19 @@ for(sort keys %$optional_modules) {
 	next;
     }
 
-    eval 'use ' . $_ ;
-    if($@) {
-	$warnings++;
-	print " ??? you may want module: $_\n";
-	print "     WHY: $optional_modules->{$_}\n";
-    } else {
-	print " ... found $_ !\n";
+    {
+	local $SIG{__DIE__} = sub { die(@_); };
+	eval 'use ' . $_ ;
+	my $module_display = $_;
+	$module_display =~ s/( [\d\.]+)$/ \>\=$1/isg;
+	if($@) {
+	    $warnings++;
+	    print " ??? you may want module: $module_display\n";
+	    print "     WHY: $optional_modules->{$_}\n";
+#	    print "   ERROR: $@\n";
+	} else {
+	    print " ... found $module_display !\n";
+	}
     }
 }
 

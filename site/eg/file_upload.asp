@@ -15,15 +15,21 @@ $limit = ($limit eq '-1') ? 'NONE' : $limit;
 print "$limit";
 %>
 </tt>.
-
+<% if($limit && ($limit < $Request->{TotalBytes})) { %>
+  This limit was <b>exceeded</b> by a POST of <tt><%= $Request->{TotalBytes} %></tt> bytes!
+<% } %>
+<table border=0><tr><td valign=center>
 <%
 use CGI;
 my $q = new CGI; 
 print $q->start_multipart_form();
 print $q->hidden('file_upload', 'Hidden File Upload Form Text');
 print $q->filefield('uploaded_file','starting value',30,100);
+print "</td><td valign=center>";
 print $q->submit('Upload File');
 %>
+</td></tr></table>
+
 <br>
 <b>File Upload Type:</b>
 <%= 
