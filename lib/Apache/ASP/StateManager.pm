@@ -92,6 +92,7 @@ sub InitState {
 	$self->{session_url_parse} = $self->{session_url_parse_match} || $r->dir_config('SessionQueryParse');
 	$self->{session_url_match} = $self->{session_url_parse_match} || $r->dir_config('SessionQueryMatch');
 	$self->{session_url} = $self->{session_url_parse} || $self->{session_url_match} || $r->dir_config('SessionQuery');
+	$self->{session_url_force} = $r->dir_config('SessionQueryForce');
 	
 	$self->{session_serialize} = $r->dir_config('SessionSerialize');
 	$self->{secure_session}    = $r->dir_config('SecureSession');
@@ -422,25 +423,17 @@ sub CleanupMaster {
     }
 }
 
-sub SessionIdCookieSet {
-    my($self, $id) = @_;
-
-    $self->{session_id} = $id;
-    my $secure = $self->{secure_session} ? '; secure' : '';
-    $self->{r}->header_out
-       ('Set-Cookie', 
-        "$SessionCookieName=$id; path=$self->{cookie_path}".$secure
-        );
-
-    $id;
-}
-
 # combo get / set
 sub SessionId {
     my($self, $id) = @_;
 
-    if($id) {
-	$self->SessionIdCookieSet($id);
+    if(defined $id) {
+	unless($self->{session_url_force}) {
+	    # don't set the cookie when we are just using SessionQuery* configs
+	    my $secure = $self->{secure_session} ? '; secure' : '';
+	    $self->{r}->header_out('Set-Cookie', "$SessionCookieName=$id; path=$self->{cookie_path}".$secure);
+	}
+	$self->{session_id} = $id;
     } else {
 	# if we have already parsed it out, return now
 	# quick session_id caching, mostly for use with 
@@ -448,20 +441,24 @@ sub SessionId {
 	$self->{session_id} && return $self->{session_id};
 
 	my $session_cookie = 0;
-	my $cookie = $self->{r}->header_in("Cookie") || '';
-	my(@parts) = split(/\;\s*/, $cookie);
-	for(@parts) {	
-	    my($name, $value) = split(/\=/, $_, 2);
-	    if($name eq $SessionCookieName) {
-		$id = $value;
-		$session_cookie = 1;
-		$self->{dbg} && $self->Debug("session id from cookie: $id");
-		last;
+
+	unless($self->{session_url_force}) {
+	    # don't read the cookie when we are just using SessionQuery* configs
+	    my $cookie = $self->{r}->header_in("Cookie") || '';
+	    my(@parts) = split(/\;\s*/, $cookie);
+	    for(@parts) {	
+		my($name, $value) = split(/\=/, $_, 2);
+		if($name eq $SessionCookieName) {
+		    $id = $value;
+		    $session_cookie = 1;
+		    $self->{dbg} && $self->Debug("session id from cookie: $id");
+		    last;
+		}
 	    }
 	}
 
 	my $session_from_url;
-	if(! $id && $self->{session_url}) {
+	if(! defined($id) && $self->{session_url}) {
 	    $id = delete $self->{Request}{QueryString}{$SessionCookieName};	    
 	    # if there was more than one session id in the query string, then just
 	    # take the first one
@@ -471,7 +468,7 @@ sub SessionId {
 	}
 
 	# SANTIZE the id against hacking
-	if($id) {
+	if(defined $id) {
 	    if($id =~ /^[0-9a-z]{8,32}$/s) {
 		# at least 8 bytes, but less than 32 bytes
 		$self->{session_id} = $id;
@@ -481,11 +478,11 @@ sub SessionId {
 	    }
 	}
 
-	if ($session_from_url) {
-	    $self->SessionIdCookieSet($id);
+	if ($session_from_url && defined $id) {
+	    $self->SessionId($id);
 	}
 
-	if($id) {
+	if(defined $id) {
 	    $self->{session_id} = $id;
 	    $self->{session_cookie} = $session_cookie;
 	}

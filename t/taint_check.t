@@ -14,8 +14,11 @@ use Apache::ASP::CGI;
 use strict;
 #$SIG{__DIE__} = \&Carp::confess;
 
+#    print STDERR $^]." $^V $PERL_VERSION --- \n";
 &Apache::ASP::CGI::do_self();
 
 __END__
 
-<% $Response->Include('session.inc'); %>
+<% 
+  $Response->Include('session.inc'); 
+%>

@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: TUNING</title>
+<title>Apache::ASP::Tuning</title>
 
 
 
@@ -35,7 +35,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td>
 	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP" width=267 height=44 ></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
 		<td align=right></td>
 	
@@ -351,9 +351,9 @@ most of your site.</font>
 </pre></font>For more tips &amp; tricks on tuning Apache and <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>, please see the tuning
 documents at:
 <font face="courier new" size=3><pre>
-  <a href="http://perl.apache.org/guide/">Stas Bekman's mod_perl guide</a>
+  <a href="http://perl.apache.org/guide/">Stas Bekman&#39;s mod_perl guide</a>
 
-  <a href="http://perl.apache.org/tuning/">Vivek Khera's mod_perl performance tuning</a>
+  <a href="http://perl.apache.org/tuning/">Vivek Khera&#39;s mod_perl performance tuning</a>
 </pre></font>Written in late 1999 this article provides an early look at 
 how to tune your Apache::ASP web site.  It has since been
 updated to remain current with Apache::ASP v2.29+
@@ -378,7 +378,7 @@ is &quot;good enough&quot;, that once reached, tuning stops.</font>
 	<a name=%24Application941f90bf></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>$Application & $Session State</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Use NoState 1 setting if you don't need the $Application or $Session
+</pre></font>Use NoState 1 setting if you don&#39;t need the $Application or $Session
 objects. State objects such as these tie to files on disk and will incur a
 performance penalty.
 <font face="courier new" size=3><pre>
@@ -396,7 +396,7 @@ administration.
 can freely use SessionSerialize to make your $Session requests
 faster, and you can achieve similar performance benefits for
 $Application if you call $Application-&gt;Lock() in your 
-global.asa's Script_OnStart.</font>
+global.asa&#39;s Script_OnStart.</font>
 	
 	<p>
 	<a name=Low%20MaxClien5a8237ea></a>
@@ -467,19 +467,19 @@ scripts may have to be recompiled.
 <font face="courier new" size=3><pre>
  &lt;Perl&gt; 
  Apache::ASP-&gt;Loader(
-	'/usr/local/proj/site', &quot;(asp|htm)\$&quot;, 
-	'Global' =&gt; '/proj/perllib',
-	'Debug' =&gt; -3, # see system output when starting apache
+	&#39;/usr/local/proj/site&#39;, &quot;(asp|htm)\$&quot;, 
+	&#39;Global&#39; =&gt; &#39;/proj/perllib&#39;,
+	&#39;Debug&#39; =&gt; -3, # see system output when starting apache
 
 	# OPTIONAL configs if you use them in your apache configuration
 	# these settings affect how the scripts are compiled and loaded
-	'GlobalPackage' =&gt; 'SomePackageName',
-	'DynamicIncludes' =&gt; 1,	
-	'StatINC' =&gt; 1,		
-        'StatINCMatch' =&gt; 'My',
-        'UseStrict' =&gt; 1,
-        'XMLSubsMatch' =&gt; 'my:\w+',
-        'XMLSubsStrict' =&gt; 0 || 1,
+	&#39;GlobalPackage&#39; =&gt; &#39;SomePackageName&#39;,
+	&#39;DynamicIncludes&#39; =&gt; 1,	
+	&#39;StatINC&#39; =&gt; 1,		
+        &#39;StatINCMatch&#39; =&gt; &#39;My&#39;,
+        &#39;UseStrict&#39; =&gt; 1,
+        &#39;XMLSubsMatch&#39; =&gt; &#39;my:\w+&#39;,
+        &#39;XMLSubsStrict&#39; =&gt; 0 || 1,
 	);
  &lt;/Perl&gt;
 </pre></font>This config section tells the server to compile all scripts
@@ -498,8 +498,8 @@ messages indicating scripts being cached.</font>
 	<a name=No%20.htaccessc4c9e884></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>No .htaccess or StatINC</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Don't use .htaccess files or the StatINC setting in a production system
-as there are many more files touched per request using these features.  I've
+</pre></font>Don&#39;t use .htaccess files or the StatINC setting in a production system
+as there are many more files touched per request using these features.  I&#39;ve
 seen performance slow down by half because of using these.  For eliminating
 the .htaccess file, move settings into *.conf Apache files.
 <font face="courier new" size=3><pre>
@@ -525,7 +525,7 @@ statements you use in your program, and you may want to leave it on.</font>
 	<a name=RAM%20Sparing></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>RAM Sparing</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>If you have a lot (1000's+) of scripts, and limited memory, set NoCache to 1,
+</pre></font>If you have a lot (1000&#39;s+) of scripts, and limited memory, set NoCache to 1,
 so that compiled scripts are not cached in memory.  You lose about
 10-15% in speed for small scripts, but save at least 10K RAM per cached
 script.  These numbers are very rough.  If you use includes, you

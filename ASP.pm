@@ -3,7 +3,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.35;
+$VERSION = 2.37;
 
 use Digest::MD5 qw(md5_hex);
 use Cwd qw(cwd);
@@ -47,6 +47,7 @@ unless($LoadModPerl++) {
       Apache MLDBM::Serializer::Data::Dumper Devel::Symdump 
       Apache::ASP::StateManager Apache::ASP::Session Apache::ASP::Application
       Apache::ASP::StatINC Apache::ASP::Error
+      Apache::compat
       )
 	    );
 # this does not seem to work right yet, as it was adding for mod_perl 1.25
@@ -832,7 +833,7 @@ sub Parse {
     $data .= $munge; # append what's left   
 #    print STDERR $file."\n\n".$data."\n\n";
 
-    # call Script_OnParse after instead if we inline includes at all
+
     # so we have the full script for people
     if(! $self->{compile_includes}) {	
 	# do pod comments again if we have any included files
@@ -1216,7 +1217,7 @@ sub ReadFile {
     local *READFILE;
     open(READFILE, $file) || $self->Error("can't open file $file for reading");
     local $/ = undef;
-    my $data .= <READFILE>;
+    my $data = <READFILE>;
     close READFILE;
 
     $data;
@@ -2523,6 +2524,14 @@ If this is set, then you don't need to set SessionQuery,
 as it will be set automatically.
 
   PerlSetVar SessionQueryMatch ^http://localhost
+
+=item SessionQueryForce
+
+default 0, set to 1 if you want to disallow the use of cookies
+for session id passing, and only allow session ids to be passed
+on the query string via SessionQuery and SessionQueryParse settings.
+
+  PerlSetVar SessionQueryForce 1
 
 =head2 Developer Environment
 
@@ -4805,7 +4814,7 @@ perl package or whereever like so
 
   sub my::employee {
     my($attributes, $body) = @_;
-    $Response->Include('employee.inc', $attributes, $body);
+    $main::Response->Include('employee.inc', $attributes, $body);
   }
 
   <!-- # employee.inc file somewhere else -->
@@ -4821,7 +4830,7 @@ perl package or whereever like so
   </table>
   <!-- # end employee.inc file -->
 
-The $Response->Include() would then delegate the rendering
+The $main::Response->Include() would then delegate the rendering
 of the employee to the employee.inc ASP script include.
 
 Though XML purists would not like this custom tag technology
@@ -5644,6 +5653,8 @@ ASP + Apache, web development could not be better!  Kudos go out to:
 
  !! Doug MacEachern, for moral support and of course mod_perl
 
+ :) Manabu Higashida, for fixes to work under perl 5.8.0
+ :) Slaven Rezic, for suggestions on smoother CPAN installtion
  :) Mitsunobu Ozato, for working on a japanese translation of the site & docs.
  :) Eamon Daly for persistence in resolving a MailErrors bug.
  :) Gert, for help on the mailing list, and pushing the limits of use on Win32 
@@ -5732,8 +5743,10 @@ send your question to modperl@apache.org
 What follows is a list of public sites that are using 
 Apache::ASP.  If you use the software for your site, and 
 would like to show your support of the software by being listed, 
-please send your URL to me at joshua@chamas.com and I'll be 
-sure to add it to the list.
+please send your URL to asp@chamas.com
+
+        AlterCom, Advanced Web Hosting
+        http://altercom.com/
 
         AmericanGamers.com
         http://www.AmericanGamers.com/
@@ -5798,7 +5811,7 @@ sure to add it to the list.
 	MLS of Greater Cincinnati
 	http://www.cincymls.com
 
-	NodeWorks - Web Link Check
+	NodeWorks - Link Check
 	http://www.nodeworks.com
 
 	OnTheWeb Services
@@ -5816,9 +5829,6 @@ sure to add it to the list.
 	Samara.RU
 	http://portal.samara.ru/
 
-	Sex Shop Online				
-	http://www.sex.shop.pl
-	
 	Spotlight
 	http://www.spotlight.com.au
 
@@ -5919,13 +5929,9 @@ interest to you, and I will give it higher priority.
 =head1 CHANGES
 
 Apache::ASP has been in development since 1998, and 
-was production ready since its .02 release.
-
-Releases are tested on a variety of platforms including Linux,
-Solaris, & WinNT, and are used in a production setting
-on at least Solaris or Linux before being made to
-the public generally.  Development releases for testing
-new features are provided privately.
+was production ready since its .02 release.  Releases
+are always used in a production setting before being
+made publically available.
 
 In July 2000, the version numbers of releases went 
 from .19 to 1.9 which is more relevant to software development
@@ -5933,7 +5939,30 @@ outside the perl community.  Where a .10 perl module usually
 means first production ready release, this would be the
 equivalent of a 1.0 release for other kinds of software.
 
- + = improvement; - = bug fix
+ + = improvement   - = bug fix    (d) = documentations
+
+=item $VERSION = 2.35; $DATE="05/30/2002"
+
+ +Destroy better $Server & $Response objects so that my closure references
+  to these to not attempt to work in the future against invalid internal data.
+  There was enough data left in these old objects to make debugging the
+  my closure problem confusing, where it looked like the ASP object state 
+  became invalid.
+
+ +Added system debug diagnostics to inspect StateManager group cleanup
+
+ (d) Documentation update about flock() work around for Win95/Win98/WinMe systems,
+  confirmed by Rex Arul
+
+ (d) Documentation/site build bug found by Mitsunobu Ozato, where <% %> 
+  not being escaped correctly with $Server->HTMLEncode().
+  New japanese documentation project started by him 
+  at http://sourceforge.jp/projects/apache-asp-jp/ 
+
+ -InitPackageGlobals() called after new Apache::ASP object created so 
+  core system templates can be compiled even when there was a runtime
+  compilation error of user templates.  Bug fix needed pointed out by
+  Eamon Daly
 
 =item $VERSION = 2.33; $DATE="04/29/2002"
 
@@ -6078,9 +6107,9 @@ equivalent of a 1.0 release for other kinds of software.
 
 =item $VERSION = 2.31; $DATE="01/22/2002";
 
- + $Server->MapInclude() API extension created to wrap up Apache::ASP::SearchDirs functionality
-   so one may do an conditional check for an include existence befor executing $Response->Include().
-   Added API test to server.t
+ + $Server->MapInclude() API extension created to wrap up Apache::ASP::SearchDirs 
+   functionality so one may do an conditional check for an include existence befor 
+   executing $Response->Include().  Added API test to server.t
 
  + $Server->Transfer() now allows arguments like $Response->Include(), and now acts just
    as a wrapper for:

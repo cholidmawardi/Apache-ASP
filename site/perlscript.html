@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: PERLSCRIPT</title>
+<title>Apache::ASP::Perlscript</title>
 
 
 
@@ -35,7 +35,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td>
 	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP" width=267 height=44 ></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
 		<td align=right></td>
 	
@@ -251,12 +251,12 @@ Please see the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></fon
         $Application
 	$Session
 	$Request-&gt;FileUpload *
-	$Request-&gt;FileUpload('upload_file') *
+	$Request-&gt;FileUpload(&#39;upload_file&#39;) *
 	$Request-&gt;Form
 	$Request-&gt;QueryString
 	$Request-&gt;Cookies
 	$Response-&gt;Cookies
-	$Response-&gt;Cookies('some_cookie')	
+	$Response-&gt;Cookies(&#39;some_cookie&#39;)	
 
   * FileUpload API Extensions
 </pre></font>And as such may be used with the following syntax, as compared
@@ -266,26 +266,26 @@ interface is compatible with the deprecated PerlScript interface.
  C = PerlScript Compatibility	N = Native Apache::ASP 
   
  ## Collection-&gt;Contents($name) 
- [C] $Application-&gt;Contents('XYZ')		
+ [C] $Application-&gt;Contents(&#39;XYZ&#39;)		
  [N] $Application-&gt;{XYZ}
 
  ## Collection-&gt;SetProperty($property, $name, $value)
- [C] $Application-&gt;Contents-&gt;SetProperty('Item', 'XYZ', &quot;Fred&quot;);
+ [C] $Application-&gt;Contents-&gt;SetProperty(&#39;Item&#39;, &#39;XYZ&#39;, &quot;Fred&quot;);
  [N] $Application-&gt;{XYZ} = &quot;Fred&quot;
 	
  ## Collection-&gt;GetProperty($property, $name)
- [C] $Application-&gt;Contents-&gt;GetProperty('Item', 'XYZ')		
+ [C] $Application-&gt;Contents-&gt;GetProperty(&#39;Item&#39;, &#39;XYZ&#39;)		
  [N] $Application-&gt;{XYZ}
 
  ## Collection-&gt;Item($name)
- [C] print $Request-&gt;QueryString-&gt;Item('message'), &quot;&lt;br&gt;\n\n&quot;;
- [N] print $Request-&gt;{QueryString}{'message'}, &quot;&lt;br&gt;\n\n&quot;;		
+ [C] print $Request-&gt;QueryString-&gt;Item(&#39;message&#39;), &quot;&lt;br&gt;\n\n&quot;;
+ [N] print $Request-&gt;{QueryString}{&#39;message&#39;}, &quot;&lt;br&gt;\n\n&quot;;		
 
  ## Working with Cookies
- [C] $Response-&gt;SetProperty('Cookies', 'Testing', 'Extra');
- [C] $Response-&gt;SetProperty('Cookies', 'Testing', {'Path' =&gt; '/'});
+ [C] $Response-&gt;SetProperty(&#39;Cookies&#39;, &#39;Testing&#39;, &#39;Extra&#39;);
+ [C] $Response-&gt;SetProperty(&#39;Cookies&#39;, &#39;Testing&#39;, {&#39;Path&#39; =&gt; &#39;/&#39;});
  [C] print $Request-&gt;Cookies(Testing) . &quot;&lt;br&gt;\n&quot;;
- [N] $Response-&gt;{Cookies}{Testing} = {Value =&gt; Extra, Path =&gt; '/'};
+ [N] $Response-&gt;{Cookies}{Testing} = {Value =&gt; Extra, Path =&gt; &#39;/&#39;};
  [N] print $Request-&gt;{Cookies}{Testing} . &quot;&lt;br&gt;\n&quot;;
 </pre></font>Several incompatibilities exist between PerlScript and Apache::ASP:
 <font face="courier new" size=3><pre>

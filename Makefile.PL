@@ -133,15 +133,15 @@ CPAN
 
 if($errors) {
     print "\n";
-    print "Exiting now because of errors!\n";
     print $CPAN;
     print "\n";
-    exit;
-} elsif($warnings) {
-    print $CPAN;
+    print "** You do not have the required modules for Apache::ASP.  Do not run 'make install' **\n\n";
+} else {
+    if($warnings) {
+	print $CPAN;
+    }
+    print "+++ Looks good!  You are ready to install Apache::ASP! +++ \n\n";
 } 
-
-print "+++ Looks good!  You are ready to install Apache::ASP! +++ \n\n";
 
 use ExtUtils::MakeMaker;
 &WriteMakefile(

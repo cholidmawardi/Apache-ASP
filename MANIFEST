@@ -190,7 +190,6 @@ t/inode_names.t
 t/load.inc
 t/load.t
 t/long_names.t
-t/long_names/long_directory_path/long_directory_path/long_directory_path/long_directory_path/long_directory_path/ok.inc
 t/loops.t
 t/mail_error.t
 t/null/global.asa

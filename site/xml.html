@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: XML/XSLT</title>
+<title>Apache::ASP::Xml/xslt</title>
 
 
 
@@ -35,7 +35,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td>
 	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP" width=267 height=44 ></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
 		<td align=right></td>
 	
@@ -247,7 +247,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Custom%20Tags%20367f63f0>Custom Tags with XMLSubsMatch</a>
+			<a href=#Custom%20Tags%202d10f1a2>Custom Tags with XMLSubsMatch</a>
 			</font>
 			</td>
 		
@@ -274,7 +274,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<p>
 
 	<p>
-	<a name=Custom%20Tags%20367f63f0></a>
+	<a name=Custom%20Tags%202d10f1a2></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>Custom Tags with XMLSubsMatch</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Before XML, there was the need to make HTML markup smarter.
@@ -282,7 +282,7 @@ Apache::ASP gives you the ability to have a perl
 subroutine handle the execution of any predefined tag,
 taking the tag descriptors, and the text contained between,
 as arguments of the subroutine.  This custom tag
-technology can be used to extend a web developer's abilities
+technology can be used to extend a web developer&#39;s abilities
 to add dynamic pieces without having to visibly use 
 &lt;% %&gt; style code entries.
 <font face="courier new" size=3><pre>
@@ -298,8 +298,8 @@ the Apache::ASP parser to render the tag with a
 subroutine:
 <font face="courier new" size=3><pre>
   PerlSetVar XMLSubsMatch my:employee
-</pre></font>Any colons, ':', in the XML custom tag will turn
-into '::', a perl package separator, so the my:employee
+</pre></font>Any colons, &#39;:&#39;, in the XML custom tag will turn
+into &#39;::&#39;, a perl package separator, so the my:employee
 tag would translate to the my::employee subroutine, or the 
 employee subroutine in the my package.
 <font face="courier new" size=3><pre>
@@ -308,13 +308,13 @@ perl package or whereever like so
 <font face="courier new" size=3><pre>
   sub my::employee {
     my($attributes, $body) = @_;
-    $Response-&gt;Include('employee.inc', $attributes, $body);
+    $main::Response-&gt;Include(&#39;employee.inc&#39;, $attributes, $body);
   }
 
   &lt;!-- # employee.inc file somewhere else --&gt;
   &lt;% my($attributes, $body) = @_; %&gt;
   &lt;table&gt;
-  &lt;% for('name', 'last', 'phone') { %&gt;
+  &lt;% for(&#39;name&#39;, &#39;last&#39;, &#39;phone&#39;) { %&gt;
     &lt;tr&gt;
       &lt;td&gt;&lt;b&gt;&lt;%=ucfirst $_ %&gt;&lt;/b&gt;:&lt;/td&gt;
       &lt;td&gt;&lt;%= $attributes-&gt;{$_} %&gt;&lt;/td&gt;
@@ -323,7 +323,7 @@ perl package or whereever like so
   &lt;tr&gt;&lt;td colspan=2&gt;&lt;%= $body %&gt;&lt;/td&gt;&lt;/tr&gt;
   &lt;/table&gt;
   &lt;!-- # end employee.inc file --&gt;
-</pre></font>The $Response-&gt;Include() would then delegate the rendering
+</pre></font>The $main::Response-&gt;Include() would then delegate the rendering
 of the employee to the employee.inc ASP script include.
 <font face="courier new" size=3><pre>
 </pre></font>Though XML purists would not like this custom tag technology

@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: CHANGES</title>
+<title>Apache::ASP::Changes</title>
 
 
 
@@ -35,7 +35,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td>
 	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP" width=267 height=44 ></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
 		<td align=right></td>
 	
@@ -237,13 +237,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <font face=verdana><font class=title size=+1 color=#555555><b>CHANGES</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Apache::ASP has been in development since 1998, and 
-was production ready since its .02 release.
-<font face="courier new" size=3><pre>
-</pre></font>Releases are tested on a variety of platforms including Linux,
-Solaris, &amp; WinNT, and are used in a production setting
-on at least Solaris or Linux before being made to
-the public generally.  Development releases for testing
-new features are provided privately.
+was production ready since its .02 release.  Releases
+are always used in a production setting before being
+made publically available.
 <font face="courier new" size=3><pre>
 </pre></font>In July 2000, the version numbers of releases went 
 from .19 to 1.9 which is more relevant to software development
@@ -251,7 +247,7 @@ outside the perl community.  Where a .10 perl module usually
 means first production ready release, this would be the
 equivalent of a 1.0 release for other kinds of software.
 <font face="courier new" size=3><pre>
- + = improvement; - = bug fix
+ + = improvement   - = bug fix    (d) = documentations
 </pre></font>
 
 	<hr size=1>
@@ -260,6 +256,22 @@ equivalent of a 1.0 release for other kinds of software.
 	<td valign=top><font face="lucida console" size=-1>
 	<ul>
 	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%202ee8682c2>$VERSION = 2.35; $DATE="05/30/2002"</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%2010d8c7b1b>$VERSION = 1.91; $DATE="07/02/2000";</a>
+			</font>
+			</td>
+							
+		</tr>
+		
 		<tr>
 		
 			<td valign=top >
@@ -280,7 +292,7 @@ equivalent of a 1.0 release for other kinds of software.
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24VERSION%20%3D%202114cfd25>$VERSION = 2.31; $DATE="01/22/2002";</a>
+			<a href=#%24VERSION%20%3D%202a77480eb>$VERSION = 2.31; $DATE="01/22/2002";</a>
 			</font>
 			</td>
 		
@@ -547,21 +559,37 @@ equivalent of a 1.0 release for other kinds of software.
 			</td>
 							
 		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#%24VERSION%20%3D%2010d8c7b1b>$VERSION = 1.91; $DATE="07/02/2000";</a>
-			</font>
-			</td>
-		<td>&nbsp;</td>					
-		</tr>
 			
 	</table>
 	<hr size=1>
 	<p>
 
+	<p>
+	<a name=%24VERSION%20%3D%202ee8682c2></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.35; $DATE="05/30/2002"</b></font><p>
+<font face="courier new" size=3><pre>
+ +Destroy better $Server &amp; $Response objects so that my closure references
+  to these to not attempt to work in the future against invalid internal data.
+  There was enough data left in these old objects to make debugging the
+  my closure problem confusing, where it looked like the ASP object state 
+  became invalid.
+
+ +Added system debug diagnostics to inspect StateManager group cleanup
+
+ (d) Documentation update about flock() work around for Win95/Win98/WinMe systems,
+  confirmed by Rex Arul
+
+ (d) Documentation/site build bug found by Mitsunobu Ozato, where &lt;% %&gt; 
+  not being escaped correctly with $Server-&gt;HTMLEncode().
+  New japanese documentation project started by him 
+  at <a href=http://sourceforge.jp/projects/apache-asp-jp/>http://sourceforge.jp/projects/apache-asp-jp/</a> 
+
+ -InitPackageGlobals() called after new Apache::ASP object created so 
+  core system templates can be compiled even when there was a runtime
+  compilation error of user templates.  Bug fix needed pointed out by
+  Eamon Daly
+</pre></font>
+	
 	<p>
 	<a name=%24VERSION%20%3D%202e5cc4c8c></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.33; $DATE="04/29/2002"</b></font><p>
@@ -579,7 +607,7 @@ equivalent of a 1.0 release for other kinds of software.
  - Fixed bug where XMLSubs where removing &lt;?xml version ... ?&gt; tag
    when it was needed in XSLT mode.
 
- + $Server-&gt;Mail({ CC =&gt; '...', BCC =&gt; '...' }), now works to send
+ + $Server-&gt;Mail({ CC =&gt; &#39;...&#39;, BCC =&gt; &#39;...&#39; }), now works to send
    CC &amp; BCC headers/recipients.
 
  + Removed $Apache::ASP::Register definition which defined the current
@@ -626,13 +654,13 @@ equivalent of a 1.0 release for other kinds of software.
    New $PERLLIB/Apache/ASP/Share/ directory created to 
    hold system &amp; user contributed components, which will be found
    on the $Server-&gt;MapInclude() path, which helps $Response-&gt;Include
-   search '.',Global,IncludesDir, and now Apache::ASP::Share for
+   search &#39;.&#39;,Global,IncludesDir, and now Apache::ASP::Share for
    includes to load at runtime.  
 
    The syntax for loading a shared include is to prefix the file
    name with Share:: as in:
 
-    $Response-&gt;TrapInclude('Share::CORE/MailError.inc');
+    $Response-&gt;TrapInclude(&#39;Share::CORE/MailError.inc&#39;);
 
    New test to cover this at t/share.t
 
@@ -707,12 +735,12 @@ equivalent of a 1.0 release for other kinds of software.
 </pre></font>
 	
 	<p>
-	<a name=%24VERSION%20%3D%202114cfd25></a>
+	<a name=%24VERSION%20%3D%202a77480eb></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.31; $DATE="01/22/2002";</b></font><p>
 <font face="courier new" size=3><pre>
- + $Server-&gt;MapInclude() API extension created to wrap up Apache::ASP::SearchDirs functionality
-   so one may do an conditional check for an include existence befor executing $Response-&gt;Include().
-   Added API test to server.t
+ + $Server-&gt;MapInclude() API extension created to wrap up Apache::ASP::SearchDirs 
+   functionality so one may do an conditional check for an include existence befor 
+   executing $Response-&gt;Include().  Added API test to server.t
 
  + $Server-&gt;Transfer() now allows arguments like $Response-&gt;Include(), and now acts just
    as a wrapper for:
@@ -822,7 +850,7 @@ equivalent of a 1.0 release for other kinds of software.
   To not let the web client POST a lot of data to your scripts as a form
   of a denial of service attack use the apache config LimitRequestBody for the 
   max limits.  You can think of PerlSetVar FileUploadMax as a soft limit, and 
-  apache's LimitRequestBody as a hard limit.
+  apache&#39;s LimitRequestBody as a hard limit.
 
  --Under certain circumstances with file upload, it seems that IsClientConnected() 
   would return an aborted client value from $r-&gt;connection-&gt;aborted, so
@@ -861,7 +889,7 @@ equivalent of a 1.0 release for other kinds of software.
    would not need to override.
 
  - Fixed possible bug when flushing a data buffer where there
-   is just a '0' in it.
+   is just a &#39;0&#39; in it.
 
  + Updated docs to note that StateCache config was deprecated
    as of 2.23.  Removed remaining code that referenced the config.
@@ -892,7 +920,7 @@ equivalent of a 1.0 release for other kinds of software.
    search results at Apache::ASP site.  Also, reengineered
    application better, with more perl code moved to global.asa.
    Make use of MLDBM::Sync::SDBM_File, where search database
-   before was engineering around SDBM_File's shortcomings.
+   before was engineering around SDBM_File&#39;s shortcomings.
 
  - Fix for SessionSerialize config, which broke in 2.23
    Also, added t/session_serialize.t to test suite to catch
@@ -906,7 +934,7 @@ equivalent of a 1.0 release for other kinds of software.
  +Make sure a couple other small standard modules get loaded
   upon &quot;PerlModule Apache::ASP&quot;, like Time::HiRes, Class::Struct,
   and MLDBM::Serializer::Data::Dumper.  If not available
-  these modules won't cause errors, but will promote child httpd
+  these modules won&#39;t cause errors, but will promote child httpd
   RAM sharing if they are.
 
  -XMLSubs args parsing fix so an arg like z-index
@@ -969,7 +997,7 @@ equivalent of a 1.0 release for other kinds of software.
     $Server-&gt;Execute(\%args, @include_args)
 
   where %args = (
-    File =&gt; 'file.inc',
+    File =&gt; &#39;file.inc&#39;,
     Cache =&gt; 1, # to activate cache layer
     Expires =&gt; 3600, # to expire in one hour
     LastModified =&gt; time() - 600, # to expire if cached before 10 minutes ago
@@ -1019,7 +1047,7 @@ equivalent of a 1.0 release for other kinds of software.
   the absolute path of the directory of the script
   with the name of the file if its a relative file
   name like ./header.inc.  Before, would just look
-  for something like ././header.inc by using '.'
+  for something like ././header.inc by using &#39;.&#39;
   as the first directory to look for includes in.
 
   The result of this is that scripts in two directories
@@ -1093,7 +1121,7 @@ equivalent of a 1.0 release for other kinds of software.
   or arbitrary user caching.
 
  -t/server_mail.t test now uses valid email for testing
-  purposes ... doesn't actually send a mail, but for SMTP
+  purposes ... doesn&#39;t actually send a mail, but for SMTP
   runtime validation purposes it should be OK.
 
  +fixed where POST data was read from under MOD_PERL,
@@ -1129,9 +1157,9 @@ equivalent of a 1.0 release for other kinds of software.
   when its Debug =&gt; 0
 
  -Check for undef values during stats for inline includes
-  so we don't trigger unintialized warnings
+  so we don&#39;t trigger unintialized warnings
 
- +Documented ';' may separate many directories in the IncludesDir
+ +Documented &#39;;&#39; may separate many directories in the IncludesDir
   setting for creating a more flexible includes search path.
 </pre></font>
 	
@@ -1171,7 +1199,7 @@ equivalent of a 1.0 release for other kinds of software.
 
  -Now file upload forms, forms with ENCTYPE=&quot;multipart/form-data&quot;
   can have multiple check boxes and select items marked for 
-  @params = $Request-&gt;Form('param_name') functionality.  This 
+  @params = $Request-&gt;Form(&#39;param_name&#39;) functionality.  This 
   will be demonstrated via the <a href=eg/file_upload.asp>./site/eg/file_upload.asp</a> example.
 </pre></font>
 	
@@ -1206,7 +1234,7 @@ equivalent of a 1.0 release for other kinds of software.
 
  ++$Response-&gt;Include(), $Response-&gt;TrapInclude(),
   and $Server-&gt;Execute() will all take a scalar ref
-  or \'asdfdsafa' type code as their first argument to execute 
+  or \&#39;asdfdsafa&#39; type code as their first argument to execute 
   a raw script instead of a script file name.  At this time, 
   compilation of such a script, will not be cached.  It is 
   compiled/executed as an anonymous subroutine and will be freed
@@ -1223,7 +1251,7 @@ equivalent of a 1.0 release for other kinds of software.
 
  +Added StateDB MLDBM::Sync::SDBM_File support for faster
   $Session + $Application than DB_File, yet still overcomes
-  SDBM_File's 1024 bytes value limitation.  Documented in 
+  SDBM_File&#39;s 1024 bytes value limitation.  Documented in 
   StateDB config, and added Makefile.PL entry.
 
  +Removed deprecated MD5 use and replace with Digest::MD5 calls
@@ -1276,8 +1304,8 @@ equivalent of a 1.0 release for other kinds of software.
   $Response-&gt;Debug() is active, overriding the Debug setting
   for this purpose.  Documented.
 
- -When Filter is on, Content-Length won't be set and compression
-  won't be used.  These things would not work with a filtering
+ -When Filter is on, Content-Length won&#39;t be set and compression
+  won&#39;t be used.  These things would not work with a filtering
   handler after Apache::ASP
 </pre></font>
 	
@@ -1293,7 +1321,7 @@ equivalent of a 1.0 release for other kinds of software.
   to Apache::ASP 2.09+ from older versions.
 
  +SessionQueryParse now works for all $Response-&gt;{ContentType}
-  starting with 'text' ... before just worked with text/html,
+  starting with &#39;text&#39; ... before just worked with text/html,
   now other text formats like wml will work too. 
 
  +32 groups instead of 64, better inactive site session group purging.
@@ -1381,16 +1409,16 @@ equivalent of a 1.0 release for other kinds of software.
 
  +Documented CollectionItem config.
 
- +New $Request-&gt;QueryString('multiple args')-&gt;Count()
+ +New $Request-&gt;QueryString(&#39;multiple args&#39;)-&gt;Count()
   interface implemented for CollectionItem config.
-  Also $Request-&gt;QueryString('multiple args')-&gt;Item(1) method.
+  Also $Request-&gt;QueryString(&#39;multiple args&#39;)-&gt;Item(1) method.
   Note ASP collections start counting at 1.
 
  --fixed race condition, where multiple processes might 
   try creating the same state directory at the same time, with
   one winning, and one generating an error.  Now, web process
   will recheck for directory existence and error if 
-  it doesn't. 
+  it doesn&#39;t. 
 
  -global.asa compilation will be cached correctly, not
   sure when this broke.  It was getting reloaded every request.
@@ -1402,7 +1430,7 @@ equivalent of a 1.0 release for other kinds of software.
   common StateDir config.  Also StateGroupWrite config
   with perms 0770 and 0660 respectively.
 
- -Apache::ASP-&gt;Loader() now won't follow links to 
+ -Apache::ASP-&gt;Loader() now won&#39;t follow links to 
   directories when searching for scripts to load.
 
  +New RegisterIncludes config which is on by default only
@@ -1412,11 +1440,11 @@ equivalent of a 1.0 release for other kinds of software.
  +Apache::ASP::CompileInclude path optimized, which underlies
   $Response-&gt;Include()
 
- +$Request-&gt;QueryString-&gt;('foo')-&gt;Item() syntax enabled
+ +$Request-&gt;QueryString-&gt;(&#39;foo&#39;)-&gt;Item() syntax enabled
   with CollectionItem config setting.  Default syntax
-  supported is $Request-&gt;QueryString('foo') which is
+  supported is $Request-&gt;QueryString(&#39;foo&#39;) which is
   in compatible.  Other syntax like $Request-&gt;{Form}{foo}
-  and $Request-&gt;Form-&gt;Item('foo') will work in either case.
+  and $Request-&gt;Form-&gt;Item(&#39;foo&#39;) will work in either case.
 
  +New fix suggested for missing Apache reference in 
   Apache::ASP handler startup for RedHat RPMs.  Added
@@ -1424,7 +1452,7 @@ equivalent of a 1.0 release for other kinds of software.
 
  --Backup flock() unlocking try for QNX will not corrupt the 
   normal flock() LOCK_UN usage, after trying to unlock a file
-  that doesn't exist.  This bug was uncovered from the below 
+  that doesn&#39;t exist.  This bug was uncovered from the below 
   group deletion race condition that existed. 
 
  -Session garbage collection will not delete new group
@@ -1436,7 +1464,7 @@ equivalent of a 1.0 release for other kinds of software.
  +Better random session-id checksums for $Session creation.
   per process srand() initialization, because srand() 
   may be called once prefork and never called again.
-  Call without arguments to rely on perl's decent rand
+  Call without arguments to rely on perl&#39;s decent rand
   seeding.  Then when calling rand() in Secret() we have
   enough random data, that even if someone else calls srand()
   to something fixed, should not mess things up terribly since
@@ -1463,7 +1491,7 @@ equivalent of a 1.0 release for other kinds of software.
 	<a name=%24VERSION%20%3D%202727b0736></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.01; $DATE="07/22/2000";</b></font><p>
 <font face="courier new" size=3><pre>
- +$data_ref = $Response-&gt;TrapInclude('file.inc') API
+ +$data_ref = $Response-&gt;TrapInclude(&#39;file.inc&#39;) API
   extension which allows for easy post processing of
   data from includes
 
@@ -1479,7 +1507,7 @@ equivalent of a 1.0 release for other kinds of software.
  -UniquePackages config works again, broke a couple versions back
 
  +better error handling for methods called on $Application
-  that don't exist, hard to debug before
+  that don&#39;t exist, hard to debug before
 </pre></font>
 	
 	<p>
@@ -1621,7 +1649,7 @@ equivalent of a 1.0 release for other kinds of software.
   on a simple hello world benchmark on a WinNT PII300.
 
  ++Better SessionManagement, more aware of server farms that 
-  don't have reliable NFS locking.  The key here is to have only
+  don&#39;t have reliable NFS locking.  The key here is to have only
   one process on one server in charge of session garbage collection
   at any one time, and try to create this situation with a snazzy
   CleanupMaster routine.  This is done by having a process register
@@ -1682,7 +1710,7 @@ equivalent of a 1.0 release for other kinds of software.
   separated email addresses for multiple recipients.
 
  -tracking of subroutines defined in scripts and includes so 
-  StatINC won't undefine them when reloading the GlobalPackage, 
+  StatINC won&#39;t undefine them when reloading the GlobalPackage, 
   and so an warning will be logged when another script redefines 
   the same subroutine name, which has been the bane of at least
   a few developers.
@@ -1714,7 +1742,7 @@ equivalent of a 1.0 release for other kinds of software.
   misleading as it reports 0 for child httpds after
   a parent fork that used Loader() upon startup.  	
 
- -Apache::ASP-&gt;Loader() would have a bad error if it didn't load 
+ -Apache::ASP-&gt;Loader() would have a bad error if it didn&#39;t load 
   any scripts when given a directory, prints &quot;loaded 0 scripts&quot; now
 </pre></font>
 	
@@ -1759,7 +1787,7 @@ equivalent of a 1.0 release for other kinds of software.
   into links when a session-id COOKIE is NOT found.
   This feature is only enabled then when a user has
   disabled cookies, so the runtime penalty of this
-  feature won't drag down the whole site, since most
+  feature won&#39;t drag down the whole site, since most
   users will have cookies turned on.   
 
  -StatINC &amp; StatINCMatch will not undef Fnctl.pm flock 
@@ -1787,7 +1815,7 @@ equivalent of a 1.0 release for other kinds of software.
   When testing, the performance hit from this parsing
   a script dropped from 12.5 hits/sec on my WinNT box
   to 11.7 hits per second for 1K of buffered output.
-  The difference is .007 of my PII300's processing power
+  The difference is .007 of my PII300&#39;s processing power
   per second.
 
   For 10K of output then, my guess is that this speed
@@ -1868,7 +1896,7 @@ equivalent of a 1.0 release for other kinds of software.
   Apache::ASP also went from 75 to 102 hits per second 
   on Solaris.
 
- +PerlTaintCheck On friendly.  This is mod_perl's way 
+ +PerlTaintCheck On friendly.  This is mod_perl&#39;s way 
   of providing -T taint checking.  When Apache::ASP
   is used with state objects like $Session or $Application,
   MLDBM must also be made taint friendly with:
@@ -1878,7 +1906,7 @@ equivalent of a 1.0 release for other kinds of software.
   which could be put in the global.asa.  Documented.
 
  +Added $Response-&gt;ErrorDocument($error_code, $uri_or_string) 
-  API extension which allows for setting of Apache's error
+  API extension which allows for setting of Apache&#39;s error
   document at runtime.  This is really just a wrapper 
   for Apache-&gt;custom_response() renamed so it syncs with
   the Apache ErrorDocument config setting.  Updated
@@ -1919,8 +1947,8 @@ equivalent of a 1.0 release for other kinds of software.
 
  -disable use of flock() on Win95/98 where it is unimplemented
 
- <b>-@array</b> context of $Request-&gt;Form('name') returns
-  undef when value for 'name' is undefined.  Put extra
+ <b>-@array</b> context of $Request-&gt;Form(&#39;name&#39;) returns
+  undef when value for &#39;name&#39; is undefined.  Put extra
   logic in there to make sure this happens.
 </pre></font>
 	
@@ -1937,7 +1965,7 @@ equivalent of a 1.0 release for other kinds of software.
 
  +more bullet proof loading of Apache::Symbol, changed the 
   way Apache::ASP loads modules in general.  It used to 
-  check for the module to load every time, if it hadn't loaded
+  check for the module to load every time, if it hadn&#39;t loaded
   successfully before, but now it just tries once per httpd,
   so the web server will have to be restarted to see new installed
   modules.  This is just for modules that Apache::ASP relies on.
@@ -1981,7 +2009,7 @@ equivalent of a 1.0 release for other kinds of software.
     $env-&gt;{REMOTE_USER} = $env-&gt;{AUTH_USER} = username
     $env-&gt;{AUTH_PASSWD} = password
     $env-&gt;{AUTH_NAME}   = your realm
-    $env-&gt;{AUTH_TYPE}   = 'Basic'
+    $env-&gt;{AUTH_TYPE}   = &#39;Basic&#39;
 
   This is the same place to find auth data as if Apache had some 
   authentication handler deal with the auth phase separately.
@@ -2095,7 +2123,7 @@ equivalent of a 1.0 release for other kinds of software.
   file uploads.
 
   This fix should also affect other seemingly random 
-  times when StatINC or StatINCMatch don't seem to do 
+  times when StatINC or StatINCMatch don&#39;t seem to do 
   the right thing.
 
  +use of ASP objects like $Response are now &quot;use strict&quot;
@@ -2119,15 +2147,15 @@ equivalent of a 1.0 release for other kinds of software.
   embedded perl blocks &lt;% #perl %&gt;
 
   Compiles were slow because of an old PerlScript compatibility
-  parsing trick where $Request-&gt;QueryString('hi')-&gt;{item}
-  would be parsed to $Request-&gt;QueryString('hi') which works.
+  parsing trick where $Request-&gt;QueryString(&#39;hi&#39;)-&gt;{item}
+  would be parsed to $Request-&gt;QueryString(&#39;hi&#39;) which works.
   I think the regexp that I was using had O(n^2) characteristics
   and it took a really big perl block to 10 +seconds to parse
   to understand there was a problem :(
 
-  I doubt anyone needed this compatibility, I don't even see
+  I doubt anyone needed this compatibility, I don&#39;t even see
   any code that looks like this in the online PerlScript examples,
-  so I've commented out this parsing trick for now.  If you 
+  so I&#39;ve commented out this parsing trick for now.  If you 
   need me to bring back this functionality, it will be in the 
   form of a config setting.
 
@@ -2192,14 +2220,14 @@ equivalent of a 1.0 release for other kinds of software.
   a production server.
 
  -Content-Length header is set again, if BufferingOn is set, and
-  haven't $Response-&gt;Flush()'d.  This broke when I introduce
+  haven&#39;t $Response-&gt;Flush()&#39;d.  This broke when I introduce
   the Script_OnEnd event handler.
 
  +Optimized reloading of the GlobalPackage perl module upon changes, 
-  so that scripts and dynamic includes don't have to be recompiled.  
+  so that scripts and dynamic includes don&#39;t have to be recompiled.  
   The global.asa will still have to be though.  Since we started
   compiling all routines into a package that can be named with
-  GlobalPackage, we've been undeffing compiled scripts and includes
+  GlobalPackage, we&#39;ve been undeffing compiled scripts and includes
   when the real GlobalPackage changed on disk, as we do a full sweep
   through the namespace.  Now, we skip those subs that we know to 
   be includes or scripts. 
@@ -2249,7 +2277,7 @@ equivalent of a 1.0 release for other kinds of software.
 
  -$Request-&gt;QueryString() now stores multiple values for the 
   same key, just as $Request-&gt;Form() has since v.07.  In
-  wantarray() context like @vals = $Request-&gt;QueryString('dupkey'),
+  wantarray() context like @vals = $Request-&gt;QueryString(&#39;dupkey&#39;),
   @vals will store whatever values where associated with dupkey
   in the query string like (1,2) from: ?dupkey=1&amp;dupkey=2
 
@@ -2317,7 +2345,7 @@ equivalent of a 1.0 release for other kinds of software.
  +Prettied the error messaging with Debug 2.
 
  +$Response-&gt;Debug(@args) debugging extension, which
-  allows a developer to hook into the module's debugging,
+  allows a developer to hook into the module&#39;s debugging,
   and only have @args be written to error_log when Debug is greater
   than 0.
 
@@ -2334,7 +2362,7 @@ equivalent of a 1.0 release for other kinds of software.
   HTTP header, useful for ratings.
 
  +Implemented $Response-&gt;{CacheControl} and $Response-&gt;{Charset} members.
-  By default, CacheControl is 'private', and this value gets sent out
+  By default, CacheControl is &#39;private&#39;, and this value gets sent out
   every request as HTTP header Cache-Control.  Charset appends itself
   onto the content type header.
 
@@ -2348,9 +2376,9 @@ equivalent of a 1.0 release for other kinds of software.
   in ./eg/server.htm
 
  -$Request-&gt;Form() now reads file uploads correctly with 
-  the latest CGI.pm, where $Request-&gt;Form('file_field') returns
+  the latest CGI.pm, where $Request-&gt;Form(&#39;file_field&#39;) returns
   the actual file name uploaded, which can be used as a file handle
-  to read in the data.  Before, $Request-&gt;Form('file_field') would
+  to read in the data.  Before, $Request-&gt;Form(&#39;file_field&#39;) would
   return a glob that looks like *Fh::filename, so to get the file
   name, you would have to parse it like =~ s/^\*Fh\:\://,
   which you no longer have to do.  As long as parsing was done as
@@ -2379,7 +2407,7 @@ equivalent of a 1.0 release for other kinds of software.
   extension.  This style of include is compiled as an anonymous sub &amp; 
   cached, and then executed with @args passed to the subroutine for 
   execution.  This is include may also be rewritten as a new API 
-  extension: $Response-&gt;Include('file', @args)
+  extension: $Response-&gt;Include(&#39;file&#39;, @args)
 
  +Added ./eg/compiled_includes.htm example documenting new dynamic includes.
 
@@ -2387,7 +2415,7 @@ equivalent of a 1.0 release for other kinds of software.
   to Apache::SSI
 
  +Turned the documentation of Filter config to value of Off so 
-  people won't cut and paste the On config by default.
+  people won&#39;t cut and paste the On config by default.
 
  +Added SecureSession config option, which forces session cookie to 
   be sent only under https secured www page requests.
@@ -2432,9 +2460,9 @@ equivalent of a 1.0 release for other kinds of software.
   command line debugging.  This is also the beginning of building
   a static site from asp scripts with the -b option, suppressing headers.
 
- +$Response-&gt;AddHeader('Set-Cookie') works for multiple cookies.
+ +$Response-&gt;AddHeader(&#39;Set-Cookie&#39;) works for multiple cookies.
 
- -$Response-&gt;Cookies('foo', '0') works, was dropping 0 because of boolean test
+ -$Response-&gt;Cookies(&#39;foo&#39;, &#39;0&#39;) works, was dropping 0 because of boolean test
 
  -Fixed up some config doc errors.
 </pre></font>
@@ -2452,9 +2480,9 @@ equivalent of a 1.0 release for other kinds of software.
  -Better lock garbage collection.  Works with StatINC seamlessly.
 
  -Multiple select forms now work in array context with $Response-&gt;Form()
-	@values = $Response-&gt;Form('multi');
+	@values = $Response-&gt;Form(&#39;multi&#39;);
 
- -Better CGI.pm compatibility with $r-&gt;header_out('Content-type'),
+ -Better CGI.pm compatibility with $r-&gt;header_out(&#39;Content-type&#39;),
   improved garbage collection under modperl, esp. w/ file uploads
 </pre></font>
 	
@@ -2491,7 +2519,7 @@ equivalent of a 1.0 release for other kinds of software.
 
  -STOP button fix.  Users may hit STOP button during script 
   execution, and Apache::ASP will cleanup with a routine registered
-  in Apache's $r-&gt;register_cleanup.  Works well supposedly.
+  in Apache&#39;s $r-&gt;register_cleanup.  Works well supposedly.
 
  +PerlScript compatibility work, trying to make ports smoother.
 	: Collection emulator, no -&gt;{Count} property
@@ -2520,10 +2548,10 @@ equivalent of a 1.0 release for other kinds of software.
 
  -Turned off StatINC in eg/.htaccess, as not everyone installs Devel::Symdump
 
- -Fixed AUTOLOAD state bug, which wouldn't let you each through state
+ -Fixed AUTOLOAD state bug, which wouldn&#39;t let you each through state
   objects, like %{$Session}, or each %$Session, (bug introduced in v.04)
 
- +Parses ASP white space better.  HTML output matches author's intent
+ +Parses ASP white space better.  HTML output matches author&#39;s intent
   by better dealing with white space surrounding &lt;% perl blocks %&gt;
 
  -Scalar insertion code &lt;%=$foo%&gt; can now span many lines.
@@ -2546,9 +2574,9 @@ equivalent of a 1.0 release for other kinds of software.
  +Example script eg/cgi.htm demonstrating CGI.pm use for output.
 
  +Optimized ASP parsing, faster and more legible executing code
-	: try 'die();' in code with setting PerlSetVar Debug 2
+	: try &#39;die();&#39; in code with setting PerlSetVar Debug 2
 
- +Cleaned up code for running with 'use strict'
+ +Cleaned up code for running with &#39;use strict&#39;
 
  -Fixed directory handle leak on Solaris, from not closing after opendir()
 
@@ -2568,7 +2596,7 @@ equivalent of a 1.0 release for other kinds of software.
 	: NOT recommended use, please see note.
 
  -MLDBM can be used for other things without messing up internal use
-	: before if it was used with different DB's and serializers,
+	: before if it was used with different DB&#39;s and serializers,
 	  internal state could be lost.
 
  --State file locking.  Corruption worries, and loss of data no more.
@@ -2582,7 +2610,7 @@ equivalent of a 1.0 release for other kinds of software.
 	- Domain cookie key now works
 	: Expire times now taken from time(), and relative time in sec
 	: Request-&gt;Cookies() reading more flexible, with wantarray()
-	  on hash cookie values, %hash = $Request-&gt;Cookie('test');
+	  on hash cookie values, %hash = $Request-&gt;Cookie(&#39;test&#39;);
 
  -make test module naming correction, was t.pm, now T.pm for Unix
 
@@ -2593,7 +2621,7 @@ equivalent of a 1.0 release for other kinds of software.
 	<a name=%24VERSION%20%3D%200ec664faf></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.03; $DATE="09/14/1998";</b></font><p>
 <font face="courier new" size=3><pre>
- +Installation 'make test' now works
+ +Installation &#39;make test&#39; now works
 
  +ActiveX objects on Win32 implemented with $Server-&gt;CreateObject() 
 
@@ -2626,7 +2654,7 @@ equivalent of a 1.0 release for other kinds of software.
 	<a name=%24VERSION%20%3D%20055b248f9></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.02; $DATE="07/12/1998";</b></font><p>
 <font face="courier new" size=3><pre>
- ++Session Manager, won't break under denial of service attack
+ ++Session Manager, won&#39;t break under denial of service attack
 
  +Fleshed out $Response, $Session objects, almost full implementation.
 
@@ -2640,7 +2668,7 @@ equivalent of a 1.0 release for other kinds of software.
 
  -755 mode set for session state directory when created
 
- -Loads Win32/OLE properly, won't break with UNIX
+ -Loads Win32/OLE properly, won&#39;t break with UNIX
 </pre></font>
 	
 	<p>
@@ -2668,11 +2696,11 @@ equivalent of a 1.0 release for other kinds of software.
 
  $Session &amp; $Application data is preserved using SDBM files.
 
- $Session id's are tracked through the use of cookies.
+ $Session id&#39;s are tracked through the use of cookies.
 
  Security
  --------
- Timeouts any attempt to use a session id that doesn't already 
+ Timeouts any attempt to use a session id that doesn&#39;t already 
  exist.  Should stop hackers, since there is no wire speed guessing
  cookies.
 </pre></font>

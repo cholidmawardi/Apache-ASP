@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: EVENTS</title>
+<title>Apache::ASP::Events</title>
 
 
 
@@ -35,7 +35,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td>
 	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP" width=267 height=44 ></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
 		<td align=right></td>
 	
@@ -385,9 +385,9 @@ code, use the API extension:
 	<a name=Session_OnSt3cfacd72></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>Session_OnStart</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Triggered by the beginning of a user's session, Session_OnStart
-gets run before the user's executing script, and if the same
-session recently timed out, after the session's triggered Session_OnEnd.
+</pre></font>Triggered by the beginning of a user&#39;s session, Session_OnStart
+gets run before the user&#39;s executing script, and if the same
+session recently timed out, after the session&#39;s triggered Session_OnEnd.
 <font face="courier new" size=3><pre>
 </pre></font>The Session_OnStart is particularly useful for caching database data,
 and avoids having the caching handled by clumsy code inserted into
@@ -473,10 +473,10 @@ Precompile Scripts subsection. It is could be called like:
 	<a name=mod_perl%20han4ea2575f></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>mod_perl handlers</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>If one wants to extend one's environment with <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>
+</pre></font>If one wants to extend one&#39;s environment with <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>
 handlers, Apache::ASP does not stop this.  Basic
 use of Apache::ASP in fact only involves the content
-handler phase of mod_perl's PerlHandler, like
+handler phase of mod_perl&#39;s PerlHandler, like
 <font face="courier new" size=3><pre>
   SetHandler perl-script
   PerlModule Apache::ASP
@@ -526,7 +526,7 @@ handler programming...
  &lt;Perl&gt;
    sub My::Access::handler {
      my $r = shift;
-     if($r-&gt;header_in('USER_AGENT') =~ /HSlide/) {
+     if($r-&gt;header_in(&#39;USER_AGENT&#39;) =~ /HSlide/) {
 	 403;
      } else {
 	 200;
@@ -543,17 +543,17 @@ always in your sites DocumentRoot.
  INPUT URL /SomeCategory/
  OUTPUT
   Script: index.asp
-  $Server-&gt;Config('PATH') eq '/SomeCategory'
+  $Server-&gt;Config(&#39;PATH&#39;) eq &#39;/SomeCategory&#39;
 
  INPUT URL /SomeCategory/index.asp
  OUTPUT
   Script: index.asp
-  $Server-&gt;Config('PATH') eq '/SomeCategory'
+  $Server-&gt;Config(&#39;PATH&#39;) eq &#39;/SomeCategory&#39;
 
  INPUT URI /index.asp
  OUTPUT
   Script: index.asp
-  $Server-&gt;Config('PATH') eq ''
+  $Server-&gt;Config(&#39;PATH&#39;) eq &#39;&#39;
 
  # httpd.conf
  PerlTransHandler My::Init
@@ -566,17 +566,17 @@ always in your sites DocumentRoot.
  sub handler {
     my $r = shift;
 
-    my $uri = $r-&gt;uri || '/';
+    my $uri = $r-&gt;uri || &#39;/&#39;;
     unless($uri =~ m|^(.*)(/([^/.]+\.[\w]+)?)$|i) {
-	warn(&quot;can't parse uri $uri&quot;);
+	warn(&quot;can&#39;t parse uri $uri&quot;);
 	return DECLINED;
     }
     $uri = $2;
-    my $PATH = $1 || '';
-    $r-&gt;dir_config('PATH', $PATH);
+    my $PATH = $1 || &#39;&#39;;
+    $r-&gt;dir_config(&#39;PATH&#39;, $PATH);
 
-    if($uri eq '/') {
-	$uri = '/index.asp';
+    if($uri eq &#39;/&#39;) {
+	$uri = &#39;/index.asp&#39;;
     }
 
     $r-&gt;uri($uri);

@@ -35,11 +35,13 @@ my %meta = (
 	);
 
 $data || die("can't get data for $section");
-my $module = "Apache :: ASP";
+my $module = "Apache::ASP";
 
-my $title = "$module :: ".uc(lc $data->{name});
+my $title;
 if($basename eq 'index.html') {
-	$title .= " [ apache+asp+perl = perl::apache::asp ]";	
+    $title = $module;
+} else {
+    $title = $module."::".ucfirst(lc $data->{name});
 }
 
 %>

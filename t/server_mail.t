@@ -16,13 +16,11 @@ __END__
 # test for Net::SMTP, and skip if not installed
 eval "use Net::SMTP";
 if($@) {
-   $t->done;
-   $Response->End;
+    return;
 } else {
     my $smtp = Net::SMTP->new('127.0.0.1');
     unless($smtp) {
-	$t->done;
-	$Response->End;
+	return;
     }
 }
 
@@ -39,8 +37,7 @@ $t->eok($Server->Mail({
 			Body => "Test Body",
 			Debug => 0
 			}),
-	"\$Server->Mail() failed in test mode, check that your ".
-	"Net::SMTP was installed with appropriate defaults."
+	"\$Server->Mail() failed in test mode, check that your mail server at 127.0.0.1 can relay email. "
 	);
 %>									
 <% $t->done; %>

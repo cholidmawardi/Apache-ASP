@@ -78,6 +78,7 @@ sub init {
     
     $self->filename($filename);
     $self->header_in('Cookie', $ENV{HTTP_COOKIE});
+    $self->connection(Apache::ASP::CGI::connection->new);
     $self->connection->remote_ip($ENV{REMOTE_HOST} || $ENV{REMOTE_ADDR} || '0.0.0.0');
     $self->connection->aborted(0);
 #    $self->dir_config('Global') || $self->dir_config('Global', '.');

@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: CGI</title>
+<title>Apache::ASP::Cgi</title>
 
 
 
@@ -35,7 +35,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td>
 	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP" width=267 height=44 ></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
 		<td align=right></td>
 	
@@ -350,10 +350,10 @@ of a complex asp.conf file is at <a href=eg/asp.conf>./site/eg/asp.conf</a>
 <font face="courier new" size=3><pre>
  # asp.conf
  %Config = (
-   'Global' =&gt; '.',
-   'StateDir' =&gt; '/tmp/aspstate',
-   'NoState' =&gt; 0,
-   'Debug' =&gt; 3,
+   &#39;Global&#39; =&gt; &#39;.&#39;,
+   &#39;StateDir&#39; =&gt; &#39;/tmp/aspstate&#39;,
+   &#39;NoState&#39; =&gt; 0,
+   &#39;Debug&#39; =&gt; 3,
  );
 </pre></font>The default for NoState is 1 in CGI mode, so one must
 set NoState to 0 for objects like $Session &amp; $Application
@@ -436,7 +436,7 @@ Data from a file upload gets written to a file handle, that may in
 turn be read from.  The original file name that was uploaded is the 
 name of the file handle.
 <font face="courier new" size=3><pre>
-	my $filehandle = $Request-&gt;Form('file_upload_field_name');
+	my $filehandle = $Request-&gt;Form(&#39;file_upload_field_name&#39;);
 	print $filehandle; # will get you the file name
 	my $data;
 	while(read($filehandle, $data, 1024)) {

@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: FAQ</title>
+<title>Apache::ASP::Faq</title>
 
 
 
@@ -35,7 +35,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td>
 	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP" width=267 height=44 ></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
 		<td align=right></td>
 	
@@ -530,7 +530,7 @@ default by setting:
 directive in Apache *.conf files is an extension enabled by mod_perl
 and will not work if mod_perl is not correctly installed.
 <font face="courier new" size=3><pre>
-</pre></font>Common user errors are not doing a 'make install' for mod_perl, which 
+</pre></font>Common user errors are not doing a &#39;make install&#39; for mod_perl, which 
 installs the perl side of mod_perl, and not starting the right httpd
 after building it.  The latter often occurs when you have an old apache
 server without mod_perl, and you have built a new one without copying
@@ -553,7 +553,7 @@ recompiled fresh from the sources.</font>
 <font face="courier new" size=3><pre>
 </pre></font>Make sure the web server or you have write access to the eg directory,
 or to the directory specified as Global in the config you are using.
-Default for Global is the directory the script is in (e.g. '.'), but should
+Default for Global is the directory the script is in (e.g. &#39;.&#39;), but should
 be set to some directory not under the www server document root,
 for security reasons, on a production site.
 <font face="courier new" size=3><pre>
@@ -595,7 +595,7 @@ an assignment like:
 browser user agents, like search engine spiders, you can use an 
 init handler like:
 <font face="courier new" size=3><pre>
-  PerlInitHandler &quot;sub { $_[0]-&gt;dir_config('NoState', 1) }&quot;
+  PerlInitHandler &quot;sub { $_[0]-&gt;dir_config(&#39;NoState&#39;, 1) }&quot;
 </pre></font>This will configure your environment before Apache::ASP executes
 and sees the configuration settings.  You can use the <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>
 API in this way to configure Apache::ASP at runtime.</font>
@@ -646,7 +646,7 @@ work for most cases.</font>
 	<a name=How%20is%20datab66fe735a></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>How is database connectivity handled?</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Database connectivity is handled through perl's DBI &amp; DBD interfaces.
+</pre></font>Database connectivity is handled through perl&#39;s DBI &amp; DBD interfaces.
 In the UNIX world, it seems most databases have cross platform support in perl.
 You can find the book on DBI programming at <a href=http://www.oreilly.com/catalog/perldbi/>http://www.oreilly.com/catalog/perldbi/</a>
 <font face="courier new" size=3><pre>
@@ -675,7 +675,7 @@ through CGI.pm which is loaded at runtime only for this purpose.
 This is the only time that CGI.pm will be loaded by Apache::ASP,
 which implements all other cgi-ish functionality natively.  The
 rationale for not implementing file uploads natively is that 
-the extra 100K in memory for CGI.pm shouldn't be a big deal if you 
+the extra 100K in memory for CGI.pm shouldn&#39;t be a big deal if you 
 are working with bulky file uploads.</font>
 	
 	<p>

@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: OBJECTS</title>
+<title>Apache::ASP::Objects</title>
 
 
 
@@ -35,7 +35,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td>
 	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP" width=267 height=44 ></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
 		<td align=right></td>
 	
@@ -1033,7 +1033,7 @@ in the HTTP header Cache-Control</font>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{Charset}</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>This member when set appends itself to the value of the Content-Type
-HTTP header.  If $Response-&gt;{Charset} = 'ISO-LATIN-1' is set, the 
+HTTP header.  If $Response-&gt;{Charset} = &#39;ISO-LATIN-1&#39; is set, the 
 corresponding header would look like:
 <font face="courier new" size=3><pre>
   Content-Type: text/html; charset=ISO-LATIN-1
@@ -1095,8 +1095,8 @@ HTTP::Date::str2time(), e.g.
  &quot;08-Feb-94&quot;       -- old rfc850 HTTP format    
  &quot;09 Feb 1994&quot;     -- proposed new HTTP format  
 
- &quot;Feb  3  1994&quot;    -- Unix 'ls -l' format
- &quot;Feb  3 17:03&quot;    -- Unix 'ls -l' format
+ &quot;Feb  3  1994&quot;    -- Unix &#39;ls -l&#39; format
+ &quot;Feb  3 17:03&quot;    -- Unix &#39;ls -l&#39; format
 </pre></font>
 	
 	<p>
@@ -1199,7 +1199,7 @@ its data is binary.</font>
 If $key is not defined, the Value of the cookie is set.
 ASP CookiePath is assumed to be / in these examples.
 <font face="courier new" size=3><pre>
- $Response-&gt;Cookies('name', 'value'); 
+ $Response-&gt;Cookies(&#39;name&#39;, &#39;value&#39;); 
   --&gt; Set-Cookie: name=value; path=/
 
  $Response-&gt;Cookies(&quot;Test&quot;, &quot;data1&quot;, &quot;test value&quot;);     
@@ -1218,8 +1218,8 @@ ASP CookiePath is assumed to be / in these examples.
 such as Expires, but also treats the cookie as a hash of key value pairs
 which can later be accesses by
 <font face="courier new" size=3><pre>
- $Request-&gt;Cookies('Test', 'data1');
- $Request-&gt;Cookies('Test', 'data2');
+ $Request-&gt;Cookies(&#39;Test&#39;, &#39;data1&#39;);
+ $Request-&gt;Cookies(&#39;Test&#39;, &#39;data2&#39;);
 </pre></font>Because this is perl, you can (NOT PORTABLE) reference the cookies
 directly through hash notation.  The same 5 commands above could be compressed to:
 <font face="courier new" size=3><pre>
@@ -1228,18 +1228,18 @@ directly through hash notation.  The same 5 commands above could be compressed t
 		Secure	=&gt; 1, 
 		Value	=&gt;	
 			{
-				data1 =&gt; 'test value', 
-				data2 =&gt; 'more test'
+				data1 =&gt; &#39;test value&#39;, 
+				data2 =&gt; &#39;more test&#39;
 			},
 		Expires	=&gt; 86400, # not portable, see above
-		Domain	=&gt; 'host.com',
-		Path    =&gt; '/'
+		Domain	=&gt; &#39;host.com&#39;,
+		Path    =&gt; &#39;/&#39;
 	};
 </pre></font>and the first command would be:
 <font face="courier new" size=3><pre>
- # you don't need to use hash notation when you are only setting 
+ # you don&#39;t need to use hash notation when you are only setting 
  # a simple value
- $Response-&gt;{Cookies}{'Test Name'} = 'Test Value'; 
+ $Response-&gt;{Cookies}{&#39;Test Name&#39;} = &#39;Test Value&#39;; 
 </pre></font>I prefer the hash notation for cookies, as this looks nice, and is 
 quite perlish.  It is here to stay.  The Cookie() routine is 
 very complex and does its best to allow access to the 
@@ -1274,7 +1274,7 @@ create a separate error log for a virtual host.
 </pre></font>If you want further debugging support, like stack traces
 in your code, consider doing things like:
 <font face="courier new" size=3><pre>
- $Response-&gt;Debug( sub { Carp::longmess('debug trace') };
+ $Response-&gt;Debug( sub { Carp::longmess(&#39;debug trace&#39;) };
  $SIG{__WARN__} = \&amp;Carp::cluck; # then warn() will stack trace
 </pre></font>The only way at present to see exactly where in your script
 an error occurred is to set the Debug config directive to 2,
@@ -1372,7 +1372,7 @@ in the Apache parent httpd like so:
 </pre></font>The cache arguments are shown here
 <font face="courier new" size=3><pre>
   $Response-&gt;Include({
-    File =&gt; 'file.inc',
+    File =&gt; &#39;file.inc&#39;,
     Cache =&gt; 1, # to activate cache layer
     Expires =&gt; 3600, # to expire in one hour
     LastModified =&gt; time() - 600, # to expire if cached before 10 minutes ago
@@ -1426,7 +1426,7 @@ $Response-&gt;Include() API, except a string reference is passed in
 instead of a filename.  For example:
 <font face="courier new" size=3><pre>
   &lt;%
-    my $script = &quot;&lt;\% print 'TEST'; %\&gt;&quot;;
+    my $script = &quot;&lt;\% print &#39;TEST&#39;; %\&gt;&quot;;
     $Response-&gt;Include(\$script);
   %&gt;
 </pre></font>This include would output TEST.  Note that tokens like
@@ -1490,7 +1490,7 @@ and returns it as as a perl string reference.  This allows
 one to postprocess the output buffer before sending
 to the client.
 <font face="courier new" size=3><pre>
-  my $string_ref = $Response-&gt;TrapInclude('file.inc');
+  my $string_ref = $Response-&gt;TrapInclude(&#39;file.inc&#39;);
   $$string_ref =~ s/\s+/ /sg; # squash whitespace like Clean 1
   print $$string_ref;
 </pre></font>The data is returned as a referenece to save on what
@@ -1530,11 +1530,11 @@ method in action.
 values for a key, those values will be returned through
 normal use of the $Request object:
 <font face="courier new" size=3><pre>
-  @values = $Request-&gt;Form('key');
+  @values = $Request-&gt;Form(&#39;key&#39;);
 </pre></font>but you can also access the internal storage, which is
 an array reference like so:
 <font face="courier new" size=3><pre>
-  $array_ref = $Request-&gt;{Form}{'key'};
+  $array_ref = $Request-&gt;{Form}{&#39;key&#39;};
   @values = @{$array_ref};
 </pre></font>Please read the <a href=perlscript.html><font size=-1 face=verdana><b>PERLSCRIPT</b></font></a> section for more information 
 on how things like $Request-&gt;QueryString() &amp; $Request-&gt;Form()
@@ -1553,7 +1553,7 @@ GET or POST.  Added in version 2.31.</font>
 <font face="courier new" size=3><pre>
 </pre></font>The amount of data sent by the client in the body of the 
 request, usually the length of the form data.  This is
-the same value as $Request-&gt;ServerVariables('CONTENT_LENGTH')</font>
+the same value as $Request-&gt;ServerVariables(&#39;CONTENT_LENGTH&#39;)</font>
 	
 	<p>
 	<a name=%24Request-%3EBicd243649></a>
@@ -1584,7 +1584,7 @@ specified, then a lookup will be done on the cookie as if it were
 a query string.  So, a cookie set by:
 <font face="courier new" size=3><pre>
  Set-Cookie: test=data1=1&amp;data2=2
-</pre></font>would have a value of 2 returned by $Request-&gt;Cookies('test','data2').
+</pre></font>would have a value of 2 returned by $Request-&gt;Cookies(&#39;test&#39;,&#39;data2&#39;).
 <font face="courier new" size=3><pre>
 </pre></font>If no name is specified, a hash will be returned of cookie names 
 as keys and cookie values as values.  If the cookie value is a query string, 
@@ -1592,7 +1592,7 @@ it will automatically be parsed, and the value will be a hash reference to
 these values.
 <font face="courier new" size=3><pre>
 </pre></font>When in doubt, try it out.  Remember that unless you set the Expires
-attribute of a cookie with $Response-&gt;Cookies('cookie', 'Expires', $xyz),
+attribute of a cookie with $Response-&gt;Cookies(&#39;cookie&#39;, &#39;Expires&#39;, $xyz),
 the cookies that you set will only last until you close your browser, 
 so you may find your self opening &amp; closing your browser a lot when 
 debugging cookies.
@@ -1609,11 +1609,11 @@ is a hash of hashes, one hash per file upload found in
 the $Request-&gt;Form() collection.  This collection of collections
 may be queried through the normal interface like so:
 <font face="courier new" size=3><pre>
-  $Request-&gt;FileUpload('upload_file', 'ContentType');
-  $Request-&gt;FileUpload('upload_file', 'FileHandle');
-  $Request-&gt;FileUpload('upload_file', 'BrowserFile');
-  $Request-&gt;FileUpload('upload_file', 'Mime-Header');
-  $Request-&gt;FileUpload('upload_file', 'TempFile');
+  $Request-&gt;FileUpload(&#39;upload_file&#39;, &#39;ContentType&#39;);
+  $Request-&gt;FileUpload(&#39;upload_file&#39;, &#39;FileHandle&#39;);
+  $Request-&gt;FileUpload(&#39;upload_file&#39;, &#39;BrowserFile&#39;);
+  $Request-&gt;FileUpload(&#39;upload_file&#39;, &#39;Mime-Header&#39;);
+  $Request-&gt;FileUpload(&#39;upload_file&#39;, &#39;TempFile&#39;);
 
   * note that TempFile must be use with the UploadTempFile 
     configuration setting.
@@ -1645,12 +1645,12 @@ create a nice alias to the form data like:
  }
  # then in ASP scripts
  &lt;%= $Form-&gt;{var} %&gt;
-</pre></font>File upload data will be loaded into $Request-&gt;Form('file_field'), 
+</pre></font>File upload data will be loaded into $Request-&gt;Form(&#39;file_field&#39;), 
 where the value is the actual file name of the file uploaded, and 
 the contents of the file can be found by reading from the file
 name as a file handle as in:
 <font face="courier new" size=3><pre>
- while(read($Request-&gt;Form('file_field_name'), $data, 1024)) {};
+ while(read($Request-&gt;Form(&#39;file_field_name&#39;), $data, 1024)) {};
 </pre></font>For more information, please see the <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> / File Upload section,
 as file uploads are implemented via the CGI.pm module.  An
 example can be found in the installation 
@@ -1663,7 +1663,7 @@ samples <a href=eg/file_upload.asp>./site/eg/file_upload.asp</a></font>
 </pre></font>API extension. If RequestParams <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> is set, the $Request-&gt;Params 
 object is created with combined contents of $Request-&gt;QueryString 
 and $Request-&gt;Form.  This is for developer convenience simlar 
-to <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm's param() method.  Just like for $Response-&gt;Form, 
+to <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm&#39;s param() method.  Just like for $Response-&gt;Form, 
 one could create a nice alias like:
 <font face="courier new" size=3><pre>
  # in global.asa
@@ -1805,7 +1805,7 @@ failure.  It is through this mechanism that a developer can
 utilize ADO.  The equivalent syntax in VBScript is 
 <font face="courier new" size=3><pre>
  Set object = Server.CreateObject(program_id)
-</pre></font>For further information, try 'perldoc Win32::OLE' from your
+</pre></font>For further information, try &#39;perldoc Win32::OLE&#39; from your
 favorite command line.</font>
 	
 	<p>
@@ -1847,11 +1847,11 @@ escaped with this method.
 for an optmization when encoding a large buffer as an API extension.
 Here is how one might use one over the other:
 <font face="courier new" size=3><pre>
-  my $buffer = '&amp;' x 100000;
+  my $buffer = &#39;&amp;&#39; x 100000;
   $buffer = $Server-&gt;HTMLEncode($buffer);
   print $buffer;
     - or -
-  my $buffer = '&amp;' x 100000;
+  my $buffer = &#39;&amp;&#39; x 100000;
   $Server-&gt;HTMLEncode(\$buffer);
   print $buffer;
 </pre></font>Using the reference passing method in benchmarks on 100K of
@@ -1870,8 +1870,8 @@ current script directory, Global, and IncludesDir directories.
 </pre></font>If the include is not found in the includes search path, then undef, or bool false,
 is returned. So one may do something like this:
 <font face="courier new" size=3><pre>
-  if($Server-&gt;MapInclude('include.inc')) {
-    $Response-&gt;Include('include.inc');
+  if($Server-&gt;MapInclude(&#39;include.inc&#39;)) {
+    $Response-&gt;Include(&#39;include.inc&#39;);
   }
 </pre></font>This code demonstrates how one might only try to execute an include if
 it exists, which is useful since a script will error if it tries to execute an include
@@ -1906,20 +1906,20 @@ SMTP server is not available, this will have a return value of 0.
 </pre></font>You could send an email like so:
 <font face="courier new" size=3><pre>
  $Server-&gt;Mail({
-		To =&gt; '<b>somebody@yourdomain.com.foobar</b>',
-		From =&gt; '<b>youremail@yourdomain.com.foobar</b>',
-		Subject =&gt; 'Subject of Email',
+		To =&gt; &#39;<b>somebody@yourdomain.com.foobar</b>&#39;,
+		From =&gt; &#39;<b>youremail@yourdomain.com.foobar</b>&#39;,
+		Subject =&gt; &#39;Subject of Email&#39;,
 		Body =&gt; 
-		 'Body of message. '.
-		 'You might have a lot to say here!',
-		Organization =&gt; 'Your Organization',
-                CC =&gt; '<b>youremailcc@yourdomain.com.foobar</b>',
-                BCC =&gt; '<b>youremailbcc@yourdomain.com.foobar</b>',
+		 &#39;Body of message. &#39;.
+		 &#39;You might have a lot to say here!&#39;,
+		Organization =&gt; &#39;Your Organization&#39;,
+                CC =&gt; &#39;<b>youremailcc@yourdomain.com.foobar</b>&#39;,
+                BCC =&gt; &#39;<b>youremailbcc@yourdomain.com.foobar</b>&#39;,
 		Debug =&gt; 0 || 1,
 	       });
 </pre></font>Any extra fields specified for the email will be interpreted
 as headers for the email, so to send an HTML email, you 
-could set 'Content-Type' =&gt; 'text/html' in the above example.
+could set &#39;Content-Type&#39; =&gt; &#39;text/html&#39; in the above example.
 <font face="courier new" size=3><pre>
 </pre></font>If you have MailFrom configured, this will be the default
 for the From header in your email.  For more configuration
@@ -1936,7 +1936,7 @@ will be passed on when that object is initialized.
 </pre></font>If you would like to include the output of an ASP page as the
 body of the mail message, you might do something like:
 <font face="courier new" size=3><pre>
-  my $mail_body = $Response-&gt;TrapInclude('mail_body.inc');
+  my $mail_body = $Response-&gt;TrapInclude(&#39;mail_body.inc&#39;);
   $Server-&gt;Mail({ %mail, Body =&gt; $$mail_body });
 </pre></font>
 	
@@ -1991,7 +1991,7 @@ $Server-&gt;Transfer is now just a wrapper for:
 	<a name=%24Server-%3EURL3674cef0></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->URLEncode($string)</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Returns the URL-escaped version of the string $string. +'s are substituted in
+</pre></font>Returns the URL-escaped version of the string $string. +&#39;s are substituted in
 for spaces and special characters are escaped to the ascii equivalents.
 Strings encoded in this manner are safe to put in urls... they are especially
 useful for encoding data used in a query string as in:
@@ -2010,7 +2010,7 @@ useful for encoding data used in a query string as in:
 </pre></font>Will return a URL with %params serialized into a query 
 string like:
 <font face="courier new" size=3><pre>
-  $url = $Server-&gt;URL('test.asp', { test =&gt; value });
+  $url = $Server-&gt;URL(&#39;test.asp&#39;, { test =&gt; value });
 </pre></font>which would give you a URL of test.asp?test=value
 <font face="courier new" size=3><pre>
 </pre></font>Used in conjunction with the SessionQuery* settings, the returned

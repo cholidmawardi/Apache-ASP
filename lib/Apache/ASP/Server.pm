@@ -63,18 +63,23 @@ sub URLEncode {
     $toencode;
 }
 
-# shamelessly ripped off from CGI.pm, by Lincoln D. Stein.
 sub HTMLEncode {
     my $toencode = $_[1];
+    return '' unless defined $toencode;
 
-    if(ref($toencode)) {
+    if(ref $toencode) {
+	# this optimization allows for the string to be passed in
+	# as a scalar reference, and returned that way as well 
+	# to save on large string copying
 	$$toencode=~s/&/&amp;/sg;
 	$$toencode=~s/\"/&quot;/sg;
+	$$toencode=~s/\'/&#39;/sg;
 	$$toencode=~s/>/&gt;/sg;
 	$$toencode=~s/</&lt;/sg;
     } else {
 	$toencode=~s/&/&amp;/sg;
 	$toencode=~s/\"/&quot;/sg;
+	$toencode=~s/\'/&#39;/sg;
 	$toencode=~s/>/&gt;/sg;
 	$toencode=~s/</&lt;/sg;
     }

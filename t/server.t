@@ -29,10 +29,12 @@ $t->eok($Server->URL('test.asp', { 'test' => ['value', 'value2'] })
 	'multi params $Server->URL() encoding did not work'
 	);
 
-my $html = '&"<>';
-my $final = '&amp;&quot;&lt;&gt;';
-$t->eok($Server->HTMLEncode('&"<>') eq $final, "\$Server->HTMLEncode('$html')");
-$Server->HTMLEncode(\$html);
+my $html = q(&"<>'abc);
+my $final = '&amp;&quot;&lt;&gt;&#39;abc';
+my $result = $Server->HTMLEncode($html);
+$t->eok($result eq $final, "\$Server->HTMLEncode('$html')");
+my $ref_result = $Server->HTMLEncode(\$html);
+$t->eok(\$html eq $ref_result, "\$Server->HTMLEncode(\\\$html) should output same ref as going in");
 $t->eok($html eq $final, "\$Server->HTMLEncode(\\\$html)");
 $t->eok($Server->MapInclude('server.t') eq './server.t', "Find executing script in Includes path");
 $t->eok($Server->File =~ /server.t$/, "\$Server->File does not match");

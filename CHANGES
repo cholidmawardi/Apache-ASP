@@ -1,26 +1,34 @@
-$MODULE=Apache::ASP; $VERSION = 2.35; $DATE="TBA"
+$MODULE=Apache::ASP; $VERSION = 2.37; $DATE="07/03/2002"
 
 Please see README for changes for past versions.
 
  + = improvement;    - = bug fix;    (d) = documentation
 
- +Destroy better $Server & $Response objects so that my closure references
-  to these to not attempt to work in the future against invalid internal data.
-  There was enough data left in these old objects to make debugging the
-  my closure problem confusing, where it looked like the ASP object state 
-  became invalid.
+ -Fixed the testing directory structures for t/long_names.t
+  so that tar software like Archive::Tar & Solaris tar that
+  have problems with long file names will still be able 
+  to untar distribution successfully.  Now t/long_names.t
+  generates its testing directory structures at runtime.
 
- +Added system debug diagnostics to inspect StateManager group cleanup
+ -Fixes for "make test" to work under perl 5.8.0 RC2, 
+  courtesy of Manabu Higashida
 
- (d) Documentation update about flock() work around for Win95/Win98/WinMe systems,
-  confirmed by Rex Arul
+ +SessionQueryForce setting created for disabling use of cookies
+  for $Session session-id passing, rather requiring use of SessionQuery*
+  functionality for session-id passing via URL query string.
 
- (d) Documentation/site build bug found by Mitsunobu Ozato, where <% %> 
-  not being escaped correctly with $Server->HTMLEncode().
-  New japanese documentation project started by him at
-     http://sourceforge.jp/projects/apache-asp-jp/ 
+  By default, even when SessionQuery* options are used, cookies will
+  be used if available with SessionQuery* functionality acting only
+  as a backup, so this makes it so that cookies will never be used.
 
- -InitPackageGlobals() called after new Apache::ASP object created so 
-  core system templates can be compiled even when there was a runtime
-  compilation error of user templates.  Bug fix needed pointed out by
-  Eamon Daly
+ +Escape ' with HTMLEncode() to &#39;
+
+ -Trying to fix t/server_mail.t to work better for platforms
+  that it should skip testing on.  Updated t/server.t test case.
+
+ +Remove exit() from Makefile.PL so CPAN.pm's automatic
+  follow prereq mechanism works correctly.  Thanks to Slaven Rezic
+  for pointing this out.
+
+ +Added Apache::compat loading in mod_perl environment for better
+  mod_perl 2.0 support.
