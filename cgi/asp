@@ -49,9 +49,9 @@ if($opt_o && ! -e $opt_o) {
 }
 
 $Config = '';
-if(-e '.asp') {
+if(-e 'asp.config') {
     # read in .asp to load %Config
-    open(CONFIG, '.asp') || die("can't open .asp: $!");
+    open(CONFIG, 'asp.config') || die("can't open .asp: $!");
     $Config = join('', <CONFIG>);
     close CONFIG;
 }

@@ -1,3 +1,4 @@
+#!/usr/local/bin/perl asp
 
 <my:include src='header.inc' title="XMLSubsMatch Demo"/>
 
@@ -8,7 +9,7 @@ to render entire XML documents, or even simply give some nice
 short cuts for use when site building.
 <p>
 
-<% if(Apache->dir_config('XMLSubsStrict')) { %>
+<% if($Server->Config('XMLSubsStrict')) { %>
   Further, the <b>XMLSubsStrict</b> setting has been set.
   <p>
 <% } %>

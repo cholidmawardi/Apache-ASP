@@ -225,6 +225,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</center>
 
 
+
+</center>
+
 </td>
 
 
@@ -235,13 +238,13 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <font face=verdana><font size=+1 color=#555555><b>OBJECTS</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>The beauty of the ASP Object Model is that it takes the
-burden of <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> and Session Management off the developer,
+burden of <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> and Session Management off the developer, 
 and puts them in objects accessible from any
 ASP script &amp; include.  For the perl programmer, treat these objects
 as globals accessible from anywhere in your ASP application.
 <font face="lucida console,courier new" size=3><pre>
   Currently the Apache::ASP object model supports the following:
-
+  
     Object	 -	Function
     ------		--------
     $Session	 -	user session state
@@ -249,7 +252,7 @@ as globals accessible from anywhere in your ASP application.
     $Request	 -	input from browser
     $Application -	application state
     $Server	 -	general support methods
-</pre></font>These objects, and their methods are further defined in the
+</pre></font>These objects, and their methods are further defined in the 
 following sections.</font>
 
 	<hr size=1>
@@ -805,30 +808,30 @@ following sections.</font>
 	<font face=verdana><font size=+0 color=#555555><b>$Session Object</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>The $Session object keeps track of user and web client state, in
-a persistent manner, making it relatively easy to develop web
+a persistent manner, making it relatively easy to develop web 
 applications.  The $Session state is stored across HTTP connections,
-in database files in the Global or StateDir directories, and will
-persist across web server restarts.
+in database files in the Global or StateDir directories, and will 
+persist across web server restarts. 
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>The user session is referenced by a 128 bit / 32 byte MD5 hex hashed cookie,
+</pre></font>The user session is referenced by a 128 bit / 32 byte MD5 hex hashed cookie, 
 and can be considered secure from session id guessing, or session hijacking.
 When a hacker fails to guess a session, the system times out for a
-second, and with 2**128 (3.4e38) keys to guess, a hacker will not be
-guessing an id any time soon.
+second, and with 2**128 (3.4e38) keys to guess, a hacker will not be 
+guessing an id any time soon.  
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>If an incoming cookie matches a timed out or non-existent session,
 a new session is created with the incoming id.  If the id matches a
 currently active session, the session is tied to it and returned.
 This is also similar to the Microsoft ASP implementation.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>The $Session reference is a hash ref, and can be used as such to
-store data as in:
+</pre></font>The $Session reference is a hash ref, and can be used as such to 
+store data as in: 
 <font face="lucida console,courier new" size=3><pre>
     $Session-&gt;{count}++;	# increment count by one
     %{$Session} = ();	# clear $Session data
 </pre></font>The $Session object state is implemented through MLDBM,
-and a user should be aware of the limitations of MLDBM.
-Basically, you can read complex structures, but not write
+and a user should be aware of the limitations of MLDBM.  
+Basically, you can read complex structures, but not write 
 them, directly:
 <font face="lucida console,courier new" size=3><pre>
   $data = $Session-&gt;{complex}{data};     # Read ok.
@@ -860,9 +863,9 @@ which is exchanged between the client and the server as a cookie.</font>
 	<a name=%24Session-%3E%7BTimeout%7D%20%5B%3D%20%24minutes%5D></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Session->{Timeout} [= $minutes]</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Timeout property, if minutes is being assigned, sets this
-default timeout for the user session, else returns
-the current session timeout.
+</pre></font>Timeout property, if minutes is being assigned, sets this 
+default timeout for the user session, else returns 
+the current session timeout.  
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>If a user session is inactive for the full
 timeout, the session is destroyed by the system.
@@ -880,26 +883,26 @@ data is cleared in the process, just as when any session times out.</font>
 	<a name=%24Session-%3ELock%28%29%20%20></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Session->Lock()  </b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>API extension. If you are about to use $Session for many consecutive
-reads or writes, you can improve performance by explicitly locking
+</pre></font>API extension. If you are about to use $Session for many consecutive 
+reads or writes, you can improve performance by explicitly locking 
 $Session, and then unlocking, like:
 <font face="lucida console,courier new" size=3><pre>
   $Session-&gt;Lock();
   $Session-&gt;{count}++;
   $Session-&gt;{count}++;
   $Session-&gt;{count}++;
-  $Session-&gt;UnLock();
+  $Session-&gt;UnLock();  
 </pre></font>This sequence causes $Session to be locked and unlocked only
 1 time, instead of the 6 times that it would be locked otherwise,
 2 for each increment with one to read and one to write.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Because of flushing issues with SDBM_File and DB_File databases,
 each lock actually ties fresh to the database, so the performance
-savings here can be considerable.
+savings here can be considerable.  
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Note that if you have SessionSerialize set, $Session is
 already locked for each script invocation automatically, as if
-you had called $Session-&gt;Lock() in Script_OnStart.  Thus you
+you had called $Session-&gt;Lock() in Script_OnStart.  Thus you 
 do not need to worry about $Session locking for performance.
 Please read the section on SessionSerialize for more info.</font>
 	
@@ -908,26 +911,26 @@ Please read the section on SessionSerialize for more info.</font>
 	<font face=verdana><font size=-1 color=#555555><b>$Session->UnLock()</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>API Extension. Unlocks the $Session explicitly.  If you do not call this,
-$Session will be unlocked automatically at the end of the
+$Session will be unlocked automatically at the end of the 
 script.</font>
 	
 	<p>
 	<a name=%24Response%20Object></a>
 	<font face=verdana><font size=+0 color=#555555><b>$Response Object</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>This object manages the output from the ASP Application and the
-client web browser.  It does not store state information like the
+</pre></font>This object manages the output from the ASP Application and the 
+client web browser.  It does not store state information like the 
 $Session object but does have a wide array of methods to call.</font>
 	
 	<p>
 	<a name=%24Response-%3E%7BBinaryRef%7D></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Response->{BinaryRef}</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>API extension. This is a perl reference to the buffered output of
+</pre></font>API extension. This is a perl reference to the buffered output of 
 the $Response object, and can be used in the Script_OnFlush
 global.asa event to modify the buffered output at runtime
-to apply global changes to scripts output without having to
-modify all the scripts.  These changes take place before
+to apply global changes to scripts output without having to 
+modify all the scripts.  These changes take place before 
 content is flushed to the client web browser.
 <font face="lucida console,courier new" size=3><pre>
  sub Script_OnFlush {
@@ -948,7 +951,7 @@ and client is sent output as output is generated by the script.</font>
 	<a name=%24Response-%3E%7BCacheControl%7D></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Response->{CacheControl}</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Default &quot;private&quot;, when set to public allows proxy servers to
+</pre></font>Default &quot;private&quot;, when set to public allows proxy servers to 
 cache the content.  This setting controls the value set
 in the HTTP header Cache-Control</font>
 	
@@ -957,16 +960,17 @@ in the HTTP header Cache-Control</font>
 	<font face=verdana><font size=-1 color=#555555><b>$Response->{Charset}</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>This member when set appends itself to the value of the Content-Type
-HTTP header.  If $Response-&gt;{Charset} = 'ISO-LATIN-1' is set, the
+HTTP header.  If $Response-&gt;{Charset} = 'ISO-LATIN-1' is set, the 
 corresponding header would look like:
 <font face="lucida console,courier new" size=3><pre>
-  Content-Type: text/html; charset=ISO-LATIN-1 </pre></font>
+  Content-Type: text/html; charset=ISO-LATIN-1
+</pre></font>
 	
 	<p>
 	<a name=%24Response-%3E%7BClean%7D%20%3D%200-9%3B></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Response->{Clean} = 0-9;</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>API extension. Set the Clean level, default 0, on a per script basis.
+</pre></font>API extension. Set the Clean level, default 0, on a per script basis.  
 Clean of 1-9 compresses text/html output.  Please see
 the Clean config option for more information. This setting may
 also be useful even if using compression to obfuscate HTML.</font>
@@ -999,7 +1003,7 @@ AppendToLog prints just raw string/scalar values.</font>
 	<a name=%24Response-%3E%7BExpires%7D%20%3D%20%24time></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Response->{Expires} = $time</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Sends a response header to the client indicating the $time
+</pre></font>Sends a response header to the client indicating the $time 
 in SECONDS in which the document should expire.  A time of 0 means
 immediate expiration.  The header generated is a standard
 HTTP date like: &quot;Wed, 09 Feb 1994 22:23:32 GMT&quot;.</font>
@@ -1009,17 +1013,18 @@ HTTP date like: &quot;Wed, 09 Feb 1994 22:23:32 GMT&quot;.</font>
 	<font face=verdana><font size=-1 color=#555555><b>$Response->{ExpiresAbsolute} = $date</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Sends a response header to the client with $date being an absolute
-time to expire.  Formats accepted are all those accepted by
+time to expire.  Formats accepted are all those accepted by 
 HTTP::Date::str2time(), e.g.
 <font face="lucida console,courier new" size=3><pre>
  &quot;Wed, 09 Feb 1994 22:23:32 GMT&quot;     -- HTTP format
  &quot;Tuesday, 08-Feb-94 14:15:29 GMT&quot;   -- old rfc850 HTTP format
 
- &quot;08-Feb-94&quot;       -- old rfc850 HTTP format
- &quot;09 Feb 1994&quot;     -- proposed new HTTP format
+ &quot;08-Feb-94&quot;       -- old rfc850 HTTP format    
+ &quot;09 Feb 1994&quot;     -- proposed new HTTP format  
 
  &quot;Feb  3  1994&quot;    -- Unix 'ls -l' format
- &quot;Feb  3 17:03&quot;    -- Unix 'ls -l' format </pre></font>
+ &quot;Feb  3 17:03&quot;    -- Unix 'ls -l' format
+</pre></font>
 	
 	<p>
 	<a name=%24Response-%3E%7BFormFill%7D%20%3D%200%7C1></a>
@@ -1049,7 +1054,7 @@ called at the end of the HTML output.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>If this property has been set, a PICS-Label HTTP header will be
 sent with its value.  For those that do not know, PICS is a header
-that is useful in rating the internet.  It stands for
+that is useful in rating the internet.  It stands for 
 Platform for Internet Content Selection, and you can find more
 info about it at: <a href=http://www.w3.org>http://www.w3.org</a></font>
 	
@@ -1080,7 +1085,7 @@ after some text on a page, you must turn BufferingOn.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Writes binary data to the client.  The only
 difference from $Response-&gt;Write() is that $Response-&gt;Flush()
-is called internally first, so the data cannot be parsed
+is called internally first, so the data cannot be parsed 
 as an html header.  Flushing flushes the header if has not
 already been written.
 <font face="lucida console,courier new" size=3><pre>
@@ -1089,11 +1094,11 @@ to something other than text/html, cgi header parsing (see <a href=cgi.html><fon
 notes), will be automatically be turned off, so you will not
 necessarily need to use BinaryWrite for writing binary data.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>For an example of BinaryWrite, see the binary_write.htm example
+</pre></font>For an example of BinaryWrite, see the binary_write.htm example 
 in <a href=eg/binary_write.htm>./site/eg/binary_write.htm</a>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Please note that if you are on Win32, you will need to
-call binmode on a file handle before reading, if
+</pre></font>Please note that if you are on Win32, you will need to 
+call binmode on a file handle before reading, if 
 its data is binary.</font>
 	
 	<p>
@@ -1110,16 +1115,16 @@ its data is binary.</font>
 If $key is not defined, the Value of the cookie is set.
 ASP CookiePath is assumed to be / in these examples.
 <font face="lucida console,courier new" size=3><pre>
- $Response-&gt;Cookies('name', 'value');
+ $Response-&gt;Cookies('name', 'value'); 
   --&gt; Set-Cookie: name=value; path=/
 
- $Response-&gt;Cookies(&quot;Test&quot;, &quot;data1&quot;, &quot;test value&quot;);
- $Response-&gt;Cookies(&quot;Test&quot;, &quot;data2&quot;, &quot;more test&quot;);
+ $Response-&gt;Cookies(&quot;Test&quot;, &quot;data1&quot;, &quot;test value&quot;);     
+ $Response-&gt;Cookies(&quot;Test&quot;, &quot;data2&quot;, &quot;more test&quot;);      
  $Response-&gt;Cookies(
-	&quot;Test&quot;, &quot;Expires&quot;,
+	&quot;Test&quot;, &quot;Expires&quot;, 
 	&amp;HTTP::Date::time2str(time+86400)
-	);
- $Response-&gt;Cookies(&quot;Test&quot;, &quot;Secure&quot;, 1);
+	); 
+ $Response-&gt;Cookies(&quot;Test&quot;, &quot;Secure&quot;, 1);               
  $Response-&gt;Cookies(&quot;Test&quot;, &quot;Path&quot;, &quot;/&quot;);
  $Response-&gt;Cookies(&quot;Test&quot;, &quot;Domain&quot;, &quot;host.com&quot;);
   --&gt;	Set-Cookie:Test=data1=test%20value&amp;data2=more%20test;	\
@@ -1134,12 +1139,12 @@ which can later be accesses by
 </pre></font>Because this is perl, you can (NOT PORTABLE) reference the cookies
 directly through hash notation.  The same 5 commands above could be compressed to:
 <font face="lucida console,courier new" size=3><pre>
- $Response-&gt;{Cookies}{Test} =
-	{
-		Secure	=&gt; 1,
-		Value	=&gt;
+ $Response-&gt;{Cookies}{Test} = 
+	{ 
+		Secure	=&gt; 1, 
+		Value	=&gt;	
 			{
-				data1 =&gt; 'test value',
+				data1 =&gt; 'test value', 
 				data2 =&gt; 'more test'
 			},
 		Expires	=&gt; 86400, # not portable, see above
@@ -1148,14 +1153,14 @@ directly through hash notation.  The same 5 commands above could be compressed t
 	};
 </pre></font>and the first command would be:
 <font face="lucida console,courier new" size=3><pre>
- # you don't need to use hash notation when you are only setting
+ # you don't need to use hash notation when you are only setting 
  # a simple value
- $Response-&gt;{Cookies}{'Test Name'} = 'Test Value';
-</pre></font>I prefer the hash notation for cookies, as this looks nice, and is
-quite perlish.  It is here to stay.  The Cookie() routine is
-very complex and does its best to allow access to the
-underlying hash structure of the data.  This is the best emulation
-I could write trying to match the Collections functionality of
+ $Response-&gt;{Cookies}{'Test Name'} = 'Test Value'; 
+</pre></font>I prefer the hash notation for cookies, as this looks nice, and is 
+quite perlish.  It is here to stay.  The Cookie() routine is 
+very complex and does its best to allow access to the 
+underlying hash structure of the data.  This is the best emulation 
+I could write trying to match the Collections functionality of 
 cookies in IIS ASP.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>For more information on Cookies, please go to the source at
@@ -1165,8 +1170,8 @@ cookies in IIS ASP.
 	<a name=%24Response-%3EDebug%28%40args%29></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Response->Debug(@args)</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>API Extension. If the Debug config option is set greater than 0,
-this routine will write @args out to server error log.  refs in @args
+</pre></font>API Extension. If the Debug config option is set greater than 0, 
+this routine will write @args out to server error log.  refs in @args 
 will be expanded one level deep, so data in simple data structures
 like one-level hash refs and array refs will be displayed.  CODE
 refs like
@@ -1176,11 +1181,11 @@ refs like
 This extension allows the user to tie directly into the
 debugging capabilities of this module.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>While developing an app on a production server, it is often
+</pre></font>While developing an app on a production server, it is often 
 useful to have a separate error log for the application
-to catch debugging output separately.  One way of implementing
-this is to use the Apache ErrorLog configuration directive to
-create a separate error log for a virtual host.
+to catch debugging output separately.  One way of implementing 
+this is to use the Apache ErrorLog configuration directive to 
+create a separate error log for a virtual host. 
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>If you want further debugging support, like stack traces
 in your code, consider doing things like:
@@ -1190,16 +1195,16 @@ in your code, consider doing things like:
 </pre></font>The only way at present to see exactly where in your script
 an error occurred is to set the Debug config directive to 2,
 and match the error line number to perl script generated
-from your ASP script.
+from your ASP script.  
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>However, as of version 0.10, the perl script generated from the
-asp script should match almost exactly line by line, except in
-cases of inlined includes, which add to the text of the original script,
+</pre></font>However, as of version 0.10, the perl script generated from the 
+asp script should match almost exactly line by line, except in 
+cases of inlined includes, which add to the text of the original script, 
 pod comments which are entirely yanked out, and &lt;% # comment %&gt; style
 comments which have a \n added to them so they still work.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>If you would like to see the HTML preceding an error
-while developing, consider setting the BufferingOn
+</pre></font>If you would like to see the HTML preceding an error 
+while developing, consider setting the BufferingOn 
 config directive to 0.</font>
 	
 	<p>
@@ -1215,7 +1220,7 @@ Automatically called at end of script, if not already called.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>API extension that allows for the modification the Apache
 ErrorDocument at runtime.  $uri may be a on site document,
-off site URL, or string containing the error message.
+off site URL, or string containing the error message.  
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>This extension is useful if you want to have scripts
 set error codes with $Response-&gt;{Status} like 401
@@ -1239,23 +1244,23 @@ is a wrapper.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>This API extension calls the routine compiled from asp script
 in $filename with the args @args.  This is a direct translation
-of the <a href=ssi.html><font size=-1 face=verdana><b>SSI</b></font></a> tag
+of the <a href=ssi.html><font size=-1 face=verdana><b>SSI</b></font></a> tag 
 <font face="lucida console,courier new" size=3><pre>
   &lt;!--#include file=$filename args=@args--&gt;
 </pre></font>Please see the SSI section for more on SSI in general.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>This API extension was created to allow greater modularization
-of code by allowing includes to be called with runtime
-arguments.  Files included are compiled once, and the
+of code by allowing includes to be called with runtime 
+arguments.  Files included are compiled once, and the 
 anonymous code ref from that compilation is cached, thus
-including a file in this manner is just like calling a
+including a file in this manner is just like calling a 
 perl subroutine.</font>
 	
 	<p>
 	<a name=%24Response-%3ERedirect%28%24url%29></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Response->Redirect($url)</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Sends the client a command to go to a different url $url.
+</pre></font>Sends the client a command to go to a different url $url.  
 Script immediately ends.</font>
 	
 	<p>
@@ -1289,19 +1294,19 @@ some point go through this method.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>The request object manages the input from the client browser, like
 posts, query strings, cookies, etc.  Normal return results are values
-if an index is specified, or a collection / perl hash ref if no index
-is specified.  WARNING, the latter property is not supported in
+if an index is specified, or a collection / perl hash ref if no index 
+is specified.  WARNING, the latter property is not supported in 
 ActiveState <a href=http://www.activestate.com/ActivePerl/><font size=-1 face=verdana><b>PerlScript</b></font></a>, so if you use the hashes returned by such
 a technique, it will not be portable.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>A normal use of this feature would be to iterate through the
+</pre></font>A normal use of this feature would be to iterate through the 
 form variables in the form hash...
 <font face="lucida console,courier new" size=3><pre>
  $form = $Request-&gt;Form();
  for(keys %{$form}) {
 	$Response-&gt;Write(&quot;$_: $form-&gt;{$_}&lt;br&gt;\n&quot;);
  }
-</pre></font>Please see the <a href=eg/server_variables.htm>./site/eg/server_variables.htm</a> asp file for this
+</pre></font>Please see the <a href=eg/server_variables.htm>./site/eg/server_variables.htm</a> asp file for this 
 method in action.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Note that if a form POST or query string contains duplicate
@@ -1314,7 +1319,7 @@ an array reference like so:
 <font face="lucida console,courier new" size=3><pre>
   $array_ref = $Request-&gt;{Form}{'key'};
   @values = @{$array_ref};
-</pre></font>Please read the <a href=perlscript.html><font size=-1 face=verdana><b>PERLSCRIPT</b></font></a> section for more information
+</pre></font>Please read the <a href=perlscript.html><font size=-1 face=verdana><b>PERLSCRIPT</b></font></a> section for more information 
 on how things like $Request-&gt;QueryString() &amp; $Request-&gt;Form()
 behave as collections.</font>
 	
@@ -1322,7 +1327,7 @@ behave as collections.</font>
 	<a name=%24Request-%3E%7BTotalBytes%7D></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Request->{TotalBytes}</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>The amount of data sent by the client in the body of the
+</pre></font>The amount of data sent by the client in the body of the 
 request, usually the length of the form data.  This is
 the same value as $Request-&gt;ServerVariables('CONTENT_LENGTH')</font>
 	
@@ -1352,15 +1357,15 @@ a query string.  So, a cookie set by:
  Set-Cookie: test=data1=1&amp;data2=2
 </pre></font>would have a value of 2 returned by $Request-&gt;Cookies('test','data2').
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>If no name is specified, a hash will be returned of cookie names
-as keys and cookie values as values.  If the cookie value is a query string,
-it will automatically be parsed, and the value will be a hash reference to
+</pre></font>If no name is specified, a hash will be returned of cookie names 
+as keys and cookie values as values.  If the cookie value is a query string, 
+it will automatically be parsed, and the value will be a hash reference to 
 these values.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>When in doubt, try it out.  Remember that unless you set the Expires
 attribute of a cookie with $Response-&gt;Cookies('cookie', 'Expires', $xyz),
-the cookies that you set will only last until you close your browser,
-so you may find your self opening &amp; closing your browser a lot when
+the cookies that you set will only last until you close your browser, 
+so you may find your self opening &amp; closing your browser a lot when 
 debugging cookies.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>For more information on cookies in ASP, please read $Response-&gt;Cookies()</font>
@@ -1371,7 +1376,7 @@ debugging cookies.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>API extension.  The FileUpload interface to file upload data is
 stabilized.  The internal representation of the file uploads
-is a hash of hashes, one hash per file upload found in
+is a hash of hashes, one hash per file upload found in 
 the $Request-&gt;Form() collection.  This collection of collections
 may be queried through the normal interface like so:
 <font face="lucida console,courier new" size=3><pre>
@@ -1381,9 +1386,9 @@ may be queried through the normal interface like so:
   $Request-&gt;FileUpload('upload_file', 'Mime-Header');
   $Request-&gt;FileUpload('upload_file', 'TempFile');
 
-  * note that TempFile must be use with the UploadTempFile
+  * note that TempFile must be use with the UploadTempFile 
     configuration setting.
-</pre></font>The above represents the old slow collection interface,
+</pre></font>The above represents the old slow collection interface, 
 but like all collections in Apache::ASP, you can reference
 the internal hash representation more easily.
 <font face="lucida console,courier new" size=3><pre>
@@ -1392,25 +1397,26 @@ the internal hash representation more easily.
   $fileup-&gt;{BrowserFile};
   $fileup-&gt;{FileHandle};
   $fileup-&gt;{Mime-Header};
-  $fileup-&gt;{TempFile}; </pre></font>
+  $fileup-&gt;{TempFile};
+</pre></font>
 	
 	<p>
 	<a name=%24Request-%3EForm%28%24name%29></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Request->Form($name)</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Returns the value of the input of name $name used in a form
-with POST method.  If $name is not specified, returns a ref to
-a hash of all the form data.
+with POST method.  If $name is not specified, returns a ref to 
+a hash of all the form data.  
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>File upload data will be loaded into $Request-&gt;Form('file_field'),
-where the value is the actual file name of the file uploaded, and
+</pre></font>File upload data will be loaded into $Request-&gt;Form('file_field'), 
+where the value is the actual file name of the file uploaded, and 
 the contents of the file can be found by reading from the file
 name as a file handle as in:
 <font face="lucida console,courier new" size=3><pre>
  while(read($Request-&gt;Form('file_field_name'), $data, 1024)) {};
 </pre></font>For more information, please see the <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> / File Upload section,
 as file uploads are implemented via the <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> module.  An
-example can be found in the installation
+example can be found in the installation 
 samples <a href=eg/file_upload.asp>./site/eg/file_upload.asp</a></font>
 	
 	<p>
@@ -1419,8 +1425,8 @@ samples <a href=eg/file_upload.asp>./site/eg/file_upload.asp</a></font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Returns the value of the input of name $name used in a form
 with GET method, or passed by appending a query string to the end of
-a url as in <tt>http://localhost/?data=value.</tt>
-If $name is not specified, returns a ref to a hash of all the query
+a url as in <tt>http://localhost/?data=value.</tt>  
+If $name is not specified, returns a ref to a hash of all the query 
 string data.</font>
 	
 	<p>
@@ -1428,18 +1434,19 @@ string data.</font>
 	<font face=verdana><font size=-1 color=#555555><b>$Request->ServerVariables($name)</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Returns the value of the server variable / environment variable
-with name $name.  If $name is not specified, returns a ref to
+with name $name.  If $name is not specified, returns a ref to 
 a hash of all the server / environment variables data.  The following
 would be a common use of this method:
 <font face="lucida console,courier new" size=3><pre>
  $env = $Request-&gt;ServerVariables();
- # %{$env} here would be equivalent to the cgi %ENV in perl. </pre></font>
+ # %{$env} here would be equivalent to the cgi %ENV in perl.
+</pre></font>
 	
 	<p>
 	<a name=%24Application%20Object></a>
 	<font face=verdana><font size=+0 color=#555555><b>$Application Object</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Like the $Session object, you may use the $Application object to
+</pre></font>Like the $Session object, you may use the $Application object to 
 store data across the entire life of the application.  Every
 page in the ASP application always has access to this object.
 So if you wanted to keep track of how many visitors there where
@@ -1447,7 +1454,7 @@ to the application during its lifetime, you might have a line
 like this:
 <font face="lucida console,courier new" size=3><pre>
  $Application-&gt;{num_users}++
-</pre></font>The Lock and Unlock methods are used to prevent simultaneous
+</pre></font>The Lock and Unlock methods are used to prevent simultaneous 
 access to the $Application object.</font>
 	
 	<p>
@@ -1456,14 +1463,14 @@ access to the $Application object.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Locks the Application object for the life of the script, or until
 UnLock() unlocks it, whichever comes first.  When $Application
-is locked, this guarantees that data being read and written to it
+is locked, this guarantees that data being read and written to it 
 will not suddenly change on you between the reads and the writes.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>This and the $Session object both lock automatically upon
-every read and every write to ensure data integrity.  This
+every read and every write to ensure data integrity.  This 
 lock is useful for concurrent access control purposes.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Be careful to not be too liberal with this, as you can quickly
+</pre></font>Be careful to not be too liberal with this, as you can quickly 
 create application bottlenecks with its improper use.</font>
 	
 	<p>
@@ -1478,17 +1485,17 @@ create application bottlenecks with its improper use.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>This NON-PORTABLE API extension returns a user $Session given
 a session id.  This allows one to easily write a session manager if
-session ids are stored in $Application during Session_OnStart, with
-full access to these sessions for administrative purposes.
+session ids are stored in $Application during Session_OnStart, with 
+full access to these sessions for administrative purposes.  
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Be careful not to expose full session ids over the net, as they
-could be used by a hacker to impersonate another user.  So when
+could be used by a hacker to impersonate another user.  So when 
 creating a session manager, for example, you could create
-some other id to reference the SessionID internally, which
+some other id to reference the SessionID internally, which 
 would allow you to control the sessions.  This kind of application
 would best be served under a secure web server.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>The <a href=eg/global_asa_demo.asp>./site/eg/global_asa_demo.asp</a> script makes use of this routine
+</pre></font>The <a href=eg/global_asa_demo.asp>./site/eg/global_asa_demo.asp</a> script makes use of this routine 
 to display all the data in current user sessions.</font>
 	
 	<p>
@@ -1501,7 +1508,7 @@ object model, but is implemented here because it is useful.  In particular,
 when accessing databases with license requirements, one can monitor usage
 effectively through accessing this value.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>This is a new feature as of v.06, and if run on a site with previous
+</pre></font>This is a new feature as of v.06, and if run on a site with previous 
 versions of Apache::ASP, the count may take a while to synch up.  To ensure
 a correct count, you must delete all the current state files associated
 with an application, usually in the $Global/.state directory.</font>
@@ -1511,7 +1518,7 @@ with an application, usually in the $Global/.state directory.</font>
 	<font face=verdana><font size=+0 color=#555555><b>$Server Object</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>The server object is that object that handles everything the other
-objects do not.  The best part of the server object for Win32 users is
+objects do not.  The best part of the server object for Win32 users is 
 the CreateObject method which allows developers to create instances of
 ActiveX components, like the ADO component.</font>
 	
@@ -1519,7 +1526,7 @@ ActiveX components, like the ADO component.</font>
 	<a name=%24Server-%3E%7BScriptTimeout%7D%20%3D%20%24seconds></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Server->{ScriptTimeout} = $seconds</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Not implemented. May never be.  Please see the
+</pre></font>Not implemented. May never be.  Please see the 
 Apache Timeout configuration option, normally in httpd.conf.</font>
 	
 	<p>
@@ -1528,9 +1535,10 @@ Apache Timeout configuration option, normally in httpd.conf.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>API extension.  Allows a developer to read the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a>
 settings, like Global, GlobalPackage, StateDir, etc.
-Currently implemented as a wrapper around
+Currently implemented as a wrapper around 
 <font face="lucida console,courier new" size=3><pre>
-  Apache-&gt;dir_config($setting) </pre></font>
+  Apache-&gt;dir_config($setting)
+</pre></font>
 	
 	<p>
 	<a name=%24Server-%3ECreateObject%28%24program_id%29></a>
@@ -1538,8 +1546,8 @@ Currently implemented as a wrapper around
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Allows use of ActiveX objects on Win32.  This routine returns
 a reference to an Win32::OLE object upon success, and nothing upon
-failure.  It is through this mechanism that a developer can
-utilize ADO.  The equivalent syntax in VBScript is
+failure.  It is through this mechanism that a developer can 
+utilize ADO.  The equivalent syntax in VBScript is 
 <font face="lucida console,courier new" size=3><pre>
  Set object = Server.CreateObject(program_id)
 </pre></font>For further information, try 'perldoc Win32::OLE' from your
@@ -1568,7 +1576,7 @@ on how IIS handles errors and is not relevant in Apache.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Returns an HTML escapes version of $string. &amp;, &quot;, &gt;, &lt;, are each
 escapes with their HTML equivalents.  Strings encoded in this nature
-should be raw text displayed to an end user, as HTML tags become
+should be raw text displayed to an end user, as HTML tags become 
 escaped with this method.                                 &quot;</font>
 	
 	<p>
@@ -1576,10 +1584,10 @@ escaped with this method.                                 &quot;</font>
 	<font face=verdana><font size=-1 color=#555555><b>$Server->MapPath($url);</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Given the url $url, absolute, or relative to the current executing script,
-this method returns the equivalent filename that the server would
+this method returns the equivalent filename that the server would 
 translate the request to, regardless or whether the request would be valid.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Only a $url that is relative to the host is valid.  Urls like &quot;.&quot; and
+</pre></font>Only a $url that is relative to the host is valid.  Urls like &quot;.&quot; and 
 &quot;/&quot; are fine arguments to MapPath, but <tt>http://localhost</tt> would not be.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>To see this method call in action, check out the sample <a href=eg/server.htm>./site/eg/server.htm</a>
@@ -1589,8 +1597,8 @@ script.</font>
 	<a name=%24Server-%3EMail%28%5C%25mail%2C%20%25smtp_args%29%3B></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Server->Mail(\%mail, %smtp_args);</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>With the Net::SMTP and Net::Config modules installed, which are part of the
-perl libnet package, you may use this API extension to send email.  The
+</pre></font>With the Net::SMTP and Net::Config modules installed, which are part of the 
+perl libnet package, you may use this API extension to send email.  The 
 \%mail hash reference that you pass in must have values for at least
 the To, From, and Subject headers, and the Body of the mail message.
 <font face="lucida console,courier new" size=3><pre>
@@ -1600,13 +1608,13 @@ the To, From, and Subject headers, and the Body of the mail message.
 		To =&gt; '<b>somebody@yourdomain.com.foobar</b>',
 		From =&gt; '<b>youremail@yourdomain.com.foobar</b>',
 		Subject =&gt; 'Subject of Email',
-		Body =&gt;
+		Body =&gt; 
 		 'Body of message. '.
 		 'You might have a lot to say here!',
 		Organization =&gt; 'Your Organization',
 	       });
 </pre></font>Any extra fields specified for the email will be interpreted
-as headers for the email, so to send an HTML email, you
+as headers for the email, so to send an HTML email, you 
 could set 'Content-Type' =&gt; 'text/html' in the above example.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>If you have MailFrom configured, this will be the default
@@ -1616,7 +1624,7 @@ options like the MailHost setting, check out the <a href=config.html><font size=
 </pre></font>The return value of this method call will be boolean for
 success of the mail being sent.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>If you would like to specially configure the Net::SMTP
+</pre></font>If you would like to specially configure the Net::SMTP 
 object used internally, you may set %smtp_args and they
 will be passed on when that object is initialized.
 &quot;perldoc Net::SMTP&quot; for more into on this topic.</font>
@@ -1627,9 +1635,9 @@ will be passed on when that object is initialized.
 <font face="lucida console,courier new" size=3><pre>
  non-portable extension
 </pre></font>Sets a subroutine reference to be executed after the script ends,
-whether normally or abnormally, the latter occurring
+whether normally or abnormally, the latter occurring 
 possibly by the user hitting the STOP button, or the web server
-being killed.  This subroutine must be a code reference
+being killed.  This subroutine must be a code reference 
 created like:
 <font face="lucida console,courier new" size=3><pre>
  $Server-&gt;RegisterCleanup(sub { $main::Session-&gt;{served}++; });
@@ -1637,10 +1645,10 @@ created like:
  sub served { $main::Session-&gt;{served}++; }
  $Server-&gt;RegisterCleanup(\&amp;served);
 </pre></font>The reference to the subroutine passed in will be executed.
-Though the subroutine will be executed in anonymous context,
-instead of the script, all objects will still be defined
-in main::*, that you would reference normally in your script.
-Output written to $main::Response will have no affect at
+Though the subroutine will be executed in anonymous context, 
+instead of the script, all objects will still be defined 
+in main::*, that you would reference normally in your script.  
+Output written to $main::Response will have no affect at 
 this stage, as the request to the www client has already completed.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Check out the <a href=eg/register_cleanup.asp>./site/eg/register_cleanup.asp</a> script for an example
@@ -1650,14 +1658,14 @@ of this routine in action.</font>
 	<a name=%24Server-%3ETransfer%28%24file%29></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Server->Transfer($file)</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>New method from ASP 3.0.  Transfers control to another script.
-The Response buffer will not be cleared automatically, so if you
-want this to serve as a faster $Response-&gt;Redirect(), you will need to
-call $Response-&gt;Clear() before calling this method.
+</pre></font>New method from ASP 3.0.  Transfers control to another script.  
+The Response buffer will not be cleared automatically, so if you 
+want this to serve as a faster $Response-&gt;Redirect(), you will need to 
+call $Response-&gt;Clear() before calling this method.  
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>This new script will take over current execution and
+</pre></font>This new script will take over current execution and 
 the current script will not continue to be executed
-afterwards.  It differs from Execute() because the
+afterwards.  It differs from Execute() because the 
 original script will not pick up where it left off.</font>
 	
 	<p>
@@ -1672,23 +1680,24 @@ useful for encoding data used in a query string as in:
  $data = $Server-&gt;URLEncode(&quot;test data&quot;);
  $url = &quot;<tt>http://localhost?data=$data&quot;;</tt>
 
- $url evaluates to <tt>http://localhost?data=test+data,</tt> and is a
- valid URL for use in anchor &lt;a&gt; tags and redirects, etc. </pre></font>
+ $url evaluates to <tt>http://localhost?data=test+data,</tt> and is a 
+ valid URL for use in anchor &lt;a&gt; tags and redirects, etc.
+</pre></font>
 	
 	<p>
 	<a name=%24Server-%3EURL%28%24url%2C%20%5C%25params%29%20></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Server->URL($url, \%params) </b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Will return a URL with %params serialized into a query
+</pre></font>Will return a URL with %params serialized into a query 
 string like:
 <font face="lucida console,courier new" size=3><pre>
   $url = $Server-&gt;URL('test.asp', { test =&gt; value });
 </pre></font>which would give you a URL of test.asp?test=value
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Used in conjunction with the SessionQuery* settings, the returned
-URL will also have the session id inserted into the query string,
-making this a critical part of that method of implementing
-cookieless sessions.  For more information on that topic
+URL will also have the session id inserted into the query string, 
+making this a critical part of that method of implementing 
+cookieless sessions.  For more information on that topic 
 please read on the setting
 in the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> section, and the <a href=sessions.html><font size=-1 face=verdana><b>SESSIONS</b></font></a> section too.</font>
 	
@@ -1701,8 +1710,8 @@ in the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> s
 and returns the XSLT output as a scalar ref like:
 <font face="lucida console,courier new" size=3><pre>
   my $xslt_data_ref = $Server-&gt;XSLT($xsl_data_ref, $xml_data_ref)
-</pre></font>The XSLT parser defaults to <a href=http://xmlxslt.sourceforge.net/><font size=-1 face=verdana><b>XML::XSLT</b></font></a>, and is configured with the
-XSLTParser setting.  Please see the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> section for more
+</pre></font>The XSLT parser defaults to <a href=http://xmlxslt.sourceforge.net/><font size=-1 face=verdana><b>XML::XSLT</b></font></a>, and is configured with the 
+XSLTParser setting.  Please see the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> section for more 
 information on the setting.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>This API was created to allow developers easy XSLT component

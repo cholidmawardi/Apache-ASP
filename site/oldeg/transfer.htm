@@ -1,0 +1,5 @@
+<% 
+  $Response->Clear;
+  $Request->{QueryString}{transfer} = 1;
+  $Server->Transfer('counting.htm');
+%>

@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl5 asp
+#!/usr/local/bin/perl asp
 
 <!--#include file="header.inc" args=""-->
 

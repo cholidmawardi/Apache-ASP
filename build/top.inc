@@ -187,6 +187,36 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</center>
 
 
+<% if($Ads && 0) { %>
+		<br>
+<center>
+<% #### Value Click %>
+<!-- VC active -->
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+// ValueParameters
+ValueHost = "hs0215003";
+ValueLoaded = false;
+ValueID = "valueid";
+ValueVersion = "1.1";
+ValueWidth = 125;
+ValueHeight = 125;
+//-->
+</SCRIPT>
+<SCRIPT LANGUAGE="Javascript" SRC="http://oz.valueclick.com/jsmaster"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+if (ValueLoaded) ValueShowAd();
+//-->
+</SCRIPT>
+<NOSCRIPT>
+<A HREF="http://kansas.valueclick.com/redirect?host=hs0215003&size=125x125&b=indexpage&v=0" TARGET="_top"><IMG BORDER="0" WIDTH="125" HEIGHT="125" ALT="Click here to visit our sponsor"
+SRC="http://kansas.valueclick.com/cycle?host=hs0215003&size=125x125&b=indexpage&noscript=1"></A>
+</NOSCRIPT>
+<!-- vc active -->                        
+<% } %>
+</center>
+
 </td>
 
 

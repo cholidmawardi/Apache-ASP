@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl5 asp
+#!/usr/local/bin/perl asp
 
 <!--#include file=header.inc-->
 <%
@@ -24,7 +24,7 @@ my @cmds = (
    <tr><td colspan=2><hr size=1></td></tr>
    <tr>
 	<td> <tt><%=$Server->HTMLEncode($_)%> </tt></td>
-	<td> <font size=+0> <pre><%=(eval $_) || $@%></pre> </font> </td>
+	<td> <font size=+0> <pre><%=(eval $_) || 'ERROR'."<!-- ERROR: $@ -->" %></pre> </font> </td>
 	<tr>
 <% } %>
     <tr><td colspan=2><hr size=1></td></tr>

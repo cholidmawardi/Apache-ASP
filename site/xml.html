@@ -225,6 +225,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</center>
 
 
+
+</center>
+
 </td>
 
 
@@ -281,27 +284,27 @@ subroutine handle the execution of any predefined tag,
 taking the tag descriptors, and the text contained between,
 as arguments of the subroutine.  This custom tag
 technology can be used to extend a web developer's abilities
-to add dynamic pieces without having to visibly use
+to add dynamic pieces without having to visibly use 
 &lt;% %&gt; style code entries.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>So, lets say that you have a table that
-you want to insert for an employee with contact
+</pre></font>So, lets say that you have a table that 
+you want to insert for an employee with contact 
 info and the like, you could set up a tag like:
 <font face="lucida console,courier new" size=3><pre>
  &lt;my:employee name=&quot;Jane&quot; last=&quot;Doe&quot; phone=&quot;555-2222&quot;&gt;
    Jane Doe has been here since 1998.
  &lt;/my:employee&gt;
-</pre></font>To render it with a custom tag, you would tell
-the Apache::ASP parser to render the tag with a
+</pre></font>To render it with a custom tag, you would tell 
+the Apache::ASP parser to render the tag with a 
 subroutine:
 <font face="lucida console,courier new" size=3><pre>
   PerlSetVar XMLSubsMatch my:employee
 </pre></font>Any colons, ':', in the XML custom tag will turn
 into '::', a perl package separator, so the my:employee
-tag would translate to the my::employee subroutine, or the
+tag would translate to the my::employee subroutine, or the 
 employee subroutine in the my package.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Then you would create the my::employee subroutine in the my
+</pre></font>Then you would create the my::employee subroutine in the my 
 perl package or whereever like so
 <font face="lucida console,courier new" size=3><pre>
   sub my::employee {
@@ -320,7 +323,7 @@ of the employee to the employee.inc ASP script include.
 to be related to XML, the reality is that a careful
 site engineer could render full XML documents with this
 technology, applying all the correct styles that one might
-otherwise do with XSLT.
+otherwise do with XSLT. 
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Custom tags defined in this way can be used as XML tags
 are defined with both a body and without as it
@@ -339,10 +342,10 @@ enclose normal ASP logic, like:
     &lt;!-- ASP inserts --&gt;
     This employee has been online for &lt;%= int(rand()*600)+1 %&gt;
     seconds, and was born near &lt;%= $birthday %&gt;.
-  &lt;/my:employee&gt;
-</pre></font>For an example of this custom XML tagging in action, please check
+  &lt;/my:employee&gt;   
+</pre></font>For an example of this custom XML tagging in action, please check 
 out the <a href=eg/xml_subs.asp>./site/eg/xml_subs.asp</a> script.  Note the one limitation
-that currently exists is that tags of the same name may not
+that currently exists is that tags of the same name may not 
 be used in each other, but otherwise customs tags may
 be used in other custom tags.</font>
 	
@@ -352,19 +355,18 @@ be used in other custom tags.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>XML is good stuff, but what can you use it for? The principle is
 that by having data and style separated in XML and XSL files, you
-can reformat your data more easily in the future, and you
-can render your data in multiple formats, just as easily
+can reformat your data more easily in the future, and you 
+can render your data in multiple formats, just as easily 
 as for your web site, so you might render your site to
 a PDA, or a cell phone just as easily as to a browser, and all
 you have to do is set up the right XSL stylesheets to do the
 transformation (XSLT).
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>In the first release of <a href=xml.html><font size=-1 face=verdana><b>XML/XSLT</b></font></a> support, ASP scripts may be the
+</pre></font>In the first release of <a href=xml.html><font size=-1 face=verdana><b>XML/XSLT</b></font></a> support, ASP scripts may be the 
 source of XML data that the XSL file transforms, and the XSL file
-itself will be first executed as an ASP script also.  The XSLT
-transformation is handled by <a href=http://xmlxslt.sourceforge.net/><font size=-1 face=verdana><b>XML::XSLT</b></font></a>, a perl module, and you can
-see an example of it in action at the <a href=eg/xslt.xml>./site/eg/xslt.xml</a> XML script.
-Because both the XML and XSL datasources are executed first
+itself will be first executed as an ASP script also.  The XSLT 
+transformation is handled by <a href=http://xmlxslt.sourceforge.net/><font size=-1 face=verdana><b>XML::XSLT</b></font></a> or XML::Sablotron and you can
+see an example of it in action at the <a href=eg/xslt.xml>./site/eg/xslt.xml</a> XML script.  
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>To specify a XSL stylesheet, use the setting:
 <font face="lucida console,courier new" size=3><pre>
@@ -375,19 +377,14 @@ scripts from the rest with the setting:
 <font face="lucida console,courier new" size=3><pre>
   PerlSetVar XSLTMatch xml$
 </pre></font>where all files with the ending xml would undergo a XSLT transformation.
-XSLT tranformations are slow however, so to cache XSLT transformations
-from XML scripts with consistent output, turn on caching:
-<font face="lucida console,courier new" size=3><pre>
-  PerlSetVar XSLTCacheSize 100
-</pre></font>which would allow for the output of 100 transformations to
-be cached.  If the XML data is consistently different as
-it might be if it were database driven, then the caching
-will have little effect, but for mostly static pages like
-real XML docs, this will be a huge win.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Note that XSLT depends on the installation of XML::XSLT,
-which in turn depends on XML::DOM, and XML::Parser.  The caching
-feature depends on Tie::Cache being installed.</font>
+which in turn depends on XML::DOM, and XML::Parser.
+As of version 2.11, XML::Sablotron may also be used by
+setting:
+<font face="lucida console,courier new" size=3><pre>
+   PerlSetVar XSLTParser XML::Sablotron
+</pre></font>
 	
 	<p>
 	<a name=Reference%20OSS%20Implementations></a>
@@ -396,14 +393,12 @@ feature depends on Tie::Cache being installed.</font>
 </pre></font>For their huge ground breaking XML efforts, these other XML OSS
 projects need mention:
 <font face="lucida console,courier new" size=3><pre>
-  Cocoon - XML-based web publishing, in Java
-  <a href=http://xml.apache.org/cocoon/>http://xml.apache.org/cocoon/</a>
+  <a href="http://xml.apache.org/cocoon/">Cocoon - XML-based web publishing, in Java</a>
 
-  AxKit - XML web publishing with Apache &amp; <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>
-  <a href=http://www.axkit.org/>http://www.axkit.org/</a>
+  <a href="http://www.axkit.org/">AxKit - XML web publishing with Apache &amp; <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a></a>
 
-  <a href=http://xmlxslt.sourceforge.net/><font size=-1 face=verdana><b>XML::XSLT</b></font></a> - Core engine that Apache::ASP uses for XSLT
-  <a href=http://xmlxslt.sourceforge.net/>http://xmlxslt.sourceforge.net/</a> </pre></font>
+  <a href="http://xmlxslt.sourceforge.net/"><a href=http://xmlxslt.sourceforge.net/><font size=-1 face=verdana><b>XML::XSLT</b></font></a> - Core engine that Apache::ASP uses for XSLT</a>
+</pre></font>
 	
 
 </font>

@@ -1,28 +1,34 @@
-$MODULE=Apache::ASP; $VERSION = 2.17; $DATE="TBA";
+$MODULE=Apache::ASP; $VERSION = 2.19; $DATE="TBA";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
 
- +Added ASP perl mmm-mode subclass and configuration
-  in editors/mmm-asp-perl.el file for better emacs support.
-  Updated SYNTAX/Editors documentation.
+ +update docs in various parts
 
- +Better debugging error message for Debug 2 or 3 settings 
-  for global.asa errors.  Limit debug output for lines
-  preceding rendered script.
+ +added ./make_httpd/build_httpds.sh scripts for quick builds
+  of apache + mod_perl + mod_ssl
 
- -In old inline include mode, there should no longer
-  be the error "need id for includes" when using
-  $Response->Include() ... if DynamicIncludes were
-  enabled, this problem would not have likely occured
-  anyway.  DynamicIncludes are preferrable to use so
-  that compiled includes can be shared between scripts.
-  This bug was likely introduced in version 2.11.
+ ++plain CGI mode available for ASP execution.  
+  cgi/asp script can now be used to execute ASP 
+  scripts in CGI mode.  See CGI perldoc section for more info.
+  The examples in ./site/eg have been set up to run
+  in cgi mode if desired.  Configuration in CGI section
+  only testing for Apache on Linux.
 
- -Removed logging from $Response->BinaryWrite() in regular
-  debug mode 1 or 2.  Logging still enabled in system Debug mode, -1 or -2
+ - Fixed some faulty or out of date docs in XML/XSLT section.
 
- -Removed other extra system debugging call that is really not
-  necessary.
+ +added t/server_mail.t test for $Server->Mail(), requires
+  Net::SMTP to be configured properly to succeed.
 
+ +Net::SMTP debugging not enabled by Debug 1,2,3 configs,
+  not only when system debugging is set with Debug -1,-2,-3
+  However, a Debug param passed to $Server->Mail() will 
+  sucessfully override the Debug -1,-2,-3 setting even
+  when its Debug => 0
+
+ +Check for undef values during stats for inline includes
+  so we don't trigger unintialized warnings
+
+ +Documented ; may separate many directories in the IncludesDir
+  setting for creating a more flexible includes search path.

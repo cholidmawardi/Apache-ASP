@@ -2,9 +2,66 @@
 
 <% 
 use vars qw ($Ads $PageCount);
-if($Ads && 0) { # turn off for now
+if($Ads && ( $0 !~ /index.html$/ )) { # turn off for now
 	$PageCount++;
 	%>
+<% ############# ValueClick code ########  %>
+<center>
+<table><tr><td>
+<nobr>
+<!-- VC active -->
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+// ValueParameters
+ValueHost = "hs0215003";
+ValueLoaded = false;
+ValueID = "valueid";
+ValueVersion = "1.1";
+ValueWidth = 468;
+ValueHeight = 60;
+//-->
+</SCRIPT>
+<SCRIPT LANGUAGE="Javascript" SRC="http://oz.valueclick.com/jsmaster"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+if (ValueLoaded) ValueShowAd();
+//-->
+</SCRIPT>
+<NOSCRIPT>
+<A HREF="http://kansas.valueclick.com/redirect?host=hs0215003&size=468x60&b=indexpage&v=0" TARGET="_top"><IMG BORDER="0" WIDTH="468" HEIGHT="60" ALT="Click here to visit our sponsor"
+SRC="http://kansas.valueclick.com/cycle?host=hs0215003&size=468x60&b=indexpage&noscript=1"></A>
+</NOSCRIPT>
+<!-- vc active -->
+</td>
+<td>
+<!-- VC active -->
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+// ValueParameters
+ValueHost = "hs0215003";
+ValueLoaded = false;
+ValueID = "valueid";
+ValueVersion = "1.1";
+ValueWidth = 120;
+ValueHeight = 60;
+//-->
+</SCRIPT>
+<SCRIPT LANGUAGE="Javascript" SRC="http://oz.valueclick.com/jsmaster"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+if (ValueLoaded) ValueShowAd();
+//-->
+</SCRIPT>
+<NOSCRIPT>
+<A HREF="http://kansas.valueclick.com/redirect?host=hs0215003&size=120x60&b=indexpage&v=0" TARGET="_top"><IMG BORDER="0" WIDTH="120" HEIGHT="60" ALT="Click here to visit our sponsor"
+SRC="http://kansas.valueclick.com/cycle?host=hs0215003&size=120x60&b=indexpage&noscript=1"></A>
+</NOSCRIPT>
+<!-- vc active -->
+</nobr>                        
+</td></tr></table>
+</center>
+
+=pod
 
 		<!--- Begin HitExchange Code --->
                <CENTER><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR><TD>
@@ -19,7 +76,6 @@ if($Ads && 0) { # turn off for now
                </TR></TABLE></CENTER>
                <!--- End HitExchange Code --->
 
-=pod
 
 	<!-- BEGIN LINKEXCHANGE CODE --> 
 	<center><iframe src="http://leader.linkexchange.com/<%=$PageCount%>/X709880/showiframe?" 
@@ -31,18 +87,6 @@ if($Ads && 0) { # turn off for now
 	target="_top"><img src="http://leader.linkexchange.com/<%=$PageCount%>/X709880/showlogo?" 
 	width=468 height=16 border=0 ismap alt=""></a><br></center>
 	<!-- END LINKEXCHANGE CODE -->
-
-=cut
-
-=pod
-
-		<center>
-		<!------ Looksmart clicks HTML starts here -------->
-		<SCRIPT LANGUAGE="JavaScript1.1" 
-		SRC="http://banners.looksmart.com/members.js?rid=B1506738&page=<%=$PageCount%>">
-		</SCRIPT>
-		<!------- Looksmart clicks HTML ends here ---------> 
-		</center>
 
 =cut
 

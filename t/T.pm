@@ -14,6 +14,12 @@ sub new {
 	}, $class;
 }    
 
+sub skip {
+    my $self = shift;
+    $self->{t}++;
+    $self->{buffer} .= "ok $self->{t} # skip\n";
+}
+
 sub ok {
     $_[0]->{t}++;
     $_[0]->{buffer} .= "ok\n";

@@ -2,8 +2,8 @@
 # Please see the readme, for what exactly the config variables do.
 
 # .asp files for Session state enabled
-AuthName TestRealm
-AuthType Basic
+#AuthName TestRealm
+#AuthType Basic
 #ErrorDocument 401 "Bad Auth
 PerlSetVar DynamicIncludes 1
 
@@ -66,13 +66,10 @@ PerlSetVar DynamicIncludes 1
 </Files>
 
 <Files ~ (\.auth)>
-	AuthName MyRealm
-	AuthType Basic
-	require valid-user
-	AuthUserFile auth_passwd
 	SetHandler perl-script
 	PerlHandler Apache::ASP
 	PerlSetVar Debug  2
 	PerlSetVar Global auth
-	PerlSetVar SessionTimeout 1
+	PerlSetVar SessionTimeout .1
+	PerlSetVar StateDir /tmp/asp_auth_test
 </Files>

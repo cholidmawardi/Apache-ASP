@@ -225,6 +225,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</center>
 
 
+
+</center>
+
 </td>
 
 
@@ -240,23 +243,23 @@ is implemented in a couple ways, the most crucial of which
 is implemented in the file include.  Formatted as
 <font face="lucida console,courier new" size=3><pre>
  &lt;!--#include file=filename.inc--&gt;
-</pre></font>,the .inc being merely a convention, text from the included
+</pre></font>,the .inc being merely a convention, text from the included 
 file will be inserted directly into the script being executed
-and the script will be compiled as a whole.  Whenever the
-script or any of its includes change, the script will be
+and the script will be compiled as a whole.  Whenever the 
+script or any of its includes change, the script will be 
 recompiled.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Includes go a great length to promote good decomposition
-and code sharing in ASP scripts, but they are still
+and code sharing in ASP scripts, but they are still 
 fairly static.  As of version .09, includes may have dynamic
 runtime execution, as subroutines compiled into the global.asa
 namespace.  The first way to invoke includes dynamically is
 <font face="lucida console,courier new" size=3><pre>
  &lt;!--#include file=filename.inc args=@args--&gt;
-</pre></font>If @args is specified, Apache::ASP knows to execute the
-include at runtime instead of inlining it directly into
+</pre></font>If @args is specified, Apache::ASP knows to execute the 
+include at runtime instead of inlining it directly into 
 the compiled code of the script.  It does this by
-compiling the script at runtime as a subroutine, and
+compiling the script at runtime as a subroutine, and 
 caching it for future invocations.  Then the compiled
 subroutine is executed and has @args passed into its
 as arguments.
@@ -274,17 +277,17 @@ runtime dynamic includes represent great potential
 savings in httpd memory, as includes are shared
 between scripts keeping the size of each script
 to a minimum.  This can often be significant saving
-if much of the formatting occurs in an included
+if much of the formatting occurs in an included 
 header of a www page.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>By default, all includes will be inlined unless
 called with an args parameter.  However, if you
-want all your includes to be compiled as subs and
+want all your includes to be compiled as subs and 
 dynamically executed at runtime, turn the DynamicIncludes
 config option on as documented above.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>That is not all!  SSI is full featured.  One of the
-things missing above is the
+</pre></font>That is not all!  SSI is full featured.  One of the 
+things missing above is the 
 <font face="lucida console,courier new" size=3><pre>
  &lt;!--#include virtual=filename.cgi--&gt;
 </pre></font>tag.  This and many other SSI code extensions are available

@@ -196,7 +196,7 @@ sub pod2html {
 	    }
 	}
 #	if($pre) {
-	$_ =~ s/\s*$//;
+#	$_ =~ s/\s*$//;
 #	    $_ = $Server->HTMLEncode($_);	    
 #	}
 
@@ -206,10 +206,13 @@ sub pod2html {
 	push(@newlines, $_);
     }
     $body = join("\n", @newlines);
-    $pre and $body .= " </pre>";
+    $pre and $body .= "\n</pre>";
+
+    $body =~ s,\n\s+(([^:\n\s]{5}|[A-Z])[^\n]*?)\s*\n\s+(http://[^\n\s]+)\s*?\n,\n  <a href="$3">$1</a>\n,sg;
+#print STDERR $body;
 
     #$body =~ s/\n\s*\n+/<p>/isg;
-    $body =~ s/([^\=])((http|ftp):\/\/[\w\.\/\-]+\.[\w\.\/\-\#\,\%]+[^\.\s\)])/$1<a href=$2>$2<\/a>/sg;
+    $body =~ s/([^\="])((http|ftp):\/\/[\w\.\/\-]+\.[\w\.\/\-\#\,\%]+[^\.\s\)])/$1<a href=$2>$2<\/a>/sg;
 #    $1 && warn "link: $1\n";
     $body =~ s|(http://localhost[\S]*[^\.\s\,]?)|<tt>$1</tt>|sg;
     $body =~ s|([\w\-]+\@[\w\.\,\@\-]+)(\?[\w\=\:]+)?|<b>$1</b>|sg;

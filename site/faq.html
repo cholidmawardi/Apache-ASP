@@ -225,6 +225,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</center>
 
 
+
+</center>
+
 </td>
 
 
@@ -454,7 +457,7 @@ about Apache::ASP.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>This is most likely that Apache is not configured to execute
 the Apache::ASP scripts properly.  Check the <a href=install.html><font size=-1 face=verdana><b>INSTALL</b></font></a> QuickStart
-section for more info on how to quickly set up Apache to
+section for more info on how to quickly set up Apache to 
 execute your ASP scripts.</font>
 	
 	<p>
@@ -465,7 +468,7 @@ execute your ASP scripts.</font>
 directive in Apache *.conf files is an extension enabled by mod_perl
 and will not work if mod_perl is not correctly installed.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Common user errors are not doing a 'make install' for mod_perl, which
+</pre></font>Common user errors are not doing a 'make install' for mod_perl, which 
 installs the perl side of mod_perl, and not starting the right httpd
 after building it.  The latter often occurs when you have an old apache
 server without mod_perl, and you have built a new one without copying
@@ -477,7 +480,7 @@ over to its proper location.
 	<a name=Error%3A%20no%20request%20object%20%28Apache%3DSCALAR%280x%3F%3F%3F%3F%3F%3F%3F%29%3A%29></a>
 	<font face=verdana><font size=-1 color=#555555><b>Error: no request object (Apache=SCALAR(0x???????):)</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Your Apache + <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> build is not working properly,
+</pre></font>Your Apache + <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> build is not working properly, 
 and is likely a RedHat Linux RPM DSO build.  Make sure
 you statically build your Apache + mod_perl httpd,
 recompiled fresh from the sources.</font>
@@ -492,13 +495,13 @@ Default for Global is the directory the script is in (e.g. '.'), but should
 be set to some directory not under the www server document root,
 for security reasons, on a production site.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Usually a
+</pre></font>Usually a 
 <font face="lucida console,courier new" size=3><pre>
  chmod -R -0777 eg
 </pre></font>will take care of the write access issue for initial testing purposes.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Failing write access being the problem, try upgrading your version
-of Data::Dumper and MLDBM, which are the modules used to write the
+of Data::Dumper and MLDBM, which are the modules used to write the 
 state files.</font>
 	
 	<p>
@@ -510,23 +513,24 @@ state files.</font>
 	<a name=How%20can%20I%20use%20%24Session%20to%20store%20complex%20data%20structures.></a>
 	<font face=verdana><font size=-1 color=#555555><b>How can I use $Session to store complex data structures.</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Very carefully.  Please read the $Session documentation in
+</pre></font>Very carefully.  Please read the $Session documentation in 
 the <a href=objects.html><font size=-1 face=verdana><b>OBJECTS</b></font></a> section.  You can store very complex objects
-in $Session, but you have to understand the limits, and
+in $Session, but you have to understand the limits, and 
 the syntax that must be used to make this happen.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>In particular, stay away from statements that that have
+</pre></font>In particular, stay away from statements that that have 
 more than one level of indirection on the left side of
 an assignment like:
 <font face="lucida console,courier new" size=3><pre>
-  $Session-&gt;{complex}{object} = $data; </pre></font>
+  $Session-&gt;{complex}{object} = $data;
+</pre></font>
 	
 	<p>
 	<a name=How%20can%20I%20keep%20search%20engine%20spiders%20from%20killing%20the%20session%20manager%3F></a>
 	<font face=verdana><font size=-1 color=#555555><b>How can I keep search engine spiders from killing the session manager?</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>If you want to dissallow session creation for certain non web
-browser user agents, like search engine spiders, you can use an
+</pre></font>If you want to dissallow session creation for certain non web 
+browser user agents, like search engine spiders, you can use an 
 init handler like:
 <font face="lucida console,courier new" size=3><pre>
   PerlInitHandler &quot;sub { $_[0]-&gt;dir_config('NoState', 1) }&quot;
@@ -538,14 +542,14 @@ API in this way to configure Apache::ASP at runtime.</font>
 	<a name=Insecure%20dependency%20in%20eval%20while%20running%20with%20-%20T%20switch%20%3F></a>
 	<font face=verdana><font size=-1 color=#555555><b>Insecure dependency in eval while running with - T switch ?</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>If you are running your <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> with &quot;PerlTaintCheck On&quot;, which
+</pre></font>If you are running your <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> with &quot;PerlTaintCheck On&quot;, which 
 is recommended if you are highly concerned about security issues,
 you may get errors like &quot;Insecure dependency ... with - T switch&quot;.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Apache::ASP automatically untaints data internally so that you
 may run scripts with PerlTaintCheck On, but if you are using
 state objects like $Session or $Application, you must also
-notify MLDBM, which Apache::ASP uses internally, to also
+notify MLDBM, which Apache::ASP uses internally, to also 
 untaint data read from disk, with this setting:
 <font face="lucida console,courier new" size=3><pre>
   $MLDBM::RemoveTaint = 1;
@@ -557,17 +561,17 @@ you define there.</font>
 	<a name=How%20can%20I%20use%20%24Session%20to%20store%20a%20%24dbh%20database%20handle%20%3F></a>
 	<font face=verdana><font size=-1 color=#555555><b>How can I use $Session to store a $dbh database handle ?</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>You cannot use $Session to store a $dbh handle.  This can
+</pre></font>You cannot use $Session to store a $dbh handle.  This can 
 be awkward for those coming from the IIS/NT world, where
 you could store just about anything in $Session, but this
 boils down to a difference between threads vs. processes.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Database handles often have per process file handles open,
-which cannot be shared between requests, so though you
-have stored the $dbh data in $Session, all the other
+which cannot be shared between requests, so though you 
+have stored the $dbh data in $Session, all the other 
 initializations are not relevant in another httpd process.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>All is not lost! Apache::DBI can be used to cache
+</pre></font>All is not lost! Apache::DBI can be used to cache 
 database connections on a per process basis, and will
 work for most cases.</font>
 	
@@ -585,7 +589,7 @@ Please see <a href=http://www.symbolstone.org/technology/perl/DBI/>http://www.sy
 In the UNIX world, it seems most databases have cross platform support in perl.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>DBD::ODBC is often your ticket on Win32.  On UNIX, commercial vendors
-like OpenLink Software (<a href=http://www.openlinksw.com/>http://www.openlinksw.com/</a>) provide the nuts and
+like OpenLink Software (<a href=http://www.openlinksw.com/>http://www.openlinksw.com/</a>) provide the nuts and 
 bolts for ODBC.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Database connections can be cached per process with Apache::DBI.</font>
@@ -596,7 +600,7 @@ bolts for ODBC.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>There are lots of perl-ish tricks to make your life developing
 and debugging an ASP application easier.  For starters,
-you will find some helpful hints by reading the
+you will find some helpful hints by reading the 
 $Response-&gt;Debug() API extension, and the Debug
 configuration directive.</font>
 	
@@ -608,8 +612,8 @@ configuration directive.</font>
 through <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> which is loaded at runtime only for this purpose.
 This is the only time that CGI.pm will be loaded by Apache::ASP,
 which implements all other cgi-ish functionality natively.  The
-rationale for not implementing file uploads natively is that
-the extra 100K in memory for CGI.pm shouldn't be a big deal if you
+rationale for not implementing file uploads natively is that 
+the extra 100K in memory for CGI.pm shouldn't be a big deal if you 
 are working with bulky file uploads.</font>
 	
 	<p>
@@ -621,11 +625,12 @@ the following notation:
 <font face="lucida console,courier new" size=3><pre>
  $main::Response-&gt;Write(&quot;html output&quot;);
 </pre></font>This notation can be used from anywhere in perl, including routines
-registered with $Server-&gt;RegisterCleanup().
+registered with $Server-&gt;RegisterCleanup().  
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>You use the normal notation in your scripts, includes, and global.asa:
 <font face="lucida console,courier new" size=3><pre>
- $Response-&gt;Write(&quot;html output&quot;); </pre></font>
+ $Response-&gt;Write(&quot;html output&quot;);
+</pre></font>
 	
 	<p>
 	<a name=Can%20I%20print%28%29%20in%20ASP%3F></a>
@@ -663,7 +668,7 @@ such solution.  Of course on NT, you get this for free with IIS.</font>
 	<font face=verdana><font size=-1 color=#555555><b>How do I get things I want done?!</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>If you find a problem with the module, or would like a feature added,
-please mail support, as listed in the <a href=support.html><font size=-1 face=verdana><b>SUPPORT</b></font></a> section, and your
+please mail support, as listed in the <a href=support.html><font size=-1 face=verdana><b>SUPPORT</b></font></a> section, and your 
 needs will be promptly and seriously considered, then implemented.</font>
 	
 	<p>

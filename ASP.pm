@@ -4,7 +4,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.17;
+$VERSION = 2.19;
 
 use MLDBM;
 use SDBM_File;
@@ -859,8 +859,9 @@ sub IsChanged {
        my $includes = $Apache::ASP::Includes{$self->{basename}}) 
       {
 	  for my $k (keys %$includes) {
-	      my $v = $includes->{$k};
-	      if((stat($k))[9] > $v) {
+	      my $v = $includes->{$k} || 0;
+	      my @stat = stat($k);
+	      if(@stat && $stat[9] > $v) {
 		  return 1;
 	      }
 	  }
@@ -959,7 +960,7 @@ sub Parse {
     # there should only be one of these, <%@ LANGUAGE="PerlScript" %>, rip it out
     # we keep white space and substitue text in so the perlscript sync's up with lines
     # only take out the first one 
-    $data =~ s/^\#\![^\n]+(\n\n?)/$1/s; #X cgi compat ?
+    $data =~ s/^\#\![^\n]+(\n\s*)/\<\%$1\%\>/s; #X cgi compat ?
     $data =~ s/^(\s*)\<\%(\s*)\@([^\n]*?)\%\>/$1\<\%$2 ; \%\>/so; 
 
     my $munge = $file_exists ? "<%\n#line 1 $file\n%>" : '';
@@ -1121,6 +1122,10 @@ sub ParseHelper {
 
     my(@out, $perl_block, $last_perl_block);
     $$data .= "<%;;;%>"; # always end with some perl code for parsing.
+
+# can't do it for <%= %><% %> constructions
+#    $$data =~ s/\%\>(\s*)\<\%/;$1/isg; # compress close code blocks, move white space to code
+
     while($$data =~ s/^(.*?)\<\%(.*?)\%\>//so) {
 	($text, $perl) = ($1,$2);
 	$perl_block = ($perl =~ /^\s*\=(.*)$/so) ? 0 : 1;
@@ -1855,7 +1860,7 @@ sub PrettyErrorHelper {
     my $response_buffer = $self->{Response}{out};
     $self->{Response}->Clear();
     my $errors_out = '';
-    my @eval_error_lines;
+    my @eval_error_lines = ();
     if($self->{errors_output}[0]) {
 	my($url, $file);
 	$errors_out = join("\n<li> ", '', map { $self->Escape($_) } @{$self->{errors_output}});
@@ -2378,21 +2383,29 @@ sub SendMail {
     
     # configure mail host
     if($self->{mail_host} = $self->{r}->dir_config('MailHost')) {
-	unless($NetConfig{smtp_hosts}->[0] eq $self->{mail_host}) {
+	unless($NetConfig{smtp_hosts} && (($NetConfig{smtp_hosts}->[0] || '') eq $self->{mail_host})) {
 	    unshift(@{$NetConfig{smtp_hosts}}, $self->{mail_host});
 	}
     }
     $mail->{From} ||= $self->{r}->dir_config('MailFrom');
-    
-    for('To', 'Body', 'Subject', 'From') {
-	$mail->{$_} ||
-	  die("need $_ argument to send mail");
+
+    unless($mail->{Test}) {
+	for('To', 'Body', 'Subject', 'From') {
+	    $mail->{$_} ||
+	      die("need $_ argument to send mail");
+	}
     }
-    
+
     # debugging set in mail args, or general debugging
-    if($mail->{Debug} || $self->{dbg}) {
-	$args{Debug} = 1;
+    if(! defined($args{Debug}) && defined($mail->{Debug})) {
+	$args{Debug} = $mail->{Debug};
 	delete $mail->{Debug};
+    }
+    if(! defined($args{Debug})) {
+	# in case of system level debugging, mark Net::SMTP debug also
+	if(($self->{r}->dir_config('Debug') || 0) < 0) {
+	    $args{Debug} = 1;
+	}
     }
 
     # connect to server
@@ -2406,10 +2419,14 @@ sub SendMail {
     
     @to = (ref $mail->{To}) ? @{$mail->{To}} : (split(/\s*,\s*/, $mail->{To})); 
     $self->Debug("sending mail to: ".join(',', @to));
-    ($mail->{From}) = split(/\s*,\s*/,$mail->{From}); # just the first one
+    ($mail->{From}) = split(/\s*,\s*/,($mail->{From} || '')); # just the first one
     
     $smtp->mail($mail->{From});
-    $smtp->to(@to);
+    $smtp->to(@to) || return(0);
+
+    if($mail->{Test}) {
+	return $rv;
+    }
 
     my($data);
     my $body = $mail->{Body};
@@ -2953,8 +2970,13 @@ sub new {
 	    # have an opportunity to use any cached contents that may exist
 	    if(my $len = $self->{TotalBytes}) {
 		$asp->{dbg} && $asp->Debug("reading in $len bytes from POST");
-		my $buf;
-		$r->read($buf, $len);
+		my $buf = '';
+		if($ENV{GATEWAY_INTERFACE} =~ /^CGI\//) {
+		    my $rv = sysread(\*STDIN, $buf, $len, 0);
+		    $asp->Debug("read $rv bytes from STDIN for CGI mode");
+		} else {
+		    $r->read($buf, $len);
+		}
 		$self->{content} = $buf;
 		$self->{content} ||= '';
 		tie(*STDIN, 'Apache::ASP::Request', $self);
@@ -3969,7 +3991,7 @@ sub Transfer {
 	my $eval = $_CODE->{code};
 	$asp->{dbg} && $asp->Debug("executing $eval");    
 	
-	my $rc = eval { &$eval(@_) };
+	my $rc = eval { &$eval() };
 	if($@) {
 	    my $code = $_CODE;
 	    die("error executing code for transfer $code->{file}: $@");
@@ -5106,7 +5128,7 @@ sub UnLock {
 package Apache::ASP::CGI;
 use strict;
 no strict qw(refs);
-use vars qw($StructsDefined);
+use vars qw($StructsDefined @END);
 $StructsDefined = 0;
 
 sub do_self {
@@ -5128,7 +5150,7 @@ sub init {
     my($filename, @args) = @_;
     $filename ||= $0;
     
-    for('CGI.pm', 'Class/Struct.pm') {
+    for('Class/Struct.pm') {
 	next if require $_;
 	die("can't load the $_ library.  please make sure you installed it");
     }
@@ -5147,7 +5169,6 @@ sub init {
 	
 	&Class::Struct::struct( 'Apache::ASP::CGI' => 
 			       {
-				   'cgi'       =>    "\$",
 				   'connection'=>'Apache::ASP::CGI::connection',
 				   'content_type' => "\$",
 				   'dir_config'=>    "\%",
@@ -5164,20 +5185,13 @@ sub init {
 
     # create struct
     my $self = new();
-    my $cgi;
-    if(defined $ENV{GATEWAY_INTERFACE} and $ENV{GATEWAY_INTERFACE} =~ /cgi/i) {
-	if($ENV{CONTENT_TYPE}=~ m|^multipart/form-data|) {
-	    # let ASP pick it up later via CGI
-	    $cgi = new CGI({});
-	} else {
-	    # reading form input here
-	    $cgi = new CGI;
-	}
+    if(defined $ENV{GATEWAY_INTERFACE} and $ENV{GATEWAY_INTERFACE} =~ /^CGI/) {
+	# nothing, don't need CGI object anymore
     } else {
-	$cgi = CGI->new({@args});
+	my %args = @args;
+	$ENV{QUERY_STRING} = join('&', map { "$_=$args{$_}" } keys %args);
     }
     
-    $self->cgi($cgi);
     $self->filename($filename);
     $self->header_in('Cookie', $ENV{HTTP_COOKIE});
     $self->connection->remote_ip($ENV{REMOTE_HOST} || $ENV{REMOTE_ADDR} || '0.0.0.0');
@@ -5188,7 +5202,7 @@ sub init {
     # directories everywhere you run this stuff
     defined($self->dir_config('NoState')) || $self->dir_config('NoState', 1);
 
-    $self->method($cgi->request_method());
+    $self->method($ENV{REQUEST_METHOD});
     $self->{env} = \%ENV;
     $self->env('SCRIPT_NAME') || $self->env('SCRIPT_NAME', $filename);
 
@@ -5257,30 +5271,18 @@ sub send_cgi_header {
 
 sub print { 
     shift; 
+    local $| = 1;
     print STDOUT map { ref($_) =~ /SCALAR/ ? $$_ : $_; } @_; 
 }
 
 sub args {
-    my($self) = @_;
+    my $self = shift;
 
-    my(%params, @pieces);	
-    my @params = $self->cgi()->param();
-    for (@params) {
-	$params{$_} = $self->cgi()->param($_);
-	my @values = $self->cgi()->param($_);
-	my $value;
-	for $value (@values) {
-	    push(@pieces, 
-		 Apache::ASP::Server->URLEncode($_).'='.
-		 Apache::ASP::Server->URLEncode($value)
-		);
-	}
-    }
-    
     if(wantarray) {
-	%params;
+	my $params = Apache::ASP::Request->ParseParams($ENV{QUERY_STRING});
+	%$params;
     } else {
-	join('&', @pieces);
+	$ENV{QUERY_STRING};
     }
 }
 *content = *args;
@@ -5290,8 +5292,29 @@ sub log_error {
     print STDERR @args, "\n";
 }
 
-sub register_cleanup { 1; } # do nothing as cgi will cleanup anyway
+sub register_cleanup { push(@END, $_[1]); }
+
+# gets called when the $r get's garbage collected
+sub END { 
+    for ( @END ) {
+	if(ref($_) && /CODE/) {
+	    eval &$_;
+	    if($@) {
+		Apache::ASP::CGI->log_error("[ERROR] error executing register_cleanup code $_: $@");
+	    }
+	}
+    }
+}
+
 sub soft_timeout { 1; };
+
+sub lookup_uri {
+    die('cannot call $Server->MapPath in CGI mode');
+}
+
+sub custom_response {
+    die('$Response->ErrorDocument not implemented for CGI mode');
+}
 
 1;
 
@@ -5557,15 +5580,15 @@ copy ASP.pm to $PERLLIB/site/Apache
 
 Please note that you must first have the Apache Web Server
 & mod_perl installed before using this module in a web server
-environment.  The offline mode for building static html may
-be used with just perl.
+environment.  The offline mode for building static html at
+./cgi/asp may be used with just perl.
 
 =head2 Need Help
 
 Often, installing the mod_perl part of the Apache server
 can be the hardest part.  If this is the case for you, 
 check out the FAQ and SUPPORT sections for further help,
-as well as the "Sample Apache Build Script" in this section.
+as well as the "Build Apache" notes in this section.
 
 Please also see the mod_perl guide at http://perl.apache.org/guide
 which one ought to give a good read before undertaking
@@ -5581,53 +5604,26 @@ not work, resulting in "no request object" error messages,
 and other oddities, and are terrible to debug, because of
 the strange kinds of things that can go wrong.
 
-=head2 Sample Apache Build Script
+=head2 Build Apache
 
-Here's a build script that can build a statically compiled 
-Apache with mod_ssl, mod_perl and mod_php.  Just drop the sources 
-into your build directory, configure the environments as appropriate, 
-update the build script with the correct version numbers, and go:
+For a quick build of apache, there is a script in the distribution at
+./make_httpd/build_httpds.sh that can compile a statically linked
+Apache with mod_ssl and mod_perl.  Just drop the sources into the 
+make_httpd directory, configure the environments as appropriate,
+and execute the script like this: 
 
- #!/bin/bash
+ make_httpd> ./build_httpds.sh
 
- # SSL
- SSL_BASE=/usr/local/openssl
- export SSL_BASE
- cd mod_ssl-2.7.*
- ./configure \
-    --with-apache=../apache_1.3.14
+You might also find helpful a couple items:
 
+  Stas's mod_perl guide install section
+  http://perl.apache.org/guide/install.html
 
- # PERL
- cd ../mod_perl-1.2*
- cd mod_perl*
- perl Makefile.PL \
-    APACHE_SRC=../apache_1.3.14/src \
-    NO_HTTPD=1 \
-    USE_APACI=1 \
-    PREP_HTTPD=1 \
-    EVERYTHING=1
+  Apache Toolbox
+  http://www.apachetoolbox.com/
 
- make
- #make test
- make install
-
- # APACHE
- cd ../apache_1.3.14
- #cd apache_1.3.14
- ./configure \
-    --prefix=/usr/local/apache \
-    --activate-module=src/modules/perl/libperl.a \
-    --activate-module=src/modules/php4/libphp4.a \
-    --enable-module=ssl \
-    --enable-module=proxy \
-    --enable-module=so \
-    --disable-rule=EXPAT
-
- #make certificate
- #make clean
- make
- make install
+People have been using Apache Toolbox to automate their 
+complex builds with great success.
 
 =head2 Quick Start
 
@@ -5658,38 +5654,42 @@ problems can be found in the FAQ section.
 
 =head1 CONFIG
 
-You may use a generic <Location> directive in your httpd.conf 
+You may use a <Files ...> directive in your httpd.conf 
 Apache configuration file to make Apache::ASP start ticking.  Configure the
-optional setting if you want, the defaults are fine to get started.  
+optional settings if you want, the defaults are fine to get started.  
 The settings are documented below.  
 Make sure Global is set to where your web applications global.asa is 
 if you have one!
 
- <Location /asp/>    
-  SetHandler perl-script
-  PerlHandler Apache::ASP
-  PerlSetVar Global /tmp
- </Location>
+ <Files ~ (\.asp)>    
+   SetHandler  perl-script
+   PerlHandler Apache::ASP
+   PerlSetVar  Global .
+   PerlSetVar  StateDir /tmp/asp
+ </Files>
 
 NOTE: do not use this for the examples in ./site/eg.  To get the 
 examples working, check out the Quick Start section of INSTALL
 
-You may also use the <Files ~ (\.asp)> tag in the httpd.conf 
-Apache configuration file or .htaccess, which allows a developer 
-to mix other file types in the application, static or otherwise. 
-This method is more natural for ASP coding, with mixed media
-per directory.
+You may use other Apache configuration tags like <Directory>,
+<Location>, and <VirtualHost>, to separately define ASP
+configurations, but using the <Files> tag is natural for
+ASP application building because it lends itself naturally
+to mixed media per directory.  For building many separate
+ASP sites, you might want to use separate .htaccess files,
+or <Files> tags in <VirtualHost> sections, the latter being
+better for performance.
 
 =head2 Core
 
 =item Global
 
-Global is the nerve center of an ASP application, in which
-the global.asa may reside, which defines the web application's 
-event handlers.  
+Global is the nerve center of an Apache::ASP application, in which
+the global.asa may reside defining the web application's 
+event handlers.
 
-This directory is pushed onto @INC, you will be able 
-to "use" and "require" files in this directory, so perl modules 
+This directory is pushed onto @INC, so you will be able 
+to "use" and "require" files in this directory, and perl modules 
 developed for this application may be dropped into this directory, 
 for easy use.
 
@@ -5760,6 +5760,18 @@ between ASP applications, whereas placing includes in the Global
 directory only allows sharing between scripts in an application.
 
   PerlSetVar IncludesDir .
+
+Also, multiple includes directories may be set by creating
+a directory list separated by a semicolon ';' as in
+
+  PerlSetVar IncludesDir ../shared;/usr/local/asp/shared
+
+Using IncludesDir in this way creates an includes search
+path that would look like ., Global, ../shared, /usr/local/asp/shared
+The current directory of the executing script is checked first
+whenever an include is specified, then the Global directory
+in which the global.asa resides, and finally the IncludesDir 
+setting.
 
 =head2 State Management
 
@@ -5959,6 +5971,16 @@ STOP button should safely quit the session however.
 
   PerlSetVar SessionSerialize 0
 
+=item SessionCount
+
+default 0, if true enables the $Application->SessionCount API
+which returns how many sessions are currently active in 
+the application.  As of v.19, this config was created 
+because there is a performance hit associated with this
+count tracking, so it is disabled by default.
+
+  PerlSetVar SessionCount 1
+
 =head2 Cookieless Sessions
 
 =item SessionQueryParse
@@ -6050,11 +6072,25 @@ PerlSetVar UseStrict 1
 
 =item Debug
 
-1 for server log debugging, 2 for extra client html output
-Use 1 for production debugging, use 2 for development.
-Turn off if you are not debugging.
+1 for server log debugging, 2 for extra client html output,
+3 for microtimes logged. Use 1 for production debugging, 
+use 2 or 3 for development.  Turn off if you are not 
+debugging.  These settings activate $Response->Debug().
 
   PerlSetVar Debug 2	
+
+If Debug 3 is set and Time::HiRes is installed, microtimes
+will show up in the log, and also calculate the time
+between one $Response->Debug() and another, so good for a
+quick benchmark when you glance at the logs.
+
+  PerlSetVar Debug 3
+
+If you would like to enable system level debugging, set
+Debug to a negative value.  So for system level debugging,
+but no output to browser:
+
+  PerlSetVar Debug -1
 
 =item DebugBufferLength
 
@@ -6584,9 +6620,9 @@ known to work well for developing Apache::ASP web sites:
 
  * Vim, special syntax support with editors/aasp.vim file in distribution.
 
- * UltraEdit32 has syntax highlighting, good macros and a configurable
-   wordlist (so one can have syntax highlighting both for Perl and HTML).
-   http://www.ultraedit.com/
+ * UltraEdit32 ( http://www.ultraedit.com/ ) has syntax highlighting, 
+   good macros and a configurable wordlist (so one can have syntax 
+   highlighting both for Perl and HTML).
 
 Please feel free to suggest your favorite development
 environment for this list.
@@ -7829,9 +7865,8 @@ transformation (XSLT).
 In the first release of XML/XSLT support, ASP scripts may be the 
 source of XML data that the XSL file transforms, and the XSL file
 itself will be first executed as an ASP script also.  The XSLT 
-transformation is handled by XML::XSLT, a perl module, and you can 
+transformation is handled by XML::XSLT or XML::Sablotron and you can
 see an example of it in action at the ./site/eg/xslt.xml XML script.  
-Because both the XML and XSL datasources are executed first 
 
 To specify a XSL stylesheet, use the setting:
 
@@ -7844,20 +7879,13 @@ scripts from the rest with the setting:
   PerlSetVar XSLTMatch xml$
 
 where all files with the ending xml would undergo a XSLT transformation.
-XSLT tranformations are slow however, so to cache XSLT transformations 
-from XML scripts with consistent output, turn on caching:
-
-  PerlSetVar XSLTCacheSize 100
-
-which would allow for the output of 100 transformations to 
-be cached.  If the XML data is consistently different as
-it might be if it were database driven, then the caching
-will have little effect, but for mostly static pages like
-real XML docs, this will be a huge win.
 
 Note that XSLT depends on the installation of XML::XSLT,
-which in turn depends on XML::DOM, and XML::Parser.  The caching
-feature depends on Tie::Cache being installed.
+which in turn depends on XML::DOM, and XML::Parser.
+As of version 2.11, XML::Sablotron may also be used by
+setting:
+
+   PerlSetVar XSLTParser XML::Sablotron
 
 =head2 Reference OSS Implementations
 
@@ -7876,7 +7904,76 @@ projects need mention:
 =head1 CGI
 
 CGI has been the standard way of deploying web applications long before
-ASP came along.  CGI.pm is a very useful module that aids developers in 
+ASP came along.  In the CGI gateway world, CGI.pm has been a widely
+used module in building CGI applications, and Apache::ASP is compatible
+with scripts written with CGI.pm.  Also, as of version 2.19, Apache::ASP
+can run in standalone CGI mode for the Apache web server without
+mod_perl being available.  See "Standalone CGI Mode" section below.
+
+Following are some special notes with respect to compatibility with CGI
+and CGI.pm.  Use of CGI.pm in any of these ways was made possible through 
+a great amount of work, and is not guaranteed to be portable with other perl 
+ASP implementations, as other ASP implementations will likely be more limited.
+
+=over
+
+=item Standalone CGI Mode, without mod_perl
+
+As of version 2.19, Apache::ASP scripts may be run as standalone
+CGI scripts without mod_perl being loaded into Apache.  Work
+to date has only been done with mod_cgi scripts under Apache on a
+Unix platform, and it is unlikely to work under other web servers 
+or Win32 operating systems without further development.
+
+To run the ./site/eg scripts as CGI scripts, you copy the 
+./site directory to some location accessible by your web
+server, in this example its /usr/local/apache/htdocs/aspcgi, 
+then in your httpd.conf activate Apache::ASP cgi
+scripts like so:
+
+ Alias /aspcgi/ /usr/local/apache/htdocs/aspcgi/
+ <Directory /usr/local/apache/htdocs/aspcgi/eg/>
+   AddType application/x-httpd-cgi .htm
+   AddType application/x-httpd-cgi .html
+   AddType application/x-httpd-cgi .asp
+   AddType application/x-httpd-cgi .xml
+   AddType application/x-httpd-cgi .ssi
+   AllowOverride None
+   Options +ExecCGI +Indexes
+ </Directory>
+
+Then copy the cgi/asp script from the distribution 
+into the installed ./site/eg directory.  This is 
+so the CGI execution line at the top of those scripts
+will invoke the asp wrapper like so:
+
+ #!/usr/local/bin/perl asp
+
+The asp script is a cgi wrapper that sets up the 
+Apache::ASP environment in lieu of the normal mod_perl
+handler request.  Because there is no Apache->dir_config()
+data available under mod_cgi, the asp script will load
+a asp.config file that may define a hash %Config of
+data for populating the dir_config() data.  An example
+of a complex asp.config file is at ./site/eg/asp.config
+
+So, a trivial asp.config file might look like:
+
+ # asp.config
+ %Config = (
+   'Global' => '.',
+   'StateDir' => '/tmp/aspstate',
+   'NoState' => 0,
+   'Debug' => 3,
+ );
+
+The default for NoState is 1 in CGI mode, so one must
+set NoState to 0 for objects like $Session & $Application
+to be defined.
+
+=item CGI.pm
+
+CGI.pm is a very useful module that aids developers in 
 the building of these applications, and Apache::ASP has been made to 
 be compatible with function calls in CGI.pm.  Please see cgi.htm in the 
 ./site/eg directory for a sample ASP script written almost entirely in CGI.
@@ -7887,13 +7984,6 @@ cgi scripts over to Apache::ASP, all you need to do is wrap <% %> around
 the script to get going.  This functionality has been implemented so that
 developers may have the best of both worlds when building their 
 web applications.
-
-Following are some special notes with respect to compatibility with CGI.
-Use of CGI.pm in any of these ways was made possible through a great
-amount of work, and is not guaranteed to be portable with other perl ASP
-implementations, as other ASP implementations will likely be more limited.
-
-=over
 
 =item Query Object Initialization
 
@@ -8621,6 +8711,30 @@ interest to you, and I will give it higher priority.
 =head1 CHANGES
 
  + = improvement; - = bug fix
+
+=item $VERSION = 2.17; $DATE="6/17/2001";
+
+ +Added ASP perl mmm-mode subclass and configuration
+  in editors/mmm-asp-perl.el file for better emacs support.
+  Updated SYNTAX/Editors documentation.
+
+ +Better debugging error message for Debug 2 or 3 settings 
+  for global.asa errors.  Limit debug output for lines
+  preceding rendered script.
+
+ -In old inline include mode, there should no longer
+  be the error "need id for includes" when using
+  $Response->Include() ... if DynamicIncludes were
+  enabled, this problem would not have likely occured
+  anyway.  DynamicIncludes are preferrable to use so
+  that compiled includes can be shared between scripts.
+  This bug was likely introduced in version 2.11.
+
+ -Removed logging from $Response->BinaryWrite() in regular
+  debug mode 1 or 2.  Logging still enabled in system Debug mode, -1 or -2
+
+ -Removed other extra system debugging call that is really not
+  necessary.
 
 =item $VERSION = 2.15; $DATE="06/12/2001";
 

@@ -1,3 +1,4 @@
+#!/usr/local/bin/perl asp
 
 <!--#include file=header.inc-->
 <% $Response->{Expires} = -100; %>
@@ -9,7 +10,7 @@ do NOT need to tag specific URLs with $Server->URL().
 Instead what happens is that Apache::ASP will automatically
 parse through the script output looking for all local 
 URLs, and those URLs matching the SessionQueryParseMatch
-config, currently set to <tt><%=Apache->dir_config('SessionQueryParseMatch')%></tt> ...
+config, currently set to <tt><%=$Server->Config('SessionQueryParseMatch')%></tt> ...
 These URLs will then have the current $Session->SessionID 
 inserted into their query strings.
 <p>

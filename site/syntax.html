@@ -225,6 +225,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</center>
 
 
+
+</center>
+
 </td>
 
 
@@ -281,7 +284,7 @@ The second is &lt;%= xxx %&gt; where xxx is some scalar value that will
 be inserted into the html directly.  An easy print.
 <font face="lucida console,courier new" size=3><pre>
   A simple asp page would look like:
-
+  
   &lt;!-- sample here --&gt;
   &lt;html&gt;
   &lt;body&gt;
@@ -329,7 +332,7 @@ and post process embedded HTML &amp; XML like:
     $main::Response-&gt;Write($html);
     $main::Response-&gt;Write(&quot;&lt;/body&gt;&lt;/html&gt;&quot;);
   }
-</pre></font>Though this could be used to fully render XML
+</pre></font>Though this could be used to fully render XML 
 documents, it was not built for this purpose, but
 to add powerful tag extensions to HTML development
 environments.  For full XML rendering, you ought
@@ -340,21 +343,20 @@ to try an XSLT approach, also supported by Apache::ASP.</font>
 	<font face=verdana><font size=+0 color=#555555><b>Editors</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>As Apache::ASP supports a mixing of perl and HTML,
-any editor which supports development of one or the
+any editor which supports development of one or the 
 other would work well.  The following editors are
 known to work well for developing Apache::ASP web sites:
 <font face="lucida console,courier new" size=3><pre>
  * Emacs, in perl or HTML modes.  For a mmm-mode config
-   that mixes HTML &amp; perl modes in a single buffer, check
+   that mixes HTML &amp; perl modes in a single buffer, check 
    out the editors/mmm-asp-perl.el file in distribution.
 
  * Microsoft Frontpage
 
  * Vim, special syntax support with editors/aasp.vim file in distribution.
 
- * UltraEdit32 has syntax highlighting, good macros and a configurable
+ * UltraEdit32 ( <a href=http://www.ultraedit.com/>http://www.ultraedit.com/</a> ) has syntax highlighting, good macros and a configurable
    wordlist (so one can have syntax highlighting both for Perl and HTML).
-   <a href=http://www.ultraedit.com/>http://www.ultraedit.com/</a>
 </pre></font>Please feel free to suggest your favorite development
 environment for this list.</font>
 	

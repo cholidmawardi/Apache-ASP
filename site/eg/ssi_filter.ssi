@@ -1,6 +1,14 @@
+#!/usr/local/bin/perl asp
+
 <% $Response->{Buffer} = 1; %>
 
 <!--#include file="header.inc"-->
+<%
+if($ENV{GATEWAY_INTERFACE} =~ /^CGI/) {
+  print "<B>WARNING:</B> Apache::SSI filtering doesn't work under normal CGI <hr>";
+}
+%>
+
 <% 
 unless($Request->QueryString('virtual') || $Request->QueryString('redirect')) {
   $Response->Redirect("$demo->{file}?redirect=1");

@@ -225,6 +225,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</center>
 
 
+
+</center>
+
 </td>
 
 
@@ -240,7 +243,7 @@ and also:
   <a href=http://www.perl.com/CPAN-local/modules/by-module/Apache/>http://www.perl.com/CPAN-local/modules/by-module/Apache/</a>
   <a href=http://download.sourceforge.net/mirrors/CPAN/modules/by-module/Apache/>http://download.sourceforge.net/mirrors/CPAN/modules/by-module/Apache/</a>
   <a href=ftp://ftp.duke.edu/pub/perl/modules/by-module/Apache/>ftp://ftp.duke.edu/pub/perl/modules/by-module/Apache/</a>
-</pre></font>As a perl user, you should make yourself familiar with
+</pre></font>As a perl user, you should make yourself familiar with 
 the CPAN.pm module, and how it may be used to install
 Apache::ASP, and other related modules.</font>
 
@@ -260,7 +263,7 @@ Apache::ASP, and other related modules.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Sample%20Apache%20Build%20Script>Sample Apache Build Script</a>
+			<a href=#Build%20Apache>Build Apache</a>
 			</font>
 			</td>
 							
@@ -300,29 +303,29 @@ Apache::ASP, and other related modules.</font>
 	<a name=Perl%20Module%20Install></a>
 	<font face=verdana><font size=+0 color=#555555><b>Perl Module Install</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Once you have downloaded it, Apache::ASP installs easily using
-the make or nmake commands as shown below.  Otherwise, just
+</pre></font>Once you have downloaded it, Apache::ASP installs easily using 
+the make or nmake commands as shown below.  Otherwise, just 
 copy ASP.pm to $PERLLIB/site/Apache
 <font face="lucida console,courier new" size=3><pre>
   &gt; perl Makefile.PL
-  &gt; make
+  &gt; make 
   &gt; make test
   &gt; make install
 
   * use nmake for win32
 </pre></font>Please note that you must first have the <a href=http://www.apache.org><font size=-1 face=verdana><b>Apache Web Server</b></font></a>
 &amp; <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> installed before using this module in a web server
-environment.  The offline mode for building static html may
-be used with just perl.</font>
+environment.  The offline mode for building static html at
+./cgi/asp may be used with just perl.</font>
 	
 	<p>
 	<a name=Need%20Help></a>
 	<font face=verdana><font size=+0 color=#555555><b>Need Help</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Often, installing the <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> part of the Apache server
-can be the hardest part.  If this is the case for you,
+can be the hardest part.  If this is the case for you, 
 check out the <a href=faq.html><font size=-1 face=verdana><b>FAQ</b></font></a> and <a href=support.html><font size=-1 face=verdana><b>SUPPORT</b></font></a> sections for further help,
-as well as the &quot;Sample Apache Build Script&quot; in this section.
+as well as the &quot;Build Apache&quot; notes in this section.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Please also see the mod_perl guide at <a href=http://perl.apache.org/guide>http://perl.apache.org/guide</a>
 which one ought to give a good read before undertaking
@@ -333,76 +336,45 @@ a mod_perl project.</font>
 	<font face=verdana><font size=+0 color=#555555><b>Linux Distributions</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>If you have a linux distribution, like a RedHat Linux server,
-with an RPM style Apache + <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>, seriously consider building
-a static version of the httpd server yourself, not DSO.
-DSO is marked as experimental for mod_perl, and often does
+with an RPM style Apache + <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>, seriously consider building 
+a static version of the httpd server yourself, not DSO.  
+DSO is marked as experimental for mod_perl, and often does 
 not work, resulting in &quot;no request object&quot; error messages,
 and other oddities, and are terrible to debug, because of
 the strange kinds of things that can go wrong.</font>
 	
 	<p>
-	<a name=Sample%20Apache%20Build%20Script></a>
-	<font face=verdana><font size=+0 color=#555555><b>Sample Apache Build Script</b></font><p>
+	<a name=Build%20Apache></a>
+	<font face=verdana><font size=+0 color=#555555><b>Build Apache</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Here's a build script that can build a statically compiled
-Apache with mod_ssl, <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> and mod_php.  Just drop the sources
-into your build directory, configure the environments as appropriate,
-update the build script with the correct version numbers, and go:
+</pre></font>For a quick build of apache, there is a script in the distribution at
+./make_httpd/build_httpds.sh that can compile a statically linked
+Apache with mod_ssl and <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>.  Just drop the sources into the 
+make_httpd directory, configure the environments as appropriate,
+and execute the script like this: 
 <font face="lucida console,courier new" size=3><pre>
- #!/bin/bash
+ make_httpd&gt; ./build_httpds.sh
+</pre></font>You might also find helpful a couple items:
+<font face="lucida console,courier new" size=3><pre>
+  <a href="http://perl.apache.org/guide/install.html">Stas's mod_perl guide install section</a>
 
- # SSL
- SSL_BASE=/usr/local/openssl
- export SSL_BASE
- cd mod_ssl-2.7.*
- ./configure \
-    --with-apache=../apache_1.3.14
-
-
- # PERL
- cd ../mod_perl-1.2*
- cd mod_perl*
- perl Makefile.PL \
-    APACHE_SRC=../apache_1.3.14/src \
-    NO_HTTPD=1 \
-    USE_APACI=1 \
-    PREP_HTTPD=1 \
-    EVERYTHING=1
-
- make
- #make test
- make install
-
- # APACHE
- cd ../apache_1.3.14
- #cd apache_1.3.14
- ./configure \
-    --prefix=/usr/local/apache \
-    --activate-module=src/modules/perl/libperl.a \
-    --activate-module=src/modules/php4/libphp4.a \
-    --enable-module=ssl \
-    --enable-module=proxy \
-    --enable-module=so \
-    --disable-rule=EXPAT
-
- #make certificate
- #make clean
- make
- make install </pre></font>
+  <a href="http://www.apachetoolbox.com/">Apache Toolbox</a>
+</pre></font>People have been using Apache Toolbox to automate their 
+complex builds with great success.</font>
 	
 	<p>
 	<a name=Quick%20Start></a>
 	<font face=verdana><font size=+0 color=#555555><b>Quick Start</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Once you have successfully built the <a href=http://www.apache.org><font size=-1 face=verdana><b>Apache Web Server</b></font></a> with <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>,
-copy the ./site/eg/ directory from the Apache::ASP installation
+copy the ./site/eg/ directory from the Apache::ASP installation 
 to your Apache document tree and try it out!  You must put &quot;AllowOverride All&quot;
-in your httpd.conf &lt;Directory&gt; config section to let the .htaccess file in the
+in your httpd.conf &lt;Directory&gt; config section to let the .htaccess file in the 
 ./site/eg installation directory do its work.  If you want a starter
-config file for Apache::ASP, just look at the .htaccess file in the
+config file for Apache::ASP, just look at the .htaccess file in the 
 ./site/eg/ directory.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>So, you might add this to your Apache httpd.conf file just to get
+</pre></font>So, you might add this to your Apache httpd.conf file just to get 
 the scripts in ./site/eg working:
 <font face="lucida console,courier new" size=3><pre>
   &lt;Directory /&gt;
@@ -410,11 +382,11 @@ the scripts in ./site/eg working:
     AllowOverride All
   &lt;/Directory&gt;
 </pre></font>This is not a good production config, because it is insecure
-with the FollowSymLinks, and tells Apache to look for .htaccess
+with the FollowSymLinks, and tells Apache to look for .htaccess 
 files all the way up to / which is bad for performance, but it
 should be handy for getting started with development.
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>You will know that Apache::ASP is working normally if you
+</pre></font>You will know that Apache::ASP is working normally if you 
 can run the scripts in ./site/eg/ without any errors.  Common
 problems can be found in the <a href=faq.html><font size=-1 face=verdana><b>FAQ</b></font></a> section.</font>
 	

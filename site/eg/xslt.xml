@@ -1,3 +1,5 @@
+#!/usr/local/bin/perl asp
+
 <?xml version="1.0"?>
 <page>
  <title>Hello World!</title>

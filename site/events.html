@@ -225,6 +225,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</center>
 
 
+
+</center>
+
 </td>
 
 
@@ -235,9 +238,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <font face=verdana><font size=+1 color=#555555><b>EVENTS</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>The ASP platform allows developers to create Web Applications.
-In fulfillment of real software requirements, ASP allows
+In fulfillment of real software requirements, ASP allows 
 event-triggered actions to be taken, which are defined in
-a global.asa file.  The global.asa file resides in the
+a global.asa file.  The global.asa file resides in the 
 Global directory, defined as a config option , and may
 define the following actions:
 <font face="lucida console,courier new" size=3><pre>
@@ -260,14 +263,14 @@ as subroutines, for example:
       $Application-&gt;{$Session-&gt;SessionID()} = started;
   }
 </pre></font>Sessions are easy to understand.  When visiting a page in a
-web application, each user has one unique $Session.  This
+web application, each user has one unique $Session.  This 
 session expires, after which the user will have a new
 $Session upon revisiting.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>A web application starts when the user visits a page in that
 application, and has a new $Session created.  Right before
 the first $Session is created, the $Application is created.
-When the last user $Session expires, that $Application
+When the last user $Session expires, that $Application 
 expires also.</font>
 
 	<hr size=1>
@@ -337,14 +340,15 @@ in an application defined by a global.asa.  Often, you would
 like to run the same code for every script, which you would
 otherwise have to add by hand, or add with a file include,
 but with these events, just add your code to the global.asa,
-and it will be run.
+and it will be run.  
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>There is one caveat.  Code in Script_OnEnd is not guaranteed
+</pre></font>There is one caveat.  Code in Script_OnEnd is not guaranteed 
 to be run when the user hits a STOP button, since the program
 execution ends immediately at this event.  To always run critical
 code, use the API extension:
 <font face="lucida console,courier new" size=3><pre>
-	$Server-&gt;RegisterCleanup() </pre></font>
+	$Server-&gt;RegisterCleanup()
+</pre></font>
 	
 	<p>
 	<a name=Session_OnStart></a>
@@ -367,12 +371,12 @@ for cleaning up and analyzing user data accumulated during a session.
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Sessions end when the session timeout expires, and the StateManager
 performs session cleanup.  The timing of the Session_OnEnd does not
-occur immediately after the session times out, but when the first
+occur immediately after the session times out, but when the first 
 script runs after the session expires, and the StateManager allows
-for that session to be cleaned up.
+for that session to be cleaned up.  
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>So on a busy site with default SessionTimeout (20 minutes) and
-StateManager (10 times) settings, the Session_OnEnd for a particular
+</pre></font>So on a busy site with default SessionTimeout (20 minutes) and 
+StateManager (10 times) settings, the Session_OnEnd for a particular 
 session should be run near 22 minutes past the last activity that Session saw.
 A site infrequently visited will only have the Session_OnEnd run
 when a subsequent visit occurs, and theoretically the last session
@@ -387,8 +391,8 @@ just stuff that would be nice to run whenever it gets run.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>API extension. This event will be called prior to flushing
 the $Response buffer to the web client.  At this time,
-the $Response-&gt;{BinaryRef} buffer reference may be used to modify
-the buffered output at runtime to apply global changes to scripts
+the $Response-&gt;{BinaryRef} buffer reference may be used to modify 
+the buffered output at runtime to apply global changes to scripts 
 output without having to modify all the scripts.
 <font face="lucida console,courier new" size=3><pre>
  sub Script_OnFlush {
@@ -401,7 +405,7 @@ output without having to modify all the scripts.
 	<a name=Application_OnStart></a>
 	<font face=verdana><font size=+0 color=#555555><b>Application_OnStart</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>This event marks the beginning of an ASP application, and
+</pre></font>This event marks the beginning of an ASP application, and 
 is run just before the Session_OnStart of the first Session
 of an application.  This event is useful to load up
 $Application with data that will be used in all user sessions.</font>
@@ -411,7 +415,7 @@ $Application with data that will be used in all user sessions.</font>
 	<font face=verdana><font size=+0 color=#555555><b>Application_OnEnd</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>The end of the application is marked by this event, which
-is run after the last user session has timed out for a
+is run after the last user session has timed out for a 
 given ASP application.</font>
 	
 
