@@ -7,24 +7,21 @@
 use strict;
 use CGI qw(:standard);
 
-my $query = new CGI;
+#my $query = new CGI;
 my $cookie;
 my $name;
 
-if($name = $query->param('name')) {
-    $cookie = $query->cookie(-name=>'name',
-    			     -value=>$name,
-			     -expires=>'+1h',
-			     );
+if($name = param('name')) {
+    $cookie = cookie(-name=>'name',
+		     -value=>$name,
+		     -expires=>'+1h',
+		    );
 }
-#use Data::Dumper;
-$name ||= $query->cookie('name');
+$name ||= cookie('name');
 
 print header(-cookie=>$cookie),
     start_html('A Simple Example'),
     h1('A Simple Example'),
-#    "<br>TEST ($query) TEST <br>\n",
-#    Data::Dumper->Dump([$query]),
     start_form,
     "What's your name? ",textfield('name'),p,
     "What's the combination?", p,
@@ -38,10 +35,10 @@ print header(-cookie=>$cookie),
     end_form,
     hr;
 
-if ($query->param()) {
+if (param()) {
     print "Your name is ",em($name),p,"\n",
-    "The keywords are: ",em(join(", ",$query->param('words'))),p,"\n",
-    "Your favorite color is ",em($query->param('color')),"\n",
+    "The keywords are: ",em(join(", ",param('words'))),p,"\n",
+    "Your favorite color is ",em(param('color')),"\n",
     hr;
 }
 

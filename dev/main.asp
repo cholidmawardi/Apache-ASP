@@ -1,6 +1,7 @@
 <%
+use strict;
 &main;
 sub main {
-	print "1.".__PACKAGE__.'.'.$counter++;
+	$Response->Write("1.".__PACKAGE__.'<br>'.$main::counter++);
 }
 %>

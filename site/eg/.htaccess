@@ -1,6 +1,12 @@
 # Note this file was used for Apache 1.3.0
 # Please see the readme, for what exactly the config variables do.
 
+PerlSetVar GlobalPackage Apache::ASP::Demo
+PerlSetVar StateDir  /tmp/asp_demo
+PerlModule CGI
+PerlSetVar StatINC 0
+PerlSetVar StatINCMatch CGI
+
 # .asp files for Session state enabled
 <Files ~ (\.asp)>
 	SetHandler perl-script
@@ -9,7 +15,6 @@
 	PerlSetVar Debug  2
 	PerlSetVar CookiePath  /	
 	PerlSetVar SessionTimeout  .5
-	PerlSetVar StateDir  ./.state
 </Files>
 
 # .htm files for the ASP parsing, but not the $Session object
@@ -25,11 +30,15 @@
 #	PerlSetVar DynamicIncludes 1
 </Files>
 
+<Files ~ (\.inc|\.htaccess)>
+	ForceType text/plain
+</Files>
+
 # .ssi for full ssi support, with Apache::Filter
 <Files ~ (\.ssi)>
-	PerlModule Apache::Filter
 	SetHandler perl-script
 	PerlHandler Apache::ASP Apache::SSI
+	PerlSetVar Global .
 	PerlSetVar Filter On
 	PerlSetVar Debug  2
 	PerlSetVar NoCache 1

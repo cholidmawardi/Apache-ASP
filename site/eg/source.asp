@@ -3,6 +3,7 @@
 <!--#include file=header.inc-->
 
 <% 
+  $Response->{Clean} = 0;
 	use File::Basename;
 
 	$file = $Request->QueryString('file');

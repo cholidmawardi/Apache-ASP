@@ -1,0 +1,123 @@
+
+
+<html>
+<head>
+<title>Apache :: ASP :: SYNTAX</title>
+</head>
+<body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
+
+<table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
+<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="Apache :: ASP"></td></tr>
+<tr>
+
+<td valign=top bgcolor=#ffcccc>
+	<table border=0 cellpadding=0 cellspacing=0>
+	<tr><td align=center><hr size=1></td></tr>
+
+	
+		<tr>
+		<td><a href=index.html><font face=verdana size=-1 color=#3355cc>INTRO</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=install.html><font face=verdana size=-1 color=#3355cc>INSTALL</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=config.html><font face=verdana size=-1 color=#3355cc>CONFIG</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=syntax.html><font face=verdana size=-1 color=#3355cc>SYNTAX</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=events.html><font face=verdana size=-1 color=#3355cc>EVENTS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=objects.html><font face=verdana size=-1 color=#3355cc>OBJECTS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=ssi.html><font face=verdana size=-1 color=#3355cc>SSI</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=cgi.html><font face=verdana size=-1 color=#3355cc>CGI</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=perlscript.html><font face=verdana size=-1 color=#3355cc>PERLSCRIPT</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=faq.html><font face=verdana size=-1 color=#3355cc>FAQ</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=tuning.html><font face=verdana size=-1 color=#3355cc>TUNING</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=kudos.html><font face=verdana size=-1 color=#3355cc>CREDITS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=support.html><font face=verdana size=-1 color=#3355cc>SUPPORT</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=sites.html><font face=verdana size=-1 color=#3355cc>SITES USING</font></a></td>
+		</tr>
+		<tr><td><hr size=1></td></tr>
+		<tr>
+		<td><a href=eg/index.html><font face=verdana size=-1 color=#3355cc>EXAMPLES</font></a></td>
+		</tr>
+		
+	<tr>
+		<td align=center>
+		<hr size=1>
+		<a href=http://perl.apache.org><img 
+			src=modperl.gif border=0
+			alt="Powered by ModPerl & Apache"
+			></a>
+		<hr size=1>
+		</td>
+	</tr>
+	</table>
+</td>
+
+<td valign=top>
+<font face=verdana><font size=+1 color=#555555><b>SYNTAX</b></font><p>
+ASP embedding syntax allows one to embed code in html in 2 simple ways.
+The first is the &lt;% xxx %&gt; tag in which xxx is any valid perl code.
+The second is &lt;%= xxx %&gt; where xxx is some scalar value that will
+be inserted into the html directly.  An easy print.
+<pre>
+  A simple asp page would look like:
+
+  &lt;!-- sample here --&gt;
+  &lt;html&gt;
+  &lt;body&gt;
+  For loop incrementing font size: &lt;p&gt;
+  &lt;% for(1..5) { %&gt;
+		   &lt;!-- iterated html text --&gt;
+		   &lt;font size=&quot;&lt;%=$_%&gt;&quot; &gt; Size = &lt;%=$_%&gt; &lt;/font&gt; &lt;br&gt;
+  &lt;% } %&gt;
+  &lt;/body&gt;
+  &lt;/html&gt;
+  &lt;!-- end sample here --&gt;
+</pre>Notice that your perl code blocks can span any html.  The for loop
+above iterates over the html without any special syntax.</font>
+
+</td>
+</tr>
+<tr bgcolor=#555555>
+	<td colspan=2 align=center width=80%>
+	<font face=verdana color=white size=-1>Copyright (c) 1998-1999, Joshua Chamas, Chamas Enterprises Inc. </font>
+	</td>
+</tr>
+</table>
+</body>
+</html>

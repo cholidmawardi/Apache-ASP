@@ -20,10 +20,10 @@ sub Application_OnEnd {
 }
 
 sub Script_OnStart {
-	$Session->{Started}++;
+    $Session->{Started}++;
 }
 sub Script_OnEnd {
-	$Session->{Ended}++;
+    $Session->{Ended}++;
 }
 
 # you can share globals between scripts as of v.10, as all scripts, including 

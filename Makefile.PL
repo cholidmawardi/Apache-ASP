@@ -63,15 +63,42 @@ for(sort keys %$optional_modules) {
     }
 }
 
+$CPAN = <<CPAN;
+
+#### CPAN HELP
+
+There are many modules that have to be installed in order
+to begin using Apache::ASP.  The easiest way to install
+modules is with CPAN.pm.  To use its command line shell,
+execute the following:
+
+> perl -MCPAN -eshell
+
+Then to install any modules, like HTTP::Date
+
+> install HTTP::Date
+
+and cpan will do all the work for you.  For more 
+information, please view the CPAN docs with 
+
+> perldoc CPAN
+
+####
+
+CPAN
+  ;
+
 if($errors) {
     print "\n";
-    print "If you need a module, please download and install it from CPAN.\n";
     print "Exiting now because of errors!\n";
+    print $CPAN;
     print "\n";
     exit;
-} else {
-    print "Looks good!\n";
-}
+} elsif($warnings) {
+    print $CPAN;
+} 
+
+print "Looks good!\n\n";
 
 $VERSION_FROM = 'CHANGES';
 use ExtUtils::MakeMaker;

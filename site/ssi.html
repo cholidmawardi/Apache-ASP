@@ -1,0 +1,163 @@
+
+
+<html>
+<head>
+<title>Apache :: ASP :: SSI</title>
+</head>
+<body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
+
+<table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
+<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="Apache :: ASP"></td></tr>
+<tr>
+
+<td valign=top bgcolor=#ffcccc>
+	<table border=0 cellpadding=0 cellspacing=0>
+	<tr><td align=center><hr size=1></td></tr>
+
+	
+		<tr>
+		<td><a href=index.html><font face=verdana size=-1 color=#3355cc>INTRO</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=install.html><font face=verdana size=-1 color=#3355cc>INSTALL</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=config.html><font face=verdana size=-1 color=#3355cc>CONFIG</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=syntax.html><font face=verdana size=-1 color=#3355cc>SYNTAX</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=events.html><font face=verdana size=-1 color=#3355cc>EVENTS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=objects.html><font face=verdana size=-1 color=#3355cc>OBJECTS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=ssi.html><font face=verdana size=-1 color=#3355cc>SSI</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=cgi.html><font face=verdana size=-1 color=#3355cc>CGI</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=perlscript.html><font face=verdana size=-1 color=#3355cc>PERLSCRIPT</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=faq.html><font face=verdana size=-1 color=#3355cc>FAQ</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=tuning.html><font face=verdana size=-1 color=#3355cc>TUNING</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=kudos.html><font face=verdana size=-1 color=#3355cc>CREDITS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=support.html><font face=verdana size=-1 color=#3355cc>SUPPORT</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=sites.html><font face=verdana size=-1 color=#3355cc>SITES USING</font></a></td>
+		</tr>
+		<tr><td><hr size=1></td></tr>
+		<tr>
+		<td><a href=eg/index.html><font face=verdana size=-1 color=#3355cc>EXAMPLES</font></a></td>
+		</tr>
+		
+	<tr>
+		<td align=center>
+		<hr size=1>
+		<a href=http://perl.apache.org><img 
+			src=modperl.gif border=0
+			alt="Powered by ModPerl & Apache"
+			></a>
+		<hr size=1>
+		</td>
+	</tr>
+	</table>
+</td>
+
+<td valign=top>
+<font face=verdana><font size=+1 color=#555555><b>SSI</b></font><p>
+SSI is great!  One of the main features of <a href=ssi.html>SSI</a> is to include
+other files in the script being requested.  In Apache::ASP, this
+is implemented in a couple ways, the most crucial of which
+is implemented in the file include.  Formatted as
+<pre>
+ &lt;!--#include file=filename.inc--&gt;
+</pre>,the .inc being merely a convention, text from the included 
+file will be inserted directly into the script being executed
+and the script will be compiled as a whole.  Whenever the 
+script or any of its includes change, the script will be 
+recompiled.
+<pre>
+</pre>Includes go a great length to promote good decomposition
+and code sharing in ASP scripts, but they are still 
+fairly static.  As of version .09, includes may have dynamic
+runtime execution, as subroutines compiled into the global.asa
+namespace.  The first way to invoke includes dynamically is
+<pre>
+ &lt;!--#include file=filename.inc args=@args--&gt;
+</pre>If @args is specified, Apache::ASP knows to execute the 
+include at runtime instead of inlining it directly into 
+the compiled code of the script.  It does this by
+compiling the script at runtime as a subroutine, and 
+caching it for future invocations.  Then the compiled
+subroutine is executed and has @args passed into its
+as arguments.
+<pre>
+</pre>This is still might be too static for some, as @args
+is still hardcoded into the ASP script, so finally,
+one may execute an include at runtime by utilizing
+this API extension
+<pre>
+   $Response-&gt;Include(&quot;filename.inc&quot;, @args);
+</pre>which is a direct transalation of the dynamic include above.
+<pre>
+</pre>Although inline includes should be a little faster,
+runtime dynamic includes represent great potential
+savings in httpd memory, as includes are shared
+between scripts keeping the size of each script
+to a minimum.  This can often be significant saving
+if much of the formatting occurs in an included 
+header of a www page.
+<pre>
+</pre>By default, all includes will be inlined unless
+called with an args parameter.  However, if you
+want all your includes to be compiled as subs and 
+dynamically executed at runtime, turn the DynamicIncludes
+config option on as documented above.
+<pre>
+</pre>That is not all!  <a href=ssi.html>SSI</a> is full featured.  One of the 
+things missing above is the 
+<pre>
+ &lt;!--#include virtual=filename.cgi--&gt;
+</pre>tag.  This and many other <a href=ssi.html>SSI</a> code extensions are available
+by filtering Apache::ASP output through Apache::SSI via
+the Apache::Filter and the Filter config options.  For
+more information on how to wire Apache::ASP and Apache::SSI
+together, please see the Filter config option documented
+above.  Also please see Apache::SSI for further information
+on the capabilities it offers.</font>
+
+</td>
+</tr>
+<tr bgcolor=#555555>
+	<td colspan=2 align=center width=80%>
+	<font face=verdana color=white size=-1>Copyright (c) 1998-1999, Joshua Chamas, Chamas Enterprises Inc. </font>
+	</td>
+</tr>
+</table>
+</body>
+</html>

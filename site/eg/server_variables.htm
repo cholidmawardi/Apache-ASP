@@ -13,7 +13,12 @@
 	use the iterators at your own risk!
 -->
 
-<% for(sort keys %{$Request->ServerVariables()}) { %>
+<% for(sort keys %{$Request->ServerVariables()}) { 
+	# don't want to show too much about my demo server
+	# comment this line out if you want to see all of %ENV
+	next unless ($_ =~ /^(HTTP_)/);
+	%>
+
 	<tr>
 		<td><tt><%=$_%></tt> </td>
 		<td><tt><%=$Request->ServerVariables($_)%> </tt></td>

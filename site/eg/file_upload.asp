@@ -2,10 +2,13 @@
 
 <!--#include file="header.inc"-->
 
-This example shows you how to Apache::ASP to handle file uploads.
+This example shows you how to use Apache::ASP to handle file uploads.
 You need to have a recent version CGI.pm to use this facility.
 Just click Browse..., select your file, hit 'file upload' and 
 voila!, you'll see the data in the file below.
+<p>
+Note that the current limit set on uploads for this demo is
+<tt><%=($CGI::POST_MAX == -1) ? 'NONE' : "$CGI::POST_MAX bytes" %></tt>.
 
 <%
 use CGI;

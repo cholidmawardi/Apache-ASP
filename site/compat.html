@@ -1,0 +1,82 @@
+
+
+<html>
+<head>
+<title>Apache::ASP::Compatibility</title>
+</head>
+<body>
+
+<table border=0 cellpadding=2 cellspacing=8>
+<tr><td colspan=2 bgcolor=#ff5599><font size=+2>Apache::ASP</font></td></tr>
+<tr>
+
+<td valign=top bgcolor=#ffcccc>
+	<table border=0 cellpadding=0 cellspacing=2>
+	
+		<tr>
+			<td><a href=index.html>INTRO</a></td>
+		</tr>
+		
+		<tr>
+			<td><a href=syntax.html>SYNTAX</a></td>
+		</tr>
+		
+		<tr>
+			<td><a href=events.html>EVENTS</a></td>
+		</tr>
+		
+		<tr>
+			<td><a href=objects.html>OBJECTS</a></td>
+		</tr>
+		
+		<tr>
+			<td><a href=ssi.html>SSI</a></td>
+		</tr>
+		
+		<tr>
+			<td><a href=compat.html>COMPATIBILITY</a></td>
+		</tr>
+		
+		<tr>
+			<td><a href=faq.html>FAQ</a></td>
+		</tr>
+		
+		<tr>
+			<td><a href=tuning.html>TUNING</a></td>
+		</tr>
+		
+		<tr>
+			<td><a href=kudos.html>NOTES</a></td>
+		</tr>
+		
+		<tr>
+			<td><a href=support.html>SUPPORT</a></td>
+		</tr>
+		
+	</table>
+</td>
+
+<td valign=top><pre>
+</pre>=head2 CGI
+<pre>
+</pre>CGI has been the standard way of deploying web applications long before
+ASP came along.  CGI.pm is a very useful module that aids developers in 
+the building of these applications, and Apache::ASP has been made to 
+be compatible with function calls in CGI.pm.  Please see cgi.htm in the 
+./eg directory for a sample ASP script written almost entirely in CGI.
+<pre>
+</pre>As of version 0.09, use of CGI.pm for both input and output is seemless
+when working under Apache::ASP.  Thus if you would like to port existing
+CGI scripts over to Apache::ASP, all you need to do is wrap &lt;% %&gt; around
+the script to get going.  This functionality has been implemented so that
+developers may have the best of both worlds when building their 
+web applications.
+<pre>
+</pre>Following are some special notes with respect to compatibility with CGI.
+Use of CGI.pm in any of these ways was made possible through a great
+amount of work, and is not gauranteed to be portable with other perl ASP
+implementations, as other ASP implementations will likely be more limited.</td>
+</tr>
+</table>
+</body>
+</html>

@@ -1,6 +1,35 @@
-$MODULE=Apache::ASP; $VERSION = .12; $DATE="07/01/99";
+$MODULE=Apache::ASP; $VERSION = .14; $DATE="TBA";
 
 + = improvement; - = bug fix
+
+- CGI & StatINC or StatINCMatch would have bad results
+  at times, with StatINC deleting dynamically compiled
+  CGI subroutines, that were imported into other scripts
+  namespaces.
+
+  A couple tweaks, and now StatINC & CGI play nice again ;)
+  StatINCMatch should be safe to use in production with CGI. 
+  This affects in particular environments that use file upload, 
+  since CGI is loaded automatically by Apache::ASP to handle 
+  file uploads.
+
+  This fix should also affect other seemingly random 
+  times when StatINC or StatINCMatch don't seem to do 
+  the right thing.
+
++ use of ASP objects like $Response are now "use strict"
+  safe in scripts, while UniquePackages config is set.
+
++ Better handling of "use strict" errors in ASP scripts.
+  The error is detected, and the developer is pointed to the 
+  Apache error log for the exact error.  
+
+  The script with "use strict" errors will be recompiled again.  Its seems 
+  though that "use strict" will only throw its error once, so that a script 
+  can be recompiled with the same errors, and work w/o any use strict
+  error messaging.  
+
+$MODULE=Apache::ASP; $VERSION = .12; $DATE="07/01/99";
 
 - Compiles are now 10+ times faster for scripts with lots of big
   embedded perl blocks <% #perl %>
@@ -332,7 +361,7 @@ $MODULE=Apache::ASP; $VERSION = .07;
   improved garabage collection under modperl, esp. w/ file uploads
 
 
-$VERSION = .06
+$MODULE=Apache::ASP; $VERSION = .06
 
 + Application_OnStart & Application_OnEnd event handlers support.
 
@@ -381,7 +410,7 @@ $VERSION = .06
   without perl choking on the extra \r characters.
 
 
-$VERSION = .05
+$MODULE=Apache::ASP; $VERSION = .05
 
 + Added PERFORMANCE doc, which includes benchmarks + hints.
 
@@ -408,7 +437,7 @@ $VERSION = .05
   html includes, and other SSI directives
 
 
-$VERSION = .04;
+$MODULE=Apache::ASP; $VERSION = .04;
 
 + Example script eg/cgi.htm demonstrating CGI.pm use for output.
 
@@ -456,7 +485,7 @@ $VERSION = .04;
 + POD / README cleanup, formatting and HTML friendly.
 
 
-$VERSION = .03;
+$MODULE=Apache::ASP; $VERSION = .03;
 
 + Installation 'make test' now works
 
@@ -487,7 +516,7 @@ $VERSION = .03;
   Thus notation like $main::Response->Write() can be used anywhere.
 
 
-$VERSION = .02;
+$MODULE=Apache::ASP; $VERSION = .02;
 
 ++ Session Manager, won't break under denial of service attack
 
@@ -506,7 +535,7 @@ $VERSION = .02;
 - Loads Win32/OLE properly, won't break with UNIX
 
 
-$VERSION = .01;
+$MODULE=Apache::ASP; $VERSION = .01;
 
 Syntax Support
 --------------

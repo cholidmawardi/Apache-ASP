@@ -1,0 +1,213 @@
+
+
+<html>
+<head>
+<title>Apache :: ASP :: EVENTS</title>
+</head>
+<body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
+
+<table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
+<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="Apache :: ASP"></td></tr>
+<tr>
+
+<td valign=top bgcolor=#ffcccc>
+	<table border=0 cellpadding=0 cellspacing=0>
+	<tr><td align=center><hr size=1></td></tr>
+
+	
+		<tr>
+		<td><a href=index.html><font face=verdana size=-1 color=#3355cc>INTRO</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=install.html><font face=verdana size=-1 color=#3355cc>INSTALL</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=config.html><font face=verdana size=-1 color=#3355cc>CONFIG</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=syntax.html><font face=verdana size=-1 color=#3355cc>SYNTAX</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=events.html><font face=verdana size=-1 color=#3355cc>EVENTS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=objects.html><font face=verdana size=-1 color=#3355cc>OBJECTS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=ssi.html><font face=verdana size=-1 color=#3355cc>SSI</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=cgi.html><font face=verdana size=-1 color=#3355cc>CGI</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=perlscript.html><font face=verdana size=-1 color=#3355cc>PERLSCRIPT</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=faq.html><font face=verdana size=-1 color=#3355cc>FAQ</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=tuning.html><font face=verdana size=-1 color=#3355cc>TUNING</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=kudos.html><font face=verdana size=-1 color=#3355cc>CREDITS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=support.html><font face=verdana size=-1 color=#3355cc>SUPPORT</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=sites.html><font face=verdana size=-1 color=#3355cc>SITES USING</font></a></td>
+		</tr>
+		<tr><td><hr size=1></td></tr>
+		<tr>
+		<td><a href=eg/index.html><font face=verdana size=-1 color=#3355cc>EXAMPLES</font></a></td>
+		</tr>
+		
+	<tr>
+		<td align=center>
+		<hr size=1>
+		<a href=http://perl.apache.org><img 
+			src=modperl.gif border=0
+			alt="Powered by ModPerl & Apache"
+			></a>
+		<hr size=1>
+		</td>
+	</tr>
+	</table>
+</td>
+
+<td valign=top>
+<font face=verdana><font size=+1 color=#555555><b>EVENTS</b></font><p>
+The ASP platform allows developers to create Web Applications.
+In fulfillment of real software requirements, ASP allows 
+event-triggered actions to be taken, which are defined in
+a global.asa file.  The global.asa file resides in the 
+Global directory, defined as a config option , and may
+define the following actions:
+<pre>
+	Action			Event
+	------			------
+        Script_OnStart *	Beginning of Script execution
+        Script_OnEnd *		End of Script execution
+	Application_OnStart	Beginning of Application
+	Application_OnEnd	End of Application
+	Session_OnStart		Beginning of user Session.
+	Session_OnEnd		End of user Session.
+
+  * These are API extensions that are not portable, but were
+    added because they are incredibly useful
+</pre>These actions must be defined in the $Global/global.asa file
+as subroutines, for example:
+<pre>
+  sub Session_OnStart {
+      $Application-&gt;{$Session-&gt;SessionID()} = started;
+  }
+</pre>Sessions are easy to understand.  When visiting a page in a
+web application, each user has one unique $Session.  This 
+session expires, after which the user will have a new
+$Session upon revisiting.
+<pre>
+</pre>A web application starts when the user visits a page in that
+application, and has a new $Session created.  Right before
+the first $Session is created, the $Application is created.
+When the last user $Session expires, that $Application 
+expires also.</font>
+
+	<hr size=1>
+	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
+	<a href=#Script_OnStart%20%26%20Script_OnEnd><font color=#3355cc>Script_OnStart & Script_OnEnd</font></a><br><a href=#Application_OnStart><font color=#3355cc>Application_OnStart</font></a><br><a href=#Application_OnEnd><font color=#3355cc>Application_OnEnd</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#Session_OnStart><font color=#3355cc>Session_OnStart</font></a><br><a href=#Session_OnEnd><font color=#3355cc>Session_OnEnd</font></a><br>	
+	</font>
+	</td>
+	</tr>
+	</table>
+	<hr size=1>
+	<p>
+
+	<p>
+	<a name=Script_OnStart%20%26%20Script_OnEnd></a>
+	<font face=verdana><font size=+0 color=#555555><b>Script_OnStart & Script_OnEnd</b></font><p>
+The script events are used to run any code for all scripts
+in an application defined by a global.asa.  Often, you would
+like to run the same code for every script, which you would
+otherwise have to add by hand, or add with a file include,
+but with these events, just add your code to the global.asa,
+and it will be run.  
+<pre>
+</pre>There is one caveat.  Code in Script_OnEnd is not gauranteed 
+to be run when the user hits a STOP button, since the program
+execution ends immediately at this event.  To always run critical
+code, use the API extension:
+<pre>
+	$Server-&gt;RegisterCleanup()</pre></font>
+	
+	<p>
+	<a name=Application_OnStart></a>
+	<font face=verdana><font size=+0 color=#555555><b>Application_OnStart</b></font><p>
+This event marks the beginning of an ASP application, and 
+is run just before the Session_OnStart of the first Session
+of an application.  This event is useful to load up
+$Application with data that will be used in all user sessions.</font>
+	
+	<p>
+	<a name=Application_OnEnd></a>
+	<font face=verdana><font size=+0 color=#555555><b>Application_OnEnd</b></font><p>
+The end of the application is marked by this event, which
+is run after the last user session has timed out for a 
+given ASP application.</font>
+	
+	<p>
+	<a name=Session_OnStart></a>
+	<font face=verdana><font size=+0 color=#555555><b>Session_OnStart</b></font><p>
+Triggered by the beginning of a user's session, Session_OnStart
+get's run before the user's executing script, and if the same
+session recently timed out, after the session's triggered Session_OnEnd.
+<pre>
+</pre>The Session_OnStart is particularly useful for caching database data,
+and avoids having the caching handled by clumsy code inserted into
+each script being executed.</font>
+	
+	<p>
+	<a name=Session_OnEnd></a>
+	<font face=verdana><font size=+0 color=#555555><b>Session_OnEnd</b></font><p>
+Triggered by a user session ending, Session_OnEnd can be useful
+for cleaning up and analyzing user data accumulated during a session.
+<pre>
+</pre>Sessions end when the session timeout expires, and the StateManager
+performs session cleanup.  The timing of the Session_OnEnd does not
+occur immediately after the session times out, but when the first 
+script runs after the session expires, and the StateManager allows
+for that session to be cleaned up.  
+<pre>
+</pre>So on a busy site with default SessionTimeout (20 minutes) and 
+StateManager (10 times) settings, the Session_OnEnd for a particular 
+session should be run near 22 minutes past the last activity that Session saw.
+A site infrequently visited will only have the Session_OnEnd run
+when a subsequent visit occurs, and theoretically the last session
+of an application ever run will never have its Session_OnEnd run.
+<pre>
+</pre>Thus I would not put anything mission-critical in the Session_OnEnd,
+just stuff that would be nice to run whenever it gets run.</font>
+	
+
+</td>
+</tr>
+<tr bgcolor=#555555>
+	<td colspan=2 align=center width=80%>
+	<font face=verdana color=white size=-1>Copyright (c) 1998-1999, Joshua Chamas, Chamas Enterprises Inc. </font>
+	</td>
+</tr>
+</table>
+</body>
+</html>

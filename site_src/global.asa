@@ -1,0 +1,153 @@
+
+use Data::Dumper;
+
+$DEBUG = 0;
+%FILES = ('index' => 'INTRO',
+	  'install' => 'INSTALL',
+	  'config' => 'CONFIG',
+	  'syntax' => 'SYNTAX',
+	  'events' => 'EVENTS',
+	  'objects' => 'OBJECTS',
+	  'ssi' => 'SSI',
+	  'cgi' => 'CGI',
+	  'perlscript' => 'PERLSCRIPT',
+	  'faq' => 'FAQ',
+	  'tuning' => 'TUNING',
+	  'kudos' => 'CREDITS',
+	  'support' => 'SUPPORT',
+	  'sites' => 'SITES USING',
+	 );
+
+%ALIASES = (
+	    'DESCRIPTION' => 'INTRO',
+	    'NOTES' => 'CREDITS',
+	   );
+
+# auto link these key words, includes %FILES inverted
+%LINKS = (
+	  'Apache HTTP Server' => 'http://www.apache.org',
+	  'mod_perl' => 'http://perl.apache.org',
+	  'CGI.pm' => 'http://stein.cshl.org/WWW/software/CGI/cgi_docs.html',
+	  'PerlScript' => 'http://www.activestate.com/ActivePerl/',
+	  'IIS' => 'http://www.microsoft.com/iis/',
+	 );
+
+# purify files and add as links
+for(keys %FILES) {
+    delete($FILES{$_}) unless -e "$_.html";
+    $LINKS{$FILES{$_}} = "$_.html";
+}
+
+open(ASP, "../ASP.pm") || die("can't open ASP.pm: $!");
+my $data = join('', <ASP>);
+$data =~ s/.*\n__END__//s;
+$ASP = { name => 'ASP', stack => [], level => 0};
+my @levels;
+unshift(@levels, $ASP);
+
+my $level = 0;
+$data =~ s/\n=(over|back)\s*?\n/\n/sg;
+while($data =~ s/\n=(head\d|item) (.*?)\n+(.+?\n+)?(\n\=(head|item)|$)/$4/is) {
+    my($type, $name, $body) = ($1,$2,$3);
+    $body =~ s/\s+$//s;
+
+    $name = $ALIASES{$name} || $name;
+#    print "----------- $type $name $body ----------- \n\n";
+#    warn substr($data, 0, 200)."\n";
+#    $body =~ s/\n=over\s*$//s;
+    my $item = { 
+		name => $name,
+		body => $body,
+		stack => [],
+		level => ($level + 1),
+	       };
+
+    if($type =~ /^head(\d)/) {
+	my $current = $1;		
+	$item->{level} = $current;
+	dbg("$current current level $name");
+	while($current <= $levels[0]->{level}) {
+	    dbg("shifting $levels[0]->{name}");
+	    shift(@levels);
+	}
+	push(@{$levels[0]->{stack}}, $item);
+	dbg("$level unshifting $item->{name}");
+	unshift(@levels, $item);
+	$level = $item->{level};
+    } else {
+	push(@{$levels[0]->{stack}}, $item);	
+    }
+}
+
+dbg(dmp($ASP));
+#exit;
+
+sub Script_OnStart {
+#    $Response->{Clean} = 1;
+#    $Response->Include("header.inc");
+}
+
+sub Script_OnEnd {
+#    $Response->Include("footer.inc");
+}
+
+sub dmp {
+    Data::Dumper->Dump([@_]);
+}
+
+sub dbg {
+    if($DEBUG) {
+	print @_ , "\n";
+    }
+}
+
+sub pod2html {
+    my($body, $title, $depth) = @_;
+
+    if($title) {
+	$depth ||= 1;
+	my $size = 2 - $depth;
+	$size = ($size > -1) ? "+$size" : $size;
+	
+	$title = "<font size=$size color=#555555><b>$title</b></font><p>\n";
+    }
+
+    my @lines = split(/\n/, $body);
+    my $pre = 0;
+    my @newlines;
+    for(@lines) {
+	my $pre_tag = '';
+	if(/^\s+[^\s]/ || /^\s*$/) {
+	    if(! $pre) {
+		#			$_ = "<pre>$_";
+		$pre_tag = "<pre>";
+		$pre = 1;
+	    }
+	} else {
+	    if($pre) {
+		#			$_ = "</pre>$_";	
+		$pre_tag = "</pre>";
+		$pre = 0;
+	    }
+	}
+	if($pre) {
+	    $_ =~ s/\s*$//;
+	}
+	$_ = $Server->HTMLEncode($_);
+	$_ = $pre_tag . $_;
+	push(@newlines, $_);
+    }
+    $body = join("\n", @newlines);
+    $pre and $body .= "</pre>";
+
+    #$body =~ s/\n\s*\n+/<p>/isg;
+    $body =~ s|(http://\w+\.[\w\.\/\-]+)|<a href=$1>$1</a>|sg;
+    $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<a href=mailto:$1$2>$1</a>|sg;
+
+    $body =~ s|\n\n</pre>|\n</pre>|isg;
+    for(keys %LINKS) {
+	$body =~ s|(\s)($_)(\s)|$1<a href=$LINKS{$_}>$2</a>$3|sg;
+    }
+
+    '<font face=verdana>'.$title.$body.'</font>';
+}

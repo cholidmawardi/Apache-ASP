@@ -20,7 +20,7 @@ getopts('hsdbo:');
 
 if($opt_h || ! @ARGV) {
     print <<HELP;
-Usage: asp [-hsdb] file1 \@arguments file2 \@arguments ...
+Usage: asp [-hsdb] [-o directory] file1 \@arguments file2 \@arguments ...
 
     -h  Help you are getting now!
     -s  Setup \$Session and \$Application state for script.

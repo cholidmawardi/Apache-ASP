@@ -1,0 +1,196 @@
+
+
+<html>
+<head>
+<title>Apache :: ASP :: CGI</title>
+</head>
+<body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
+
+<table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
+<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="Apache :: ASP"></td></tr>
+<tr>
+
+<td valign=top bgcolor=#ffcccc>
+	<table border=0 cellpadding=0 cellspacing=0>
+	<tr><td align=center><hr size=1></td></tr>
+
+	
+		<tr>
+		<td><a href=index.html><font face=verdana size=-1 color=#3355cc>INTRO</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=install.html><font face=verdana size=-1 color=#3355cc>INSTALL</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=config.html><font face=verdana size=-1 color=#3355cc>CONFIG</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=syntax.html><font face=verdana size=-1 color=#3355cc>SYNTAX</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=events.html><font face=verdana size=-1 color=#3355cc>EVENTS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=objects.html><font face=verdana size=-1 color=#3355cc>OBJECTS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=ssi.html><font face=verdana size=-1 color=#3355cc>SSI</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=cgi.html><font face=verdana size=-1 color=#3355cc>CGI</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=perlscript.html><font face=verdana size=-1 color=#3355cc>PERLSCRIPT</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=faq.html><font face=verdana size=-1 color=#3355cc>FAQ</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=tuning.html><font face=verdana size=-1 color=#3355cc>TUNING</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=kudos.html><font face=verdana size=-1 color=#3355cc>CREDITS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=support.html><font face=verdana size=-1 color=#3355cc>SUPPORT</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=sites.html><font face=verdana size=-1 color=#3355cc>SITES USING</font></a></td>
+		</tr>
+		<tr><td><hr size=1></td></tr>
+		<tr>
+		<td><a href=eg/index.html><font face=verdana size=-1 color=#3355cc>EXAMPLES</font></a></td>
+		</tr>
+		
+	<tr>
+		<td align=center>
+		<hr size=1>
+		<a href=http://perl.apache.org><img 
+			src=modperl.gif border=0
+			alt="Powered by ModPerl & Apache"
+			></a>
+		<hr size=1>
+		</td>
+	</tr>
+	</table>
+</td>
+
+<td valign=top>
+<font face=verdana><font size=+1 color=#555555><b>CGI</b></font><p>
+CGI has been the standard way of deploying web applications long before
+ASP came along.  <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> is a very useful module that aids developers in 
+the building of these applications, and Apache::ASP has been made to 
+be compatible with function calls in CGI.pm.  Please see cgi.htm in the 
+./site/eg directory for a sample ASP script written almost entirely in CGI.
+<pre>
+</pre>As of version 0.09, use of <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> for both input and output is seemless
+when working under Apache::ASP.  Thus if you would like to port existing
+cgi scripts over to Apache::ASP, all you need to do is wrap &lt;% %&gt; around
+the script to get going.  This functionality has been implemented so that
+developers may have the best of both worlds when building their 
+web applications.
+<pre>
+</pre>Following are some special notes with respect to compatibility with CGI.
+Use of <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> in any of these ways was made possible through a great
+amount of work, and is not gauranteed to be portable with other perl ASP
+implementations, as other ASP implementations will likely be more limited.</font>
+
+	<hr size=1>
+	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
+	<a href=#Query%20Object%20Initialization><font color=#3355cc>Query Object Initialization</font></a><br><a href=#CGI%20headers><font color=#3355cc>CGI headers</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#print%28%29ing%20CGI><font color=#3355cc>print()ing CGI</font></a><br><a href=#File%20Upload><font color=#3355cc>File Upload</font></a><br>	
+	</font>
+	</td>
+	</tr>
+	</table>
+	<hr size=1>
+	<p>
+
+	<p>
+	<a name=Query%20Object%20Initialization></a>
+	<font face=verdana><font size=+0 color=#555555><b>Query Object Initialization</b></font><p>
+You may create a <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> $query object like so:
+<pre>
+	use CGI;
+	my $query = new CGI;
+</pre>As of Apache::ASP version 0.09, form input may be read in 
+by <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> upon initialization.  Before, Apache::ASP would 
+consume the form input when reading into $Request-&gt;Form(), 
+but now form input is cached, and may be used by <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> input
+routines.</font>
+	
+	<p>
+	<a name=CGI%20headers></a>
+	<font face=verdana><font size=+0 color=#555555><b>CGI headers</b></font><p>
+Not only can you use the <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> $query-&gt;header() method
+to put out headers, but with the CgiHeaders config option
+set to true, you can also print &quot;Header: value\n&quot;, and add 
+similar lines to the top of your script, like:
+<pre>
+ Some-Header: Value
+ Some-Other: OtherValue
+
+ &lt;html&gt;&lt;body&gt; Script body starts here.
+</pre>Once there are no longer any cgi sytle headers, or the 
+there is a newline, the body of the script begins. So
+if you just had an asp script like:
+<pre>
+    print join(&quot;:&quot;, %{$Request-&gt;QueryString});
+</pre>You would likely end up with no output, as that line is
+interpreted as a header because of the semicolon.  When doing
+basic debugging, as long as you start the page with &lt;html&gt;
+you will avoid this problem.</font>
+	
+	<p>
+	<a name=print%28%29ing%20CGI></a>
+	<font face=verdana><font size=+0 color=#555555><b>print()ing CGI</b></font><p>
+CGI is notorious for its print() statements, and the functions in <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> 
+usually return strings to print().  You can do this under Apache::ASP,
+since print just aliases to $Response-&gt;Write().  Note that $| has no
+affect.
+<pre>
+	print $query-&gt;header();
+	print $query-&gt;start_form();</pre></font>
+	
+	<p>
+	<a name=File%20Upload></a>
+	<font face=verdana><font size=+0 color=#555555><b>File Upload</b></font><p>
+CGI.pm is used for implementing reading the input from file upload.  You
+may create the file upload form however you wish, and then the 
+data may be recovered from the file upload by using $Request-&gt;Form().
+Data from a file upload gets written to a filehandle, that may in
+turn be read from.  The original file name that was uploaded is the 
+name of the file handle.
+<pre>
+	my $filehandle = $Request-&gt;Form('file_upload_field_name');
+	print $filehandle; # will get you the file name
+	my $data;
+	while(read($filehandle, $data, 1024)) {
+		# data from the uploaded file read into $data
+	};
+</pre>Please see the docs on <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> (try perldoc CGI) for more information
+on this topic, and ./site/eg/file_upload.asp for an example of its use.</font>
+	
+
+</td>
+</tr>
+<tr bgcolor=#555555>
+	<td colspan=2 align=center width=80%>
+	<font face=verdana color=white size=-1>Copyright (c) 1998-1999, Joshua Chamas, Chamas Enterprises Inc. </font>
+	</td>
+</tr>
+</table>
+</body>
+</html>

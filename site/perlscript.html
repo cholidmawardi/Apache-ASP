@@ -1,0 +1,151 @@
+
+
+<html>
+<head>
+<title>Apache :: ASP :: PERLSCRIPT</title>
+</head>
+<body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
+
+<table border=0 cellpadding=5 cellspacing=0 height=95% width=100%>
+<tr><td colspan=2 bgcolor=#ff4488><img src=apache_asp.gif alt="Apache :: ASP"></td></tr>
+<tr>
+
+<td valign=top bgcolor=#ffcccc>
+	<table border=0 cellpadding=0 cellspacing=0>
+	<tr><td align=center><hr size=1></td></tr>
+
+	
+		<tr>
+		<td><a href=index.html><font face=verdana size=-1 color=#3355cc>INTRO</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=install.html><font face=verdana size=-1 color=#3355cc>INSTALL</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=config.html><font face=verdana size=-1 color=#3355cc>CONFIG</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=syntax.html><font face=verdana size=-1 color=#3355cc>SYNTAX</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=events.html><font face=verdana size=-1 color=#3355cc>EVENTS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=objects.html><font face=verdana size=-1 color=#3355cc>OBJECTS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=ssi.html><font face=verdana size=-1 color=#3355cc>SSI</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=cgi.html><font face=verdana size=-1 color=#3355cc>CGI</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=perlscript.html><font face=verdana size=-1 color=#3355cc>PERLSCRIPT</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=faq.html><font face=verdana size=-1 color=#3355cc>FAQ</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=tuning.html><font face=verdana size=-1 color=#3355cc>TUNING</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=kudos.html><font face=verdana size=-1 color=#3355cc>CREDITS</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=support.html><font face=verdana size=-1 color=#3355cc>SUPPORT</font></a></td>
+		</tr>
+		
+		<tr>
+		<td><a href=sites.html><font face=verdana size=-1 color=#3355cc>SITES USING</font></a></td>
+		</tr>
+		<tr><td><hr size=1></td></tr>
+		<tr>
+		<td><a href=eg/index.html><font face=verdana size=-1 color=#3355cc>EXAMPLES</font></a></td>
+		</tr>
+		
+	<tr>
+		<td align=center>
+		<hr size=1>
+		<a href=http://perl.apache.org><img 
+			src=modperl.gif border=0
+			alt="Powered by ModPerl & Apache"
+			></a>
+		<hr size=1>
+		</td>
+	</tr>
+	</table>
+</td>
+
+<td valign=top>
+<font face=verdana><font size=+1 color=#555555><b>PERLSCRIPT</b></font><p>
+Much work has been done to bring compatibility with ASP applications
+written in <a href=http://www.activestate.com/ActivePerl/>PerlScript</a> under IIS.  Most of that work revolved around
+bringing a Win32::OLE Collection interface to many of the objects
+in Apache::ASP, which are natively written as perl hashes.
+<pre>
+</pre>The following objects in Apache::ASP respond as Collections:
+<pre>
+        $Application
+	$Session
+	$Request-&gt;Form
+	$Request-&gt;QueryString
+	$Request-&gt;Cookies
+	$Response-&gt;Cookies
+	$Response-&gt;Cookies('Any Cookie')
+</pre>And as such may be used with the following syntax, as compared
+with the Apache::ASP native calls.  Please note the native Apache::ASP
+interface is compatible with the deprecated <a href=http://www.activestate.com/ActivePerl/>PerlScript</a> interface.
+<pre>
+	C = <a href=http://www.activestate.com/ActivePerl/>PerlScript</a> Compatibility	N = Native Apache::ASP
+
+        ## Collection-&gt;Contents($name)
+	[C] $Application-&gt;Contents('XYZ')
+	[N] $Application-&gt;{XYZ}
+
+	## Collection-&gt;SetProperty($property, $name, $value)
+	[C] $Application-&gt;Contents-&gt;SetProperty('Item', 'XYZ', &quot;Fred&quot;);
+	[N] $Application-&gt;{XYZ} = &quot;Fred&quot;
+
+	## Collection-&gt;GetProperty($property, $name)
+	[C] $Application-&gt;Contents-&gt;GetProperty('Item', 'XYZ')
+	[N] $Application-&gt;{XYZ}
+
+	## Collection-&gt;Item($name)
+        [C] print $Request-&gt;QueryString-&gt;Item('message'), &quot;&lt;br&gt;\n\n&quot;;
+	[N] print $Request-&gt;{QueryString}{'message'}, &quot;&lt;br&gt;\n\n&quot;;
+
+	## Working with Cookies
+	[C] $Response-&gt;SetProperty('Cookies', 'Testing', 'Extra');
+	[C] $Response-&gt;SetProperty('Cookies', 'Testing', {'Path' =&gt; '/'});
+	[C] print $Request-&gt;Cookies(Testing) . &quot;&lt;br&gt;\n&quot;;
+	[N] $Response-&gt;{Cookies}{Testing} = {Value =&gt; Extra, Path =&gt; '/'};
+	[N] print $Request-&gt;{Cookies}{Testing} . &quot;&lt;br&gt;\n&quot;;
+</pre>Several incompatibilities exist between <a href=http://www.activestate.com/ActivePerl/>PerlScript</a> and Apache::ASP:
+<pre>
+ &gt; Collection-&gt;{Count} property has not been implemented.
+ &gt; VBScript dates may not be used for Expires property of cookies.
+ &gt; Win32::OLE::in may not be used.  Use keys() to iterate over Collections.
+ &gt; The -&gt;{Item} property does not work, use the -&gt;Item() method.</pre></font>
+
+</td>
+</tr>
+<tr bgcolor=#555555>
+	<td colspan=2 align=center width=80%>
+	<font face=verdana color=white size=-1>Copyright (c) 1998-1999, Joshua Chamas, Chamas Enterprises Inc. </font>
+	</td>
+</tr>
+</table>
+</body>
+</html>

@@ -4,12 +4,8 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 0.12;
+$VERSION = 0.14;
 
-srand(time()); 
-
-#use strict;
-#use Apache();
 use MLDBM;
 use SDBM_File;
 use Data::Dumper;
@@ -60,6 +56,11 @@ $Apache::ASP::StatINCInit    = 1;
 
 %Apache::ASP::LoadModuleErrors = 
   (
+   'Filter' => 
+   "Apache::Filter was not loaded correctly for using SSI filtering.  ".
+   "If you don't want to use filtering, make sure you turn the Filter ".
+   "config option off whereever it's being used",
+
    Clean => undef,
    
    CreateObject => 
@@ -371,6 +372,14 @@ sub new {
 	$self->{stat_inc} = 1;
     }
 
+    # Ken said no need for seed ;)
+#    unless($Apache::ASP::RandSeed) {
+#	my $seed = $$.time;
+#	$self->Debug("seed srand with $seed");
+#	srand($seed);
+#	$Apache::ASP::RandSeed = 1;
+#    }
+
     if($self->{no_cache}) {
 	# this way subsequent recompiles overwrite each other
 	$self->{id} = "NoCache";
@@ -393,21 +402,23 @@ sub new {
     # filtering support
     my $filter_config = $r->dir_config('Filter') || $Apache::ASP::Filter;
     if($filter_config && ($filter_config !~ /off/io)) {
-        if($r->can('filter_input') && $r->can('get_handlers')) {
-	    $self->{filter} = 1;
-	    #X: do something with the return code, can't now because
-	    # apache constants aren't working on my win32
-	    my($fh, $rc) = $r->filter_input();
-	    $self->{filehandle} = $fh;
-	} else {
-	    if(! $r->can('get_handlers')) {
-		$self->Error("You need at least mod_perl 1.16 to use SSI filtering");
-	    } else {
-		$self->Error("Apache::Filter was not loaded correctly for using SSI filtering.  ".
-			     "If you don't want to use filtering, make sure you turn the Filter ".
-			     "config option off whereever it's being used");
-	    }
-	}
+        if($self->LoadModules(Filter, 'Apache::Filter') 
+	   && $r->can('filter_input') && $r->can('get_handlers')) 
+	  {
+	      $self->{filter} = 1;
+	      #X: do something with the return code, can't now because
+	      # apache constants aren't working on my win32
+	      my($fh, $rc) = $r->filter_input();
+	      $self->{filehandle} = $fh;
+	  } else {
+	      if(! $r->can('get_handlers')) {
+		  $self->Error("You need at least mod_perl 1.16 to use SSI filtering");
+	      } else {
+		  $self->Error("Apache::Filter was not loaded correctly for using SSI filtering.  ".
+			       "If you don't want to use filtering, make sure you turn the Filter ".
+			       "config option off whereever it's being used");
+	      }
+	  }
     }
 
     # make sure we have a cookie path config'd if we need one for state
@@ -959,16 +970,28 @@ sub Compile {
     $self->Debug("compiling into package $self->{'package'}") if $self->{debug};
 
     my($eval) = 
-	join(" ;; ", 
-	     "package $self->{'package'}; ",
-	     "sub $subid { ",
-	     ' @_ = ();',
-	     $script,
-	     '}',
-	     );
+      join(" ;; ", 
+	   "package $self->{'package'}; ",
+	   'no strict;', 
+	   "use vars qw(\$".join(" \$",@Apache::ASP::Objects).');',
+	   "sub $subid { ",
+	   ' return(1) unless $_[0]; @_ = ();',
+	   $script,
+	   '}',
+	  );
 
 #    $self->Debug($eval);
     eval $eval;
+    
+    # dummy execute, to catch use strict error, where there is
+    # no die, just STDERR to error log
+    unless($@) {
+	eval { &$subid(0) };
+	if($@) {
+	    $@ = "Probably use strict error, please see error log for more info: $@";
+	}
+    }
+
     if($@) {
 	$self->Error($@);
 	$self->{compile_error} .= "\n$@\n";
@@ -1025,7 +1048,7 @@ sub Execute {
     #    $self->{GlobalASA}->RequestOnStart();
     
 #    $self->{r}->soft_timeout(1);
-    eval " &$subid ";  
+    eval  { &$subid(1) };
     if($@ && $@ !~ /Apache\:\:exit/) { 
 	$self->Error($@); 
     }
@@ -1358,7 +1381,8 @@ sub Escape {
 sub StatINC {
     my $self = shift;
     my $stats = 0;
-    
+#    $self->Debug("doing stat inc");
+
     # include necessary libs, without nice error message...
     # we only do this once if successful, to speed up code a bit,
     # and load success bool into global. otherwise keep trying
@@ -1399,6 +1423,12 @@ sub StatINC {
 	if($mtime > $Apache::ASP::Stat{$file}) {
 	    $self->Debug("reloading", {$key => $file});
 	    $stats++; # count files we have reloaded
+	    $self->StatRegisterAll();
+
+	    # we need to explicitly re-register a namespace that 
+	    # we are about to undef, in case any imports happened there
+	    # since last we checked, so we don't delete duplicate symbols
+	    $self->StatRegister($key, $file, $mtime);
 
 	    my $class = &Apache::Symbol::file2class($key);
 	    my $sym = Devel::Symdump->new($class);
@@ -1409,7 +1439,6 @@ sub StatINC {
 		my $code = \&{$function};
 		next if $Apache::ASP::Codes{$code}{count} > 1;
 
-#		$self->Debug("undef code $function: $code");
 		if($is_global_package) {
 		    # skip undef if id is an include or script 
 		    if($CompiledIncludes{$function}) {
@@ -1422,6 +1451,7 @@ sub StatINC {
 		    }
 		}
 
+#		$self->Debug("undef code $function: $code");
 		&Apache::Symbol::undef($code);
 		delete $Apache::ASP::Codes{$code};
 	    }
@@ -1454,6 +1484,7 @@ sub StatINC {
 	    # we want to register INC now in case any new libs were
 	    # added when this module was reloaded
 	    $self->StatRegisterAll();
+#	    $self->StatRegisterAll();
 	}
     }
 
@@ -1477,6 +1508,14 @@ sub StatRegister {
     if($class eq 'Apache' or $class eq 'Apache::Constants') {
 	$self->Debug("skipping StatINC register of $class");
 	return;
+    }
+
+    $self->Debug("stat register of $key $file $class");
+    if($class eq 'CGI') {
+	# must compensate for its autoloading behavior, and 
+	# precompile all the routines, so we can register them
+	# and not delete them later
+	CGI->compile(':all');
     }
 
     my $sym = Devel::Symdump->new($class);
@@ -1922,7 +1961,7 @@ sub new {
     my $form = {};
     if(($r->method() || '') eq "POST") {	
 	if($ENV{CONTENT_TYPE}=~ m|^multipart/form-data|) {
-	    eval 'use CGI qw(:private_tempfiles);';
+	    eval 'use CGI qw(-private_tempfiles);';
 	    if($@) { 
 		$self->{asp}->Error("can't use file upload without CGI.pm: $@");
 	    } else {		
@@ -3690,14 +3729,14 @@ __END__
 
 =head1 DESCRIPTION
 
-This module provides a Active Server Pages port to Apache with perl
-as the host scripting language. Active Server Pages is a web 
-application platform that originated with the Microsoft IIS server.  
-Under Apache for both Win32 and Unix, it allows a developer to 
-create dynamic web applications with session management and perl code
-embedded in static html files.
+This perl module provides an Active Server Pages port to the 
+Apache HTTP Server with perl as the host scripting language. 
+Active Server Pages is a web application platform that originated 
+with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
+it allows a developer to create dynamic web applications with session 
+management and perl code embedded in static html files.
 
-This is a portable solution, similar to ActiveWare PerlScript
+This is a portable solution, similar to ActiveState PerlScript
 and MKS PScript implementation of perl for IIS ASP.  Work has
 been done and will continue to make ports to and from these
 other implementations as seemless as possible.
@@ -3707,12 +3746,22 @@ with the mod_perl module enabled. See http://www.apache.org and
 http://perl.apache.org for futher information.
 
 For database access, ActiveX, and scripting language issues, please read 
-the FAQ at the end of this document.
+the FAQ section.
 
-=head2 INSTALLATION
+=head1 INSTALL
 
-Apache::ASP installs easily using the make or nmake commands as
-shown below.  Otherwise, just copy ASP.pm to $PERLLIB/site/Apache
+The latest Apache::ASP can be found at your nearest CPAN,
+and also:
+
+  http://www.perl.com/CPAN-local/modules/by-module/Apache/
+
+As a perl user, you should make yourself familiar with 
+the CPAN.pm module, and how it may be used to install
+Apache::ASP, and other related modules.
+
+Once you have downloaded it, Apache::ASP installs easily using 
+the make or nmake commands as shown below.  Otherwise, just 
+copy ASP.pm to $PERLLIB/site/Apache
 
   > perl Makefile.PL
   > make 
@@ -3721,453 +3770,437 @@ shown below.  Otherwise, just copy ASP.pm to $PERLLIB/site/Apache
 
   * use nmake for win32
 
-=head2 CONFIG
+Please note that you must first have the Apache HTTP Server
+& mod_perl installed before using this module in a web server
+environment.  The offline mode for building static html may
+be used with just perl.
 
-Use with Apache.  Copy the /eg directory from the ASP installation 
+=head1 CONFIG
+
+Use with Apache.  Copy the ./site/eg directory from the ASP installation 
 to your Apache document tree and try it out!  You have to put
 
   AllowOverride All
 
 in your <Directory> config section to let the .htaccess file in the 
-/eg installation directory do its work.
+./site/eg installation directory do its work.
 
 If you want a STARTER config file, just look at the .htaccess
-file in the /eg directory.
+file in the ./site/eg directory.
 
-Here is a Location directive that you might (do not) put in a *.conf Apache 
-configuration file.  It describes the ASP variables that you 
-can set.  Set the optional ones if you want, the defaults are fine...
+Here is a Location directive that you might put in a *.conf Apache 
+configuration file.  Set the optional ones if you want, 
+the defaults are fine.  The settings are documented below.
 
-  <Location /asp/>    
-
-  ##ASP##PERL##APACHE##UNIX##WINNT##ASP##PERL##APACHE##NOT##IIS##ASP##
-  ##
-  ## DOCUMENTATION for the config options, only!  DO NOT paste this 
-  ## configuration information directly into an Apache *.conf file
-  ## unless you know what you are setting with these options.
-  ##
-  ##ASP##PERL##APACHE##ACTIVE##SERVER##PAGES##SCRIPTING##FREE##PEACE##
-
-  ###########################################################
-  ## mandatory 
-  ###########################################################
-  
-  # Generic apache directives to make asp start ticking.
+ # Generic apache directives to make asp start ticking.
+ <Location /asp/>    
   SetHandler perl-script
   PerlHandler Apache::ASP
-  
-  # Global
-  # ------
-  # Global is the nerve center of an ASP application, in which
-  # the global.asa may reside, which defines the web application's 
-  # event handlers.  
-  #
-  # This directory is pushed onto @INC, you will be able 
-  # to "use" and "require" files in this directory, so perl modules 
-  # developed for this application may be dropped into this directory, 
-  # for easy use.
-  #
-  # Unless StateDir is configured, this directory must be some 
-  # writeable directory by the web server.  $Session and $Application 
-  # object state files will be stored in this directory.  If StateDir
-  # is configured, then ignore this paragraph, as it overrides the 
-  # Global directory for this purpose.
-  # 
-  # Includes, specified with <!--#include file=somefile.inc--> 
-  # or $Response->Include() syntax, may also be in this directory, 
-  # please see section on includes for more information.
-  #
   PerlSetVar Global /tmp
-  
-  ###########################################################
-  ## optional
-  ###########################################################
-  
-  # CookiePath
-  # ----------
-  # URL root that client responds to by sending the session cookie.
-  # If your asp application falls under the server url "/asp", 
-  # then you would set this variable to /asp.  This then allows
-  # you to run different applications on the same server, with
-  # different user sessions for each application.
-  #
-  PerlSetVar CookiePath /   
-  
-  # GlobalPackage
-  # -------------
-  # Perl package namespace that all scripts, includes, & global.asa
-  # events are compiled into.  By default, GlobalPackage is some
-  # obsure name that is uniquely generated from the file path of 
-  # the Global directory, and global.asa file.  The use of explicitly
-  # naming the GlobalPackage is to allow scripts access to globals
-  # and subs defined in a perl module that is included with commands like:
-  #
-  #   in perl script: use Some::Package;
-  #   in apache conf: PerlModule Some::Package
-  #
-  PerlSetVar GlobalPackage Some::Package
-
-  # UniquePackages
-  # --------------
-  # default 0.  Set to 1 to emulate pre-v.10 ASP script compilation 
-  # behavior, which compiles each script into its own perl package.
-  #
-  # Before v.10, ASP scripts were compiled into their own perl package
-  # namespace.  This allowed ASP scripts in the same ASP application
-  # to defined subroutines of the same name without a problem.  
-  # 
-  # As of v.10, ASP scripts in a web application are compiled into the 
-  # *same* perl package by default, so these scripts, their includes, and the 
-  # global.asa events all share common globals & subroutines defined by each other.
-  # The problem for some developers was that they would at times define a 
-  # subroutine of the same name in 2+ scripts, and one subroutine definition would
-  # redefine the other one because of the namespace collision.
-  # 
-  PerlSetVar UniquePackages 0
-  
-  # AllowSessionState
-  # -----------------
-  # Set to 0 for no session tracking, 1 by default
-  # If Session tracking is turned off, performance improves,
-  # but the $Session object is inaccessible.
-  #
-  PerlSetVar AllowSessionState 1    
-  
-  # SessionTimeout
-  # --------------
-  # Default 20 minutes, when a user's session has been inactive for this
-  # period of time, the Session_OnEnd event is run, if defined, for 
-  # that session, and the contents of that session are destroyed.
-  #
-  PerlSetVar SessionTimeout 20 
-  
-  # SecureSession
-  # -------------
-  # default 0.  Sets the secure tag for the session cookie, so that the cookie
-  # will only be transimitted by the browser under https transmissions.
-  #	
-  PerlSetVar SecureSession 1
-  
-  # Debug
-  # -----
-  # 1 for server log debugging, 2 for extra client html output
-  # Use 1 for production debugging, use 2 for development.
-  # Turn off if you are not debugging.
-  #
-  PerlSetVar Debug 2	
-  
-  # BufferingOn
-  # -----------
-  # default 1, if true, buffers output through the response object.
-  # $Response object will only send results to client browser if
-  # a $Response->Flush() is called, or if the asp script ends.  Lots of 
-  # output will need to be flushed incrementally.
-  # 
-  # If false, 0, the output is immediately written to the client,
-  # CGI style.  There will be a performance hit server side if output
-  # is flushed automatically to the client, but is probably small.
-  #
-  # I would leave this on, since error handling is poor, if your asp 
-  # script errors after sending only some of the output.
-  #
-  PerlSetVar BufferingOn 1
-  
-  # StatINC
-  # -------
-  # default 0, if true, reloads perl libraries that have changed
-  # on disk automatically for ASP scripts.  If false, the www server
-  # must be restarted for library changes to take effect.
-  #
-  # A known bug is that any functions that are exported, e.g. confess 
-  # Carp qw(confess), will not be refreshed by StatINC.  To refresh
-  # these, you must restart the www server.  
-  #
-  # This setting should be used in development only because it is so slow.
-  # For a production version of StatINC, see StatINCMatch.
-  #
-  PerlSetVar StatINC 1
-  
-  # StatINCMatch
-  # ------------
-  # default undef, if defined, it will be used as a regular expression
-  # to reload modules that match as in StatINC.  This is useful because
-  # StatINC has a very high performance penalty in production, so if
-  # you can narrow the modules that are checked for reloading each
-  # script execution to a handful, you will only suffer a mild performance 
-  # penalty.
-  #
-  # The StatINCMatch setting should be a regular expression like: Struct|LWP
-  # which would match on reloading Class/Struct.pm, and all the LWP/.*
-  # libraries.
-  # 
-  # If you define StatINCMatch, you do not need to define StatINC.
-  #
-  PerlSetVar StatINCMatch .*
-  
-  # SessionSerialize
-  # ----------------
-  # default 0, if true, locks $Session for duration of script, which
-  # serializes requests to the $Session object.  Only one script at
-  # a time may run, per user $Session, with sessions allowed.
-  # 
-  # Serialized requests to the session object is the Microsoft ASP way, 
-  # but is dangerous in a production environment, where there is risk
-  # of long-running or run-away processes.  If these things happen,
-  # a session may be locked for an indefinate period of time.  A user
-  # STOP button should safely quit the session however.
-  #
-  PerlSetVar SessionSerialize 0
-  
-  # SoftRedirect
-  # ------------
-  # default 0, if true, a $Response->Redirect() does not end the 
-  # script.  Normally, when a Redirect() is called, the script
-  # is ended automatically.  SoftRedirect 1, is a standard
-  # way of doing redirects, allowing for html output after the 
-  # redirect is specified.
-  #
-  PerlSetVar SoftRedirect 0
-  
-  # NoState
-  # -------
-  # default 0, if true, neither the $Application nor $Session objects will
-  # be created.  Use this for a performance increase.  Please note that 
-  # this setting takes precedence over the AllowSessionState setting.
-  #
-  PerlSetVar NoState 0
-  
-  # StateDir
-  # --------
-  # default $Global/.state.  State files for ASP application go to 
-  # this directory.  Where the state files go is the most important
-  # determinant in what makes a unique ASP application.  Different
-  # configs pointing to the same StateDir are part of the same
-  # ASP application.
-  # 
-  # The default has not changed since implementing this config directive.
-  # The reason for this config option is to allow OS's with caching
-  # file systems like Solaris to specify a state directory separatly
-  # from the Global directory, which contains more permanent files.
-  # This way one may point StateDir to /tmp/myaspapp, and make one's ASP
-  # application scream with speed.
-  #
-  PerlSetVar StateDir ./.state
-  
-  # StateManager
-  # ------------
-  # default 10, this number specifies the numbers of times per SessionTimeout
-  # that timed out sessions are garbage collected.  The bigger the number,
-  # the slower your system, but the more precise Session_OnEnd's will be 
-  # run from global.asa, which occur when a timed out session is cleaned up,
-  # and the better able to withstand Session guessing hacking attempts.
-  # The lower the number, the faster a normal system will run.  
-  #
-  # The defaults of 20 minutes for SessionTimeout and 10 times for 
-  # StateManager, has dead Sessions being cleaned up every 2 minutes.
-  #
-  PerlSetVar StateManager 10
-  
-  # StateDB
-  # --------
-  # default SDBM_File, this is the internal database used for state
-  # objects like $Application and $Session.  Because an %sdbm_file hash has
-  # has a limit on the size of a record / key value pair, usually 1024 bytes,
-  # you may want to use another tied database like DB_File.  
-  #
-  # With lightweight $Session and $Application use, you can get 
-  # away with SDBM_File, but if you load it up with complex data like
-  #   $Session{key} = { # very large complex object }
-  # you might max out the 1024 limit.
-  # 
-  # Currently StateDB can only be: SDBM_File, DB_File
-  # Please let me know if you would like to add any more to this list.
-  # 
-  # If you switch to a new StateDB, you will want to delete the 
-  # old StateDir, as there will likely be incompatibilities between
-  # the different database formats, including the way garbage collection
-  # is handled.
-  #
-  PerlSetVar StateDB SDBM_File
-  
-  # Filter
-  # ------
-  # On/Off,default Off.  With filtering enabled, you can take advantage of 
-  # full server side includes (SSI), implemented through Apache::SSI.  
-  # SSI is implemented through this mechanism by using Apache::Filter.  
-  # A sample configuration for full SSI with filtering is in the 
-  # eg/.htaccess file, with a relevant example script eg/ssi_filter.ssi.
-  # 
-  # You may only use this option with modperl v1.16 or greater installed
-  # and PERL_STACKED_HANDLERS enabled.  Filtering may be used in 
-  # conjunction with other handlers that are also "filter aware".
-  #
-  # With filtering through Apache::SSI, you should expect at least
-  # a 20% performance decrease, increasing as your files get bigger, 
-  # increasing the work that SSI must do.
-  #
-  PerlSetVar Filter Off
-
-  # PodComments
-  # -----------
-  # default 1.  With pod comments turned on, perl pod style comments
-  # and documentation are parsed out of scripts at compile time.
-  # This make for great documentation and a nice debugging tool,
-  # and it lets you comment out perl code and html in blocks.  
-  # Specifically text like this:
-  # 
-  # =pod
-  # text or perl code here
-  # =cut 
-  #
-  # will get ripped out of the script before compiling.  The =pod and
-  # =cut perl directives must be at the beginning of the line, and must
-  # be followed by the end of the line.
-  #
-  PerlSetVar PodComments 1
-  
-  # DynamicIncludes
-  # ---------------
-  # default 0.  SSI file includes are normally inlined in the calling 
-  # script, and the text gets compiled with the script as a whole. 
-  # With this option set to TRUE, file includes are compiled as a
-  # separate subroutine and called when the script is run.  
-  # The advantage of having this turned on is that the code compiled
-  # from the include can be shared between scripts, which keeps the 
-  # script sizes smaller in memory, and keeps compile times down.
-  #
-  PerlSetVar DynamicIncludes 0
-  
-  # CgiHeaders
-  # ----------
-  # default 0.  When true, script output that looks like HTTP / CGI
-  # headers, will be added to to the HTTP headers of the request.
-  # So you could add:
-  #   Set-Cookie: test=message
-  #   
-  #   <html>...
-  # to the top of your script, and all the headers preceding a newline
-  # will be added as if with a call to $Response->AddHeader().  This
-  # functionality is here for compatibility with raw cgi scripts,
-  # and those used to this kind of coding.
-  # 
-  # When set to 0, CgiHeaders style headers will not be parsed from the 
-  # script response.
-  #
-  PerlSetVar CgiHeaders 0
-  
-  # ParanoidSession
-  # ---------------
-  # default 0.  When true, stores the user-agent header of the browser 
-  # that creates the session and validates this against the session cookie presented.
-  # If this check fails, the session is killed, with the rationale that 
-  # there is a hacking attempt underway.
-  #
-  # This config option was implemented to be a smooth upgrade, as
-  # you can turn it off and on, without disrupting current sessions.  
-  # Sessions must be created with this turned on for the security to take effect.
-  #
-  # This config option is to help prevent a brute force cookie search from 
-  # being successful. The number of possible cookies is huge, 2^128, thus making such
-  # a hacking attempt VERY unlikely.  However, on the off chance that such
-  # an attack is successful, the hacker must also present identical
-  # browser headers to authenticate the session, or the session will be
-  # destroyed.  Thus the User-Agent acts as a backup to the real session id.
-  # The IP address of the browser cannot be used, since because of proxies,
-  # IP addresses may change between requests during a session.
-  #		
-  # There are a few browsers that will not present a User-Agent header.
-  # These browsers are considered to be browsers of type "Unknown", and 
-  # this method works the same way for them.
-  # 
-  # Most people agree that this level of security is unnecessary, thus
-  # it is titled paranoid :)
-  #
-  PerlSetVar ParanoidSession 0
-  
-  # Clean
-  # -----
-  # default 0, may be set between 1 and 9.  This setting determine how much
-  # text/html output should be compressed.  A setting of 1 strips mostly
-  # white space saving usually 10% in output size, at a performance cost
-  # of less than 5%.  A setting of 9 goes much further saving anywhere
-  # 25% to 50% typically, but with a performance hit of 50%.
-  # 
-  # This config option is implemented via HTML::Clean.  Per script
-  # configuration of this setting is available via the $Response->{Clean}
-  # property, which may also be set between 0 and 9.
-  #
-  PerlSetVar Clean 0
-
-  # MailHost
-  # --------
-  # The mail host is the smtp server that the below Mail* config directives
-  # will use when sending their emails.  By default Net::SMTP uses
-  # smtp mail hosts configured in Net::Config, which is set up at
-  # install time, but this setting can be used to override this config.
-  #
-  # The mail hosts specified in the Net::Config file will be used as
-  # backup smtp servers to the MailHost specified here, should this
-  # primary server not be working.
-  #
-  # PerlSetVar MailHost smtp.yourdomain.com
-
-  # MailErrorsTo
-  # ------------
-  # No default, if set, ASP server errors, error code 500, that result
-  # while compiling or running scripts under Apache::ASP will automatically
-  # be emailed to the email address set for this config.  This allows
-  # an administrator to have a rapid response to user generated server
-  # errors resulting from bugs in production ASP scripts.  Other errors, such 
-  # as 404 not found will be handled by Apache directly.
-  #
-  # An easy way to see this config in action is to have an ASP script which calls
-  # a die(), which generates an internal ASP 500 server error.
-  #
-  # The Debug config of value 2 and this setting are mutually exclusive,
-  # as Debug 2 is a development setting where errors are displayed in the browser,
-  # and MailErrorsTo is a production setting so that errors are silently logged
-  # and sent via email to the web admin.
-  #
-  # PerlSetVar MailErrorsTo youremail@yourdomain.com
-
-  # MailAlertTo
-  # -----------
-  # The address configured will have an email sent on any ASP server error 500,
-  # and the message will be short enough to fit on a text based pager.  This
-  # config setting would be used to give an administrator a heads up that a www
-  # server error occured, as opposed to MailErrorsTo would be used for debugging
-  # that server error.
-  #
-  # This config does not work when Debug 2 is set, as it is a setting for
-  # use in production only, where Debug 2 is for development use.
-  #
-  # PerlSetVar MailAlertTo youremail@yourdomain.com
-  
-  # MailAlertPeriod
-  # ---------------
-  # Default 20 minutes, this config specifies the time in minutes over 
-  # which there may be only one alert email generated by MailAlertTo.
-  # The purpose of MailAlertTo is to give the admin a heads up that there
-  # is an error at the www server.  MailErrorsTo is for to aid in speedy 
-  # debugging of the incident.
-  #
-  PerlSetVar MailAlertPeriod 20
-  
-  </Location>
-
-  ##ASP##PERL##APACHE##UNIX##WINNT##ASP##PERL##APACHE##NOT##IIS##ASP##
-  ## END INSERT
-  ##ASP##PERL##APACHE##ACTIVE##SERVER##PAGES##SCRIPTING##!#MICROSOFT##
+ </Location>
 
 You can use the same config in .htaccess files without the 
 Location tag.  I use the <Files ~ (\.asp)> tag in the .htaccess
 file of the directory that I want to run my asp application.
 This allows me to mix other file types in my application,
-static or otherwise.  Again, please see the ./eg directory 
+static or otherwise.  Again, please see the ./site/eg directory 
 in the installation for some good starter .htaccess configs,
 and see them in action on the example scripts.
 
-=head1 ASP Syntax
+=item Global
+
+Global is the nerve center of an ASP application, in which
+the global.asa may reside, which defines the web application's 
+event handlers.  
+
+This directory is pushed onto @INC, you will be able 
+to "use" and "require" files in this directory, so perl modules 
+developed for this application may be dropped into this directory, 
+for easy use.
+
+Unless StateDir is configured, this directory must be some 
+writeable directory by the web server.  $Session and $Application 
+object state files will be stored in this directory.  If StateDir
+is configured, then ignore this paragraph, as it overrides the 
+Global directory for this purpose.
+
+Includes, specified with <!--#include file=somefile.inc--> 
+or $Response->Include() syntax, may also be in this directory, 
+please see section on includes for more information.
+
+  PerlSetVar Global /tmp
+
+=item CookiePath
+
+URL root that client responds to by sending the session cookie.
+If your asp application falls under the server url "/asp", 
+then you would set this variable to /asp.  This then allows
+you to run different applications on the same server, with
+different user sessions for each application.
+
+  PerlSetVar CookiePath /   
+
+=item GlobalPackage
+
+Perl package namespace that all scripts, includes, & global.asa
+events are compiled into.  By default, GlobalPackage is some
+obsure name that is uniquely generated from the file path of 
+the Global directory, and global.asa file.  The use of explicitly
+naming the GlobalPackage is to allow scripts access to globals
+and subs defined in a perl module that is included with commands like:
+
+  in perl script: use Some::Package;
+  in apache conf: PerlModule Some::Package
+
+  PerlSetVar GlobalPackage Some::Package
+
+=item UniquePackages
+
+default 0.  Set to 1 to emulate pre-v.10 ASP script compilation 
+behavior, which compiles each script into its own perl package.
+
+Before v.10, ASP scripts were compiled into their own perl package
+namespace.  This allowed ASP scripts in the same ASP application
+to defined subroutines of the same name without a problem.  
+
+As of v.10, ASP scripts in a web application are compiled into the 
+*same* perl package by default, so these scripts, their includes, and the 
+global.asa events all share common globals & subroutines defined by each other.
+The problem for some developers was that they would at times define a 
+subroutine of the same name in 2+ scripts, and one subroutine definition would
+redefine the other one because of the namespace collision.
+
+  PerlSetVar UniquePackages 0
+
+=item AllowSessionState
+
+Set to 0 for no session tracking, 1 by default
+If Session tracking is turned off, performance improves,
+but the $Session object is inaccessible.
+
+  PerlSetVar AllowSessionState 1    
+
+=item SessionTimeout
+
+Default 20 minutes, when a user's session has been inactive for this
+period of time, the Session_OnEnd event is run, if defined, for 
+that session, and the contents of that session are destroyed.
+
+  PerlSetVar SessionTimeout 20 
+
+=item SecureSession
+
+default 0.  Sets the secure tag for the session cookie, so that the cookie
+will only be transimitted by the browser under https transmissions.
+
+  PerlSetVar SecureSession 1
+
+=item ParanoidSession
+
+default 0.  When true, stores the user-agent header of the browser 
+that creates the session and validates this against the session cookie presented.
+If this check fails, the session is killed, with the rationale that 
+there is a hacking attempt underway.
+
+This config option was implemented to be a smooth upgrade, as
+you can turn it off and on, without disrupting current sessions.  
+Sessions must be created with this turned on for the security to take effect.
+
+This config option is to help prevent a brute force cookie search from 
+being successful. The number of possible cookies is huge, 2^128, thus making such
+a hacking attempt VERY unlikely.  However, on the off chance that such
+an attack is successful, the hacker must also present identical
+browser headers to authenticate the session, or the session will be
+destroyed.  Thus the User-Agent acts as a backup to the real session id.
+The IP address of the browser cannot be used, since because of proxies,
+IP addresses may change between requests during a session.
+
+There are a few browsers that will not present a User-Agent header.
+These browsers are considered to be browsers of type "Unknown", and 
+this method works the same way for them.
+
+Most people agree that this level of security is unnecessary, thus
+it is titled paranoid :)
+
+  PerlSetVar ParanoidSession 0
+
+=item Debug
+
+1 for server log debugging, 2 for extra client html output
+Use 1 for production debugging, use 2 for development.
+Turn off if you are not debugging.
+
+  PerlSetVar Debug 2	
+
+=item BufferingOn
+
+default 1, if true, buffers output through the response object.
+$Response object will only send results to client browser if
+a $Response->Flush() is called, or if the asp script ends.  Lots of 
+output will need to be flushed incrementally.
+
+If false, 0, the output is immediately written to the client,
+CGI style.  There will be a performance hit server side if output
+is flushed automatically to the client, but is probably small.
+
+I would leave this on, since error handling is poor, if your asp 
+script errors after sending only some of the output.
+
+  PerlSetVar BufferingOn 1
+
+=item StatINC
+
+default 0, if true, reloads perl libraries that have changed
+on disk automatically for ASP scripts.  If false, the www server
+must be restarted for library changes to take effect.
+
+A known bug is that any functions that are exported, e.g. confess 
+Carp qw(confess), will not be refreshed by StatINC.  To refresh
+these, you must restart the www server.  
+
+This setting should be used in development only because it is so slow.
+For a production version of StatINC, see StatINCMatch.
+
+  PerlSetVar StatINC 1
+
+=item StatINCMatch
+
+default undef, if defined, it will be used as a regular expression
+to reload modules that match as in StatINC.  This is useful because
+StatINC has a very high performance penalty in production, so if
+you can narrow the modules that are checked for reloading each
+script execution to a handful, you will only suffer a mild performance 
+penalty.
+
+The StatINCMatch setting should be a regular expression like: Struct|LWP
+which would match on reloading Class/Struct.pm, and all the LWP/.*
+libraries.
+
+If you define StatINCMatch, you do not need to define StatINC.
+
+  PerlSetVar StatINCMatch .*
+
+=item SessionSerialize
+
+default 0, if true, locks $Session for duration of script, which
+serializes requests to the $Session object.  Only one script at
+a time may run, per user $Session, with sessions allowed.
+
+Serialized requests to the session object is the Microsoft ASP way, 
+but is dangerous in a production environment, where there is risk
+of long-running or run-away processes.  If these things happen,
+a session may be locked for an indefinate period of time.  A user
+STOP button should safely quit the session however.
+
+  PerlSetVar SessionSerialize 0
+
+=item SoftRedirect
+
+default 0, if true, a $Response->Redirect() does not end the 
+script.  Normally, when a Redirect() is called, the script
+is ended automatically.  SoftRedirect 1, is a standard
+way of doing redirects, allowing for html output after the 
+redirect is specified.
+
+  PerlSetVar SoftRedirect 0
+
+=item NoState
+
+default 0, if true, neither the $Application nor $Session objects will
+be created.  Use this for a performance increase.  Please note that 
+this setting takes precedence over the AllowSessionState setting.
+
+  PerlSetVar NoState 0
+
+=item StateDir
+
+default $Global/.state.  State files for ASP application go to 
+this directory.  Where the state files go is the most important
+determinant in what makes a unique ASP application.  Different
+configs pointing to the same StateDir are part of the same
+ASP application.
+
+The default has not changed since implementing this config directive.
+The reason for this config option is to allow OS's with caching
+file systems like Solaris to specify a state directory separatly
+from the Global directory, which contains more permanent files.
+This way one may point StateDir to /tmp/myaspapp, and make one's ASP
+application scream with speed.
+
+  PerlSetVar StateDir ./.state
+
+=item StateManager
+
+default 10, this number specifies the numbers of times per SessionTimeout
+that timed out sessions are garbage collected.  The bigger the number,
+the slower your system, but the more precise Session_OnEnd's will be 
+run from global.asa, which occur when a timed out session is cleaned up,
+and the better able to withstand Session guessing hacking attempts.
+The lower the number, the faster a normal system will run.  
+
+The defaults of 20 minutes for SessionTimeout and 10 times for 
+StateManager, has dead Sessions being cleaned up every 2 minutes.
+
+  PerlSetVar StateManager 10
+
+=item StateDB
+
+default SDBM_File, this is the internal database used for state
+objects like $Application and $Session.  Because an %sdbm_file hash has
+has a limit on the size of a record / key value pair, usually 1024 bytes,
+you may want to use another tied database like DB_File.  
+
+With lightweight $Session and $Application use, you can get 
+away with SDBM_File, but if you load it up with complex data like
+  $Session{key} = { # very large complex object }
+you might max out the 1024 limit.
+
+Currently StateDB can only be: SDBM_File, DB_File
+Please let me know if you would like to add any more to this list.
+
+If you switch to a new StateDB, you will want to delete the 
+old StateDir, as there will likely be incompatibilities between
+the different database formats, including the way garbage collection
+is handled.
+
+  PerlSetVar StateDB SDBM_File
+
+=item Filter
+
+On/Off,default Off.  With filtering enabled, you can take advantage of 
+full server side includes (SSI), implemented through Apache::SSI.  
+SSI is implemented through this mechanism by using Apache::Filter.  
+A sample configuration for full SSI with filtering is in the 
+./site/eg/.htaccess file, with a relevant example script ./site/eg/ssi_filter.ssi.
+
+You may only use this option with modperl v1.16 or greater installed
+and PERL_STACKED_HANDLERS enabled.  Filtering may be used in 
+conjunction with other handlers that are also "filter aware".
+
+With filtering through Apache::SSI, you should expect at least
+a 20% performance decrease, increasing as your files get bigger, 
+increasing the work that SSI must do.
+
+  PerlSetVar Filter Off
+
+=item PodComments
+
+default 1.  With pod comments turned on, perl pod style comments
+and documentation are parsed out of scripts at compile time.
+This make for great documentation and a nice debugging tool,
+and it lets you comment out perl code and html in blocks.  
+Specifically text like this:
+
+ =pod
+ text or perl code here
+ =cut 
+
+will get ripped out of the script before compiling.  The =pod and
+=cut perl directives must be at the beginning of the line, and must
+be followed by the end of the line.
+
+  PerlSetVar PodComments 1
+
+=item DynamicIncludes
+
+default 0.  SSI file includes are normally inlined in the calling 
+script, and the text gets compiled with the script as a whole. 
+With this option set to TRUE, file includes are compiled as a
+separate subroutine and called when the script is run.  
+The advantage of having this turned on is that the code compiled
+from the include can be shared between scripts, which keeps the 
+script sizes smaller in memory, and keeps compile times down.
+
+  PerlSetVar DynamicIncludes 0
+
+=item CgiHeaders
+
+default 0.  When true, script output that looks like HTTP / CGI
+headers, will be added to to the HTTP headers of the request.
+So you could add:
+  Set-Cookie: test=message
+  
+  <html>...
+to the top of your script, and all the headers preceding a newline
+will be added as if with a call to $Response->AddHeader().  This
+functionality is here for compatibility with raw cgi scripts,
+and those used to this kind of coding.
+
+When set to 0, CgiHeaders style headers will not be parsed from the 
+script response.
+
+  PerlSetVar CgiHeaders 0
+
+=item Clean
+
+default 0, may be set between 1 and 9.  This setting determine how much
+text/html output should be compressed.  A setting of 1 strips mostly
+white space saving usually 10% in output size, at a performance cost
+of less than 5%.  A setting of 9 goes much further saving anywhere
+25% to 50% typically, but with a performance hit of 50%.
+
+This config option is implemented via HTML::Clean.  Per script
+configuration of this setting is available via the $Response->{Clean}
+property, which may also be set between 0 and 9.
+
+  PerlSetVar Clean 0
+
+=item MailHost
+
+The mail host is the smtp server that the below Mail* config directives
+will use when sending their emails.  By default Net::SMTP uses
+smtp mail hosts configured in Net::Config, which is set up at
+install time, but this setting can be used to override this config.
+
+The mail hosts specified in the Net::Config file will be used as
+backup smtp servers to the MailHost specified here, should this
+primary server not be working.
+
+  PerlSetVar MailHost smtp.yourdomain.com
+
+=item MailErrorsTo
+
+No default, if set, ASP server errors, error code 500, that result
+while compiling or running scripts under Apache::ASP will automatically
+be emailed to the email address set for this config.  This allows
+an administrator to have a rapid response to user generated server
+errors resulting from bugs in production ASP scripts.  Other errors, such 
+as 404 not found will be handled by Apache directly.
+
+An easy way to see this config in action is to have an ASP script which calls
+a die(), which generates an internal ASP 500 server error.
+
+The Debug config of value 2 and this setting are mutually exclusive,
+as Debug 2 is a development setting where errors are displayed in the browser,
+and MailErrorsTo is a production setting so that errors are silently logged
+and sent via email to the web admin.
+
+  PerlSetVar MailErrorsTo youremail@yourdomain.com
+
+=item MailAlertTo
+
+The address configured will have an email sent on any ASP server error 500,
+and the message will be short enough to fit on a text based pager.  This
+config setting would be used to give an administrator a heads up that a www
+server error occured, as opposed to MailErrorsTo would be used for debugging
+that server error.
+
+This config does not work when Debug 2 is set, as it is a setting for
+use in production only, where Debug 2 is for development use.
+
+  PerlSetVar MailAlertTo youremail@yourdomain.com
+
+=item MailAlertPeriod
+
+Default 20 minutes, this config specifies the time in minutes over 
+which there may be only one alert email generated by MailAlertTo.
+The purpose of MailAlertTo is to give the admin a heads up that there
+is an error at the www server.  MailErrorsTo is for to aid in speedy 
+debugging of the incident.
+
+  PerlSetVar MailAlertPeriod 20
+
+=head1 SYNTAX
 
 ASP embedding syntax allows one to embed code in html in 2 simple ways.
 The first is the <% xxx %> tag in which xxx is any valid perl code.
@@ -4191,7 +4224,7 @@ be inserted into the html directly.  An easy print.
 Notice that your perl code blocks can span any html.  The for loop
 above iterates over the html without any special syntax.
 
-=head1 The Event Model & global.asa
+=head1 EVENTS
 
 The ASP platform allows developers to create Web Applications.
 In fulfillment of real software requirements, ASP allows 
@@ -4209,8 +4242,8 @@ define the following actions:
 	Session_OnStart		Beginning of user Session.
 	Session_OnEnd		End of user Session.
 
-* These are API extensions that are not portable, but were
-  added because they are incredibly useful
+  * These are API extensions that are not portable, but were
+    added because they are incredibly useful
 
 These actions must be defined in the $Global/global.asa file
 as subroutines, for example:
@@ -4242,7 +4275,9 @@ and it will be run.
 There is one caveat.  Code in Script_OnEnd is not gauranteed 
 to be run when the user hits a STOP button, since the program
 execution ends immediately at this event.  To always run critical
-code, use the $Server->RegisterCleanup() method.
+code, use the API extension:
+
+	$Server->RegisterCleanup()
 
 =head2 Application_OnStart
 
@@ -4288,7 +4323,7 @@ of an application ever run will never have its Session_OnEnd run.
 Thus I would not put anything mission-critical in the Session_OnEnd,
 just stuff that would be nice to run whenever it gets run.
 
-=head1 The Object Model
+=head1 OBJECTS
 
 The beauty of the ASP Object Model is that it takes the
 burden of CGI and Session Management off the developer, 
@@ -4339,9 +4374,9 @@ and a user should be aware of the limitations of MLDBM.
 Basically, you can read complex structures, but not write 
 them, directly:
 
-  $data = $Session->{complex}{data};      # Read ok.
-  $Session->{complex}{data} = $data;      # Write NOT ok.
-  $Session->{complex} = {data => $data};  # Write ok, all at once.
+  $data = $Session->{complex}{data};     # Read ok.
+  $Session->{complex}{data} = $data;     # Write NOT ok.
+  $Session->{complex} = {data => $data}; # Write ok, all at once.
 
 Please see MLDBM for more information on this topic.
 $Session can also be used for the following methods and properties:
@@ -4384,7 +4419,7 @@ data is cleared in the process, just as when any session times out.
 =head2 $Response Object
 
 This object manages the output from the ASP Application and the 
-client web browser.  It does store state information like the 
+client web browser.  It does not store state information like the 
 $Session object but does have a wide array of methods to call.
 
 =over
@@ -4486,7 +4521,7 @@ notes), will be automatically be turned off, so you will not
 necessarily need to use BinaryWrite for writing binary data.
 
 For an example of BinaryWrite, see the gif.htm example 
-in ./eg/gif.htm
+in ./site/eg/gif.htm
 
 Please note that if you are on Win32, you will need to 
 call binmode on a file handle before reading, if 
@@ -4496,28 +4531,27 @@ its data is binary.
 
 Erases buffered ASP output.
 
-=item $Response->Cookies($name,$value)
-
-=item $Response->Cookies($name,$key,$value)
-
-=item $Response->Cookies($name,$attribute,$value)
+=item $Response->Cookies($name, [$key,] $value)
 
 Sets the key or attribute of cookie with name $name to the value $value.
 If $key is not defined, the Value of the cookie is set.
 ASP CookiePath is assumed to be / in these examples.
 
  $Response->Cookies('name', 'value'); 
- #-->	Set-Cookie: name=value; path=/
+  --> Set-Cookie: name=value; path=/
 
  $Response->Cookies("Test", "data1", "test value");     
  $Response->Cookies("Test", "data2", "more test");      
- $Response->Cookies("Test", "Expires", &HTTP::Date::time2str(time() + 86400)); 
+ $Response->Cookies(
+	"Test", "Expires", 
+	&HTTP::Date::time2str(time+86400)
+	); 
  $Response->Cookies("Test", "Secure", 1);               
  $Response->Cookies("Test", "Path", "/");
  $Response->Cookies("Test", "Domain", "host.com");
- #-->	Set-Cookie:Test=data1=test%20value&data2=more%20test;	\
- #		expires=Fri, 23 Apr 1999 07:19:52 GMT;		\
- #		path=/; domain=host.com; secure
+  -->	Set-Cookie:Test=data1=test%20value&data2=more%20test;	\
+ 		expires=Fri, 23 Apr 1999 07:19:52 GMT;		\
+ 		path=/; domain=host.com; secure
 
 The latter use of $key in the cookies not only sets cookie attributes
 such as Expires, but also treats the cookie as a hash of key value pairs
@@ -4532,8 +4566,12 @@ directly through hash notation.  The same 5 commands above could be compressed t
  $Response->{Cookies}{Test} = 
 	{ 
 		Secure	=> 1, 
-		Value	=> {data1 => 'test value', data2 => 'more test'},
-		Expires	=> 86400, # not portable shortcut, see above for proper use
+		Value	=>	
+			{
+				data1 => 'test value', 
+				data2 => 'more test'
+			},
+		Expires	=> 86400, # not portable shortcut, see above
 		Domain	=> 'host.com',
 		Path    => '/'
 	};
@@ -4551,8 +4589,8 @@ underlying hash structure of the data.  This is the best emulation
 I could write trying to match the Collections functionality of 
 cookies in IIS ASP.
 
-For more information on Cookies, please go to the source at:
- http://home.netscape.com/newsref/std/cookie_spec.html
+For more information on Cookies, please go to the source at
+http://home.netscape.com/newsref/std/cookie_spec.html
 
 =item $Response->Debug(@args)
 
@@ -4608,7 +4646,9 @@ Sends buffered output to client and clears buffer.
 
 This API extension calls the routine compiled from asp script
 in $filename with the args @args.  This is a direct translation
-of the SSI tag <!--#include file=$filename args=@args-->
+of the SSI tag 
+
+  <!--#include file=$filename args=@args-->
 
 Please see the SSI section for more on SSI in general.
 
@@ -4649,7 +4689,7 @@ a technique, it will not be portable.
 	$Response->Write("$_: $form->{$_}<br>\n");
  }
 
- # Please see the eg/server_variables.htm asp file for this 
+ # Please see the ./site/eg/server_variables.htm asp file for this 
  # method in action.
 
 =over
@@ -4671,9 +4711,7 @@ parsing done on it by Apache::ASP.
 
 Not implemented.
 
-=item $Request->Cookies($name)
-
-=item $Request->Cookies($name,$key)
+=item $Request->Cookies($name [,$key])
 
 Returns the value of the Cookie with name $name.  If a $key is
 specified, then a lookup will be done on the cookie as if it were
@@ -4712,13 +4750,13 @@ name as a file handle as in:
 For more information, please see the CGI / File Upload section,
 as file uploads are implemented via the CGI.pm module.  An
 example can be found in the installation 
-samples ./eg/file_upload.asp
+samples ./site/eg/file_upload.asp
 
 =item $Request->QueryString($name)
 
 Returns the value of the input of name $name used in a form
 with GET method, or passed by appending a query string to the end of
-a url as in http://someurl.com/?data=value.  
+a url as in http://localhost/?data=value.  
 If $name is not specified, returns a ref to a hash of all the query 
 string data.
 
@@ -4825,7 +4863,7 @@ translate the request to, regardless or whether the request would be valid.
 Only a $url that is relative to the host is valid.  Urls like "." and 
 "/" are fine arguments to MapPath, but "http://localhost" would not be.
 
-To see this method call in action, check out the sample ./eg/server.htm
+To see this method call in action, check out the sample ./site/eg/server.htm
 script.
 
 =item $Server->URLEncode($string)
@@ -4863,12 +4901,12 @@ in main::*, that you would reference normally in your script.
 Output written to $main::Response will have no affect at 
 this stage, as the request to the www client has already completed.
 
-Check out the eg/register_cleanup.asp script for an example
+Check out the ./site/eg/register_cleanup.asp script for an example
 of this routine in action.
 
 =back
 
-=head1 Server Side Includes (SSI) & Code Sharing
+=head1 SSI
 
 SSI is great!  One of the main features of SSI is to include
 other files in the script being requested.  In Apache::ASP, this
@@ -4937,13 +4975,13 @@ on the capabilities it offers.
 
 =head1 EXAMPLES
 
-Use with Apache.  Copy the ./eg directory from the ASP installation 
+Use with Apache.  Copy the ./site/eg directory from the ASP installation 
 to your Apache document tree and try it out!  You have to put
 
  AllowOverride All
 
 in your <Directory> config section to let the .htaccess file in the 
-/eg installation directory do its work.  
+./site/eg installation directory do its work.  
 
 IMPORTANT (FAQ): Make sure that the web server has write access to 
 that directory.  Usually a 
@@ -4952,19 +4990,17 @@ that directory.  Usually a
 
 will do the trick :)
 
-=head1 COMPATIBILITY
-
-=head2 CGI
+=head1 CGI
 
 CGI has been the standard way of deploying web applications long before
 ASP came along.  CGI.pm is a very useful module that aids developers in 
 the building of these applications, and Apache::ASP has been made to 
 be compatible with function calls in CGI.pm.  Please see cgi.htm in the 
-./eg directory for a sample ASP script written almost entirely in CGI.
+./site/eg directory for a sample ASP script written almost entirely in CGI.
 
 As of version 0.09, use of CGI.pm for both input and output is seemless
 when working under Apache::ASP.  Thus if you would like to port existing
-CGI scripts over to Apache::ASP, all you need to do is wrap <% %> around
+cgi scripts over to Apache::ASP, all you need to do is wrap <% %> around
 the script to get going.  This functionality has been implemented so that
 developers may have the best of both worlds when building their 
 web applications.
@@ -4978,20 +5014,20 @@ implementations, as other ASP implementations will likely be more limited.
 
 =item Query Object Initialization
 
-You may create a CGI $query object like so:
+You may create a CGI.pm $query object like so:
 
 	use CGI;
 	my $query = new CGI;
 
 As of Apache::ASP version 0.09, form input may be read in 
-by CGI upon initialization.  Before, Apache::ASP would 
+by CGI.pm upon initialization.  Before, Apache::ASP would 
 consume the form input when reading into $Request->Form(), 
-but now form input is cached, and may be used by CGI input
+but now form input is cached, and may be used by CGI.pm input
 routines.
 
 =item CGI headers
 
-Not only can you use the CGI $query->header() method
+Not only can you use the CGI.pm $query->header() method
 to put out headers, but with the CgiHeaders config option
 set to true, you can also print "Header: value\n", and add 
 similar lines to the top of your script, like:
@@ -5039,11 +5075,11 @@ name of the file handle.
 	};
 
 Please see the docs on CGI.pm (try perldoc CGI) for more information
-on this topic, and ./eg/file_upload.asp for an example of its use.
+on this topic, and ./site/eg/file_upload.asp for an example of its use.
 
 =back
 
-=head2 PerlScript
+=head1 PERLSCRIPT
 
 Much work has been done to bring compatibility with ASP applications
 written in PerlScript under IIS.  Most of that work revolved around
@@ -5094,9 +5130,12 @@ Several incompatibilities exist between PerlScript and Apache::ASP:
  > Collection->{Count} property has not been implemented.
  > VBScript dates may not be used for Expires property of cookies.
  > Win32::OLE::in may not be used.  Use keys() to iterate over Collections.
- > The ->{Item} property is parsed automatically out of scripts, use ->Item().
+ > The ->{Item} property does not work, use the ->Item() method.
 
 =head1 FAQ
+
+The following are some frequently asked questions
+about Apache::ASP.
 
 =over
 
@@ -5124,7 +5163,7 @@ To get mod_perl, go to http://perl.apache.org
 
 =item How are file uploads handled?
 
-Please see the CGI section above.  File uploads are implemented
+Please see the CGI section.  File uploads are implemented
 through CGI.pm which is loaded at runtime only for this purpose.
 This is the only time that CGI.pm will be loaded by Apache::ASP,
 which implements all other cgi-ish functionality natively.  The
@@ -5159,8 +5198,8 @@ such solution.  Of course on NT, you get this for free with IIS.
 =item How do I get things I want done?!
 
 If you find a problem with the module, or would like a feature added,
-please mail support, as listed below, and your needs will be
-promptly and seriously considered, then implemented.
+please mail support, as listed in the SUPPORT section, and your 
+needs will be promptly and seriously considered, then implemented.
 
 =item What is the state of Apache::ASP?  Can I publish a web site on it?
 
@@ -5196,93 +5235,75 @@ the following notation:
  $main::Response->Write("html output");
 
 This notation can be used from anywhere in perl, including routines
-defined in your global.asa, and registered with $Server->RegisterCleanup().  
+registered with $Server->RegisterCleanup().  
 
-Only in your main ASP script and includes, can you use the normal notation:
+You use the normal notation in your scripts, includes, and global.asa:
 
  $Response->Write("html output");
 
 =item Can I print() in ASP?
 
 Yes.  You can print() from anywhere in an ASP script as it aliases
-to the $Response->Write() method.  However, this method is not 
-portable (unless you can tell me otherwise :)
+to the $Response->Write() method.  Using print() is portable with
+PerlScript when using Win32::ASP in that environment.
 
 =back
 
-=head1 PERFORMANCE
+=head1 TUNING
 
-=head2 BENCHMARKS 
+A little tuning can go a long way, and can make the difference between
+a web site that gets by, and a site that screams with speed.  With
+Apache::ASP, you can easily take a poorly tuned site running at
+5 hits/second to 25+ hits/second just with the right configuration.
 
- Hits/Sec	Processor	OS	Static	ASP	State	DBI	Logic
- --------	---------	--	------	---	-----	---	-----
- 25		PII 300		WinNT	Y	-	-	-	-
- 16		PII 300		WinNT   -	Y	-	-	-
- 11		PII 300		WinNT	-	Y	Y	-	-
- 10		PII 300		WinNT	-	Y	-	-	Y
- 7		PII 300		WinNT	-	Y	Y	Oracle	Y
+Documented below are some simple things you can do to make the 
+most of your site.
 
- * all benchmarks run with clients and server on same machine
- ** please mail me some of your results if you conduct your own benchmark
+For more tips & tricks on tuning Apache and mod_perl, please see the tuning
+documents at:
 
- Static	-	Static html content, the fastest, included for control purposes.
- ASP	-	ASP script, as opposed to static content.
- State	-	Defined $Application and $Session objects.
- DBI     -	Persistent Database connection part of script, with Apache::DBI.
- Logic	-	Real web application logic, extra modules, etc.  A "Real Site".
+	Vivek Khera's modperl performance tuning
+	http://perl.apache.org/tuning/ 
 
-=head2 HINTS 
+	Stas Beckman's modperl Guide
+	http://perl.apache.org/guide/
 
- 1) Use NoState 1 setting if you don't need the $Application or $Session objects.
-    State objects such as these tie to files on disk and will incur a performace
-    penalty.
+=head2 $Application & $Session State
 
- 2) If you need the state objects $Application and $Session, and if 
-    running an OS that caches files in memory, set your "StateDir" 
-    directory to a cached file system.  On WinNT, all files 
-    may be cached, and you have no control of this.  On Solaris, /tmp is cached
-    and would be a good place to set the "StateDir" config setting to.  
-    When cached file systems are used there is little performance penalty 
-    for using state files.
+Use NoState 1 setting if you don't need the $Application or $Session objects.
+State objects such as these tie to files on disk and will incur a performace
+penalty.
 
- 3) Don't use .htaccess files or the StatINC setting in a production system
-    as there are many more files touched per request using these features.  I've
-    seen performance slow down by half because of using these.  For eliminating
-    the .htaccess file, move settings into *.conf Apache files.
+If you need the state objects $Application and $Session, and if 
+running an OS that caches files in memory, set your "StateDir" 
+directory to a cached file system.  On WinNT, all files 
+may be cached, and you have no control of this.  On Solaris, /tmp is cached
+and would be a good place to set the "StateDir" config setting to.  
+When cached file systems are used there is little performance penalty 
+for using state files.
 
- 4) Set your max requests per child thread or process (in httpd.conf) high, 
-    so that ASP scripts have a better chance being cached, which happens after 
-    they are first compiled.  You will also avoid the process fork penalty on 
-    UNIX systems.  Somewhere between 100 - 1000 is probably pretty good.
+=head2 High MaxRequests
 
- 5) If you have a lot of scripts, and limited memory, set NoCache to 1,
-    so that compiled scripts are not cached in memory.  You lose about
-    10-15% in speed for small scripts, but save about 10K per cached
-    script.  These numbers are very rough.  If you use includes, you
-    can instead try setting DynamicIncludes to 1, which will share compiled
-    code for includes between scripts.
+Set your max requests per child thread or process (in httpd.conf) high, 
+so that ASP scripts have a better chance being cached, which happens after 
+they are first compiled.  You will also avoid the process fork penalty on 
+UNIX systems.  Somewhere between 100 - 1000 is probably pretty good.
 
- 6) Turn debugging off by setting Debug to 0.  Having the debug config option
-    on slows things down immensely.
+=head2 Precompile Scripts
 
- 7) Precompile your scripts by using the Apache::ASP->Loader() routine
-    documented below.  This will at least save the first user hitting 
-    a script from suffering compile time lag.  On UNIX, precompiling scripts
-    upon server startup allows this code to be shared with forked child
-    www servers, so you reduce overall memory usage, and use less CPU 
-    compiling scripts for each separate www server process.  These 
-    savings could be significant.  On my PII300, it takes a couple seconds
-    to compile 28 scripts upon server startup, and this savings is passed
-    on to the child servers.
-
- 8) For more tips and tricks for general Apache and mod_perl performance
-    tuning, please reference the docs at http://perl.apache.org
-
-=head2 PRECOMPILING SCRIPTS
+Precompile your scripts by using the Apache::ASP->Loader() routine
+documented below.  This will at least save the first user hitting 
+a script from suffering compile time lag.  On UNIX, precompiling scripts
+upon server startup allows this code to be shared with forked child
+www servers, so you reduce overall memory usage, and use less CPU 
+compiling scripts for each separate www server process.  These 
+savings could be significant.  On my PII300, it takes a couple seconds
+to compile 28 scripts upon server startup, with an average of 50K RAM
+per compiled script, and this savings is passed on to the child httpd 
+servers.
 
 Apache::ASP->Loader() can be called to precompile scripts and
-even entire ASP applications at server startup.  The reasons
-why you would do this are described in the HINTS section.  Note 
+even entire ASP applications at server startup.  Note 
 also that in modperl, you can precompile modules with the 
 PerlModule config directive, which is highly recommended.
 
@@ -5321,6 +5342,32 @@ To see precompiling in action, set Debug to 1 for the Loader() and
 for your application in general and watch your error_log for 
 messages indicating scripts being cached.
 
+=head2 No .htaccess or StatINC
+
+Don't use .htaccess files or the StatINC setting in a production system
+as there are many more files touched per request using these features.  I've
+seen performance slow down by half because of using these.  For eliminating
+the .htaccess file, move settings into *.conf Apache files.
+
+Instead of StatINC, try using the StatINCMatch config, which 
+will check a small subset of perl libraries for changes.  This
+config is fine for a production environment, and if used well
+might only incur a 10-20% performance penalty.
+
+=head2 Turn off Debugging
+
+Turn debugging off by setting Debug to 0.  Having the debug config option
+on slows things down immensely.
+
+=head2 RAM Sparing
+
+If you have a lot of scripts, and limited memory, set NoCache to 1,
+so that compiled scripts are not cached in memory.  You lose about
+10-15% in speed for small scripts, but save at least 10K per cached
+script.  These numbers are very rough.  If you use includes, you
+can instead try setting DynamicIncludes to 1, which will share compiled
+code for includes between scripts.
+
 =head1 SEE ALSO
 
 perl(1), mod_perl(3), Apache(3), MLDBM(3), HTTP::Date(3), CGI(3),
@@ -5337,35 +5384,82 @@ ASP + Apache, web development could not be better!  Kudos go out to:
  :) Bryan Murphy, for being a PerlScript wiz
  :) Francesco Pasqualini, for bringing ASP to CGI
  :) Michael Rothwell, for his love of Session hacking
- :) Lincoln Stein, for his blessed CGI module
+ :) Lincoln Stein, for his blessed CGI.pm module
  :) Alan Sparks, for knowing when size is more important than speed
  :) Jeff Groves, who put a STOP to user stop button woes
- :) Matt Sergeant, for his excellect tutorial on PerlScript and love of ASP
+ :) Matt Sergeant, for his great tutorial on PerlScript and love of ASP
  :) Ken Williams, for great teamwork bringing full SSI to the table
  :) Darren Gibbons, the biggest cookie-monster I have ever known.
  :) Doug Silver, for finding most of the bugs.
  :) Marc Spencer, who brainstormed dynamic includes.
  :) Greg Stark, for endless enthusiasm, pushing the module to its limits.
- :) Richard Rossi, for his need for speed & bravely testing dynamic includes.
+ :) Richard Rossi, for his need for speed & boldly testing dynamic includes.
  :) Bill McKinnon, who understands the finer points of running a web site.
  :) Russell Weiss, for being every so "strict" about his code.
  :) Paul Linder, who is Mr. Clean... not just the code, its faster too !
- :) Tony Merc Mobily, inspirating tweaks to compile scripts  * 10 * times faster
+ :) Tony Merc Mobily, inspiring tweaks to compile scripts 10 times faster
 
 =head1 SUPPORT
 
+Support is available via email and mailing list archive.
+
+=head2 MAILING LIST ARCHIVE
+
+The modperl mailing list archive is located at
+http://forum.swarthmore.edu/epigone/modperl ,
+and allows searching for previously asked Apache::ASP
+questions.
+
+=head2 EMAIL
+
 Please send any questions or comments to the Apache modperl mailing
-list at modperl@apache.org or to me at chamas@alumni.stanford.org.
+list at modperl@apache.org?subject=Apache::ASP or if you do not
+feel appropriate for the list, just to me directly 
+at chamas@alumni.stanford.org . Please email the modperl list 
+when possible, as it allows other Apache::ASP users the 
+opportunity to answer your questions, and archives the 
+answer at the above list mailing list archive. 
+
+=head1 SITES USING
+
+What follows is a list of public sites that are using 
+Apache::ASP.  If you use the software for your site, and 
+would like to show your support of the software by being listed, 
+please send your URL to me at joshua@chamas.com and I'll be 
+sure to add it to the list.
+
+	Chamas Enterprises Inc.		
+	http://www.chamas.com
+
+	HCST
+	http://www.hcst.net/
+
+	Internetowa Gielda Samochodowa		
+	http://www.gielda.szczecin.pl
+
+	Multiple Listing Service of Greater Cincinnati
+	http://www.cincymls.com/
+
+	NODEWORKS - web site link monitoring				
+	http://www.nodeworks.com
+
+	Polish Ports Handbook			
+	http://www.link.fnet.pl
+
+	Sex Shop Online				
+	http://www.sex.shop.pl
+	
+	Spotlight
+	http://www.spotlight.com.au/
+
 
 =head1 COPYRIGHT
 
-Copyright (c) 1998-1999, Joshua Chamas. 
+Copyright (c) 1998-1999, Joshua Chamas, Chamas Enterprises Inc. 
 
-All rights reserved. This program is free software; 
-you can redistribute it and/or modify it under the same 
-terms as Perl itself. 
+All rights reserved.  This program is free software; you can 
+redistribute it and/or modify it under the same terms as Perl itself. 
 
-=cut
 
 
 
