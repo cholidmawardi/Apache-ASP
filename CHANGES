@@ -1,0 +1,30 @@
+$VERSION = .01;
+
+Syntax Support
+--------------
+Intial realease, could be considered alpha software.
+Allows developers to embed perl in html ASP style.
+
+<!-- sample here -->
+<html>
+<body>
+<% for(1..10) { %>
+	counting: <%=$_%> <br>
+<% } %>
+</body>
+</html>
+
+ASP Objects
+-----------
+$Session, $Application, $Response, $Request objects available
+for use in asp pages.
+
+$Session & $Application data is preserved using SDBM files.
+
+$Session id's are tracked through the use of cookies.
+
+Security
+--------
+Timeouts any attempt to use a session id that doesn't already 
+exist.  Should stop hackers, since there is no wire speed guessing
+cookies.

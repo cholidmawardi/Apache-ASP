@@ -1,0 +1,106 @@
+COPYRIGHT
+    Copyright (c) 1998 Chamas Enterprises Inc. All rights reserved.
+    This program is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself.
+
+NAME
+    Apache::ASP - Active Server Pages for Apache (all platforms)
+
+DESCRIPTION
+    This module provides a Active Server Pages port to Apache.
+    Active Server Pages is a web application platform that
+    originated with Microsoft's IIS server. Under Apache for both
+    Win32 and Unix, it allows a developer to create web applications
+    with session management and perl embedded in static html files.
+
+    This is a portable solution, similar to ActiveWare's PerlScript
+    and MKS's PScript implementation of perl for IIS ASP.
+    Theoretically, one should be able to take a solution that runs
+    under Apache::ASP and run it without change under PerlScript or
+    PScript for IIS.
+
+CONFIG
+    Use with Apache. Copy the /eg directory from the ASP
+    installation to your Apache document tree and try it out! You
+    have to put
+
+    AllowOverride All
+
+    in your <Directory> config section to let the .htaccess file in
+    the /eg installation directory do its work.
+
+    Here is a sample config in a *.conf Apache configuration file
+    that works, if you want to skip the /eg installation:
+
+<Location /asp/>    
+    ## mandatory
+    SetHandler perl-script
+    PerlHandler Apache::ASP
+    PerlSendHeader On
+    Options ExecCGI 
+
+    ## optional flags
+    PerlSetVar Debug 0
+    PerlSetVar Global c:/tmp
+    PerlSetVar CookiePath /
+    PerlSetVar NoSession 0
+    PerlSetVar SessionTimeout 20
+</Location>
+
+    You can use the same config in .htaccess files without the
+    Location tag. I use the <Files ~ (\.asp)> tag in the .htaccess
+    file of the directory that I want to run my asp application.
+    This allows me to mix other file types in my application, static
+    or otherwise.
+
+ASP Syntax
+    ASP embedding syntax allows one to embed code in html in 2
+    simple ways. The first is the <% xxx %> tag in which xxx is any
+    valid perl code. The second is <%= xxx %> where xxx is some
+    scalar value that will be inserted into the html directly. An
+    easy print.
+
+    A simple asp page would look like:
+
+	<!-- sample here -->
+	<html>
+	<body>
+	For loop incrementing font size: <p>
+	<% for(1..5) { %>
+		<!-- iterated html text -->
+		<font size="<%=$_%>" > Size = <%=$_%> </font> <br>
+	<% } %>
+	</body>
+	</html>
+	<!-- end sample here -->
+
+    Notice that your perl code blocks can span any html. The for
+    loop above iterates over the html without any special syntax.
+
+The Object Model
+    The beauty of the ASP Object Model is that it takes the brunt of
+    the burden of CGI and Session Management off the developer, and
+    puts them in objects accessible from any ASP page. For the perl
+    programmer, treat these objects as globals accesible from
+    anywhere in your ASP application.
+
+    Currently the Apache::ASP object model supports the following
+    objects:
+
+	Object		--	Function
+	------			--------
+	$Response	--	output
+	$Request	--	input
+	$Application	--	application state
+	$Session	--	session state
+
+    These objects, and their methods are further defined in the
+    following sections.
+
+MORE
+    I'll put more info on objects here soon.
+
+QUESTIONS
+    Please send any questions or comments to Joshua Chamas at
+    chamas@alumni.stanford.org
+
