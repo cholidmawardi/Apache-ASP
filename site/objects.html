@@ -756,6 +756,16 @@ following sections.</font>
 			</td>
 		<td>&nbsp;</td>					
 		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24Response-%3ETrapInclude%28%24file%2C%20%40args%29><font color=#003090>$Response->TrapInclude($file, @args)</font></a>
+			</font>
+			</td>
+		<td>&nbsp;</td>					
+		</tr>
 			
 	</table>
 	<hr size=1>
@@ -1187,6 +1197,23 @@ perl subroutine.</font>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>Sends the client a command to go to a different url $url.  
 Script immediately ends.</font>
+	
+	<p>
+	<a name=%24Response-%3ETrapInclude%28%24file%2C%20%40args%29></a>
+	<font face=verdana><font size=-1 color=#555555><b>$Response->TrapInclude($file, @args)</b></font><p>
+<font face="lucida console,courier new" size=3><pre>
+</pre></font>Calls $Response->Include() with same arguments as
+passed to it, but instead traps the include output buffer
+and returns it as as a perl scalar ref.  This allows
+one to postprocess the output buffer before sending
+to the client.
+<font face="lucida console,courier new" size=3><pre>
+  my $string_ref = $Response-&gt;TrapInclude('file.inc');
+  $$string_ref =~ s/\s+/ /sg; # squash whitespace like Clean 1
+  print $$string_ref;
+</pre></font>The scalar is returned as a referenece to save on what
+might be a large string copy.  You may dereference the scalar
+with the $$string_ref notation.</font>
 	
 	<p>
 	<a name=%24Response-%3EWrite%28%24data%29></a>

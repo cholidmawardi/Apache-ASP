@@ -1062,7 +1062,7 @@ sub ParseHelper {
 	       $args =~ s/( [^\s]+\s*)\=/,$1\=\>/sg;
 	       $args =~ s/^,//s;
 	       
-	       if($text =~ /\<\%.*\%\>/) {
+	       if($text =~ /\<\%/) {
 		   # parse again, and control output buffer for this level
 		   my $sub_script = &ParseHelper($self, \$text);
 		   $text = (
@@ -3503,13 +3503,13 @@ sub PRINTF {
 
 sub Null {};
 sub TrapInclude {
-    my($self, $file) = @_;
+    my($self, $file) = (shift, shift);
     
     my $out = "";
     local $self->{out} = local $self->{BinaryRef} = \$out;
     local $self->{Ended} = 0;
     local *Apache::ASP::Response::Flush = *Null;
-    $self->Include($file);
+    $self->Include($file, @_);
 
     \$out;
 }
@@ -5049,6 +5049,8 @@ with session management and embedded perl code.
 
 =begin html
 
+<table><tr><td>
+
 <b>Apache::ASP's features include:</b>
 
 <ul>
@@ -5062,6 +5064,11 @@ with session management and embedded perl code.
 <li> PERLSCRIPT Compatibility
 <li> Great Open Source SUPPORT
 </ul>
+
+</td>
+<td width=5>&nbsp;</td>
+<td><a href=http://www.oreillynet.com/pub/w/apache_tutorials.html><img src=oscon2000_speaker.gif border=0></a>
+</td></tr></table>
 
 =end html
 
@@ -6457,6 +6464,22 @@ perl subroutine.
 Sends the client a command to go to a different url $url.  
 Script immediately ends.
 
+=item $Response->TrapInclude($file, @args)
+
+Calls $Response->Include() with same arguments as
+passed to it, but instead traps the include output buffer
+and returns it as as a perl scalar ref.  This allows
+one to postprocess the output buffer before sending
+to the client.
+
+  my $string_ref = $Response->TrapInclude('file.inc');
+  $$string_ref =~ s/\s+/ /sg; # squash whitespace like Clean 1
+  print $$string_ref;
+
+The scalar is returned as a referenece to save on what
+might be a large string copy.  You may dereference the scalar
+with the $$string_ref notation.
+
 =item $Response->Write($data)
 
 Write output to the HTML page.  <%=$data%> syntax is shorthand for
@@ -7847,6 +7870,16 @@ interest to you, and I will give it higher priority.
 =head1 CHANGES
 
  + = improvement; - = bug fix
+
+=item $VERSION = 2.01; $DATE="07/22/00";
+
++ $data_ref = $Response->TrapInclude('file.inc') API
+  extension which allows for easy post processing of
+  data from includes
+
++ ./site/eg/source.inc syntax highlighting improvements
+
++ XMLSubsMatch compile time parsing performance improvement
 
 =item $VERSION = 2.00; $DATE="07/15/00";
 

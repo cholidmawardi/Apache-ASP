@@ -1,11 +1,14 @@
-$MODULE=Apache::ASP; $VERSION = 2.00; $DATE="07/15/00";
+$MODULE=Apache::ASP; $VERSION = 2.01; $DATE="07/22/00";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
 
- -UniquePackages config works again, broke a couple versions back
++ $data_ref = $Response->TrapInclude('file.inc') API
+  extension which allows for easy post processing of
+  data from includes
 
- +better error handling for methods called on $Application
-  that don't exist, hard to debug before
++ ./site/eg/source.inc syntax highlighting improvements
+
++ XMLSubsMatch compile time parsing performance improvement
 

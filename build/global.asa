@@ -156,7 +156,7 @@ sub pod2html {
     $pre and $body .= " </pre>";
 
     #$body =~ s/\n\s*\n+/<p>/isg;
-    $body =~ s|(http://[\w\.\/\-]+\.[\w\.\/\-\#\,]+[^\.\s\)])|<a href=$1>$1</a>|sg;
+    $body =~ s|([^\=])(http://[\w\.\/\-]+\.[\w\.\/\-\#\,]+[^\.\s\)])|$1<a href=$2>$2</a>|sg;
 #    $1 && warn "link: $1\n";
     $body =~ s|(http://localhost[\S]*[^\.\s\,]?)|<tt>$1</tt>|sg;
     $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<b>$1</b>|sg;

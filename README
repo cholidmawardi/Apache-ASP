@@ -1257,6 +1257,20 @@ OBJECTS
         Sends the client a command to go to a different url $url. Script
         immediately ends.
 
+    $Response->TrapInclude($file, @args)
+        Calls $Response->Include() with same arguments as passed to it, but
+        instead traps the include output buffer and returns it as as a perl
+        scalar ref. This allows one to postprocess the output buffer before
+        sending to the client.
+
+          my $string_ref = $Response->TrapInclude('file.inc');
+          $$string_ref =~ s/\s+/ /sg; # squash whitespace like Clean 1
+          print $$string_ref;
+
+        The scalar is returned as a referenece to save on what might be a
+        large string copy. You may dereference the scalar with the
+        $$string_ref notation.
+
     $Response->Write($data)
         Write output to the HTML page. <%=$data%> syntax is shorthand for a
         $Response->Write($data). All final output to the client must at some
@@ -2535,6 +2549,14 @@ TODO
 
 CHANGES
      + = improvement; - = bug fix
+
+    $VERSION = 2.01; $DATE="07/22/00";
+    + $data_ref = $Response->TrapInclude('file.inc') API extension which
+    allows for easy post processing of data from includes
+
+    + ./site/eg/source.inc syntax highlighting improvements
+
+    + XMLSubsMatch compile time parsing performance improvement
 
     $VERSION = 2.00; $DATE="07/15/00";
      -UniquePackages config works again, broke a couple versions back

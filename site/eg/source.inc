@@ -27,8 +27,10 @@ if($file) {
 	"<b><font color=#cc0000 face=\"courier new\">$1<font color=#000099>$2<\/font>$3<\/font><\/b>";
 	/egsx;
     $escaped =~ s/(&lt;\!\-\-\s*\#include\s*file\s*\=)(.*?)(\-\-&gt;)/
-	"<b><font color=#009900 face=\"courier new\">$1<font color=#555555>$2<\/font>$3<\/font><\/b>";
-	/egsx;
+      "<b><font color=#009900 face=\"courier new\">$1<font color=#555555>$2<\/font>$3<\/font><\/b>";
+    /egsx;
+    $escaped =~ s/(&lt;\/?)([\w-]+:[\w-]+)/$1\<font color=\#008000\><b>$2<\/b>\<\/font\>/isg;
+    $escaped =~ s/(&lt;\/?)([a-z]+)/$1\<font color=#007070\><b>$2<\/b>\<\/font\>/isg;
     %>
 
 <h3>Source of file <%=$file%>:</h3>
