@@ -3,7 +3,7 @@
 use strict;
 
 my $necessary_modules = {
-    'Apache' => 'Make sure your installation of mod_perl is complete',
+#    'Apache' => 'Make sure your installation of mod_perl is complete',
     'MLDBM' => 'This is used for reading and writing multi-level hashes on disk',
     'SDBM_File' => 'Internal databases used for state files, like $Session',
     'Data::Dumper' => 'Serializes data for MLDBM',
@@ -33,7 +33,7 @@ my $optional_modules =
    'Net::Config' => 'Config options for use with Net::SMTP',	     
    'Time::HiRes' => 'Sub second Apache::ASP response timing with Debug 3/-3 turned on.',
    'XML::XSLT 0.32' => 'XSLT transformations require this module.  Install Bundle::XML from CPAN before installing this module for the first time.',
-   'XML::Sablotron' => 'XSLT that is 10 x faster than XML::XSLT',
+   'XML::Sablotron' => 'XSLT that is 10 times faster than XML::XSLT',
 };
 	    
 print "Checking for the REQUIRED modules...\n";

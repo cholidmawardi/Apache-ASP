@@ -4,7 +4,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.11;
+$VERSION = 2.15;
 
 use MLDBM;
 use SDBM_File;
@@ -98,7 +98,7 @@ $Apache::ASP::StartTime      = time();
    
    'Cache' => "You need this module for xml output caching",
 
-   UndefRoutine => '',
+   UndefRoutine => undef,
    
    XSLT => 'Cannot load XML::XSLT.  Try installing the module.',
 
@@ -1118,7 +1118,7 @@ sub ParseHelper {
 
     my(@out, $perl_block, $last_perl_block);
     $$data .= "<%;;;%>"; # always end with some perl code for parsing.
-    while($$data =~ /(.*?)\<\%(.*?)\%\>/gso) {
+    while($$data =~ s/^(.*?)\<\%(.*?)\%\>//so) {
 	($text, $perl) = ($1,$2);
 	$perl_block = ($perl =~ /^\s*\=(.*)$/so) ? 0 : 1;
 	my $perl_scalar = $1;
@@ -2558,7 +2558,9 @@ sub LoadModules {
 	    if($LoadModuleErrors{$category}) {
 		$self->Error("cannot load $_ for $category: $LoadModuleErrors{$category}; $@");
 	    } else {
-		$self->Log("cannot load $_ for $category: $@");
+		# don't wan't Log() output for make test when Apache::Symbol
+		# is not installed, --jc 6/11/2001
+		$self->Debug("cannot load $_ for $category: $@");
 	    }
 	    $load_errors++;
 	    $LoadedModules{$_} = 0;
@@ -2908,7 +2910,8 @@ sub new {
 		my %form;
 		my $q = $self->{cgi} = new CGI;
 		for(my @names = $q->param) {
-		    $form{$_} = $q->param($_);
+		    my @params = $q->param($_);
+		    $form{$_} = @params > 1 ? [ @params ] : $params[0];
 		    if(ref($form{$_}) eq 'Fh') {
 			my $fh = $form{$_};
 			binmode $fh if $asp->{win32};
@@ -7962,7 +7965,7 @@ written in PerlScript under IIS.  Most of that work revolved around
 bringing a Win32::OLE Collection interface to many of the objects
 in Apache::ASP, which are natively written as perl hashes.
 
-New as of verionsion 2.05 is new functionality enabled with the 
+New as of version 2.05 is new functionality enabled with the 
 CollectionItem setting, to giver better support to more recent PerlScript syntax.
 This seems helpful when porting from an IIS/PerlScript code base.
 Please see the CONFIG section for more info.
@@ -8596,6 +8599,109 @@ interest to you, and I will give it higher priority.
 =head1 CHANGES
 
  + = improvement; - = bug fix
+
+=item $VERSION = 2.11; $DATE="05/29/2001";
+
+ +Parser optimization from Dariusz Pietrzak
+
+ -work around for global destruction error message for perl 5.6
+  during install
+
+ +$Response->{IsClientConnected} now will be set
+  correctly with ! $r->connection->aborted after each
+  $Response->Flush()
+
+ +New XSLTParser config which can be set to XML::XSLT or
+  XML::Sablotron.  XML::Sablotron renders 10 times faster, 
+  but differently.  XML::XSLT is pure perl, so has wider
+  platform support than XML::Sablotron.  This config affects
+  both the XSLT config and the $Server->XSLT() method.
+
+ +New $Server->XSLT(\$xsl_data, \$xml_data) API which 
+  allows runtime XSLT on components instead of having to process
+  the entire ASP output as XSLT.  
+
+ -XSLT support for XML::XSL 0.32.  Things broke after .24.
+
+ -XSLTCacheSize config no longer supported.  Was a bad 
+  Tie::Cache implementation.  Should be file based cache
+  to greatly increases cache hit ratio.
+
+ ++$Response->Include(), $Response->TrapInclude(),
+  and $Server->Execute() will all take a scalar ref
+  or \'asdfdsafa' type code as their first argument to execute 
+  a raw script instead of a script file name.  At this time, 
+  compilation of such a script, will not be cached.  It is 
+  compiled/executed as an anonymous subroutine and will be freed
+  when it goes out of scope.
+
+ + -p argument to cgi/asp script to set GlobalPackage
+  config for static site builds
+
+ -pod commenting fix where windows clients are used for 
+  ASP script generation.
+
+ +Some nice performance enhancements, thank to submissions from
+  Ime Smits.  Added some 1-2% per request execution speed.
+
+ +Added StateDB MLDBM::Sync::SDBM_File support for faster
+  $Session + $Application than DB_File, yet still overcomes
+  SDBM_File's 1024 bytes value limitation.  Documented in 
+  StateDB config, and added Makefile.PL entry.
+
+ +Removed deprecated MD5 use and replace with Digest::MD5 calls
+
+ +PerlSetVar InodeNames 1 config which will compile scripts hashed by 
+  their device & inode identifiers, from a stat($file)[0,1] call.
+  This allows for script directories, the Global directory,
+  and IncludesDir directories to be symlinked to without
+  recompiling identical scripts.  Likely only works on Unix
+  systems.  Thanks to Ime Smits for this one.
+
+ +Streamlined code internally so that includes & scripts were
+  compiled by same code.  This is a baby step toward fusing
+  include & script code compilation models, leading to being
+  able to compile bits of scripts on the fly as ASP subs, 
+  and being able to garbage collect ASP code subroutines.
+
+ -removed @_ = () in script compilation which would trigger warnings 
+  under PerlWarn being set, thanks for Carl Lipo for reporting this.
+
+ -StatINC/StatINCMatch fix for not undeffing compiled includes
+  and pages in the GlobalPackage namespace
+
+ -Create new HTML::FillInForm object for each FormFill
+  done, to avoid potential bug with multiple forms filled
+  by same object.  Thanks to Jim Pavlick for the tip.
+
+ +Added PREREQ_PM to Makefile.PL, so CPAN installation will
+  pick up the necessary modules correctly, without having
+  to use Bundle::Apache::ASP, thanks to Michael Davis. 
+
+ + > mode for opening lock files, not >>, since its faster
+
+ +$Response->Flush() fixed, by giving $| = 1 perl hint
+  to $r->print() and the rest of the perl sub.
+
+ +$Response->{Cookies}{cookie_name}{Expires} = -86400 * 300;
+  works so negative relative time may be used to expire cookies.
+
+ +Count() + Key() Collection class API implementations
+
+ +Added editors/aasp.vim VIM syntax file for Apache::ASP,
+  courtesy of Jon Topper.
+
+ ++Better line numbering with #line perl pragma.  Especially
+  helps with inline includes.  Lots of work here, & integrated
+  with Debug 2 runtime pretty print debugging.
+
+ +$Response->{Debug} member toggles on/off whether 
+  $Response->Debug() is active, overriding the Debug setting
+  for this purpose.  Documented.
+
+ -When Filter is on, Content-Length won't be set and compression
+  won't be used.  These things would not work with a filtering
+  handler after Apache::ASP
 
 =item $VERSION = 2.09; $DATE="01/30/2001";
 

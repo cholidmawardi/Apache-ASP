@@ -10,7 +10,7 @@ voila!, you will see the data in the file below.
 Note that the current limit set on uploads for this demo is
 <tt>	
 <%
-my $limit = Apache->dir_config('FileUploadMax') || $CGI::POST_MAX;
+my $limit = $Server->Config('FileUploadMax') || $CGI::POST_MAX;
 $limit = ($limit eq '-1') ? 'NONE' : $limit;
 print "$limit";
 %>
@@ -21,14 +21,25 @@ use CGI;
 my $q = new CGI; 
 print $q->start_multipart_form();
 print $q->hidden('file_upload', 'Hidden File Upload Form Text');
-print $q->filefield('uploaded_file','starting value',40,80);
+print $q->filefield('uploaded_file','starting value',30,100);
 print $q->submit('Upload File');
-print $q->endform();
 %>
+<br>
+<b>File Upload Type:</b>
+<%= 
+    $q->checkbox_group(-name=>'extensions',
+		   -values=>['GIF','HTML','OTHER'],
+		   -defaults=>['HTML']
+		   ).
+    $q->endform()
+  %>
 
 <% 
 my $filehandle;
 if($filehandle = $Request->{Form}{uploaded_file}) { 
+    %>
+      Upload Type Specified: <%= join(', ', $Request->Form('extensions')) %><br>
+    <%
     local *FILE;
     my $upload = $Request->{FileUpload}{uploaded_file};
     print "<table>";

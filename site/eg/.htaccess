@@ -8,7 +8,7 @@ PerlSetVar StatINC 0
 PerlSetVar StatINCMatch 0
 PerlSetVar Clean 0
 PerlSetVar DynamicIncludes 1
-PerlSetVar FileUploadMax 25000
+PerlSetVar FileUploadMax 50000
 PerlSetVar FileUploadTemp 1
 PerlSetVar SessionQueryParse 0
 PerlSetVar SessionQuery 1
@@ -28,6 +28,8 @@ PerlSetVar UseStrict 1
 	PerlSetVar SessionTimeout  5
 	PerlSetVar RegisterIncludes 1
 	PerlSetVar XMLSubsMatch my:\w+
+	PerlSetVar AllowApplicationState 1
+	PerlSetVar AllowSessionState 1
 #	PerlSetVar StateSerializer Storable
 #	PerlSetVar StateDB DB_File
 #	PerlSetVar StatScripts 0

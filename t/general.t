@@ -3,7 +3,9 @@ use Apache::ASP;
 
 __END__
 <%@ LANGUAGE="PerlScript" %>
-<% use lib '.';	use T;	$t =T->new(); %>
+<% use lib '.';	use T;	%>
+
+<% $t =T->new(); %>
 
 <% 
 for(@Apache::ASP::Objects) {

@@ -140,7 +140,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		if($here) {
 			$link = "<font color=$VLinkColor>$top->{name}</font>";
 		} else {
-			$link = "<a href=$file style=text-decoration:none><font color=$LinkColor>$top->{name}</font></a>";
+			$link = "<a href=\"$file\" style=\"text-decoration:none\"><font color=$LinkColor>$top->{name}</font></a>";
 		} 
 #		my $nav_row_color = ++$nav_row_counter % 2 ? '#e0f0ff' : 'white';
 		my $nav_row_color = 'white';
