@@ -1,3 +1,23 @@
+$MODULE=Apache::ASP; $VERSION = 2.39; $DATE="09/10/2002"
+
+- Turn off $^W explicitly before reloading global.asa.  Reloading
+  global.asa when $^W is set will trigger subroutine redefinition
+  warnings.  Reloading global.asa should occur without any problems
+  under normal usage of the system, thus this work around.
+  
+  This fix is important to UseStrict functionality because warnings
+  automatically become thrown as die() errors with UseStrict enabled,
+  so we have to disable normal soft warnings here.
+
+- $Response->Include() runtime errors now throw a die() that
+  can be trapped.  This was old functionality that has been restored.
+  Other compile time errors should still trigger a hard error
+  like script compilation, global.asa, or $Response->Include()
+  without an eval()
+
++ Some better error handling with Debug 3 or -3 set, cleaned
+  up developer errors messages somewhat.
+
 $MODULE=Apache::ASP; $VERSION = 2.37; $DATE="07/03/2002"
 
 Please see README for changes for past versions.

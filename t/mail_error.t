@@ -3,7 +3,8 @@
 use Apache::ASP::CGI;
 use strict;
 
-&Apache::ASP::CGI::do_self(NoState => 1);
+$^W = 1;
+&Apache::ASP::CGI::do_self(NoState => 1, UseStrict => 1);
 
 __END__
 

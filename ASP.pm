@@ -3,7 +3,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.37;
+$VERSION = 2.39;
 
 use Digest::MD5 qw(md5_hex);
 use Cwd qw(cwd);
@@ -920,7 +920,7 @@ sub ParseHelper {
 		    # copying the HTML twice this way.  This might be large
 		    # saving on a typical site with rich HTML headers & footers
 		    $script .= 
-		      '&ASP::WriteRef($main::Response, \('.join('.', @out).'));';
+		      '&Apache::ASP::WriteRef($main::Response, \('.join('.', @out).'));';
 		    @out = ();
 		}			 
 
@@ -1265,6 +1265,10 @@ sub CompilePerl {
     my $sub_ref;
     if($self->{use_strict}) { 
 	local $SIG{__WARN__} = sub { die("maybe use strict error: ", @_) };
+
+	# comment out for now, until 3.0 release for this may create lots
+	# of compile time errors for people that will need to fix scripts
+	#	local $^W = 1; # trigger my closure errors, --jc 9/7/2002
 	$sub_ref = eval $eval;
     } else {
 	local $SIG{__WARN__} = sub { $self->Out(@_) };
@@ -1272,8 +1276,9 @@ sub CompilePerl {
     }
 
     my $rv; # for readability
+    my $error = $@;
     if($@) {
-	$self->CompileError($eval, $@);
+	$self->CompileError($eval); # don't throw error, so we can throw die later
 	$subid && $self->UndefRoutine($subid);
 	$rv = undef;
     } else {
@@ -1292,6 +1297,7 @@ sub CompilePerl {
 	}
     }
 
+    $@ = $error;
     $rv;
 }
 
@@ -1299,8 +1305,13 @@ sub Compile {
     my($self, $script, $subid) = @_;
     $subid ||= $self->{subid};
     my $package = $self->{'package'};
-    $self->CompilePerl($script, $subid, $package);
-    ! $self->{errs};
+
+    my $compiled_sub = $self->CompilePerl($script, $subid, $package);
+    unless($compiled_sub) {
+	$self->Error("could not compile script: $@");
+    }
+
+    $compiled_sub;
 }
 
 sub CompileChecksum {
@@ -1610,15 +1621,21 @@ sub Log {
     }
 }
 
+sub CompileErrorThrow {
+    my($self, $eval, @errors) = @_;
+    $self->CompileError($eval);
+    $self->Error(@errors);
+}
+
 sub CompileError {
     my($self, $eval) = (shift, shift);
-    $self->{compile_error} = $_[0] || 1;
+    $self->{compile_error} = 1;
     if(ref $eval) {
-	$self->{compile_eval} = $$eval;
+	my $copy_eval = $$eval;
+	$self->{compile_eval} = \$copy_eval;
     } else {
-	$self->{compile_eval} = $eval;
+	$self->{compile_eval} = \$eval;
     }
-    $self->Error(@_);
 }
 
 sub Error {

@@ -318,7 +318,7 @@ sub FormFill {
 					);
 		 };
 		 if($@) {
-		     $asp->CompileError($form, "form fill failed: $@");
+		     $asp->CompileErrorThrow($form, "form fill failed: $@");
 		 } else {
 		     $asp->{dbg} && 
 			 $asp->Debug("form fill for form of start length $start_length ".
@@ -649,7 +649,7 @@ sub Write {
     &WriteRef($self, $dataref);
 }
 
-*ASP::WriteRef = *WR = *WriteRef;
+*Apache::ASP::WriteRef = *WriteRef;
 sub WriteRef {
     my($self, $dataref) = @_;
 
@@ -789,10 +789,9 @@ sub Include {
 
     my $_CODE = $asp->CompileInclude($file);
     unless(defined $_CODE) {
-	$asp->Error("error including $file, not compiled");
-	return;
+	die("error including $file, not compiled: $@");
     }
-    
+
     my $eval = $_CODE->{code};
     $asp->{dbg} && $asp->Debug("executing $eval");    
 

@@ -32,7 +32,7 @@ sub new {
     my $id = $asp->FileId($asp->{global}, undef, 1);
     my $package = $asp->{global_package} ? $asp->{global_package} : "Apache::ASP::Compiles::".$id;
 
-    my $self = bless { 
+    my $self = bless {
 	asp => $asp,
 #	filename => $filename,
 	id => $id,
@@ -104,6 +104,13 @@ sub new {
     $code =~ /^(.*)$/s;
     $code = $1;
 
+    # turn off $^W to suppress warnings about reloading subroutines
+    # which is a valid use of global.asa.  We cannot just undef 
+    # all the events possible in global.asa, as global.asa can be 
+    # used as a general package library for the web application
+    # --jc, 9/6/2002
+    local $^W = 0;
+
     # only way to catch strict errors here    
     if($asp->{use_strict}) { 
 	local $SIG{__WARN__} = sub { die("maybe use strict error: ", @_) };
@@ -135,7 +142,7 @@ sub new {
 	$asp->Debug('global.asa routines', $routines);
 	$self->{'compiled'} = $compiled;
     } else {
-	$asp->CompileError($code, "errors compiling global.asa: $@");
+	$asp->CompileErrorThrow($code, "errors compiling global.asa: $@");
     }
 
     $self;

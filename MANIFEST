@@ -161,6 +161,7 @@ t/asp-perl2.t
 t/asp_object.t
 t/cache.t
 t/cache_test.inc
+t/closure.t
 t/collection.t
 t/collectionitem.t
 t/dynamic_include_change.inc
@@ -194,6 +195,7 @@ t/loops.t
 t/mail_error.t
 t/null/global.asa
 t/null/ok.inc
+t/reload_global_asa.t
 t/req_params_none.t
 t/request.t
 t/response.t
@@ -209,6 +211,8 @@ t/session_events/global.asa
 t/session_serialize.t
 t/share.t
 t/stat_inc.t
+t/strict_error.inc
+t/strict_error.t
 t/taint_check.t
 t/xmlsubs.t
 t/xmlsubsmatch.t

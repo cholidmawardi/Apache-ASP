@@ -5,6 +5,8 @@ sub ProcessErrors {
     my $self = shift;
     my $r = $self->{r};
     my $status;
+
+    $self->InitPackageGlobals;
     
     if($self->{dbg} >= 2) {
 	$self->PrettyError();
@@ -50,24 +52,21 @@ sub PrettyErrorHelper {
 	# link in the line number to the compiled program
 	$self->Debug("errors out $errors_out");
 	if($errors_out =~
-	   s,\s+at\s+(.*?)\s+line\s+(\d+),
+	   s|\s+at\s+(.*?)\s+line\s+(\d+)|
 	   {
-	    $file = $1;
-	    $url = $self->{Server}->URLEncode($1.' '.$2);
-	    " at $1 <a href=#$url>line $2</a>";
+	    my($file, $line_no) = ($1, $2);
+            if($file =~ /\)/) {
+              " at $file line $line_no";
+            } else {
+	      $url = $self->{Server}->URLEncode($file.' '.$line_no);
+	      " at $file <a href=#$url>line $line_no</a>";
+            }
 	   }
-	   ,exs
+	   |exs
 	  )
 	  {
 	      push(@eval_error_lines, $url);	      
 	  }
-    }
-
-    # trim the compile error output, for global.asa errors in particular
-    # it can often be quite long
-    if($self->{compile_error}) {
-	$errors_out = substr($errors_out, 0, $CompileErrorSize);
-	$errors_out .= '... see compile error for rest';
     }
 
     my $out = <<OUT;
@@ -79,7 +78,7 @@ $errors_out
 
 <b><u>Debug Output</u></b>
 <ol>
-@{[join("\n<li> ", '', map { $self->Escape($self->{compile_error} ? substr($_, 0, $CompileErrorSize).' ... ' : $_) } @{$self->{debugs_output}}) ]}
+@{[join("\n<li> ", '', map { $_ } @{$self->{debugs_output}}) ]}
 </ol>
 </tt>
 <pre>
@@ -91,10 +90,7 @@ OUT
     # with probably a runtime error
     my $script;     
     if($self->{compile_error}) {    
-	$out .= "<b><u>Compile Error</u></b>\n\n";
-	my $compile_error = substr($self->{compile_error}, 0, $CompileErrorSize);
-	$out .= $self->Escape($compile_error) . " ...\n\n";
-	$script = $self->{compile_eval};
+	$script = ${$self->{compile_eval}};
     }
     
     if($$response_buffer) {
@@ -163,9 +159,19 @@ sub MailErrors {
     # email during register cleanup so the user doesn't have 
     # to wait, and possible cancel the mail by pressing "STOP"
     $self->Log("registering error mail to $self->{mail_errors_to} for cleanup phase");
-    my $body_ref = $self->Response->TrapInclude('Share::CORE/MailErrors.inc', 
-						COMPILE_ERROR => $self->PrettyErrorHelper
-					       );
+    my $body_ref;
+    eval {
+	# there was a "use strict" + warn error while compiling this template
+	local $^W = 0;
+	$body_ref = $self->Response->TrapInclude('Share::CORE/MailErrors.inc', 
+						 COMPILE_ERROR => $self->PrettyErrorHelper
+						);
+    };
+    if($@) {
+	$self->Error("error creating error mail in MailErrors(): $@");
+	return;
+    }
+
     my($subject,$body);
     if($$body_ref =~ /^\s+Subject:\s*(.*?)\s*\n\s*(.*)$/is) {
 	($subject,$body) = ($1,$2);
