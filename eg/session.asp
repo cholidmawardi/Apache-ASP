@@ -1,3 +1,5 @@
+#!/usr/local/bin/perl5 asp
+
 <%
 	my $form = $Request->Form();
 

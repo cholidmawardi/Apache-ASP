@@ -6,16 +6,23 @@ interest to you, and I will give it higher priority.
 
 WILL BE DONE 
 ============
+- MailErrorsPower, sends duplicate errors every 1,10,100... occurances
+- MailErrorsPowerPeriod, resets the duplicate errors counter.
 - $Request->ClientCertificate()
 - asp.pl, CGI method of doing asp
 - Investigating possibility of hooking $Session timeout into 
   client/server 401 authentication failure.  Seems like IE 
   caches passwords which makes things tough
+- BerkeleyDB2 integration for state management, maybe getting
+  shared memory to work.
+- Better debugging, line numbers for dynamic includes.  
+  Maybe also some lightweight syntax error checking.
 
 MAY BE DONE
 ===========
+- Session management w/o cookies.
 - VBScript, ECMAScript interpreters
-- allow use of Http::Session for session management
-- Integration with HTML::Embed
+- allow use of Apache::Session for session management
+- Close integration with HTML::Embperl
 - Dumping state of Apache::ASP during an error, and being
   able to go through it with the perl debugger.

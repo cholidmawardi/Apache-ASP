@@ -1,0 +1,70 @@
+#!/usr/local/bin/perl5 asp
+
+<%
+# split the page in 2 for nice formatting and english style sorting
+my(@col1, @col2);
+my @keys = sort keys %EG;
+my $half = int(@keys/2);
+
+for(my $i =0; $i <= $#keys; $i++) {
+	if($i <= $half) {
+		push(@col1, $keys[$i]);
+	} else {
+		push(@col2, $keys[$i]);
+	}
+} 
+$Response->Debug(\@col1, \@col2);
+%>
+
+<!--#include file=header.inc-->
+
+<table border=0>
+<tr><td colspan=3 align=center bgcolor=black>
+	<b>
+	<tt><font size=+1 color=white><%=uc "Example ASP Scripts"%></font></tt>
+	</b>
+</td></tr>
+<% while(@col1) { 
+	my $col1 = shift @col1;
+	my $col2 = shift @col2;
+	%>
+	<tr>
+	<% for([$col1, $EG{$col1}], '', [$col2, $EG{$col2}]) { 
+		unless(ref $_) { 
+			print "<td width=10>&nbsp;</td>";
+			next;
+		} 
+		next unless $_->[0]; # last col / last row
+
+
+		# clean up the descriptions
+		$_->[1] =~ s/\s*\.\s*$//s;
+		$_->[1] .= '.';
+
+		%>
+		<td valign=top>
+			<nobr>
+			<font size=-0>
+				<tt><b>
+				<a href=<%=$_->[0]%>><%=$_->[0]%></a>
+				<% if($_->[0] =~ /\.(htm|asp|ssi)$/) { %>
+					&nbsp
+					<i>
+					(<a href=source.asp?file=<%=$_->[0]%>>source</a>)
+					</i>
+				<% } %>
+				</tt></b>
+			</font>
+			</nobr>
+			<br>
+			<font size=-1><%=$_->[1]%></font>			
+		</td> 
+	<% } %>
+	</tr>
+<% } %>
+</table>
+
+<!--#include file=footer.inc-->
+
+
+	

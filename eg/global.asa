@@ -26,5 +26,65 @@ sub Script_OnEnd {
 	$Session->{Ended}++;
 }
 
+# you can share globals between scripts as of v.10, as all scripts, including 
+# the global.asa are compiled into the same module
+%EG = (
+	'.htaccess' => 'Configuration parameters that make Apache::ASP tick.',
 
+       'application.asp' => 'Uses $Application for incrementing a counter.',
+
+       'binary_write.htm' => '$Response->BinaryWrite() demo for an asp script serving a gif.',
+
+       'cgi.htm' => 'Shows compatibility with the CGI.pm library',
+
+       'counting.htm' => 'Simple asp syntax shown by wrapping a for loop around html and inserting a '.
+				'scalar value.',
+
+       'dynamic_includes.htm' => 'Shows an included file called as a subroutine.',
+
+       'file_upload.asp' => 'File upload data can be read from the $Request->Form(), '.
+				'and is implemented via CGI.pm',
+
+	'footer.inc' => 'Footer include for most of the scripts listed.',
+
+       'form.asp' => 'Shows simple use of $Request->Form() and how to get raw input data '.
+			' from $Request->BinaryRead()',
+
+       'global.asa' => 'The global.asa is the nervous system of an ASP application and '.
+			'is where you define your event handlers.',
+
+       'global_asa_demo.asp' => 'Shows how the global.asa can be used to track users in an '.
+			'application',
+
+       'header.inc' => 'Header include for most of the scripts listed here.',
+
+       'include.htm' => 'Shows how you can decompose a script into common included files',
+
+       'register_cleanup.asp' => 'Demonstrates use of the API extension $Server->RegisterCleanup(). '.
+		'Execute code after a response completes in a fail safe way with this routine. ',
+
+       'response.asp' => 'Messy script showing much of the $Response object\'s functionality, '.
+		'including cookies and buffering.',
+
+       'row.inc' => 'File dynamically included in the dynamic_includes.htm example',
+
+       'server.htm' => 'Shows much of the $Server object\'s functionality',
+
+       'server_variables.htm' => '$Response->ServerVariables() are the equivalent of %ENV in ASP',
+
+       'session.asp' => 'Shows use of the $Session object',
+
+       'source.asp' => 'Handy source code viewer used to let you easily view the source of '.
+		       'the other asp scripts.',
+
+       'ssi_filter.ssi' => 'Shows full SSI in action via Apache::Filter & Apache::SSI. You must compile '.
+			'your apache with stacked handlers and install these modules to see '.
+       '		this script',
+
+       'syntax_error.htm' => 'Demonstrates asp debugging with Debug 2 by creating a perl syntax error ',
+
+       'table.inc' => 'Another include used to demo dynamic_includes.htm',
+
+       'test.gif' => 'Source gif for the binary_write.htm example',
+);
 

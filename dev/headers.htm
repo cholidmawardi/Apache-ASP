@@ -1,0 +1,6 @@
+<% 
+my $env = $Request->ServerVariables(); 
+for(sort keys %$env) {
+	 print "$_: $env->{$_}<br>\n";
+}
+%>

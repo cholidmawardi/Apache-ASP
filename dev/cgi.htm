@@ -1,5 +1,3 @@
-#!/usr/local/bin/perl5 asp
-
 <%
 	# This code was ripped almost straight out of CGI.pm, by Lincoln Stein.
 	# The code was the bulk of the SYNOPSIS section of CGI.pm v2.46
@@ -22,7 +20,8 @@ $name ||= $query->cookie('name');
 print header(-cookie=>$cookie),
     start_html('A Simple Example'),
     h1('A Simple Example'),
-    start_form,
+    start_form('-method' => 'GET'),
+#    start_form(),
     "What's your name? ",textfield('name'),p,
     "What's the combination?", p,
     checkbox_group(-name=>'words',
@@ -35,9 +34,11 @@ print header(-cookie=>$cookie),
     end_form,
     hr;
 
+use Data::Dumper;
 if ($query->param()) {
     print "Your name is ",em($name),p,
-    "The keywords are: ",em(join(", ",$query->param('words'))),p,
+#    "The keywords are: ",em(join(", ",$query->param('words'))),p,
+    "The keywords are: ",em(join(", ",$Request->QueryString('words'))),p,
     "Your favorite color is ",em($query->param('color')),
     hr;
 }

@@ -1,3 +1,5 @@
+#!/usr/local/bin/perl5 asp
+
 <!--#include file="header.inc"-->
 
 This example shows you how to Apache::ASP to handle file uploads.
@@ -13,9 +15,10 @@ print $q->hidden('file_upload', 'Hidden File Upload Form Text');
 print $q->filefield('uploaded_file','starting value',40,80);
 print $q->submit('Upload File');
 print $q->endform();
+my $filehandle;
 %>
 
-<% if(my $filehandle = $Request->{Form}{uploaded_file}) { %>
+<% if($filehandle = $Request->{Form}{uploaded_file}) { %>
 hidden text: <%=$Request->Form('file_upload') %><br>
 uploaded file name: <%=$filehandle%>
 <pre>

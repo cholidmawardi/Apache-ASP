@@ -13,14 +13,20 @@ $necessary_modules = {
     'Carp' => 'Provides critical error messaging with confess()',
 };
 
-$optional_modules = {
-    'Devel::Symdump' => 'Used for StatINC setting, which reloads modules dynamically',
-    'Win32::OLE' => { 
-	test => '$^O eq \'MSWin32\'',
-	message => 'Required for access to ActiveX objects on Win32, like ADO.',
-    },
-    'CGI' => 'Required for file upload, make test, and command line ./cgi/asp script',
-    'DB_File' => 'Optional module for StateDB config option'
+$optional_modules = 
+  {
+   'Devel::Symdump' => 'Used for StatINC setting, which reloads modules dynamically',
+   'Win32::OLE' => { 
+		    test => '$^O eq \'MSWin32\'',
+		    message => 'Required for access to ActiveX objects on Win32, like ADO.',
+		   },
+   'CGI' => 'Required for file upload, make test, and command line ./cgi/asp script',
+   'DB_File' => 'Optional module for StateDB config option',
+   'HTML::Clean' => 'Compress text/html with Clean config or $Response->{Clean} set to 1-9',
+   'Apache::Filter' => 'Full SSI support via Apache::Filter & Apache::SSI',
+   'Apache::SSI' => 'Full SSI support via Apache::Filter & Apache::SSI',
+   'Net::SMTP' => 'Runtime errors can be mailed to the webmaster with MailErrorTo config',
+   'Net::Config' => 'Config options for use with Net::SMTP'		     
 };
 	    
 print "Checking for the prerequisite modules...\n";

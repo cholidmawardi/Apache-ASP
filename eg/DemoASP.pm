@@ -9,7 +9,7 @@ sub new {
 
     my $basename = &File::Basename::basename($0);
     my($title) = "Demo ASP: ". $basename;
-	my($self) = bless {
+    my($self) = bless {
 	bgcolor => white,
 	env => $env,
 	title => $title,

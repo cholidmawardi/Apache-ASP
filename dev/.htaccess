@@ -20,8 +20,9 @@
 	PerlSetVar Debug  2
 	PerlSetVar Global  .		
 	PerlSetVar NoState 1 
-	PerlSetVar BufferingOn 0
-#	PerlSetVar CompileIncludes 1
+	PerlSetVar BufferingOn 1
+#	PerlSetVar DynamicIncludes 1
+#	PerlSetVar CgiHeaders 1
 </Files>
 
 # .ssi for full ssi support, with Apache::Filter

@@ -22,6 +22,7 @@
 	PerlSetVar NoState 1 
 	PerlSetVar BufferingOn 0
 	PerlSetVar NoCache 1
+#	PerlSetVar DynamicIncludes 1
 </Files>
 
 # .ssi for full ssi support, with Apache::Filter

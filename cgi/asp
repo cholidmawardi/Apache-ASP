@@ -1,10 +1,23 @@
-#!/usr/local/bin/perl 
+#!/usr/local/bin/perl5
 
+use lib qw(./lib);
 use Apache::ASP;
 
 # help section
+use File::Basename;
 use Getopt::Std;
-getopts('hsdb');
+use Cwd;
+
+getopts('hsdbo:');
+
+#if($ENV{GATEWAY_INTERFACE} =~ /cgi/i) {
+#    if(-e $ENV{PATH_TRANSLATED}) {
+#	push(@ARGV, $ENV{PATH_TRANSLATED});
+#    } else {
+#	die("no file to parse");
+#    }
+#}
+
 if($opt_h || ! @ARGV) {
     print <<HELP;
 Usage: asp [-hsdb] file1 \@arguments file2 \@arguments ...
@@ -13,6 +26,7 @@ Usage: asp [-hsdb] file1 \@arguments file2 \@arguments ...
     -s  Setup \$Session and \$Application state for script.
     -d  Set to debug code upon errors.
     -b  Only return body of document, no headers.
+    -o  Output directory, writes to files there instead of STDOUT
 
 This program will run asp scripts from the command line.
 Each file that is specified will be run, and the 
@@ -27,7 +41,21 @@ HELP
     exit;
 }
 
+if($opt_o && ! -e $opt_o) {
+    mkdir($opt_o, 0750) || die("can't mkdir $opt_o");    
+}
+
+$Config = '';
+if(-e '.asp') {
+    # read in .asp to load %Config
+    open(CONFIG, '.asp') || die("can't open .asp: $!");
+    $Config = join('', <CONFIG>);
+    close CONFIG;
+}
+
+my $cwd = cwd();
 while(@ARGV) {
+    $cwd && (chdir($cwd) || die("can't chdir to $cwd"));
     my $file = shift @ARGV;
     my @script_args;
 
@@ -41,7 +69,16 @@ while(@ARGV) {
 	push(@script_args, shift @ARGV);
     }
 	
+    if($opt_o) {
+	my $basename = basename($file);
+	open(STDOUT, ">$opt_o/$basename") || die("can't open $opt_o/$basename for writing");
+    }
+
     $r = &Apache::ASP::CGI::init($file, @script_args);
+    $0 = $file; # might need real $0 in $Config
+    eval $Config;
+    $@ && die("can't eval config error: $@");
+
     $r->dir_config('NoState', 0) if $opt_s;
     if($opt_d) {
 	$r->dir_config('Debug', 2);
@@ -50,8 +87,17 @@ while(@ARGV) {
     if($opt_b) {
 	$r->dir_config('NoHeaders', 1);
     }
-    
+
+    for(keys %Config) {
+	$r->dir_config($_, $Config{$_});
+    }
+
     &Apache::ASP::handler($r);
+
+    if($opt_o) {
+	close STDOUT;
+    }
+    
 }
 
 

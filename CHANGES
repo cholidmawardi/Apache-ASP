@@ -1,45 +1,182 @@
-$MODULE=Apache::ASP; $VERSION = .09;
+$MODULE=Apache::ASP; $VERSION = .11;
+
++ The MailHost config option is the smtp server used for 
+  relay emails for the Mail* config options.
+
++ MailAlertTo config option used for sending a short administrative
+  alert for an internal ASP error, server code 500.  This is the 
+  compliment to MailErrorsTo, but is suited for sending a to a
+  small text based pager.  The email sent by MailErrorsTo would
+  then be checked by the web admin for quick response & debugging
+  for the incident. 
+
+  The MailAlertPeriod config specifies the time in minutes during 
+  which only one alert will be sent, which defaults to 20.
+
++ MailErrorsTo config options sends the results of a 500 error
+  to the email address specified as if Debug were set to 2.
+  If Debug 2 is set, this config will not be on, as it is
+  for production use only.  Debug settings less than 2 only 
+  log errors to the apache server error log.
+
+- StatINCMatch / StatINC can be used in production and work
+  even after a server graceful restart, which is essential for 
+  a production server.
+
+- Content-Length header is set again, if BufferingOn is set, and
+  haven't $Response->Flush()'d.  This broke when I introduce
+  the Script_OnEnd event handler.
+
++ Optimized reloading of the GlobalPackage perl module upon changes, 
+  so that scripts and dynamic includes don't have to be recompiled.  
+  The global.asa will still have to be though.  Since we started
+  compiling all routines into a package that can be named with
+  GlobalPackage, we've been undef'ing compiled scripts and includes
+  when the real GlobalPackage changed on disk, as we do a full sweep
+  through the namespace.  Now, we skip those subs that we know to 
+  be includes or scripts. 
+
+- Using Apache::Symbol::undef() to undefine precompiled scripts
+  and includes when reloading those scripts.  Doing just an undef() 
+  would sometimes result in an "active subroutine undef" error.
+  This bug came out when I started thrashing the StatINC system
+  for production use.
+
++ StatINCMatch setting created for production use reloading of
+  perl modules.  StatINCMatch allows StatINC reloading of a
+  subset of all the modules defined in %INC, those that match
+  $module =~ /$StatINCMatch/, where module is some module name
+  like Class/Struct.pm
+
++ Reoptimized pod comment parsing.  I slowed it down to sync
+  lines numbers in the last version, but found another corner I could cut.
 
 + = improvement; - = bug fix
 
+$MODULE=Apache::ASP; $VERSION = .10; $DATE="5/24/99";
+
++ = improvement; - = bug fix
+
++ Added index.html file to ./eg to help people wade through
+  the examples.  This one has been long overdue.
+
++ Clean config option, or setting $Response->{Clean} to 1 - 9,
+  uses HTML::Clean to compress text/html output of ASP scripts.
+  I like the Clean 1 setting which is lightweight, stripping 
+  whitespace for about 10% compression, at a cost of less than
+  a 5% performance penalty.
+
++ Using pod style commenting no longer confuses the line
+  numbering.  ASP script line numbers are almost exactly match
+  their compiled perl version, except that normal inline includes
+  (not dynamic) insert extra text which can confuse line numbering.
+  If you want perl error line numbers to entirely sync with your 
+  ASP scripts, I would suggest learning how to use dynamic includes,
+  as opposed to inline includes.
+
+- Wrapped StatINC reloading of libs in an eval, and capturing
+  error for Debug 2 setting.  This makes changing libs with StatINC
+  on a little more friendly when there are errors. 
+
+- $Request->QueryString() now stores multiple values for the 
+  same key, just as $Request->Form() has since v.07.  In
+  wantarray() context like @vals = $Request->QueryString('dupkey'),
+  @vals will store whatever values where associated with dupkey
+  in the query string like (1,2) from: ?dupkey=1&dupkey=2
+
++ The GlobalPackage config directive may be defined
+  to explicitly set the perl module that all scripts and global.asa
+  are compiled into.
+
+- Dynamic includes may be in the Global directory, just like
+  normal includes.
+
++ Perl script generated from asp scripts should match line
+  for line, seen in errors, except when using inline (default) 
+  includes, pod comments, or <% #comment %> perl comments, which 
+  will throw off the line counts by adding text, removing
+  text, or having an extra newline added, respectively.
+
+- Script_OnEnd may now send output to the browser.  Before
+  $main::Response->End() was being called at the end of the
+  main script preventing further output.
+
+++All scripts are compiled as routines in a namespace uniquely
+  defined by the global.asa of the ASP application.  Thus,
+  scripts, includes, and global.asa routines will share
+  all globals defined in the global.asa namespace.   This means
+  that globals between scripts will be shared, and globals
+  defined in a global.asa will be available to scripts.
+
+  Scripts used to have their own namespace, thus globals
+  were not shared between them.
+
++ a -o $output_dir switch on the ./cgi/asp script allows
+  it to execute scripts and write their output to an output
+  directory.  Useful for building static html sites, based on
+  asp scripts.  An example use would be:
+
+    asp -b -o out *.asp
+
+  Without an output dir, script output is written to STDOUT
+
+
+$MODULE=Apache::ASP; $VERSION = .09; $DATE="4/22/99";
+
 + Updated Makefile.PL optional modules output for CGI & DB_File
+
 + Improved docs on $Response->Cookies() and $Request->Cookies()
+
 + Added PERFORMANCE doc to main README, and added sub section
   on precompiling scripts with Apache::ASP->Loader()
+
 + Naming of CompileIncludes switched over to DynamicIncludes 
   for greater clarity.
+
 + Dynamic includes can now reference ASP objects like $Session
   w/o the $main::* syntax.  These subs are no longer anonymous
   subs, and are now compiled into the namespace of the global.asa package.
+
 + Apache::ASP->Loader() precompiles dynamic includes too. Making this work
   required fixing some subtle bugs / dependencies in the compiling process.
+
 + Added Apache::ASP->Loader() similar to Apache::RegistryLoader for
   precompiling ASP scripts.  Precompile a whole site at server 
   startup with one function call.
+
 + Prettied the error messaging with Debug 2.
+
 + $Response->Debug(@args) debugging extension, which
   allows a developer to hook into the module's debugging,
   and only have @args be written to error_log when Debug is greater
   than 0.
+
 - Put write locking code around State writes, like $Session
   and $Application.  I thought I fixed this bug a while ago.
+
 - API change: converted $Session->Timeout() and $Session->SessionID() 
   methods into $Session->{Timeout} and $Session->{SessionID} properties.
   The use of these properties as methods is deprecated, but 
   backwards compatibility will remain.  Updated ./eg/session.asp
   to use these new properties.
+
 + Implemented $Response->{PICS} which if set sends out a PICS-Label
   HTTP header, useful for ratings.
+
 + Implemented $Response->{CacheControl} and $Response->{Charset} members.
   By default, CacheControl is 'private', and this value gets sent out
   every request as HTTP header Cache-Control.  Charset appends itself
   onto the content type header.
+
 + Implemented $Request->BinaryRead(), $Request->{TotalBytes},
   documented them, and updated ./eg/form.asp for an example usage. 
+
 + Implemented $Response->BinaryWrite(), documented, and created
   and example in ./eg/binary_write.htm
+
 + Implemented $Server->MapPath() and created example of its use
   in ./eg/server.htm
+
 - $Request->Form() now reads file uploads correctly with 
   the latest CGI.pm, where $Request->Form('file_field') returns
   the actual file name uploaded, which can be used as a file handle
@@ -48,185 +185,276 @@ $MODULE=Apache::ASP; $VERSION = .09;
   name, you would have to parse it like =~ s/^\*Fh\:\://,
   which you no longer have to do.  As long as parsing was done as
   mentioned, the change should be backwards compatible.
+
 + Updated + enhanced documentation on file uploads.  Created extra
   comments about it as an FAQ, and under $Response->Form(), the latter
   being an obvious place for a developer to look for it.
+
 + Updated ./eg/file_upload.asp to show use of non file form data, 
   with which we had a bug before.
+
 + Finished retieing *STDIN to cached STDIN contents, so that 
   CGI input routines may be used transparently, along side with
   use of $Request->Form()
+
 + Cleaned up and optimized $Request code
+
 + Updated documentation for CGI input & file uploads.  Created
   file upload FAQ.
+
 + Reworked ./eg/cgi.htm example to use CGI input routines
   after doing a native read of STDIN.
-++ Added dynamic includes with <!--include file=file args=@args-->
+
+++Added dynamic includes with <!--include file=file args=@args-->
   extension.  This style of include is compiled as an anonymous sub & 
   cached, and then executed with @args passed to the subroutine for 
   execution.  This is include may also be rewritten as a new API 
   extension: $Response->Include('file', @args)
+
 + Added ./eg/compiled_includes.htm example documenting new dynamic includes.
+
 + Documented SSI: native file includes, and the rest with filtering 
   to Apache::SSI
+
 + Turned the documentation of Filter config to value of Off so 
   people won't cut and paste the On config by default.
+
 + Added SecureSession config option, which forces session cookie to 
   be sent only under https secured www page requests.
+
 + Added StateDB config option allows use of DB_File for $Session, since 
   default use of SDBM_File is limited.  See StateDB in README.
+
 + file include syntax w/o quotes supported like <!--#include file=test.inc-->
+
 + Nested includes are supported, with includes including each other.
   Recursive includes are detected and errors out when an include has been 
   included 100 times for a script.  Better to quit early than 
   have a process spin out of control. (PORTABLE ? probably not)
+
 + Allow <!--include file=file.inc--> notation w/o quotes around file names
+
 - PerlSetEnv apache conf setting now get passed through to $Request->ServerVariables.
   this update has ServerVariables getting data from %ENV instead of $r->cgi_env
+
 + README FAQ for PerlHandler errors
+
 
 $MODULE=Apache::ASP; $VERSION = .08; $DATE="2/6/99";
 
 ++SSI with Apache::Filter & Apache::SSI, see config options & ./eg files
   Currently filtering only works in the direction Apache::ASP -> Apache::SSI,
   will not work the other way around, as SSI must come last in a set of filters
+
 + SSI file includes may reference files in the Global directory, better code sharing
+
 - <% @array... %> no longer dropped from code.
+
 + perl =pod comments are stripped from script before compiling, and associated
   PodComments configuration options.
+
 + Command line cgi/asp script takes various options, and allows execution
   of multiple asp scripts at one time.  This script should be used for
   command line debugging.  This is also the beginning of building
   a static site from asp scripts with the -b option, suppressing headers.
+
 + $Response->AddHeader('Set-Cookie') works for multiple cookies.
+
 - $Response->Cookies('foo', '0') works, was dropping 0 because of boolean test
+
 - Fixed up some config doc errors.
+
 
 $MODULE=Apache::ASP; $VERSION = .07;
 
 - removed SIG{__WARN__} handler, it was a bad idea.
+
 - fixes file locking on QNX, work around poor flock porting
+
 + removed message about Win32::OLE on UNIX platforms from Makefile.PL
+
 - Better lock garbage collection.  Works with StatINC seemlessly.
+
 - Multiple select forms now work in array context with $Response->Form()
 	@values = $Response->Form('multi');
+
 - Better CGI.pm compatibility with $r->header_out('Content-type'),
   improved garabage collection under modperl, esp. w/ file uploads
+
 
 $VERSION = .06
 
 + Application_OnStart & Application_OnEnd event handlers support.
+
 - Compatible with CGI.pm 2.46 headers() 
+
 - Compatible with CGI.pm $q = new CGI({}), caveat: does not set params 
+
 + use strict; followed by use of objects like $Session is fine.
+
 - Multiple cookies may be set per script execution.
+
 + file upload implemented via CGI.pm
+
 ++global.asa implemented with events Session_OnStart and Session_OnEnd
   working appropriately.
+
 + StateDir configuration directive implemented.
   StateDir allows the session state directory to be specified separately 
   from the Global directory, useful for OS's with caching filesystems.
+
 + StateManager config directive.  StateManager specifies how frequently
   Sessions are cleaned up, with 10 (default) meaning that old Sessions
   will be cleaned up 10 times per SessionTimeout period (default 20 minutes).
+
 + $Application->SessionCount() implemented, non-portable method.
 	: returns the number of currently active sessions
+
 - STOP button fix.  Users may hit STOP button during script 
   execution, and Apache::ASP will cleanup with a routine registered
   in Apache's $r->register_cleanup.  Works well supposedly.
+
 + PerlScript compatibility work, trying to make ports smoother.
 	: Collection emulator, no ->{Count} property
 	: $.*(.*)->{Item} parsed automatically, 
 	  shedding the ->{Item} for Collection support (? better way ?)
 	: No VBScript dates support, just HTTP RFC dates with HTTP::Date
 	: Win32::OLE::in not supported, just use "keys %{$Collection}"	
+
 + ./cgi/asp script for testing scripts from the command line
 	: will be upgraded to CGI method of doing asp
 	: is not "correct" in anyway, so not documented for now
 	  but still useful
+
 + strips DOS carriage returns from scripts automatically, so that
   programs like FrontPage can upload pages to UNIX servers
   without perl choking on the extra \r characters.
 
+
 $VERSION = .05
 
 + Added PERFORMANCE doc, which includes benchmarks + hints.
+
 + Better installation warnings and errors for other modules required. 
+
 - Turned off StatINC in eg/.htaccess, as not everyone installs Devel::Symdump
+
 - Fixed AUTOLOAD state bug, which wouldn't let you each through state
   objects, like %{$Session}, or each %$Session, (bug introduced in v.04)
+
 + Parses ASP white space better.  HTML output matches author's intent
   by better dealing with white space surrounding <% perl blocks %>
+
 - Scalar insertion code <%=$foo%> can now span many lines.
+
 + Added include.t test script for includes.
+
 + Script recompiles when included files change.
+
 + Files can be included in script with 
   SSI <!--#include file="filename"--> syntax, needs to be
   done in ASP module to allow compilation of included code and html 
   into script.  Future chaining with Apache::SSI will allow static 
   html includes, and other SSI directives
 
+
 $VERSION = .04;
 
 + Example script eg/cgi.htm demonstrating CGI.pm use for output.
+
 + Optimized ASP parsing, faster and more legible executing code
 	: try 'die();' in code with setting PerlSetVar Debug 2
+
 + Cleaned up code for running with 'use strict'
+
 - Fixed directory handle leak on Solaris, from not closing after opendir()
+
 + StatINC overhaul.  StatINC setting now works as it should, with 
   the caveat that exported functions will not be refreshed.
+
 + NoState setting optimization, disallows $Application & $Session
+
 + $Application->*Lock() functions implemented
+
 - SoftRedirect setting for those who want scripts to keep running
   after a Redirect()
+
 + SessionSerialize setting to lock session while script is running
 	: Microsoft ASP style session locking
 	: For a session, scripts execute one at a time 
 	: NOT recommended use, please see note.
+
 - MLDBM can be used for other things without messing up internal use
 	: before if it was used with different DB's and serializers,
 	  internal state could be lost.
+
 -- State file locking.  Corruption worries, and loss of data no more.
+
 + CGI header support, developer can use CGI.pm for *output*, or just print()
 	: print "Set-Cookie: test=cookie\n", and things will just work
 	: use CGI.pm for output
 	: utilizes $r->send_cgi_header(), thanks Doug!
+
 + Improved Cookie implementation, more flexible and complete
 	- Domain cookie key now works
 	: Expire times now taken from time(), and relative time in sec
 	: Request->Cookies() reading more flexible, with wantarray()
 	  on hash cookie values, %hash = $Request->Cookie('test');
+
 - make test module naming correction, was t.pm, now T.pm for Unix
+
 + POD / README cleanup, formatting and HTML friendly.
+
 
 $VERSION = .03;
 
 + Installation 'make test' now works
+
 + ActiveX objects on Win32 implemented with $Server->CreateObject() 
+
 + Cookies implemented: $Response->Cookies() & $Request->Cookies()
+
 - Fixed $Response object API, converting some methods to object members.
   Deprecated methods, but backwards compatible.
+
 + Improved error messaging, debug output
+
 + $, influences $Response->Write(@strings) behavior
+
 + perl print() works, sending output to $Response object
+
 + $Response->Write() prints scalars, arrays, and hashes.  Before only scalars.
+
 + Begin implementation of $Server object.
+
 + Implemented $Response->{Expires} and $Response->{ExpiresAbsolute}
+
 + Added "PerlSetVar StatINC" config option
+
 + $0 is aliased to current script filename
+
 + ASP Objects ($Response, etc.) are set in main package
   Thus notation like $main::Response->Write() can be used anywhere.
+
 
 $VERSION = .02;
 
 ++ Session Manager, won't break under denial of service attack
+
 + Fleshed out $Response, $Session objects, almost full implementation.
+
 + Enormously more documentation.
+
 - Fixed error handling with Debug = 2.
+
 - Documentation fixed for pod2man support.  README now more man-like.
+
 - Stripped \r\n dos characters from installation files
+
 - 755 mode set for session state directory when created
+
 - Loads Win32/OLE properly, won't break with UNIX
+
 
 $VERSION = .01;
 

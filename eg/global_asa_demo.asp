@@ -1,3 +1,5 @@
+#!/usr/local/bin/perl5 asp
+
 <!--#include file="header.inc" args=""-->
 
 This example serves as how one may use the global.asa 
