@@ -2536,6 +2536,12 @@ TODO
 CHANGES
      + = improvement; - = bug fix
 
+    $VERSION = 2.00; $DATE="07/15/00";
+     -UniquePackages config works again, broke a couple versions back
+
+     +better error handling for methods called on $Application
+      that don't exist, hard to debug before
+
     $VERSION = 1.95; $DATE="07/10/00";
      !!!!! EXAMPLES SECURITY BUG FOUND & FIXED !!!!!
 
@@ -2554,9 +2560,9 @@ CHANGES
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-     -$0 now set to transfered file, when using $Server->Transfer
+     -$0 now set to transferred file, when using $Server->Transfer
 
-     -Fix for XMLSubMatch parsing on cases with 2 or more args passed
+     -Fix for XMLSubsMatch parsing on cases with 2 or more args passed
       to tag sub that was standalone like 
         <Apps:header type="header" title="Moo" foo="moo" />
 

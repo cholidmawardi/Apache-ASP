@@ -4,7 +4,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 1.95;
+$VERSION = 2.00;
 
 use MLDBM;
 use SDBM_File;
@@ -293,6 +293,7 @@ sub Loader {
     $r->dir_config('StatINC', $args{StatINC});
     $r->dir_config('StatINCMatch', $args{StatINCMatch});
     $r->dir_config('UseStrict', $args{UseStrict});
+    $r->dir_config('XMLSubsMatch', $args{XMLSubsMatch});
     
     eval {
 	$COUNT++;
@@ -573,7 +574,6 @@ sub new {
     # always create these
     # global_asa assigns itself to parent object automatically
     my $global_asa = &Apache::ASP::GlobalASA::new($self);
-    $self->{subid} = $global_asa->{'package'}.'::'.$self->{id};
     $self->{Response}  = &Apache::ASP::Response::new($self);
     $self->{Request}   = &Apache::ASP::Request::new($self);
     # Server::new() is just one line, so execute directly
@@ -593,6 +593,8 @@ sub new {
 	$self->{'package'} = $global_asa->{'package'};
 	$self->{init_packages} = ['main', $global_asa->{'package'}];	
     }
+    # must happen after tweaking id
+    $self->{subid} = $global_asa->{'package'}.'::'.$self->{id};
 
     # WHY? cut out now before we get to the big objects
 #    return if $self->{errs};
@@ -3820,8 +3822,8 @@ sub new {
     bless \%self;
 }
 
-sub Lock { shift->LOCK };
-sub UnLock { shift->UNLOCK };
+sub Lock { shift->SUPER::LOCK };
+sub UnLock { shift->SUPER::UNLOCK };
 
 sub SessionCount {
     my $asp = tied(%{$_[0]})->{asp};
@@ -4543,10 +4545,14 @@ sub AUTOLOAD {
     $AUTOLOAD =~ s/^(.*)::(.*?)$/$2/o;
 
     my $value;
-    $self->WriteLock();
-    $value = $self->{dbm}->$AUTOLOAD(@_);
-    $self->UnLock();
-    
+    if($self->{lock_file}) {
+	$self->WriteLock();
+	$value = $self->{dbm}->$AUTOLOAD(@_);
+	$self->UnLock();
+    } else {
+	die("$self can't handle method $AUTOLOAD without lockfile");
+    }
+
     $value;
 }
 
@@ -4613,8 +4619,8 @@ sub STORE {
     $self->UnLock();
 }
 
-sub LOCK { tied(%{(shift)})->WriteLock(); }
-sub UNLOCK { tied(%{(shift)})->UnLock(); }
+sub LOCK { my $self = tied(%{$_[0]}); $self->WriteLock(); }
+sub UNLOCK { my $self = tied(%{$_[0]}); $self->UnLock(); }
 
 # the +> mode open a read/write w/clobber file handle.
 # the clobber is useful, since we don't have to create
@@ -4644,13 +4650,14 @@ sub CloseLock {
 sub WriteLock {
     my $self = shift;
     my $file = $self->{lock_file_fh};
+    my $asp = $self->{asp};
     $self->{num_locks}++;
 
     if($self->{write_locked}) {
 #	$self->{asp}->Log("writelock: already write locked $file");
 	1;
     } else {
-#	$self->{asp}->Log("write locking");
+#	$asp->Log("write locking", $self);
 	$self->{write_locked} = 1;
 	$self->{total_locks}++;
 	local $^W = 0;
@@ -4658,9 +4665,9 @@ sub WriteLock {
 	if($rv) {
 	    # success, typical, first test for speed
 	} elsif($@ and $^O eq 'MSWin32') {
-	    $self->{asp}->Debug("flock() doesn't work on this platform, likely Win95: $!");
+	    $asp->Debug("flock() doesn't work on this platform, likely Win95: $!");
 	} else {
-	    $self->{asp}->Error("can't write lock $file: $!");    
+	    $asp->Error("can't write lock $file: $!");    
 	}
 	$self->Set();
     }
@@ -7841,6 +7848,13 @@ interest to you, and I will give it higher priority.
 
  + = improvement; - = bug fix
 
+=item $VERSION = 2.00; $DATE="07/15/00";
+
+ -UniquePackages config works again, broke a couple versions back
+
+ +better error handling for methods called on $Application
+  that don't exist, hard to debug before
+
 =item $VERSION = 1.95; $DATE="07/10/00";
 
  !!!!! EXAMPLES SECURITY BUG FOUND & FIXED !!!!!
@@ -7860,9 +7874,9 @@ interest to you, and I will give it higher priority.
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
- -$0 now set to transfered file, when using $Server->Transfer
+ -$0 now set to transferred file, when using $Server->Transfer
 
- -Fix for XMLSubMatch parsing on cases with 2 or more args passed
+ -Fix for XMLSubsMatch parsing on cases with 2 or more args passed
   to tag sub that was standalone like 
     <Apps:header type="header" title="Moo" foo="moo" />
 

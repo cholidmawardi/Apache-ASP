@@ -1,20 +1,11 @@
-$MODULE=Apache::ASP; $VERSION = 1.95; $DATE="07/10/00";
+$MODULE=Apache::ASP; $VERSION = 2.00; $DATE="07/15/00";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
 
- --source.asp parses out special characters of the open() call
-  when reading files so that it is not used to clobber or read
-  special system files maliciously.
+ -UniquePackages config works again, broke a couple versions back
 
- Similar bug announced by openhack.org for minivend software
- in story at: 
-    http://www.zdnet.com/eweek/stories/general/0,11011,2600258,00.html
-
- -$0 now set to transfered file, when using $Server->Transfer
-
- -Fix for XMLSubMatch parsing on cases with 2 or more args passed
-  to tag sub that was standalone like 
-    <Apps:header type="header" title="Moo" foo="moo" />
+ +better error handling for methods called on $Application
+  that don't exist, hard to debug before
 
