@@ -2,7 +2,7 @@
 
 <% 
 use vars qw ($Ads $PageCount);
-if($Ads) { 
+if($Ads && 0) { # turn off for now
 	$PageCount++;
 	%>
 

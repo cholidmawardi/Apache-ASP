@@ -2,7 +2,7 @@ use Apache::ASP;
 &Apache::ASP::CGI::do_self();
 
 __END__
-
+<%@ LANGUAGE="PerlScript" %>
 <% use lib '.';	use T;	$t =T->new(); %>
 
 <% 

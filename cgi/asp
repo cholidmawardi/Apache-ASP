@@ -10,7 +10,7 @@ use Cwd;
 use Carp qw(confess);
 
 $SIG{__DIE__} = \&confess;
-getopts('hsdbo:');
+getopts('hsdbo:p:');
 
 #if($ENV{GATEWAY_INTERFACE} =~ /cgi/i) {
 #    if(-e $ENV{PATH_TRANSLATED}) {
@@ -29,6 +29,7 @@ Usage: asp [-hsdb] [-o directory] file1 \@arguments file2 \@arguments ...
     -d  Set to debug code upon errors.
     -b  Only return body of document, no headers.
     -o  Output directory, writes to files there instead of STDOUT
+    -p  GlobalPackage config, what perl package are the scripts compiled in.
 
 This program will run asp scripts from the command line.
 Each file that is specified will be run, and the 
@@ -88,6 +89,9 @@ while(@ARGV) {
     }
     if($opt_b) {
 	$r->dir_config('NoHeaders', 1);
+    }
+    if($opt_p) {
+	$r->dir_config('GlobalPackage', $opt_p);
     }
 
     for(keys %Config) {

@@ -1,79 +1,26 @@
-#!/usr/local/bin/perl
 
 use Benchmark;
-use XML::XSLT;
-use Carp qw(confess);
 use strict;
+use Apache::ASP;
 
-$SIG{__DIE__} = \&confess;
-my $xsl_data = &xsl_data;
-my $xml_data = &xml_data;
+my @test_files = glob('test/*.t');
+for my $test_file (sort @test_files) {
+    open(FILE, $test_file) || die("can't open $test_file for reading: $!");
+    my $data = join('', <FILE>);
+    close FILE;
+    local *0 = $test_file;
 
-my $num = $ARGV[0] || 1;
-$XSLT::debug = $num == 1 ? 1 : 0;
-defined $ARGV[1] and $XML::XSLTParser::_indent_incr = $ARGV[1];
+    my $t = timeit(1, sub { eval $data });
+    my($ok, $not_ok);
+    if ($@) {
+	line_out($t, $test_file, "failed: $@");
+	next;
+    }
 
-my $xsl = XML::DOM::Parser->new->parse($xsl_data);
-# my $xml = XML::DOM::Parser->new->parse($xml_data);
-
-my $result;
-print "starting test...\n\n";
-timethis ($num, sub 
-	  {
-	      my $parser = XML::XSLTParser->new();
-	      $parser->open_project ($xml_data, $xsl, 'STRING', 'DOM');
-	      $parser->process_project;
-	      $result = $XSLT::result->toString;	      
-	      $parser->DESTROY();
-});
-
-
-print $result;
-sleep 5;
-exit;
-
-sub xsl_data {
-    my $data = <<DATA;
-<?xml version="1.0"?> 
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-
-<xsl:template match="page">
- <html>
-  <head>
-   <title><xsl:value-of select="title"/></title>
-  </head>
-  <body bgcolor="#ffffff">
-   <xsl:apply-templates/>
-  </body>
- </html>
-</xsl:template>
-
-<xsl:template match="title">
- <h2>
-  <xsl:apply-templates/>
- </h2>
-</xsl:template>
-
-<xsl:template match="paragraph">
- <p>
-  <i><xsl:apply-templates/></i>
- </p>
-</xsl:template> 
-
-</xsl:stylesheet>
-DATA
-  ;
+    line_out($t, $test_file, 'success');
 }
 
-sub xml_data {
-    my $data =<<DATA;
-<?xml version="1.0"?>
-<page>
- <title>Hello World!</title>
- <content>
-  <paragraph>This is my first XSLT enabled Apache::ASP page!</paragraph>
- </content>
-</page>
-DATA
-  ;
+sub line_out {
+    my($time, $test_file, $message) = @_;
+    printf "...%-25s --- %-20s %8.6f seconds\n", $test_file, $message, $time->[1];
 }

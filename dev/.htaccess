@@ -23,6 +23,7 @@ PerlSetVar DynamicIncludes 1
 	PerlSetVar Global  .		
 #	PerlSetVar Debug  -1
 	PerlSetVar Debug  -2
+	PerlSetVar CollectionItem 1
 	PerlSetVar CookiePath  /	
 	PerlSetVar SessionTimeout .5
 	PerlSetVar StateDir  ./.state

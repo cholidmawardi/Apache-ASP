@@ -1,17 +1,19 @@
 #!perl
 
-$necessary_modules = {
+use strict;
+
+my $necessary_modules = {
     'Apache' => 'Make sure your installation of mod_perl is complete',
     'MLDBM' => 'This is used for reading and writing multi-level hashes on disk',
     'SDBM_File' => 'Internal databases used for state files, like $Session',
     'Data::Dumper' => 'Serializes data for MLDBM',
     'Fcntl' => 'Used for file locking constants',
-    'MD5' => '32 byte hash algorithm for cookie session-id',
+    'Digest::MD5' => '32 byte hash algorithm for cookie session-id',
     'HTTP::Date' => 'Provides mapping between Perl time() and HTTP dates',
     'Carp' => 'Provides critical error messaging with confess()',
 };
 
-$optional_modules = 
+my $optional_modules = 
   {
    'Devel::Symdump' => 'Used for StatINC setting, which reloads modules dynamically',
    'Win32::OLE' => { 
@@ -21,6 +23,7 @@ $optional_modules =
    'CGI' => 'Required for file upload, make test, and command line ./cgi/asp script',
    'Compress::Zlib' => "Required for html gzip text compression for browsers that support it",
    'DB_File' => 'Optional module for StateDB config option',
+   'MLDBM::Sync::SDBM_File' => 'Optional module for StateDB config option that is faster than DB_File on Linux',
    'HTML::Clean' => 'Compress text/html with Clean config or $Response->{Clean} set to 1-9',
    'HTML::FillInForm' => 
    'Enables FormFill feature which will auto fill forms from $Request->Form data',
@@ -28,12 +31,12 @@ $optional_modules =
    'Apache::SSI' => 'Full SSI support via Apache::Filter & Apache::SSI',
    'Net::SMTP' => 'Runtime errors can be mailed to the webmaster with MailErrorTo config',
    'Net::Config' => 'Config options for use with Net::SMTP',	     
-   'XML::XSLT' => 'XSLT transformations require this module.  Install Bundle::XML from CPAN before installing this module for the first time.',
-   'Tie::Cache' => 'XSLTCacheSize setting support',
-   'Time::HiRes' => 'Sub second Apache::ASP response timing with Debug turned on.',
+   'Time::HiRes' => 'Sub second Apache::ASP response timing with Debug 3/-3 turned on.',
+   'XML::XSLT 0.32' => 'XSLT transformations require this module.  Install Bundle::XML from CPAN before installing this module for the first time.',
+   'XML::Sablotron' => 'XSLT that is 10 x faster than XML::XSLT',
 };
 	    
-print "Checking for the prerequisite modules...\n";
+print "Checking for the REQUIRED modules...\n";
 my($errors, $warnings);
 for(sort keys %$necessary_modules) {
     eval 'require ' . $_ ;
@@ -46,7 +49,7 @@ for(sort keys %$necessary_modules) {
     }
 }
 
-print "\nChecking for the optional modules...\n";
+print "\nChecking for the OPTIONAL modules...\n";
 for(sort keys %$optional_modules) {
     my $data = $optional_modules->{$_};
     my $message = ref($data) ? $data->{message} : $data;
@@ -58,7 +61,7 @@ for(sort keys %$optional_modules) {
 	next;
     }
 
-    eval 'require ' . $_ ;
+    eval 'use ' . $_ ;
     if($@) {
 	$warnings++;
 	print " ??? you may want module: $_\n";
@@ -68,7 +71,7 @@ for(sort keys %$optional_modules) {
     }
 }
 
-$CPAN = <<CPAN;
+my $CPAN = <<CPAN;
 
 =-=-= CPAN HELP
 
@@ -105,7 +108,18 @@ if($errors) {
 
 print "Looks good!\n\n";
 
-$VERSION_FROM = 'CHANGES';
 use ExtUtils::MakeMaker;
-&WriteMakefile( NAME => "Apache::ASP" );
+&WriteMakefile(
+	       'NAME' => "Apache::ASP",
+	       'VERSION_FROM' => 'CHANGES', # finds $VERSION
+	       'PREREQ_PM' => {
+			       'Carp' => 0,
+			       'Data::Dumper' => 0,
+			       'Fcntl' => 0,
+			       'HTTP::Date' => 0,
+			       'Digest::MD5' => 0,
+			       'MLDBM' => 0,
+			       'SDBM_File' => 0,
+			      },
+	      );
 

@@ -1,10 +1,10 @@
 <%
 
-use File::Basename;
+use File::Basename qw(basename);
 use strict;
 use vars qw( 
     $NavColor $LinkColor $NavColSpan $Ads $PageCount $DarkRowColor $VLinkColor 
-    $BodyWidth
+    $BodyWidth $BodyColSpan
     );
 
 #$NavColor = '#ffcccc';
@@ -15,6 +15,7 @@ $NavColSpan = 2;
 $DarkRowColor = $LinkColor;
 $VLinkColor = '#993399';
 $BodyWidth = '98%';
+$BodyColSpan = 3;
 
 my $basename = basename($0);
 my($baseprefix) = split(/\./, $basename);
@@ -106,6 +107,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 </tr>
 </table>
 
+<% my $nav_row_counter = 0; %>
 <table border=0 cellpadding=10 cellspacing=0 width=100% bgcolor=<%=$NavColor%>>
 <tr>
 <td valign=top width=120 bgcolor=<%=$NavColor%>>
@@ -140,14 +142,15 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		} else {
 			$link = "<a href=$file style=text-decoration:none><font color=$LinkColor>$top->{name}</font></a>";
 		} 
+#		my $nav_row_color = ++$nav_row_counter % 2 ? '#e0f0ff' : 'white';
+		my $nav_row_color = 'white';
 		%>
 		<tr>
-
-		<td><font size=-2 face="verdana" color=<%=$VLinkColor%>><b><nobr><%= 
+		<td bgcolor=<%= $nav_row_color %>><font size=-2 face="verdana" color=<%=$VLinkColor%>><b><nobr><%= 
 				$here ? $Server->HTMLEncode("%") : "&nbsp;"
 				%></nobr></b></font></td>
 
-		<td bgcolor=white><font face="verdana,arial" size=-1><b><nobr><%=
+		<td bgcolor=<%= $nav_row_color %> ><font face="verdana,helvetica" size=-1><b><nobr><%=
 			$link
 		%></nobr></b></font></td>		
 
@@ -162,7 +165,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 		<br>
 		<center>
-		<a href=http://www.nodeworks.com/asp/><img 
+		<a href=http://www.apache-asp.org/><img 
 			src=powered_by_apache_asp.jpg border=0
 			alt="Powered by Apache::ASP"
 			></a>
@@ -170,6 +173,11 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<a href=http://perl.apache.org><img 
 			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl and Apache"
+			></a>
+		<br>
+		<a href=http://www.perl.com><img 
+			src=rectangle_power_perl.gif border=0
+			alt="Powered by Perl"
 			></a>
 		<br>
 		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img 
@@ -292,11 +300,29 @@ for $data (@order) {
 
 </font>
 </td>
+
+<td bgcolor=white valign=top>
+<%
+  # EXTRA SECTION NEXT TO BODY ?
+  my $basename = basename($0);
+  $basename =~ s/\.\w+$//isg;
+  my $extra_include = $basename.'_extra.inc';
+  warn $extra_include;
+  if(-e $extra_include) {
+     my $data = $Response->TrapInclude($extra_include);
+     $$data =~ s/(<td[^>]*>)/$1<font size=-1 face=verdana,helvetica,arial>/isg;
+     print $$data;
+  } else {
+    print "&nbsp;";
+  }
+%>
+</td>
+
 </tr>
 <tr bgcolor=<%=$DarkRowColor%>>
-	<td colspan=2 align=center width=80%>
+	<td colspan=<%= $BodyColSpan %> align=center width=80%>
 	<font face=verdana color=white size=-1>
-	Copyright &copy; 1998-2000, Joshua Chamas, 
+	Copyright &copy; 1998-<%= (localtime())[5] + 1900 %>, Joshua Chamas, 
 	<a href=http://www.chamas.com><font color=white>Chamas Enterprises Inc.</font></a>
 	</font>
 	</td>

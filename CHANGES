@@ -1,54 +1,106 @@
-$MODULE=Apache::ASP; $VERSION = 2.09; $DATE="01/30/2001";
+$MODULE=Apache::ASP; $VERSION = 2.11; $DATE="05/29/2001";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
+ 
+ +Parser optimization from Dariusz Pietrzak
 
- +Examples in ./site/eg are now UseStrict friendly.  
-  Also fixed up ssi_filter.ssi example.
+ -work around for global destruction error message for perl 5.6
+  during install
 
- +Auto purge of old stale session group directories, increasing 
-  session manager performance when using Sessions when migrating
-  to Apache::ASP 2.09+ from older versions.
+ +$Response->{IsClientConnected} now will be set
+  correctly with ! $r->connection->aborted after each
+  $Response->Flush()
 
- +SessionQueryParse now works for all $Response->{ContentType}
-  starting with 'text' ... before just worked with text/html,
-  now other text formats like wml will work too. 
+ +New XSLTParser config which can be set to XML::XSLT or
+  XML::Sablotron.  XML::Sablotron renders 10 times faster, 
+  but differently.  XML::XSLT is pure perl, so has wider
+  platform support than XML::Sablotron.  This config affects
+  both the XSLT config and the $Server->XSLT() method.
 
- +32 groups instead of 64, better inactive site session group purging.
+ +New $Server->XSLT(\$xsl_data, \$xml_data) API which 
+  allows runtime XSLT on components instead of having to process
+  the entire ASP output as XSLT.  
 
- +Default session-id length back up to 32 hex bytes.
-  Better security vs. performance, security more important,
-  especially when performance difference was very little.
+ -XSLT support for XML::XSL 0.32.  Things broke after .24.
 
- +PerlSetVar RequestParams 1 creates $Request->Params
-  object with combined contents of $Request->QueryString
-  and $Request->Form
+ -XSLTCacheSize config no longer supported.  Was a bad 
+  Tie::Cache implementation.  Should be file based cache
+  to greatly increases cache hit ratio.
 
- ++FormFill feature via HTML::FillInForm.  Activate with
-  $Response->{FormFill} = 1 or PerlSetVar FormFill 1
-  See site/eg/formfill.asp for example.
+ ++$Response->Include(), $Response->TrapInclude(),
+  and $Server->Execute() will all take a scalar ref
+  or \'asdfdsafa' type code as their first argument to execute 
+  a raw script instead of a script file name.  At this time, 
+  compilation of such a script, will not be cached.  It is 
+  compiled/executed as an anonymous subroutine and will be freed
+  when it goes out of scope.
 
- ++XMLSubs tags of the same name may be embedded in each other
-  recursively now.
+ + -p argument to cgi/asp script to set GlobalPackage
+  config for static site builds
 
- +No umask() use on Win32 as it seems unclear what it would do
+ -pod commenting fix where windows clients are used for 
+  ASP script generation.
 
- +simpler Apache::ASP::State file handle mode of >> when opening 
-  lock file.  saves doing a -e $file test.
+ +Some nice performance enhancements, thank to submissions from
+  Ime Smits.  Added some 1-2% per request execution speed.
 
- +AuthServerVariables config to init $Request->ServerVariables
-  with basic auth data as documented.  This used to be default
-  behavior, but triggers "need AuthName" warnings from recent
-  versions of Apache when AuthName is not set.
+ +Added StateDB MLDBM::Sync::SDBM_File support for faster
+  $Session + $Application than DB_File, yet still overcomes
+  SDBM_File's 1024 bytes value limitation.  Documented in 
+  StateDB config, and added Makefile.PL entry.
 
- -Renamed Apache::ASP::Loader class to Apache::ASP::Load
-  as it collided with the Apache::ASP->Loader() function
-  namespace.  Class used internally by Apache::ASP->Loader()
-  so no public API changed here.
+ +Removed deprecated MD5 use and replace with Digest::MD5 calls
 
- +-Read of POST input for $Request->BinaryRead() even
-   if its not from a form.  Only set up $Request->Form
-   if this is from a form POST.
+ +PerlSetVar InodeNames 1 config which will compile scripts hashed by 
+  their device & inode identifiers, from a stat($file)[0,1] call.
+  This allows for script directories, the Global directory,
+  and IncludesDir directories to be symlinked to without
+  recompiling identical scripts.  Likely only works on Unix
+  systems.  Thanks to Ime Smits for this one.
 
- +faster POST/GET param parsing
+ +Streamlined code internally so that includes & scripts were
+  compiled by same code.  This is a baby step toward fusing
+  include & script code compilation models, leading to being
+  able to compile bits of scripts on the fly as ASP subs, 
+  and being able to garbage collect ASP code subroutines.
+
+ -removed @_ = () in script compilation which would trigger warnings 
+  under PerlWarn being set, thanks for Carl Lipo for reporting this.
+
+ -StatINC/StatINCMatch fix for not undeffing compiled includes
+  and pages in the GlobalPackage namespace
+
+ -Create new HTML::FillInForm object for each FormFill
+  done, to avoid potential bug with multiple forms filled
+  by same object.  Thanks to Jim Pavlick for the tip.
+
+ +Added PREREQ_PM to Makefile.PL, so CPAN installation will
+  pick up the necessary modules correctly, without having
+  to use Bundle::Apache::ASP, thanks to Michael Davis. 
+
+ + > mode for opening lock files, not >>, since its faster
+
+ +$Response->Flush() fixed, by giving $| = 1 perl hint
+  to $r->print() and the rest of the perl sub.
+
+ +$Response->{Cookies}{cookie_name}{Expires} = -86400 * 300;
+  works so negative relative time may be used to expire cookies.
+
+ +Count() + Key() Collection class API implementations
+
+ +Added editors/aasp.vim VIM syntax file for Apache::ASP,
+  courtesy of Jon Topper.
+
+ ++Better line numbering with #line perl pragma.  Especially
+  helps with inline includes.  Lots of work here, & integrated
+  with Debug 2 runtime pretty print debugging.
+
+ +$Response->{Debug} member toggles on/off whether 
+  $Response->Debug() is active, overriding the Debug setting
+  for this purpose.  Documented.
+
+ -When Filter is on, Content-Length won't be set and compression
+  won't be used.  These things would not work with a filtering
+  handler after Apache::ASP

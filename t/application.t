@@ -1,11 +1,12 @@
 use Apache::ASP;
 &Apache::ASP::CGI::do_self(
-#	Debug => 1
+#	Debug => -1
 );
 
 __END__
 
 <% 
+
 $t->eok(sub { $Application->Lock }, '$Application->Lock');
 $t->eok($Application->{Start}, 'Application_OnStart did not run');
 

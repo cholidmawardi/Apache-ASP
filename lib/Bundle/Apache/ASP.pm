@@ -1,6 +1,6 @@
 package Bundle::Apache::ASP;
 
-$VERSION = '1.02';
+$VERSION = '1.04';
 
 1;
 
@@ -20,7 +20,7 @@ MLDBM		  - This is used for reading and writing multi-level hashes on disk
 
 Data::Dumper	  - Serializes data for MLDBM
 
-MD5		  - 32 byte hash algorithm for cookie session-id
+Digest::MD5	  - 32 byte hash algorithm for cookie session-id
 
 CGI		  - Required for file upload, make test, and command line ./cgi/asp script
 

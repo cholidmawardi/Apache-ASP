@@ -20,13 +20,17 @@ execute code that you have to for that script.
 sleeping for <%=$Sleep %>
 <p>
 <%	
-	$Response->Flush();
-	$Server->RegisterCleanup( sub { $main::Session->{cleanup_count}++ }); 
-	for(1..$Sleep) {
-		print '.<br>';
-		$Response->Flush();
-		sleep(1);
-	}
+$Response->Flush();
+$Server->RegisterCleanup( sub { $main::Session->{cleanup_count}++ }); 
+for(1..$Sleep) {
+    print '.<br>';
+    $Response->Flush();
+    if(! $Response->{IsClientConnected}) {
+	$Response->Debug("ending script execution since client is no longer connected");
+	$Response->End;
+    }
+    sleep(1);
+}
 %>
 <p>
 Count incremented in $Server-<%=$Server->HTMLEncode('>')%>RegisterCleanup 

@@ -7,7 +7,7 @@ use Data::Dumper;
 
 $DUMP = "/tmp/aspbuilddumpdata";
 %FILES = ('index' => 'INTRO',
-	  'install' => 'DOWNLOAD',
+	  'install' => 'INSTALL',
 	  'changes' => 'CHANGES',
 	  'config' => 'CONFIG',
 	  'sessions' => 'SESSIONS',
@@ -30,7 +30,7 @@ $DUMP = "/tmp/aspbuilddumpdata";
 
 %ALIASES = (
 	    'DESCRIPTION' => 'INTRO',
-	    'INSTALL' => 'DOWNLOAD',
+#	    'INSTALL' => 'DOWNLOAD',
 	    'NOTES' => 'CREDITS',
 	   );
 
@@ -75,7 +75,7 @@ sub doc_init {
     close ASP;
 
     $data =~ s/^.*\n__END__//s;
-    my $new_checksum = MD5->hexhash($data.$self_data);
+    my $new_checksum = MD5->hexhash($data.$self_data.(join('', %ALIASES)));
     if ($new_checksum eq $dump_data->{checksum}) {
 	$Response->Debug("matched old compiled ASP doc $dump_data->{checksum}");
 	$ASP = $dump_data->{ASP};
@@ -209,10 +209,10 @@ sub pod2html {
     $pre and $body .= " </pre>";
 
     #$body =~ s/\n\s*\n+/<p>/isg;
-    $body =~ s/([^\=])((http|ftp):\/\/[\w\.\/\-]+\.[\w\.\/\-\#\,]+[^\.\s\)])/$1<a href=$2>$2<\/a>/sg;
+    $body =~ s/([^\=])((http|ftp):\/\/[\w\.\/\-]+\.[\w\.\/\-\#\,\%]+[^\.\s\)])/$1<a href=$2>$2<\/a>/sg;
 #    $1 && warn "link: $1\n";
     $body =~ s|(http://localhost[\S]*[^\.\s\,]?)|<tt>$1</tt>|sg;
-    $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<b>$1</b>|sg;
+    $body =~ s|([\w\-]+\@[\w\.\,\@\-]+)(\?[\w\=\:]+)?|<b>$1</b>|sg;
 #    $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<a href=mailto:$1$2>$1</a>|sg;
     $body =~ s|(\./site/)(eg/[\w\.]+[^\.\s])|<a href=$2>$1$2</a>|sg;
 

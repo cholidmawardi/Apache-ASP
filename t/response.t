@@ -15,6 +15,8 @@ ok
 ok
 <% 
 	print "ok\n";
+#	$Response->AppendToLog("logging ok");
+#	$Response->Debug("logging ok");
 %>
 
 
