@@ -6,6 +6,19 @@
 
 
 
+<style type="text/css">
+<!--
+      td {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      font {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      .title {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 16px}
+
+
+
+
+-->
+</style>
+
+
 </head>
 <body bgcolor=black link=#063678 alink=#ff5599 vlink=#993399
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
@@ -235,7 +248,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td valign=top bgcolor=white>
 <font size=+0 face=verdana,arial>
 
-<font face=verdana><font size=+1 color=#555555><b>OBJECTS</b></font><p>
+<font face=verdana><font class=title size=+1 color=#555555><b>OBJECTS</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The beauty of the ASP Object Model is that it takes the
 burden of <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> and Session Management off the developer, 
@@ -847,7 +860,7 @@ and simple aliases for common functions.</font>
 
 	<p>
 	<a name=%24Session%20Obj517fb3b8></a>
-	<font face=verdana><font size=+0 color=#555555><b>$Session Object</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$Session Object</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The $Session object keeps track of user and web client state, in
 a persistent manner, making it relatively easy to develop web 
@@ -884,26 +897,26 @@ $Session can also be used for the following methods and properties:</font>
 	
 	<p>
 	<a name=%24Session-%3E%7BCa919a318></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Session->{CodePage}</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Session->{CodePage}</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Not implemented.  May never be until someone needs it.</font>
 	
 	<p>
 	<a name=%24Session-%3E%7BL2343b3bf></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Session->{LCID}</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Session->{LCID}</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Not implemented.  May never be until someone needs it.</font>
 	
 	<p>
 	<a name=%24Session-%3E%7BS1049f4e8></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Session->{SessionID}</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Session->{SessionID}</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>SessionID property, returns the id for the current session,
 which is exchanged between the client and the server as a cookie.</font>
 	
 	<p>
 	<a name=%24Session-%3E%7BTf539b225></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Session->{Timeout} [= $minutes]</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Session->{Timeout} [= $minutes]</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Timeout property, if minutes is being assigned, sets this 
 default timeout for the user session, else returns 
@@ -916,14 +929,14 @@ garbage collects it eventually.</font>
 	
 	<p>
 	<a name=%24Session-%3EAbc5f4cea0></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Session->Abandon()</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Session->Abandon()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The abandon method times out the session immediately.  All Session
 data is cleared in the process, just as when any session times out.</font>
 	
 	<p>
 	<a name=%24Session-%3ELocc872f91></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Session->Lock()  </b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Session->Lock()  </b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API extension. If you are about to use $Session for many consecutive 
 reads or writes, you can improve performance by explicitly locking 
@@ -950,7 +963,7 @@ Please read the section on SessionSerialize for more info.</font>
 	
 	<p>
 	<a name=%24Session-%3EUnc1c1024f></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Session->UnLock()</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Session->UnLock()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API Extension. Unlocks the $Session explicitly.  If you do not call this,
 $Session will be unlocked automatically at the end of the 
@@ -958,7 +971,7 @@ script.</font>
 	
 	<p>
 	<a name=%24Response%20Ob5268b3d4></a>
-	<font face=verdana><font size=+0 color=#555555><b>$Response Object</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$Response Object</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>This object manages the output from the ASP Application and the 
 client web browser.  It does not store state information like the 
@@ -966,7 +979,7 @@ $Session object but does have a wide array of methods to call.</font>
 	
 	<p>
 	<a name=%24Response-%3E%7B4a870234></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{BinaryRef}</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{BinaryRef}</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API extension. This is a perl reference to the buffered output of 
 the $Response object, and can be used in the Script_OnFlush
@@ -983,7 +996,7 @@ content is flushed to the client web browser.
 	
 	<p>
 	<a name=%24Response-%3E%7Ba1012197></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{Buffer}</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{Buffer}</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Default 1, when TRUE sends output from script to client only at
 the end of processing the script.  When 0, response is not buffered,
@@ -991,7 +1004,7 @@ and client is sent output as output is generated by the script.</font>
 	
 	<p>
 	<a name=%24Response-%3E%7B5be79ef4></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{CacheControl}</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{CacheControl}</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Default &quot;private&quot;, when set to public allows proxy servers to 
 cache the content.  This setting controls the value set
@@ -999,7 +1012,7 @@ in the HTTP header Cache-Control</font>
 	
 	<p>
 	<a name=%24Response-%3E%7Bad3d9995></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{Charset}</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{Charset}</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>This member when set appends itself to the value of the Content-Type
 HTTP header.  If $Response-&gt;{Charset} = 'ISO-LATIN-1' is set, the 
@@ -1010,7 +1023,7 @@ corresponding header would look like:
 	
 	<p>
 	<a name=%24Response-%3E%7Bd81fcef3></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{Clean} = 0-9;</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{Clean} = 0-9;</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API extension. Set the Clean level, default 0, on a per script basis.  
 Clean of 1-9 compresses text/html output.  Please see
@@ -1019,14 +1032,14 @@ also be useful even if using compression to obfuscate HTML.</font>
 	
 	<p>
 	<a name=%24Response-%3E%7Bc7488fa7></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{ContentType} = "text/html"</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{ContentType} = "text/html"</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Sets the MIME type for the current response being sent to the client.
 Sent as an HTTP header.</font>
 	
 	<p>
 	<a name=%24Response-%3E%7Bbbff130a></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{Debug} = 1|0</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{Debug} = 1|0</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API extension.  Default set to value of Debug config.  May be
 used to temporarily activate or inactivate $Response-&gt;Debug()
@@ -1043,7 +1056,7 @@ AppendToLog prints just raw string/scalar values.</font>
 	
 	<p>
 	<a name=%24Response-%3E%7Bf2954302></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{Expires} = $time</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{Expires} = $time</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Sends a response header to the client indicating the $time 
 in SECONDS in which the document should expire.  A time of 0 means
@@ -1052,7 +1065,7 @@ HTTP date like: &quot;Wed, 09 Feb 1994 22:23:32 GMT&quot;.</font>
 	
 	<p>
 	<a name=%24Response-%3E%7B0a525d33></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{ExpiresAbsolute} = $date</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{ExpiresAbsolute} = $date</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Sends a response header to the client with $date being an absolute
 time to expire.  Formats accepted are all those accepted by 
@@ -1070,7 +1083,7 @@ HTTP::Date::str2time(), e.g.
 	
 	<p>
 	<a name=%24Response-%3E%7Bf2167225></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{FormFill} = 0|1</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{FormFill} = 0|1</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>If true, HTML forms generated by the script output will
 be auto filled with data from $Request-&gt;Form.  This feature
@@ -1082,7 +1095,7 @@ for the script execution only.</font>
 	
 	<p>
 	<a name=%24Response-%3E%7Bf284792c></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{IsClientConnected}</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{IsClientConnected}</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>1 if web client is connected, 0 if not.  This value
 starts set to 1, and will be updated whenever a
@@ -1103,7 +1116,7 @@ without calling first a $Response-&gt;Flush</font>
 	
 	<p>
 	<a name=%24Response-%3E%7Bc48a3e9e></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{PICS}</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{PICS}</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>If this property has been set, a PICS-Label HTTP header will be
 sent with its value.  For those that do not know, PICS is a header
@@ -1113,14 +1126,14 @@ info about it at: <a href=http://www.w3.org>http://www.w3.org</a></font>
 	
 	<p>
 	<a name=%24Response-%3E%7B7098f2f6></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->{Status} = $status</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->{Status} = $status</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Sets the status code returned by the server.  Can be used to
 set messages like 500, internal server error</font>
 	
 	<p>
 	<a name=%24Response-%3EA8c17d8af></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->AddHeader($name, $value)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->AddHeader($name, $value)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Adds a custom header to a web page.  Headers are sent only before any
 text from the main page is sent, so if you want to set a header
@@ -1128,13 +1141,13 @@ after some text on a page, you must turn BufferingOn.</font>
 	
 	<p>
 	<a name=%24Response-%3EA1b47bb43></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->AppendToLog($message)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->AppendToLog($message)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Adds $message to the server log.  Useful for debugging.</font>
 	
 	<p>
 	<a name=%24Response-%3EB202b8013></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->BinaryWrite($data)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->BinaryWrite($data)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Writes binary data to the client.  The only
 difference from $Response-&gt;Write() is that $Response-&gt;Flush()
@@ -1156,13 +1169,13 @@ its data is binary.</font>
 	
 	<p>
 	<a name=%24Response-%3EC08958c05></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->Clear()</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->Clear()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Erases buffered ASP output.</font>
 	
 	<p>
 	<a name=%24Response-%3ECd77d06d7></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->Cookies($name, [$key,] $value)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->Cookies($name, [$key,] $value)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Sets the key or attribute of cookie with name $name to the value $value.
 If $key is not defined, the Value of the cookie is set.
@@ -1221,7 +1234,7 @@ cookies in IIS ASP.
 	
 	<p>
 	<a name=%24Response-%3EDe321f073></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->Debug(@args)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->Debug(@args)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API Extension. If the Debug config option is set greater than 0, 
 this routine will write @args out to server error log.  refs in @args 
@@ -1262,14 +1275,14 @@ config directive to 0.</font>
 	
 	<p>
 	<a name=%24Response-%3EE295b6523></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->End()</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->End()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Sends result to client, and immediately exits script.
 Automatically called at end of script, if not already called.</font>
 	
 	<p>
 	<a name=%24Response-%3EE0139cee1></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->ErrorDocument($code, $uri)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->ErrorDocument($code, $uri)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API extension that allows for the modification the Apache
 ErrorDocument at runtime.  $uri may be a on site document,
@@ -1287,13 +1300,13 @@ is a wrapper.</font>
 	
 	<p>
 	<a name=%24Response-%3EF8d6e0efc></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->Flush()</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->Flush()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Sends buffered output to client and clears buffer.</font>
 	
 	<p>
 	<a name=%24Response-%3EI2a8df2f3></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->Include($filename, @args)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->Include($filename, @args)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>This API extension calls the routine compiled from asp script
 in $filename with the args @args.  This is a direct translation
@@ -1320,7 +1333,7 @@ an include like:
 	
 	<p>
 	<a name=%24Response-%3EI3a1a8b77></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->Include(\%cache_args, @sub_args) *CACHE API*</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->Include(\%cache_args, @sub_args) *CACHE API*</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>As of version 2.23, output from an include may be
 cached with this API and the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> settings CacheDir &amp; CacheDB.  This
@@ -1386,7 +1399,7 @@ at all.</font>
 	
 	<p>
 	<a name=%24Response-%3EI11344adb></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->IsClientConnected()</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->IsClientConnected()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API Extension.  1 for web client still connected, 0 if 
 disconneted which might happen if the user hits the stop button.
@@ -1411,14 +1424,14 @@ that value for you.</font>
 	
 	<p>
 	<a name=%24Response-%3ER0203b227></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->Redirect($url)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->Redirect($url)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Sends the client a command to go to a different url $url.  
 Script immediately ends.</font>
 	
 	<p>
 	<a name=%24Response-%3ET427038b6></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->TrapInclude($file, @args)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->TrapInclude($file, @args)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Calls $Response-&gt;Include() with same arguments as
 passed to it, but instead traps the include output buffer
@@ -1435,7 +1448,7 @@ with the $$string_ref notation.</font>
 	
 	<p>
 	<a name=%24Response-%3EW0307fe16></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Response->Write($data)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->Write($data)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Write output to the HTML page.  &lt;%=$data%&gt; syntax is shorthand for
 a $Response-&gt;Write($data).  All final output to the client must at
@@ -1443,7 +1456,7 @@ some point go through this method.</font>
 	
 	<p>
 	<a name=%24Request%20Objc3cab62e></a>
-	<font face=verdana><font size=+0 color=#555555><b>$Request Object</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$Request Object</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The request object manages the input from the client browser, like
 posts, query strings, cookies, etc.  Normal return results are values
@@ -1478,7 +1491,7 @@ behave as collections.</font>
 	
 	<p>
 	<a name=%24Request-%3E%7BT6acbcf5a></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Request->{TotalBytes}</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->{TotalBytes}</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The amount of data sent by the client in the body of the 
 request, usually the length of the form data.  This is
@@ -1486,7 +1499,7 @@ the same value as $Request-&gt;ServerVariables('CONTENT_LENGTH')</font>
 	
 	<p>
 	<a name=%24Request-%3EBi9c9c4529></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Request->BinaryRead($length)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->BinaryRead($length)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Returns a scalar whose contents are the first $length bytes
 of the form data, or body, sent by the client request.
@@ -1495,13 +1508,13 @@ parsing done on it by Apache::ASP.</font>
 	
 	<p>
 	<a name=%24Request-%3ECled50cd44></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Request->ClientCertificate()</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->ClientCertificate()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Not implemented.</font>
 	
 	<p>
 	<a name=%24Request-%3ECoe6d79e01></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Request->Cookies($name [,$key])</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->Cookies($name [,$key])</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Returns the value of the Cookie with name $name.  If a $key is
 specified, then a lookup will be done on the cookie as if it were
@@ -1525,7 +1538,7 @@ debugging cookies.
 	
 	<p>
 	<a name=%24Request-%3EFi6799fcec></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Request->FileUpload($form_field, $key)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->FileUpload($form_field, $key)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API extension.  The FileUpload interface to file upload data is
 stabilized.  The internal representation of the file uploads
@@ -1555,7 +1568,7 @@ the internal hash representation more easily.
 	
 	<p>
 	<a name=%24Request-%3EFo76659178></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Request->Form($name)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->Form($name)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Returns the value of the input of name $name used in a form
 with POST method.  If $name is not specified, returns a ref to 
@@ -1582,7 +1595,7 @@ samples <a href=eg/file_upload.asp>./site/eg/file_upload.asp</a></font>
 	
 	<p>
 	<a name=%24Request-%3EPa455879ca></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Request->Params($name)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->Params($name)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API extension. If RequestParams <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> is set, the $Request-&gt;Params 
 object is created with combined contents of $Request-&gt;QueryString 
@@ -1599,7 +1612,7 @@ one could create a nice alias like:
 	
 	<p>
 	<a name=%24Request-%3EQu7330a0a3></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Request->QueryString($name)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->QueryString($name)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Returns the value of the input of name $name used in a form
 with GET method, or passed by appending a query string to the end of
@@ -1609,7 +1622,7 @@ string data.</font>
 	
 	<p>
 	<a name=%24Request-%3ESe3a73f873></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Request->ServerVariables($name)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->ServerVariables($name)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Returns the value of the server variable / environment variable
 with name $name.  If $name is not specified, returns a ref to 
@@ -1622,7 +1635,7 @@ would be a common use of this method:
 	
 	<p>
 	<a name=%24Application971dfe6c></a>
-	<font face=verdana><font size=+0 color=#555555><b>$Application Object</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$Application Object</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Like the $Session object, you may use the $Application object to 
 store data across the entire life of the application.  Every
@@ -1637,7 +1650,7 @@ access to the $Application object.</font>
 	
 	<p>
 	<a name=%24Application7d01ce04></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Application->Lock()</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Application->Lock()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Locks the Application object for the life of the script, or until
 UnLock() unlocks it, whichever comes first.  When $Application
@@ -1653,13 +1666,13 @@ create application bottlenecks with its improper use.</font>
 	
 	<p>
 	<a name=%24Application2899ee54></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Application->UnLock()</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Application->UnLock()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Unlocks the $Application object.  If already unlocked, does nothing.</font>
 	
 	<p>
 	<a name=%24Applicationaeaabc29></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Application->GetSession($sess_id)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Application->GetSession($sess_id)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>This NON-PORTABLE API extension returns a user $Session given
 a session id.  This allows one to easily write a session manager if
@@ -1678,7 +1691,7 @@ to display all the data in current user sessions.</font>
 	
 	<p>
 	<a name=%24Applicationc6f0697d></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Application->SessionCount()</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Application->SessionCount()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>This NON-PORTABLE method returns the current number of active sessions,
 in the application.  This method is not implemented as part of the ASP
@@ -1693,7 +1706,7 @@ with an application, usually in the $Global/.state directory.</font>
 	
 	<p>
 	<a name=%24Server%20Objeed08cf85></a>
-	<font face=verdana><font size=+0 color=#555555><b>$Server Object</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$Server Object</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The server object is that object that handles everything the other
 objects do not.  The best part of the server object for Win32 users is 
@@ -1702,14 +1715,14 @@ ActiveX components, like the ADO component.</font>
 	
 	<p>
 	<a name=%24Server-%3E%7BSc74a89b4a></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->{ScriptTimeout} = $seconds</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->{ScriptTimeout} = $seconds</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Not implemented. May never be.  Please see the 
 Apache Timeout configuration option, normally in httpd.conf.</font>
 	
 	<p>
 	<a name=%24Server-%3ECon7d9785f8></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->Config($setting)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->Config($setting)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API extension.  Allows a developer to read the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a>
 settings, like Global, GlobalPackage, StateDir, etc.
@@ -1721,7 +1734,7 @@ return a hash ref of all the PerlSetVar settings.</font>
 	
 	<p>
 	<a name=%24Server-%3ECre0144679e></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->CreateObject($program_id)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->CreateObject($program_id)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Allows use of ActiveX objects on Win32.  This routine returns
 a reference to an Win32::OLE object upon success, and nothing upon
@@ -1734,7 +1747,7 @@ favorite command line.</font>
 	
 	<p>
 	<a name=%24Server-%3EExec0fa247a></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->Execute($file, @args)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->Execute($file, @args)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>New method from ASP 3.0, this does the same thing as
 <font face="courier new" size=3><pre>
@@ -1744,14 +1757,14 @@ had this important functionality before the IIS/ASP camp!</font>
 	
 	<p>
 	<a name=%24Server-%3EGetb3d1ac42></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->GetLastError()</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->GetLastError()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Not implemented, will likely not ever be because this is dependent
 on how IIS handles errors and is not relevant in Apache.</font>
 	
 	<p>
 	<a name=%24Server-%3EHTM62a8deda></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->HTMLEncode( $string || \$string )</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->HTMLEncode( $string || \$string )</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Returns an HTML escapes version of $string. &amp;, &quot;, &gt;, &lt;, are each
 escapes with their HTML equivalents.  Strings encoded in this nature
@@ -1775,7 +1788,7 @@ It saves on copying the 100K buffer twice.</font>
 	
 	<p>
 	<a name=%24Server-%3EMap0fe1ebb5></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->MapPath($url);</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->MapPath($url);</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Given the url $url, absolute, or relative to the current executing script,
 this method returns the equivalent filename that the server would 
@@ -1789,7 +1802,7 @@ script.</font>
 	
 	<p>
 	<a name=%24Server-%3EMai9b6fc85e></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->Mail(\%mail, %smtp_args);</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->Mail(\%mail, %smtp_args);</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>With the Net::SMTP and Net::Config modules installed, which are part of the 
 perl libnet package, you may use this API extension to send email.  The 
@@ -1825,7 +1838,7 @@ will be passed on when that object is initialized.
 	
 	<p>
 	<a name=%24Server-%3EReg38562b5d></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->RegisterCleanup($sub) </b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->RegisterCleanup($sub) </b></font><p>
 <font face="courier new" size=3><pre>
  non-portable extension
 </pre></font>Sets a subroutine reference to be executed after the script ends,
@@ -1850,7 +1863,7 @@ of this routine in action.</font>
 	
 	<p>
 	<a name=%24Server-%3ETra7f104569></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->Transfer($file)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->Transfer($file)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>New method from ASP 3.0.  Transfers control to another script.  
 The Response buffer will not be cleared automatically, so if you 
@@ -1864,7 +1877,7 @@ original script will not pick up where it left off.</font>
 	
 	<p>
 	<a name=%24Server-%3EURL3674cef0></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->URLEncode($string)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->URLEncode($string)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Returns the URL-escaped version of the string $string. +'s are substituted in
 for spaces and special characters are escaped to the ascii equivalents.
@@ -1880,7 +1893,7 @@ useful for encoding data used in a query string as in:
 	
 	<p>
 	<a name=%24Server-%3EURL6c8bf743></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->URL($url, \%params) </b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->URL($url, \%params) </b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Will return a URL with %params serialized into a query 
 string like:
@@ -1897,7 +1910,7 @@ in the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> s
 	
 	<p>
 	<a name=%24Server-%3EXSLd6dded33></a>
-	<font face=verdana><font size=-1 color=#555555><b>$Server->XSLT($xsl_data_ref, $xml_data_ref)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->XSLT($xsl_data_ref, $xml_data_ref)</b></font><p>
 <font face="courier new" size=3><pre>
  * NON-PORTABLE ASP EXTENSION *
 </pre></font>This method takes scalar refs for XSL and XML data

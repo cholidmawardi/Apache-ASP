@@ -1,7 +1,8 @@
 use Apache::ASP;
 &Apache::ASP::CGI::do_self(
-#	Debug => 1,
+#	Debug => 1
 #	StateDir => '/tmp/asp_test',
+	SessionSerialize => 1,
 );
 
 __END__

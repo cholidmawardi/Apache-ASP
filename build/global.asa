@@ -167,7 +167,7 @@ sub pod2html {
 	my $size = 2 - $depth;
 	$size = ($size > -1) ? "+$size" : $size;
 	
-	$title = "<font size=$size color=#555555><b>$title</b></font><p>\n";
+	$title = "<font class=title size=$size color=#555555><b>$title</b></font><p>\n";
     }
 
 

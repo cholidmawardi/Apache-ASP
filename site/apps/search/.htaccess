@@ -5,9 +5,9 @@ DirectoryIndex index.asp
 	PerlSetVar Global .
 	PerlSetVar GlobalPackage My::Search
 	PerlSetVar StateDir /tmp/asp_search
-	PerlSetVar Debug -1
+	PerlSetVar Debug -3
 	PerlSetVar IncludesDir ../../eg
-#	PerlSetVar UseStrict 1
+	PerlSetVar UseStrict 1
 	PerlSetVar SessionSerialize 1
 
 	PerlSetVar SearchDB /tmp/asp_search/search

@@ -6,6 +6,19 @@
 
 
 
+<style type="text/css">
+<!--
+      td {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      font {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      .title {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 16px}
+
+
+
+
+-->
+</style>
+
+
 </head>
 <body bgcolor=black link=#063678 alink=#ff5599 vlink=#993399
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
@@ -235,7 +248,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td valign=top bgcolor=white>
 <font size=+0 face=verdana,arial>
 
-<font face=verdana><font size=+1 color=#555555><b>FAQ</b></font><p>
+<font face=verdana><font class=title size=+1 color=#555555><b>FAQ</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The following are some frequently asked questions
 about Apache::ASP.</font>
@@ -454,12 +467,12 @@ about Apache::ASP.</font>
 
 	<p>
 	<a name=Installation></a>
-	<font face=verdana><font size=+0 color=#555555><b>Installation</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Installation</b></font><p>
 </font>
 	
 	<p>
 	<a name=Examples%20donf48a0968></a>
-	<font face=verdana><font size=-1 color=#555555><b>Examples don't work, I see the ASP script in the browser?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Examples don't work, I see the ASP script in the browser?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>This is most likely that Apache is not configured to execute
 the Apache::ASP scripts properly.  Check the <a href=install.html><font size=-1 face=verdana><b>INSTALL</b></font></a> QuickStart
@@ -468,7 +481,7 @@ execute your ASP scripts.</font>
 	
 	<p>
 	<a name=Why%20do%20varia68e97184></a>
-	<font face=verdana><font size=-1 color=#555555><b>Why do variables retain their values between requests?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Why do variables retain their values between requests?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Unless scoped by my() or local(), perl variables in <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>
 are treated as globals, and values set may persist from one 
@@ -494,7 +507,7 @@ default by setting:
 	
 	<p>
 	<a name=Apache%20errord5510ac4></a>
-	<font face=verdana><font size=-1 color=#555555><b>Apache errors on the PerlHandler directive ?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Apache errors on the PerlHandler directive ?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>You do not have <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> correctly installed for Apache.  The PerlHandler
 directive in Apache *.conf files is an extension enabled by mod_perl
@@ -510,7 +523,7 @@ over to its proper location.
 	
 	<p>
 	<a name=Error%3A%20no%20reb1d13fcf></a>
-	<font face=verdana><font size=-1 color=#555555><b>Error: no request object (Apache=SCALAR(0x???????):)</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Error: no request object (Apache=SCALAR(0x???????):)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Your Apache + <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> build is not working properly, 
 and is likely a RedHat Linux RPM DSO build.  Make sure
@@ -519,7 +532,7 @@ recompiled fresh from the sources.</font>
 	
 	<p>
 	<a name=I%20am%20getting272ca0df></a>
-	<font face=verdana><font size=-1 color=#555555><b>I am getting a tie or MLDBM / state error message, what do I do?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>I am getting a tie or MLDBM / state error message, what do I do?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Make sure the web server or you have write access to the eg directory,
 or to the directory specified as Global in the config you are using.
@@ -538,12 +551,12 @@ state files.</font>
 	
 	<p>
 	<a name=Sessions></a>
-	<font face=verdana><font size=+0 color=#555555><b>Sessions</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Sessions</b></font><p>
 </font>
 	
 	<p>
 	<a name=How%20can%20I%20us9eb242f1></a>
-	<font face=verdana><font size=-1 color=#555555><b>How can I use $Session to store complex data structures.</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>How can I use $Session to store complex data structures.</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Very carefully.  Please read the $Session documentation in 
 the <a href=objects.html><font size=-1 face=verdana><b>OBJECTS</b></font></a> section.  You can store very complex objects
@@ -559,7 +572,7 @@ an assignment like:
 	
 	<p>
 	<a name=How%20can%20I%20kef206b910></a>
-	<font face=verdana><font size=-1 color=#555555><b>How can I keep search engine spiders from killing the session manager?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>How can I keep search engine spiders from killing the session manager?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>If you want to dissallow session creation for certain non web 
 browser user agents, like search engine spiders, you can use an 
@@ -572,7 +585,7 @@ API in this way to configure Apache::ASP at runtime.</font>
 	
 	<p>
 	<a name=Insecure%20depec6cd400></a>
-	<font face=verdana><font size=-1 color=#555555><b>Insecure dependency in eval while running with - T switch ?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Insecure dependency in eval while running with - T switch ?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>If you are running your <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> with &quot;PerlTaintCheck On&quot;, which 
 is recommended if you are highly concerned about security issues,
@@ -591,7 +604,7 @@ you define there.</font>
 	
 	<p>
 	<a name=How%20can%20I%20us50054dc6></a>
-	<font face=verdana><font size=-1 color=#555555><b>How can I use $Session to store a $dbh database handle ?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>How can I use $Session to store a $dbh database handle ?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>You cannot use $Session to store a $dbh handle.  This can 
 be awkward for those coming from the IIS/NT world, where
@@ -609,12 +622,12 @@ work for most cases.</font>
 	
 	<p>
 	<a name=Development></a>
-	<font face=verdana><font size=+0 color=#555555><b>Development</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Development</b></font><p>
 </font>
 	
 	<p>
 	<a name=How%20is%20databc9095df5></a>
-	<font face=verdana><font size=-1 color=#555555><b>How is database connectivity handled?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>How is database connectivity handled?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Database connectivity is handled through perl's DBI &amp; DBD interfaces.
 Please see <a href=http://www.symbolstone.org/technology/perl/DBI/>http://www.symbolstone.org/technology/perl/DBI/</a> for more information.
@@ -628,7 +641,7 @@ bolts for ODBC.
 	
 	<p>
 	<a name=What%20is%20the%20ffd599fa></a>
-	<font face=verdana><font size=-1 color=#555555><b>What is the best way to debug an ASP application ?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>What is the best way to debug an ASP application ?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>There are lots of perl-ish tricks to make your life developing
 and debugging an ASP application easier.  For starters,
@@ -638,7 +651,7 @@ configuration directive.</font>
 	
 	<p>
 	<a name=How%20are%20file3e89fb5c></a>
-	<font face=verdana><font size=-1 color=#555555><b>How are file uploads handled?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>How are file uploads handled?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Please see the <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> section.  File uploads are implemented
 through <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> which is loaded at runtime only for this purpose.
@@ -650,7 +663,7 @@ are working with bulky file uploads.</font>
 	
 	<p>
 	<a name=How%20do%20I%20acc6523fd95></a>
-	<font face=verdana><font size=-1 color=#555555><b>How do I access the ASP Objects in general?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>How do I access the ASP Objects in general?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>All the ASP objects can be referenced through the main package with
 the following notation:
@@ -666,7 +679,7 @@ registered with $Server-&gt;RegisterCleanup().
 	
 	<p>
 	<a name=Can%20I%20print%2874ba394b></a>
-	<font face=verdana><font size=-1 color=#555555><b>Can I print() in ASP?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Can I print() in ASP?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Yes.  You can print() from anywhere in an ASP script as it aliases
 to the $Response-&gt;Write() method.  Using print() is portable with
@@ -674,7 +687,7 @@ to the $Response-&gt;Write() method.  Using print() is portable with
 	
 	<p>
 	<a name=Do%20I%20have%20aca178cfb4></a>
-	<font face=verdana><font size=-1 color=#555555><b>Do I have access to ActiveX objects?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Do I have access to ActiveX objects?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Only under Win32 will developers have access to ActiveX objects through
 the perl Win32::OLE interface.  This will remain true until there
@@ -683,7 +696,7 @@ for the UNIX world.</font>
 	
 	<p>
 	<a name=Can%20I%20script2300fcb1></a>
-	<font face=verdana><font size=-1 color=#555555><b>Can I script in VBScript or JScript ?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Can I script in VBScript or JScript ?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Yes, but not with this perl module.  For ASP with other scripting
 languages besides perl, you will need to go with a commercial vendor
@@ -692,12 +705,12 @@ such solution.  Of course on NT, you get this for free with IIS.</font>
 	
 	<p>
 	<a name=Support%20and%20b4365dac></a>
-	<font face=verdana><font size=+0 color=#555555><b>Support and Production</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Support and Production</b></font><p>
 </font>
 	
 	<p>
 	<a name=How%20do%20I%20get45b324ef></a>
-	<font face=verdana><font size=-1 color=#555555><b>How do I get things I want done?!</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>How do I get things I want done?!</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>If you find a problem with the module, or would like a feature added,
 please mail support, as listed in the <a href=support.html><font size=-1 face=verdana><b>SUPPORT</b></font></a> section, and your 
@@ -705,7 +718,7 @@ needs will be promptly and seriously considered, then implemented.</font>
 	
 	<p>
 	<a name=What%20is%20the%20bd2800a9></a>
-	<font face=verdana><font size=-1 color=#555555><b>What is the state of Apache::ASP?  Can I publish a web site on it?</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>What is the state of Apache::ASP?  Can I publish a web site on it?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Apache::ASP has been production ready since v.02.  Work being done
 on the module is on a per need basis, with the goal being to eventually

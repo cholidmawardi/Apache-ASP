@@ -6,6 +6,19 @@
 
 
 
+<style type="text/css">
+<!--
+      td {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      font {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      .title {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 16px}
+
+
+
+
+-->
+</style>
+
+
 </head>
 <body bgcolor=black link=#063678 alink=#ff5599 vlink=#993399
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
@@ -235,7 +248,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td valign=top bgcolor=white>
 <font size=+0 face=verdana,arial>
 
-<font face=verdana><font size=+1 color=#555555><b>TUNING</b></font><p>
+<font face=verdana><font class=title size=+1 color=#555555><b>TUNING</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>A little tuning can go a long way, and can make the difference between
 a web site that gets by, and a site that screams with speed.  With
@@ -339,7 +352,7 @@ documents at:
 
 	<p>
 	<a name=%24Application941f90bf></a>
-	<font face=verdana><font size=+0 color=#555555><b>$Application & $Session State</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$Application & $Session State</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Use NoState 1 setting if you don't need the $Application or $Session
 objects. State objects such as these tie to files on disk and will incur a
@@ -363,7 +376,7 @@ global.asa's Script_OnStart.</font>
 	
 	<p>
 	<a name=Low%20MaxClien5a8237ea></a>
-	<font face=verdana><font size=+0 color=#555555><b>Low MaxClients</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Low MaxClients</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Set your MaxClients low, such that if you have that
 many httpd servers running, which will happen on busy site,
@@ -374,7 +387,7 @@ look into a dual server, mod_proxy front end.</font>
 	
 	<p>
 	<a name=High%20MaxRequ0724a06d></a>
-	<font face=verdana><font size=+0 color=#555555><b>High MaxRequestsPerChild</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>High MaxRequestsPerChild</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Set your max requests per child thread or process (in httpd.conf) high, 
 so that ASP scripts have a better chance being cached, which happens after 
@@ -386,7 +399,7 @@ or Apache::GTopLimit to optimally tune MaxRequestsPerChild at runtime.</font>
 	
 	<p>
 	<a name=Precompile%20M39676a96></a>
-	<font face=verdana><font size=+0 color=#555555><b>Precompile Modules</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Precompile Modules</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>For those modules that your Apache::ASP application uses,
 make sure that they are loaded in your sites startup.pl
@@ -395,7 +408,7 @@ that your modules are compiled pre-fork in the parent httpd.</font>
 	
 	<p>
 	<a name=Precompile%20S36827838></a>
-	<font face=verdana><font size=+0 color=#555555><b>Precompile Scripts</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Precompile Scripts</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Precompile your scripts by using the Apache::ASP-&gt;Loader() routine
 documented below.  This will at least save the first user hitting 
@@ -459,7 +472,7 @@ messages indicating scripts being cached.</font>
 	
 	<p>
 	<a name=No%20.htaccessc4c9e884></a>
-	<font face=verdana><font size=+0 color=#555555><b>No .htaccess or StatINC</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>No .htaccess or StatINC</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Don't use .htaccess files or the StatINC setting in a production system
 as there are many more files touched per request using these features.  I've
@@ -475,7 +488,7 @@ needs to be checked for changes on a per request basis.</font>
 	
 	<p>
 	<a name=Turn%20off%20Debe0bab100></a>
-	<font face=verdana><font size=+0 color=#555555><b>Turn off Debugging</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Turn off Debugging</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Turn off system debugging by setting Debug to 0-3.  Having the system 
 debug config option on slows things down immensely, but can be useful
@@ -486,7 +499,7 @@ statements you use in your program, and you may want to leave it on.</font>
 	
 	<p>
 	<a name=RAM%20Sparing></a>
-	<font face=verdana><font size=+0 color=#555555><b>RAM Sparing</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>RAM Sparing</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>If you have a lot (1000's+) of scripts, and limited memory, set NoCache to 1,
 so that compiled scripts are not cached in memory.  You lose about
@@ -498,7 +511,7 @@ into a $Response-&gt;Include().</font>
 	
 	<p>
 	<a name=Resource%20Limfd66f2d8></a>
-	<font face=verdana><font size=+0 color=#555555><b>Resource Limits</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Resource Limits</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Make sure your web processes do not use too many resources
 like CPU or RAM with the handy Apache::Resource module.

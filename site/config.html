@@ -6,6 +6,19 @@
 
 
 
+<style type="text/css">
+<!--
+      td {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      font {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      .title {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 16px}
+
+
+
+
+-->
+</style>
+
+
 </head>
 <body bgcolor=black link=#063678 alink=#ff5599 vlink=#993399
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
@@ -235,7 +248,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td valign=top bgcolor=white>
 <font size=+0 face=verdana,arial>
 
-<font face=verdana><font size=+1 color=#555555><b>CONFIG</b></font><p>
+<font face=verdana><font class=title size=+1 color=#555555><b>CONFIG</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>You may use a &lt;Files ...&gt; directive in your httpd.conf 
 Apache configuration file to make Apache::ASP start ticking.  Configure the
@@ -903,12 +916,12 @@ better for performance.</font>
 
 	<p>
 	<a name=Core></a>
-	<font face=verdana><font size=+0 color=#555555><b>Core</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Core</b></font><p>
 </font>
 	
 	<p>
 	<a name=Global></a>
-	<font face=verdana><font size=-1 color=#555555><b>Global</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Global</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Global is the nerve center of an Apache::ASP application, in which
 the global.asa may reside defining the web application's 
@@ -934,7 +947,7 @@ please see section on includes for more information.
 	
 	<p>
 	<a name=GlobalPackag78b2e61e></a>
-	<font face=verdana><font size=-1 color=#555555><b>GlobalPackage</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>GlobalPackage</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Perl package namespace that all scripts, includes, &amp; global.asa
 events are compiled into.  By default, GlobalPackage is some
@@ -951,7 +964,7 @@ and subs defined in a perl module that is included with commands like:
 	
 	<p>
 	<a name=UniquePackag00f06756></a>
-	<font face=verdana><font size=-1 color=#555555><b>UniquePackages</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>UniquePackages</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0.  Set to 1 to emulate pre-v.10 ASP script compilation 
 behavior, which compiles each script into its own perl package.
@@ -972,7 +985,7 @@ redefine the other one because of the namespace collision.
 	
 	<p>
 	<a name=DynamicInclu7867a61a></a>
-	<font face=verdana><font size=-1 color=#555555><b>DynamicIncludes</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>DynamicIncludes</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0.  <a href=ssi.html><font size=-1 face=verdana><b>SSI</b></font></a> file includes are normally inlined in the calling 
 script, and the text gets compiled with the script as a whole. 
@@ -987,7 +1000,7 @@ script sizes smaller in memory, and keeps compile times down.
 	
 	<p>
 	<a name=IncludesDir></a>
-	<font face=verdana><font size=-1 color=#555555><b>IncludesDir</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>IncludesDir</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>no defaults.  If set, this directory will also be used to look
 for includes when compiling scripts.  By default the directory 
@@ -1011,12 +1024,12 @@ setting.</font>
 	
 	<p>
 	<a name=State%20Managedeff2cd7></a>
-	<font face=verdana><font size=+0 color=#555555><b>State Management</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>State Management</b></font><p>
 </font>
 	
 	<p>
 	<a name=NoState></a>
-	<font face=verdana><font size=-1 color=#555555><b>NoState</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>NoState</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if true, neither the $Application nor $Session objects will
 be created.  Use this for a performance increase.  Please note that 
@@ -1028,7 +1041,7 @@ AllowApplicationState settings.
 	
 	<p>
 	<a name=AllowSession471aaf40></a>
-	<font face=verdana><font size=-1 color=#555555><b>AllowSessionState</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>AllowSessionState</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Set to 0 for no session tracking, 1 by default
 If Session tracking is turned off, performance improves,
@@ -1044,7 +1057,7 @@ spiders, you can use an init handler like:
 	
 	<p>
 	<a name=AllowApplica55cb396b></a>
-	<font face=verdana><font size=-1 color=#555555><b>AllowApplicationState</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>AllowApplicationState</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Default 1.  If you want to leave $Application undefined, then set this
 to 0, for a performance increase of around 2-3%.  Allowing use of 
@@ -1057,7 +1070,7 @@ so this parameter should be only used for extreme tuning.
 	
 	<p>
 	<a name=StateDir></a>
-	<font face=verdana><font size=-1 color=#555555><b>StateDir</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>StateDir</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default $Global/.state.  State files for ASP application go to 
 this directory.  Where the state files go is the most important
@@ -1077,7 +1090,7 @@ application scream with speed.
 	
 	<p>
 	<a name=StateManager></a>
-	<font face=verdana><font size=-1 color=#555555><b>StateManager</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>StateManager</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 10, this number specifies the numbers of times per SessionTimeout
 that timed out sessions are garbage collected.  The bigger the number,
@@ -1094,7 +1107,7 @@ StateManager, has dead Sessions being cleaned up every 2 minutes.
 	
 	<p>
 	<a name=StateDB></a>
-	<font face=verdana><font size=-1 color=#555555><b>StateDB</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>StateDB</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default SDBM_File, this is the internal database used for state
 objects like $Application and $Session.  Because an SDBM_File %hash 
@@ -1123,7 +1136,7 @@ is handled.
 	
 	<p>
 	<a name=StateCache></a>
-	<font face=verdana><font size=-1 color=#555555><b>StateCache</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>StateCache</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Default 0, set to 1 for lock files that are acquired for $Application 
 and an internal database used for session management to be cached
@@ -1143,7 +1156,7 @@ if you are, there is more to worry about.
 	
 	<p>
 	<a name=StateSeriali106736b1></a>
-	<font face=verdana><font size=-1 color=#555555><b>StateSerializer</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>StateSerializer</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default Data::Dumper, you may set this to Storable for 
 faster serialization and storage of data into state objects.
@@ -1165,12 +1178,12 @@ Data::Dumper &amp; SDBM_File to store data.
 	
 	<p>
 	<a name=Sessions></a>
-	<font face=verdana><font size=+0 color=#555555><b>Sessions</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Sessions</b></font><p>
 </font>
 	
 	<p>
 	<a name=CookiePath></a>
-	<font face=verdana><font size=-1 color=#555555><b>CookiePath</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>CookiePath</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>URL root that client responds to by sending the session cookie.
 If your asp application falls under the server url &quot;/asp&quot;, 
@@ -1183,7 +1196,7 @@ different user sessions for each application.
 	
 	<p>
 	<a name=SessionTimeo21fc354e></a>
-	<font face=verdana><font size=-1 color=#555555><b>SessionTimeout</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>SessionTimeout</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Default 20 minutes, when a user's session has been inactive for this
 period of time, the Session_OnEnd event is run, if defined, for 
@@ -1194,7 +1207,7 @@ that session, and the contents of that session are destroyed.
 	
 	<p>
 	<a name=SecureSessio77114c01></a>
-	<font face=verdana><font size=-1 color=#555555><b>SecureSession</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>SecureSession</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0.  Sets the secure tag for the session cookie, so that the cookie
 will only be transmitted by the browser under https transmissions.
@@ -1204,7 +1217,7 @@ will only be transmitted by the browser under https transmissions.
 	
 	<p>
 	<a name=ParanoidSess9085f1d5></a>
-	<font face=verdana><font size=-1 color=#555555><b>ParanoidSession</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>ParanoidSession</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0.  When true, stores the user-agent header of the browser 
 that creates the session and validates this against the session cookie presented.
@@ -1236,7 +1249,7 @@ it is titled paranoid :)
 	
 	<p>
 	<a name=SessionSeria0633b2a7></a>
-	<font face=verdana><font size=-1 color=#555555><b>SessionSerialize</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>SessionSerialize</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if true, locks $Session for duration of script, which
 serializes requests to the $Session object.  Only one script at
@@ -1253,7 +1266,7 @@ STOP button should safely quit the session however.
 	
 	<p>
 	<a name=SessionCount></a>
-	<font face=verdana><font size=-1 color=#555555><b>SessionCount</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>SessionCount</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if true enables the $Application-&gt;SessionCount API
 which returns how many sessions are currently active in 
@@ -1266,12 +1279,12 @@ count tracking, so it is disabled by default.
 	
 	<p>
 	<a name=Cookieless%20S21cbf4f4></a>
-	<font face=verdana><font size=+0 color=#555555><b>Cookieless Sessions</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Cookieless Sessions</b></font><p>
 </font>
 	
 	<p>
 	<a name=SessionQuery6920bb61></a>
-	<font face=verdana><font size=-1 color=#555555><b>SessionQueryParse</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>SessionQueryParse</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if true, will automatically parse the $Session
 session id into the query string of each local URL found in the 
@@ -1293,7 +1306,7 @@ read the <a href=sessions.html><font size=-1 face=verdana><b>SESSIONS</b></font>
 	
 	<p>
 	<a name=SessionQueryd88d64b8></a>
-	<font face=verdana><font size=-1 color=#555555><b>SessionQueryParseMatch</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>SessionQueryParseMatch</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, set to a regexp pattern that matches all URLs that you 
 want to have SessionQueryParse parse in session ids.  By default
@@ -1309,7 +1322,7 @@ you are also setting SessionQueryParse.
 	
 	<p>
 	<a name=SessionQuery></a>
-	<font face=verdana><font size=-1 color=#555555><b>SessionQuery</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>SessionQuery</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if set, the session id will be initialized from
 the $Request-&gt;QueryString if not first found as a cookie.
@@ -1328,7 +1341,7 @@ which will do this for you automatically.
 	
 	<p>
 	<a name=SessionQuery3ae841c3></a>
-	<font face=verdana><font size=-1 color=#555555><b>SessionQueryMatch</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>SessionQueryMatch</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, set to a regexp pattern that will match
 URLs for $Server-&gt;URL() to add a session id to.  SessionQuery
@@ -1346,12 +1359,12 @@ as it will be set automatically.
 	
 	<p>
 	<a name=Developer%20Enc3495841></a>
-	<font face=verdana><font size=+0 color=#555555><b>Developer Environment</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Developer Environment</b></font><p>
 </font>
 	
 	<p>
 	<a name=UseStrict></a>
-	<font face=verdana><font size=-1 color=#555555><b>UseStrict</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>UseStrict</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if set to 1, will compile all scripts, global.asa
 and includes with &quot;use strict;&quot; inserted at the head of 
@@ -1374,7 +1387,7 @@ statements.
 	
 	<p>
 	<a name=Debug></a>
-	<font face=verdana><font size=-1 color=#555555><b>Debug</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Debug</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>1 for server log debugging, 2 for extra client html output,
 3 for microtimes logged. Use 1 for production debugging, 
@@ -1397,7 +1410,7 @@ but no output to browser:
 	
 	<p>
 	<a name=DebugBufferL32fcff6d></a>
-	<font face=verdana><font size=-1 color=#555555><b>DebugBufferLength</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>DebugBufferLength</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Default 100, set this to the number of bytes of the 
 buffered output's tail you want to see when an error occurs
@@ -1416,7 +1429,7 @@ the debugging information.
 	
 	<p>
 	<a name=PodComments></a>
-	<font face=verdana><font size=-1 color=#555555><b>PodComments</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>PodComments</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 1.  With pod comments turned on, perl pod style comments
 and documentation are parsed out of scripts at compile time.
@@ -1436,7 +1449,7 @@ be followed by the end of the line.
 	
 	<p>
 	<a name=CollectionItb0343456></a>
-	<font face=verdana><font size=-1 color=#555555><b>CollectionItem</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>CollectionItem</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Enables <a href=http://www.activestate.com/ActivePerl/><font size=-1 face=verdana><b>PerlScript</b></font></a> syntax like:
 <font face="courier new" size=3><pre>
@@ -1456,12 +1469,12 @@ be followed by the end of the line.
 	
 	<p>
 	<a name=XML%20%2F%20XSLT></a>
-	<font face=verdana><font size=+0 color=#555555><b>XML / XSLT</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>XML / XSLT</b></font><p>
 </font>
 	
 	<p>
 	<a name=XMLSubsMatch></a>
-	<font face=verdana><font size=-1 color=#555555><b>XMLSubsMatch</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>XMLSubsMatch</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default not defined, set to some regexp pattern
 that will match all XML and HTML tags that you want
@@ -1476,7 +1489,7 @@ powerful extensions to your XML and HTML rendering.
 	
 	<p>
 	<a name=XMLSubsStriceb376c26></a>
-	<font face=verdana><font size=-1 color=#555555><b>XMLSubsStrict</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>XMLSubsStrict</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, when set XMLSubs will only take arguments
 that are properly formed XML tag arguments like:
@@ -1491,7 +1504,7 @@ XMLSubsStrict to 1 if this is the case.</font>
 	
 	<p>
 	<a name=XSLT></a>
-	<font face=verdana><font size=-1 color=#555555><b>XSLT</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>XSLT</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default not defined, if set to a file, ASP scripts will
 be regarded as XML output and transformed with the given
@@ -1509,7 +1522,7 @@ use.
 	
 	<p>
 	<a name=XSLTMatch></a>
-	<font face=verdana><font size=-1 color=#555555><b>XSLTMatch</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>XSLTMatch</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default .*, if XSLT is set by default all ASP scripts 
 will be XSL transformed by the specified XSL template.
@@ -1524,7 +1537,7 @@ with the same configuration block.  Please see
 	
 	<p>
 	<a name=XSLTParser></a>
-	<font face=verdana><font size=-1 color=#555555><b>XSLTParser</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>XSLTParser</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default <a href=http://xmlxslt.sourceforge.net/><font size=-1 face=verdana><b>XML::XSLT</b></font></a>, determines which perl module to use for 
 XSLT parsing.  This is a new config as of 2.11.
@@ -1537,7 +1550,7 @@ handle XSLT with the exact same output, but is about
 	
 	<p>
 	<a name=XSLTCache></a>
-	<font face=verdana><font size=-1 color=#555555><b>XSLTCache</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>XSLTCache</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Activate XSLT file based caching through CacheDB, CacheDir,
 and CacheSize settings.  This gives cached XSLT performance
@@ -1549,13 +1562,13 @@ keyed uniquely by XML &amp; XSLT inputs.
 	
 	<p>
 	<a name=XSLTCacheSiz6e7d9101></a>
-	<font face=verdana><font size=-1 color=#555555><b>XSLTCacheSize</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>XSLTCacheSize</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>as of version 2.11, this config is no longer supported.</font>
 	
 	<p>
 	<a name=Caching></a>
-	<font face=verdana><font size=+0 color=#555555><b>Caching</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Caching</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The output caching layer is a file dbm based output cache that runs
 on top of the MLDBM::Sync so inherits its performance characteristics.  
@@ -1587,7 +1600,7 @@ just running under <a href=http://perl.apache.org><font size=-1 face=verdana><b>
 	
 	<p>
 	<a name=CacheDB></a>
-	<font face=verdana><font size=-1 color=#555555><b>CacheDB</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>CacheDB</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Like StateDB, sets dbm format for caching.  Since SDBM_File
 only support key/values pairs of around 1K max in length,
@@ -1617,7 +1630,7 @@ the default being MLDBM::Sync::SDBM_File.
 	
 	<p>
 	<a name=CacheDir></a>
-	<font face=verdana><font size=-1 color=#555555><b>CacheDir</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>CacheDir</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>By default, the cache directory is at StateDir/cache,
 but if StateDir is not set, then CacheDir can be used
@@ -1632,7 +1645,7 @@ pretty well by default, this is less important.</font>
 	
 	<p>
 	<a name=CacheSize></a>
-	<font face=verdana><font size=-1 color=#555555><b>CacheSize</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>CacheSize</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>By default, this is 10M of data per cache.  When any cache, 
 like the XSLTCache, reaches this limit, the cache will be purged 
@@ -1656,12 +1669,12 @@ See $Response-&gt;Include() for more info on the Response cache.</font>
 	
 	<p>
 	<a name=Miscellaneou387baf01></a>
-	<font face=verdana><font size=+0 color=#555555><b>Miscellaneous</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Miscellaneous</b></font><p>
 </font>
 	
 	<p>
 	<a name=AuthServerVaa7584921></a>
-	<font face=verdana><font size=-1 color=#555555><b>AuthServerVariables</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>AuthServerVariables</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0. If you are using basic auth and would like 
 $Request-&gt;ServerVariables set like AUTH_TYPE, AUTH_USER, 
@@ -1676,7 +1689,7 @@ when performing basic 401 auth.
 	
 	<p>
 	<a name=BufferingOn></a>
-	<font face=verdana><font size=-1 color=#555555><b>BufferingOn</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>BufferingOn</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 1, if true, buffers output through the response object.
 $Response object will only send results to client browser if
@@ -1695,7 +1708,7 @@ script errors after sending only some of the output.
 	
 	<p>
 	<a name=InodeNames></a>
-	<font face=verdana><font size=-1 color=#555555><b>InodeNames</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>InodeNames</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Default 0. Set to 1 to uses a stat() call on scripts and includes to
 derive subroutine namespace based on device and inode numbers. In case of 
@@ -1709,7 +1722,7 @@ numbers.
 	
 	<p>
 	<a name=RequestParam25a784ba></a>
-	<font face=verdana><font size=-1 color=#555555><b>RequestParams</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>RequestParams</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Default 0, if set creates $Request-&gt;Params object with combined 
 contents of $Request-&gt;QueryString and $Request-&gt;Form.  This
@@ -1720,7 +1733,7 @@ is for developer convenience simlar to <a href=cgi.html><font size=-1 face=verda
 	
 	<p>
 	<a name=StatINC></a>
-	<font face=verdana><font size=-1 color=#555555><b>StatINC</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>StatINC</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if true, reloads perl libraries that have changed
 on disk automatically for ASP scripts.  If false, the www server
@@ -1738,7 +1751,7 @@ For a production version of StatINC, see StatINCMatch.
 	
 	<p>
 	<a name=StatINCMatch></a>
-	<font face=verdana><font size=-1 color=#555555><b>StatINCMatch</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>StatINCMatch</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default undef, if defined, it will be used as a regular expression
 to reload modules that match as in StatINC.  This is useful because
@@ -1758,7 +1771,7 @@ libraries.
 	
 	<p>
 	<a name=StatScripts></a>
-	<font face=verdana><font size=-1 color=#555555><b>StatScripts</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>StatScripts</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 1, if set to 0, changed scripts, global.asa, and includes
 will not be reloaded.  Coupled with Apache <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> startup and restart
@@ -1792,7 +1805,7 @@ doing a quick bug fix.
 	
 	<p>
 	<a name=SoftRedirect></a>
-	<font face=verdana><font size=-1 color=#555555><b>SoftRedirect</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>SoftRedirect</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if true, a $Response-&gt;Redirect() does not end the 
 script.  Normally, when a Redirect() is called, the script
@@ -1805,7 +1818,7 @@ redirect is specified.
 	
 	<p>
 	<a name=Filter></a>
-	<font face=verdana><font size=-1 color=#555555><b>Filter</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Filter</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>On/Off, default Off.  With filtering enabled, you can take advantage of 
 full server side includes (<a href=ssi.html><font size=-1 face=verdana><b>SSI</b></font></a>), implemented through Apache::SSI.  
@@ -1827,7 +1840,7 @@ a 20% performance decrease.
 	
 	<p>
 	<a name=CgiHeaders></a>
-	<font face=verdana><font size=-1 color=#555555><b>CgiHeaders</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>CgiHeaders</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0.  When true, script output that looks like HTTP / <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>
 headers, will be added to the HTTP headers of the request.
@@ -1848,7 +1861,7 @@ script response.
 	
 	<p>
 	<a name=Clean></a>
-	<font face=verdana><font size=-1 color=#555555><b>Clean</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>Clean</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, may be set between 1 and 9.  This setting determine how much
 text/html output should be compressed.  A setting of 1 strips mostly
@@ -1865,7 +1878,7 @@ property, which may also be set between 0 and 9.
 	
 	<p>
 	<a name=CompressGzip></a>
-	<font face=verdana><font size=-1 color=#555555><b>CompressGzip</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>CompressGzip</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if true will gzip compress HTML output on the
 fly if Compress::Zlib is installed, and the client browser
@@ -1887,7 +1900,7 @@ own risk.
 	
 	<p>
 	<a name=FormFill></a>
-	<font face=verdana><font size=-1 color=#555555><b>FormFill</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>FormFill</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if true will auto fill HTML forms with values
 from $Request-&gt;Form().  This functionality is provided
@@ -1903,7 +1916,7 @@ with $Response-&gt;{FormFill} = 1
 	
 	<p>
 	<a name=TimeHiRes></a>
-	<font face=verdana><font size=-1 color=#555555><b>TimeHiRes</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>TimeHiRes</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if set and Time::HiRes is installed, will do 
 sub second timing of the time it takes Apache::ASP to process
@@ -1921,7 +1934,7 @@ other system messages.</font>
 	
 	<p>
 	<a name=Mail%20Adminis1a4d2b59></a>
-	<font face=verdana><font size=+0 color=#555555><b>Mail Administration</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Mail Administration</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Apache::ASP has some powerful administrative email
 extensions that let you sleep at night, knowing full well
@@ -1932,7 +1945,7 @@ extension which you can read up about in the <a href=objects.html><font size=-1 
 	
 	<p>
 	<a name=MailHost></a>
-	<font face=verdana><font size=-1 color=#555555><b>MailHost</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>MailHost</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The mail host is the smtp server that the below Mail* config directives
 will use when sending their emails.  By default Net::SMTP uses
@@ -1948,7 +1961,7 @@ primary server not be working.
 	
 	<p>
 	<a name=MailFrom></a>
-	<font face=verdana><font size=-1 color=#555555><b>MailFrom</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>MailFrom</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Default NONE, set this to specify the default mail address placed 
 in the From: mail header for the $Server-&gt;Mail() API extension, 
@@ -1959,7 +1972,7 @@ as well as MailErrorsTo and MailAlertTo.
 	
 	<p>
 	<a name=MailErrorsTo></a>
-	<font face=verdana><font size=-1 color=#555555><b>MailErrorsTo</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>MailErrorsTo</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>No default, if set, ASP server errors, error code 500, that result
 while compiling or running scripts under Apache::ASP will automatically
@@ -1981,7 +1994,7 @@ and sent via email to the web admin.
 	
 	<p>
 	<a name=MailAlertTo></a>
-	<font face=verdana><font size=-1 color=#555555><b>MailAlertTo</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>MailAlertTo</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The address configured will have an email sent on any ASP server error 500,
 and the message will be short enough to fit on a text based pager.  This
@@ -1997,7 +2010,7 @@ use in production only, where Debug 2 is for development use.
 	
 	<p>
 	<a name=MailAlertPer096b67a8></a>
-	<font face=verdana><font size=-1 color=#555555><b>MailAlertPeriod</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>MailAlertPeriod</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Default 20 minutes, this config specifies the time in minutes over 
 which there may be only one alert email generated by MailAlertTo.
@@ -2010,12 +2023,12 @@ debugging of the incident.
 	
 	<p>
 	<a name=File%20Uploads></a>
-	<font face=verdana><font size=+0 color=#555555><b>File Uploads</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>File Uploads</b></font><p>
 </font>
 	
 	<p>
 	<a name=FileUploadMa625d7c4d></a>
-	<font face=verdana><font size=-1 color=#555555><b>FileUploadMax</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>FileUploadMax</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if set will limit file uploads to this
 size in bytes.  This is currently implemented by 
@@ -2029,7 +2042,7 @@ to work.
 	
 	<p>
 	<a name=FileUploadTeb83a1ea3></a>
-	<font face=verdana><font size=-1 color=#555555><b>FileUploadTemp</b></font><p>
+	<font face=verdana><font class=title size=-1 color=#555555><b>FileUploadTemp</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>default 0, if set will leave a temp file on disk during the request, 
 which may be helpful for processing by other programs, but is also

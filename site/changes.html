@@ -6,6 +6,19 @@
 
 
 
+<style type="text/css">
+<!--
+      td {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      font {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      .title {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 16px}
+
+
+
+
+-->
+</style>
+
+
 </head>
 <body bgcolor=black link=#063678 alink=#ff5599 vlink=#993399
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
@@ -235,10 +248,22 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td valign=top bgcolor=white>
 <font size=+0 face=verdana,arial>
 
-<font face=verdana><font size=+1 color=#555555><b>CHANGES</b></font><p>
+<font face=verdana><font class=title size=+1 color=#555555><b>CHANGES</b></font><p>
 <font face="courier new" size=3><pre>
- + = improvement; - = bug fix
-</pre></font>
+</pre></font>Apache::ASP has been in development since 1998, and 
+was production ready since its .02 release.
+<font face="courier new" size=3><pre>
+</pre></font>Releases are tested on a variety of platforms including Linux,
+Solaris, &amp; WinNT, and are used in a production setting
+on at least Solaris or Linux before being made to
+the public generally.  Development releases for testing
+new features are provided privately.
+<font face="courier new" size=3><pre>
+</pre></font>In July 2000, the version numbers of releases went 
+from .19 to 1.9 which is more relevant to software development
+outside the perl community.  Where a .10 perl module usually
+means first production ready release, this would be the
+equivalent of a 1.0 release for other kinds of software.</font>
 
 	<hr size=1>
 	<table width=100% border=0 cellpadding=1 cellspacing=3>
@@ -246,6 +271,22 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<td valign=top><font face="lucida console" size=-1>
 	<ul>
 	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%202e47a7dd2>$VERSION = 2.23; $DATE="10/11/2001";</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%200792d4e8d>$VERSION = 0.17; $DATE="11/15/99";</a>
+			</font>
+			</td>
+							
+		</tr>
+		
 		<tr>
 		
 			<td valign=top >
@@ -485,24 +526,164 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 			</td>
 							
 		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#%24VERSION%20%3D%200792d4e8d>$VERSION = 0.17; $DATE="11/15/99";</a>
-			</font>
-			</td>
-		<td>&nbsp;</td>					
-		</tr>
 			
 	</table>
 	<hr size=1>
 	<p>
 
 	<p>
+	<a name=%24VERSION%20%3D%202e47a7dd2></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.23; $DATE="10/11/2001";</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>Please see README for changes for past versions.
+<font face="courier new" size=3><pre>
+ + = improvement; - = bug fix
+
+ +Make sure a couple other small standard modules get loaded
+  upon &quot;PerlModule Apache::ASP&quot;, like Time::HiRes, Class::Struct,
+  and MLDBM::Serializer::Data::Dumper.  If not available
+  these modules won't cause errors, but will promote child httpd
+  RAM sharing if they are.
+
+ -XMLSubs args parsing fix so an arg like z-index
+  does not error under UseStrict.  This is OK now:
+
+   &lt;my:layer z-index=3 top=0 left=0&gt; HTML &lt;/my:layer&gt;
+
+ -Only remove outermost &lt;SCRIPT&gt; tags from global.asa
+  for IIS/<a href=http://www.activestate.com/ActivePerl/><font size=-1 face=verdana><b>PerlScript</b></font></a> compatibility.  Used to remove
+  all &lt;SCRIPT&gt; tags, which hurt when some subs in globa.asa
+  would be printing some JavaScript.
+
+ +$Response-&gt;{IsClientConnected} now updated correctly 
+  before global.asa Script_OnStart.  $Response-&gt;IsClientConnect()
+  can be used for accurate accounting, while 
+  $Response-&gt;{IsClientConnected} only gets updated
+  after $Response-&gt;Flush().  Added test cases to response.t
+
+ +$Server-&gt;HTMLEncode(\$data) API extension, now can take
+  scalar ref, which can give a 5% improvement in benchmarks
+  for data 100K in size.
+
+ -Access to $Application is locked when Application_OnEnd &amp; 
+  Application_OnStart is called, creating a critical section
+  for use of $Application
+
+ ++MLDBM::Sync used now for core DBM support in Apache::ASP::State.
+  This drastically simplifies/stabilizes the code in there
+  and will make it easier for future SQL database plugins.
+
+ +New API for accessing ASP object information in non content
+  handler phases:
+
+    use Apache::ASP;
+    sub My::Auth::handler {
+      my $r = shift;
+      my $ASP = Apache::ASP-&gt;new($r) 
+      my $Session = $ASP-&gt;Session;
+    }
+
+  In the above example, $Session would be the same $Session
+  object created later while running the ASP script for this
+  same request.  
+
+  Added t/asp_object.t test for this.  Fixed global.asa to only 
+  init StateDir when application.asp starts which is the first 
+  test script to run.
+
+ -Fixed on Win32 to make Apache::ASP-&gt;new($r) able to create
+  multiple master ASP objects per request.  Was not reentrant 
+  safe before, particularly with state locking for dbms like 
+  $Application &amp; $Session.  
+
+ ++Output caching for includes, built on same layer ( extended )
+  as XSLTCache, test suite at t/cache.t.  Enabled with special 
+  arguments to 
+
+    $Response-&gt;Include(\%args, @include_args)
+    $Response-&gt;TrapInclude(\%args, @include_args)
+    $Server-&gt;Execute(\%args, @include_args)
+
+  where %args = (
+    File =&gt; 'file.inc',
+    Cache =&gt; 1, # to activate cache layer
+    Expires =&gt; 3600, # to expire in one hour
+    LastModified =&gt; time() - 600, # to expire if cached before 10 minutes ago
+    Key =&gt; $Request-&gt;Form, # to cache based on checksum of serialized form data,
+    Clear =&gt; 1, # to not allow fetch from cache this time, will always execute include
+  );
+
+  Like the XSLTCache, it uses MLDBM::Sync::SDBM_File
+  by default, but can use DB_File or GDBM_File if
+  CacheDB is set to these.
+
+  See t/cache.t for API support until this is documented.
+
+ +CacheSize now supports units of M, K, B like 
+
+   CacheSize 10M
+   CacheSize 10240K
+   CacheSize 10000000B
+   CacheSize 10000000
+
+ -Better handling of $Session-&gt;Abandon() so multiple
+  request to the same session while its being destroyed
+  will have the right effect.
+
+ +Optimized XMLSubs parsing.  Scripts with lots lof XMLSubs 
+  now parse faster for the first time.  One test script with 
+  almost 200 such tags went from a parse time of around 3 seconds
+  to .7 seconds after optimizations.
+
+ +Updated performance tuning docs, particularly for using
+  Apache::ASP-&gt;Loader()
+
+ +$Server-&gt;URL($url, \%params) now handles array refs
+  in the params values like
+    $Server-&gt;URL($url, { key =&gt; [ qw( value1 value2 ) ] })
+
+  This is so that query string data found in 
+  $Request-&gt;QueryString that gets parsed into this form
+  from a string like: ?key=value&amp;key=value2 would be 
+  able to be reused passed back to $Server-&gt;URL to 
+  create self referencing URLs more easily.
+
+ -Bug fix where XMLSubs like &lt;s:td /&gt; now works on perl 
+  5.005xx, thanks to Philip Mak for reporting &amp; fix.
+
+ +When searching for included files, will now join
+  the absolute path of the directory of the script
+  with the name of the file if its a relative file
+  name like ./header.inc.  Before, would just look
+  for something like ././header.inc by using '.'
+  as the first directory to look for includes in.
+
+  The result of this is that scripts in two directories
+  configured with the same Global setting should be able
+  to have separate local header.inc files without causing
+  a cached namespace collision.
+
+ +$Server-&gt;Config() call will return a hash ref 
+  to all the config setting for that request, like
+  Apache-&gt;dir_config would.
+
+ -StatINC setting with Apache::ASP-&gt;Loader() works again.
+  This makes StatINC &amp; StatINCMatch settings viable 
+  for production &amp; development use when the system has
+  very many modules.
+
+ -Cookieless session support with configs like SessionQueryParse
+  and SessionQuery now work for URLs with frags in them
+  like <tt>http://localhost?arg=value#frag</tt>
+
+ +@rv = $Response-&gt;Include() now works where there are
+  multiple return values from an include like:
+  &lt;% return(1,2); %&gt;
+</pre></font>
+	
+	<p>
 	<a name=%24VERSION%20%3D%202c37caa32></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 2.21; $DATE="8/5/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.21; $DATE="8/5/2001";</b></font><p>
 <font face="courier new" size=3><pre>
  +Documented RequestParams config in <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> misc section.
 
@@ -558,7 +739,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%2029e6581ab></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 2.19; $DATE="7/10/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.19; $DATE="7/10/2001";</b></font><p>
 <font face="courier new" size=3><pre>
  +update docs in various parts
 
@@ -592,7 +773,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%20282c9e25e></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 2.17; $DATE="6/17/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.17; $DATE="6/17/2001";</b></font><p>
 <font face="courier new" size=3><pre>
  +Added ASP perl mmm-mode subclass and configuration
   in editors/mmm-asp-perl.el file for better emacs support.
@@ -619,7 +800,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%202d4094038></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 2.15; $DATE="06/12/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.15; $DATE="06/12/2001";</b></font><p>
 <font face="courier new" size=3><pre>
  -Fix for running under perl 5.6.1 by removing parser optimization
   introduced in 2.11.
@@ -632,7 +813,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%2023614edca></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 2.11; $DATE="05/29/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.11; $DATE="05/29/2001";</b></font><p>
 <font face="courier new" size=3><pre>
  +Parser optimization from Dariusz Pietrzak
 
@@ -738,7 +919,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%202023e855d></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 2.09; $DATE="01/30/2001";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.09; $DATE="01/30/2001";</b></font><p>
 <font face="courier new" size=3><pre>
  +Examples in ./site/eg are now UseStrict friendly.  
   Also fixed up <a href=eg/ssi_filter.ssi>./site/eg/ssi_filter.ssi</a> example.
@@ -792,7 +973,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%2021002eb7e></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 2.07; $DATE="11/26/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.07; $DATE="11/26/2000";</b></font><p>
 <font face="courier new" size=3><pre>
  -+-+ Session Manager
   empty state group directories are not removed, thus alleviating
@@ -905,7 +1086,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%202909e81ef></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 2.03; $DATE="08/01/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.03; $DATE="08/01/2000";</b></font><p>
 <font face="courier new" size=3><pre>
  +License change to GPL.  See <a href=license.html><font size=-1 face=verdana><b>LICENSE</b></font></a> section.
 
@@ -916,7 +1097,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%202727b0736></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 2.01; $DATE="07/22/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.01; $DATE="07/22/2000";</b></font><p>
 <font face="courier new" size=3><pre>
  +$data_ref = $Response-&gt;TrapInclude('file.inc') API
   extension which allows for easy post processing of
@@ -929,7 +1110,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%202784583b1></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 2.00; $DATE="07/15/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.00; $DATE="07/15/2000";</b></font><p>
 <font face="courier new" size=3><pre>
  -UniquePackages config works again, broke a couple versions back
 
@@ -939,7 +1120,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%201716f16ef></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 1.95; $DATE="07/10/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 1.95; $DATE="07/10/2000";</b></font><p>
 <font face="courier new" size=3><pre>
  !!!!! EXAMPLES SECURITY BUG FOUND &amp; FIXED !!!!!
 
@@ -967,7 +1148,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%201b231718a></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 1.93; $DATE="07/03/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 1.93; $DATE="07/03/2000";</b></font><p>
 <font face="courier new" size=3><pre>
  -sub second timing with Time::HiRes was adding &lt;!-- --&gt;
   comments by HTML by default, which would possibly
@@ -984,7 +1165,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%2010d8c7b1b></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 1.91; $DATE="07/02/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 1.91; $DATE="07/02/2000";</b></font><p>
 <font face="courier new" size=3><pre>
  +Documented XMLSubsMatch &amp; XSLT* configuration
   settings in <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> section.
@@ -1018,7 +1199,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%200f0c93549></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.19; $DATE="NOT RELEASED";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.19; $DATE="NOT RELEASED";</b></font><p>
 <font face="courier new" size=3><pre>
  +XMLSubsMatch and XSLT* settings documented in 
   the <a href=xml.html><font size=-1 face=verdana><b>XML/XSLT</b></font></a> section of the site/README.
@@ -1175,7 +1356,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%2004a1da04f></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.18; $DATE="02/03/2000";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.18; $DATE="02/03/2000";</b></font><p>
 <font face="courier new" size=3><pre>
  +Documented SessionQuery* &amp; $Server-&gt;URL() and 
   cleaned up formatting some, as well as redoing
@@ -1306,7 +1487,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%200792d4e8d></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.17; $DATE="11/15/99";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.17; $DATE="11/15/99";</b></font><p>
 <font face="courier new" size=3><pre>
  ++20%+ faster startup script execution, as measured by the 
   HelloWorld bench.  I cut a lot of the fat out of 
@@ -1381,7 +1562,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%2003dd1597d></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.16; $DATE="09/22/99";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.16; $DATE="09/22/99";</b></font><p>
 <font face="courier new" size=3><pre>
  -$Response-&gt;{Buffer} and PerlSetVar BufferingOn
   configs now work when set to 0, to unbuffer output,
@@ -1447,7 +1628,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%200a2fa9027></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.15; $DATE="08/24/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.15; $DATE="08/24/1999";</b></font><p>
 <font face="courier new" size=3><pre>
  --State databases like $Session, $Application are 
   now tied/untied to every lock/unlock triggered by read/write 
@@ -1536,7 +1717,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%200b667e0c4></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.14; $DATE="07/29/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.14; $DATE="07/29/1999";</b></font><p>
 <font face="courier new" size=3><pre>
  -<a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> &amp; StatINC or StatINCMatch would have bad results
   at times, with StatINC deleting dynamically compiled
@@ -1568,7 +1749,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%200fcc7c76f></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.12; $DATE="07/01/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.12; $DATE="07/01/1999";</b></font><p>
 <font face="courier new" size=3><pre>
  -Compiles are now 10 +times faster for scripts with lots of big
   embedded perl blocks &lt;% #perl %&gt;
@@ -1619,7 +1800,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%200bd024b52></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.11; $DATE="06/24/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.11; $DATE="06/24/1999";</b></font><p>
 <font face="courier new" size=3><pre>
  +Lots of documentation updates
 
@@ -1677,7 +1858,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%200c7f99fbe></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.10; $DATE="05/24/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.10; $DATE="05/24/1999";</b></font><p>
 <font face="courier new" size=3><pre>
  += improvement; - = bug fix
 
@@ -1746,7 +1927,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%2005ee189f2></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.09; $DATE="04/22/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.09; $DATE="04/22/1999";</b></font><p>
 <font face="courier new" size=3><pre>
  +Updated Makefile.PL optional modules output for <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> &amp; DB_File
 
@@ -1868,7 +2049,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%200ea85a09a></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.08; $DATE="02/06/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.08; $DATE="02/06/1999";</b></font><p>
 <font face="courier new" size=3><pre>
  ++<a href=ssi.html><font size=-1 face=verdana><b>SSI</b></font></a> with Apache::Filter &amp; Apache::SSI, see config options &amp; ./eg files
   Currently filtering only works in the direction Apache::ASP -&gt; Apache::SSI,
@@ -1896,7 +2077,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%2003960e08a></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.07; $DATE="01/20/1999";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.07; $DATE="01/20/1999";</b></font><p>
 <font face="courier new" size=3><pre>
  -removed SIG{__WARN__} handler, it was a bad idea.
 
@@ -1915,7 +2096,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%200394bbc7f></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.06; $DATE="12/21/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.06; $DATE="12/21/1998";</b></font><p>
 <font face="courier new" size=3><pre>
  +Application_OnStart &amp; Application_OnEnd event handlers support.
 
@@ -1967,7 +2148,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%2003a5fe2db></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.05; $DATE="10/19/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.05; $DATE="10/19/1998";</b></font><p>
 <font face="courier new" size=3><pre>
  +Added PERFORMANCE doc, which includes benchmarks  +hints.
 
@@ -1996,7 +2177,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%2009ffce1f9></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.04; $DATE="10/14/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.04; $DATE="10/14/1998";</b></font><p>
 <font face="courier new" size=3><pre>
  +Example script eg/cgi.htm demonstrating <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm use for output.
 
@@ -2046,7 +2227,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%200ec664faf></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.03; $DATE="09/14/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.03; $DATE="09/14/1998";</b></font><p>
 <font face="courier new" size=3><pre>
  +Installation 'make test' now works
 
@@ -2079,7 +2260,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%20055b248f9></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.02; $DATE="07/12/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.02; $DATE="07/12/1998";</b></font><p>
 <font face="courier new" size=3><pre>
  ++Session Manager, won't break under denial of service attack
 
@@ -2100,7 +2281,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	
 	<p>
 	<a name=%24VERSION%20%3D%2009faee67f></a>
-	<font face=verdana><font size=+0 color=#555555><b>$VERSION = 0.01; $DATE="06/26/1998";</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 0.01; $DATE="06/26/1998";</b></font><p>
 <font face="courier new" size=3><pre>
  Syntax Support
  --------------

@@ -6,6 +6,19 @@
 
 
 
+<style type="text/css">
+<!--
+      td {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      font {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      .title {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 16px}
+
+
+
+
+-->
+</style>
+
+
 </head>
 <body bgcolor=black link=#063678 alink=#ff5599 vlink=#993399
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
@@ -235,7 +248,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td valign=top bgcolor=white>
 <font size=+0 face=verdana,arial>
 
-<font face=verdana><font size=+1 color=#555555><b>CGI</b></font><p>
+<font face=verdana><font class=title size=+1 color=#555555><b>CGI</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> has been the standard way of deploying web applications long before
 ASP came along.  In the CGI gateway world, <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> has been a widely
@@ -309,7 +322,7 @@ ASP implementations, as other ASP implementations will likely be more limited.</
 
 	<p>
 	<a name=Standalone%20C1c4c1a9b></a>
-	<font face=verdana><font size=+0 color=#555555><b>Standalone CGI Mode, without mod_perl</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Standalone CGI Mode, without mod_perl</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>As of version 2.19, Apache::ASP scripts may be run as standalone
 <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> scripts without <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> being loaded into Apache.  Work
@@ -362,7 +375,7 @@ to be defined.</font>
 	
 	<p>
 	<a name=CGI.pm></a>
-	<font face=verdana><font size=+0 color=#555555><b>CGI.pm</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>CGI.pm</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm is a very useful module that aids developers in 
 the building of these applications, and Apache::ASP has been made to 
@@ -378,7 +391,7 @@ web applications.</font>
 	
 	<p>
 	<a name=Query%20Object4fef5875></a>
-	<font face=verdana><font size=+0 color=#555555><b>Query Object Initialization</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Query Object Initialization</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>You may create a <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm $query object like so:
 <font face="courier new" size=3><pre>
@@ -392,7 +405,7 @@ routines.</font>
 	
 	<p>
 	<a name=CGI%20headers></a>
-	<font face=verdana><font size=+0 color=#555555><b>CGI headers</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>CGI headers</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Not only can you use the <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm $query-&gt;header() method
 to put out headers, but with the CgiHeaders config option
@@ -415,7 +428,7 @@ you will avoid this problem.</font>
 	
 	<p>
 	<a name=print%28%29ing%20C99232b52></a>
-	<font face=verdana><font size=+0 color=#555555><b>print()ing CGI</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>print()ing CGI</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> is notorious for its print() statements, and the functions in <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> 
 usually return strings to print().  You can do this under Apache::ASP,
@@ -428,7 +441,7 @@ affect.
 	
 	<p>
 	<a name=File%20Upload></a>
-	<font face=verdana><font size=+0 color=#555555><b>File Upload</b></font><p>
+	<font face=verdana><font class=title size=+0 color=#555555><b>File Upload</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm is used for implementing reading the input from file upload.  You
 may create the file upload form however you wish, and then the 

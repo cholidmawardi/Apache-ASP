@@ -3353,7 +3353,165 @@ TODO
      + $Request->ClientCertificate()
 
 CHANGES
+    Apache::ASP has been in development since 1998, and was production ready
+    since its .02 release.
+
+    Releases are tested on a variety of platforms including Linux, Solaris,
+    & WinNT, and are used in a production setting on at least Solaris or
+    Linux before being made to the public generally. Development releases
+    for testing new features are provided privately.
+
+    In July 2000, the version numbers of releases went from .19 to 1.9 which
+    is more relevant to software development outside the perl community.
+    Where a .10 perl module usually means first production ready release,
+    this would be the equivalent of a 1.0 release for other kinds of
+    software.
+
+    $VERSION = 2.23; $DATE="10/11/2001";
+    Please see README for changes for past versions.
+
      + = improvement; - = bug fix
+
+     +Make sure a couple other small standard modules get loaded
+      upon "PerlModule Apache::ASP", like Time::HiRes, Class::Struct,
+      and MLDBM::Serializer::Data::Dumper.  If not available
+      these modules won't cause errors, but will promote child httpd
+      RAM sharing if they are.
+
+     -XMLSubs args parsing fix so an arg like z-index
+      does not error under UseStrict.  This is OK now:
+
+       <my:layer z-index=3 top=0 left=0> HTML </my:layer>
+
+     -Only remove outermost <SCRIPT> tags from global.asa
+      for IIS/PerlScript compatibility.  Used to remove
+      all <SCRIPT> tags, which hurt when some subs in globa.asa
+      would be printing some JavaScript.
+
+     +$Response->{IsClientConnected} now updated correctly 
+      before global.asa Script_OnStart.  $Response->IsClientConnect()
+      can be used for accurate accounting, while 
+      $Response->{IsClientConnected} only gets updated
+      after $Response->Flush().  Added test cases to response.t
+
+     +$Server->HTMLEncode(\$data) API extension, now can take
+      scalar ref, which can give a 5% improvement in benchmarks
+      for data 100K in size.
+
+     -Access to $Application is locked when Application_OnEnd & 
+      Application_OnStart is called, creating a critical section
+      for use of $Application
+
+     ++MLDBM::Sync used now for core DBM support in Apache::ASP::State.
+      This drastically simplifies/stabilizes the code in there
+      and will make it easier for future SQL database plugins.
+
+     +New API for accessing ASP object information in non content
+      handler phases:
+
+        use Apache::ASP;
+        sub My::Auth::handler {
+          my $r = shift;
+          my $ASP = Apache::ASP->new($r) 
+          my $Session = $ASP->Session;
+        }
+
+      In the above example, $Session would be the same $Session
+      object created later while running the ASP script for this
+      same request.  
+
+      Added t/asp_object.t test for this.  Fixed global.asa to only 
+      init StateDir when application.asp starts which is the first 
+      test script to run.
+
+     -Fixed on Win32 to make Apache::ASP->new($r) able to create
+      multiple master ASP objects per request.  Was not reentrant 
+      safe before, particularly with state locking for dbms like 
+      $Application & $Session.  
+
+     ++Output caching for includes, built on same layer ( extended )
+      as XSLTCache, test suite at t/cache.t.  Enabled with special 
+      arguments to 
+
+        $Response->Include(\%args, @include_args)
+        $Response->TrapInclude(\%args, @include_args)
+        $Server->Execute(\%args, @include_args)
+
+      where %args = (
+        File => 'file.inc',
+        Cache => 1, # to activate cache layer
+        Expires => 3600, # to expire in one hour
+        LastModified => time() - 600, # to expire if cached before 10 minutes ago
+        Key => $Request->Form, # to cache based on checksum of serialized form data,
+        Clear => 1, # to not allow fetch from cache this time, will always execute include
+      );
+
+      Like the XSLTCache, it uses MLDBM::Sync::SDBM_File
+      by default, but can use DB_File or GDBM_File if
+      CacheDB is set to these.
+
+      See t/cache.t for API support until this is documented.
+
+     +CacheSize now supports units of M, K, B like 
+
+       CacheSize 10M
+       CacheSize 10240K
+       CacheSize 10000000B
+       CacheSize 10000000
+
+     -Better handling of $Session->Abandon() so multiple
+      request to the same session while its being destroyed
+      will have the right effect.
+
+     +Optimized XMLSubs parsing.  Scripts with lots lof XMLSubs 
+      now parse faster for the first time.  One test script with 
+      almost 200 such tags went from a parse time of around 3 seconds
+      to .7 seconds after optimizations.
+
+     +Updated performance tuning docs, particularly for using
+      Apache::ASP->Loader()
+
+     +$Server->URL($url, \%params) now handles array refs
+      in the params values like
+        $Server->URL($url, { key => [ qw( value1 value2 ) ] })
+
+      This is so that query string data found in 
+      $Request->QueryString that gets parsed into this form
+      from a string like: ?key=value&key=value2 would be 
+      able to be reused passed back to $Server->URL to 
+      create self referencing URLs more easily.
+
+     -Bug fix where XMLSubs like <s:td /> now works on perl 
+      5.005xx, thanks to Philip Mak for reporting & fix.
+
+     +When searching for included files, will now join
+      the absolute path of the directory of the script
+      with the name of the file if its a relative file
+      name like ./header.inc.  Before, would just look
+      for something like ././header.inc by using '.'
+      as the first directory to look for includes in.
+
+      The result of this is that scripts in two directories
+      configured with the same Global setting should be able
+      to have separate local header.inc files without causing
+      a cached namespace collision.
+
+     +$Server->Config() call will return a hash ref 
+      to all the config setting for that request, like
+      Apache->dir_config would.
+
+     -StatINC setting with Apache::ASP->Loader() works again.
+      This makes StatINC & StatINCMatch settings viable 
+      for production & development use when the system has
+      very many modules.
+
+     -Cookieless session support with configs like SessionQueryParse
+      and SessionQuery now work for URLs with frags in them
+      like http://localhost?arg=value#frag
+
+     +@rv = $Response->Include() now works where there are
+      multiple return values from an include like:
+      <% return(1,2); %>
 
     $VERSION = 2.21; $DATE="8/5/2001";
      +Documented RequestParams config in CONFIG misc section.

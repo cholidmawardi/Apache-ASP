@@ -58,6 +58,19 @@ if($0 =~ /index.html$/) {
 }
 %>
 
+<style type="text/css">
+<!--
+      td {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      font {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 14px}
+      .title {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 16px}
+=pod
+      a:link {  font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: bold; color: #003366}
+      a:visited {  font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: bold; color: #003366}
+=cut
+-->
+</style>
+
+
 </head>
 <body bgcolor=black link=<%=$LinkColor%> alink=#ff5599 vlink=<%=$VLinkColor%>
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
