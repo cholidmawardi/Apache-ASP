@@ -39,7 +39,6 @@ build/todo.html
 build/top.inc
 build/tuning.html
 build/xml.html
-cgi/asp
 editors/aasp.vim
 editors/mmm-asp-perl.el
 lib/Apache/ASP/Application.pm

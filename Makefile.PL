@@ -67,8 +67,9 @@ if(! $errors) {
     print "OTHER MODULES NEEDED! You need to install the above required modules before installing Apache::ASP.\n";
 }
 
+print "\n";
 sleep(2) unless $fresh_makefile;
-print "\nChecking for the OPTIONAL modules...\n";
+print "Checking for the OPTIONAL modules...\n";
 sleep(2) unless $fresh_makefile;
 
 for(sort keys %$optional_modules) {
@@ -159,5 +160,6 @@ use ExtUtils::MakeMaker;
 			       'MLDBM::Sync' => 0,
 			      },
                'EXE_FILES' => [ 'asp-perl' ],
+	       'clean' => { FILES => 't/long_directory_path_test t/.cache t/.state t/session_events/.state' },
 	      );
 

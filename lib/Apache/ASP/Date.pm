@@ -7,8 +7,6 @@ package Apache::ASP::Date;
 
 use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-$VERSION = sprintf("%d.%02d", q$Revision: 1.1.1.1 $ =~ /(\d+)\.(\d+)/);
-sub Version { $VERSION; }
 
 require 5.002;
 require Exporter;

@@ -3,7 +3,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.39;
+$VERSION = 2.41;
 
 use Digest::MD5 qw(md5_hex);
 use Cwd qw(cwd);
@@ -5427,12 +5427,6 @@ Of course on NT, you get this for free with IIS.
 
   Halcyon Software
   http://www.halcyonsoft.com
-
-If you are willing to migrate your VBScript ASP to PHP, you might
-also check out:
-
-  asp2php.com site
-  http://www.asp2php.com
 
 =head2 Support and Production
 
