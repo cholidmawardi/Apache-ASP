@@ -1,6 +1,39 @@
-$VERSION = .03;
+$VERSION = .04;
 
 + = improvement; - = bug fix
+
++ Example script eg/cgi.htm demonstrating CGI.pm use for output.
++ Optimized ASP parsing, faster and more legible executing code
+	: try 'die();' in code with setting PerlSetVar Debug 2
++ Cleaned up code for running with 'use strict'
+- Fixed directory handle leak on Solaris, from not closing after opendir()
++ StatINC overhaul.  StatINC setting now works as it should, with 
+  the caveat that exported functions will not be refreshed.
++ NoState setting optimization, disallows $Application & $Session
++ $Application->*Lock() functions implemented
+- SoftRedirect setting for those who want scripts to keep running
+  after a Redirect()
++ SessionSerialize setting to lock session while script is running
+	: Microsoft ASP style session locking
+	: For a session, scripts execute one at a time 
+	: NOT recommended use, please see note.
+- MLDBM can be used for other things without messing up internal use
+	: before if it was used with different DB's and serializers,
+	  internal state could be lost.
+-- State file locking.  Corruption worries, and loss of data no more.
++ CGI header support, developer can use CGI.pm for *output*, or just print()
+	: print "Set-Cookie: test=cookie\n", and things will just work
+	: use CGI.pm for output
+	: utilizes $r->send_cgi_header(), thanks Doug!
++ Improved Cookie implementation, more flexible and complete
+	- Domain cookie key now works
+	: Expire times now taken from time(), and relative time in sec
+	: Request->Cookies() reading more flexible, with wantarray()
+	  on hash cookie values, %hash = $Request->Cookie('test');
+- make test module naming correction, was t.pm, now T.pm for Unix
++ POD / README cleanup, formatting and HTML friendly.
+
+$VERSION = .03;
 
 + Installation 'make test' now works
 + ActiveX objects on Win32 implemented with $Server->CreateObject() 

@@ -1,0 +1,33 @@
+<%
+	use DemoASP; 
+	$demo = &DemoASP::new();
+
+	use CGI qw(:standard :html2);
+	my $query = new CGI;
+	my $cookie = $query->cookie(-name=>'sessionID',
+				    -value=>'xyzzy',
+				    -expires=>'+1h',
+	);
+
+	print $query->header(-cookie=>$cookie);
+	print 
+		start_html('Using CGI.pm'),
+		h1('Simple Script'),
+		hr,"\n";
+%>
+    
+This script is a demonstration of using the CGI.pm library
+in an ASP script.  Please remember that using CGI.pm will 
+probably NOT be portable with PScript and PerlScript.
+<p>
+At the time of writing this help page, CGI.pm can only be
+used for output under Apache.  Input, as in reading from forms,
+query string, etc., will not work.
+<p>    
+<a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
+view this file's source
+
+<%
+	print end_html;
+%>
+

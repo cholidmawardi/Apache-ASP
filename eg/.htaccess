@@ -10,6 +10,7 @@
 	PerlSetVar CookiePath  /	
 	PerlSetVar SessionTimeout  .5	
 	PerlSetVar AllowSessionState  1
+	PerlSetVar StatINC 1
 </Files>
 
 # .htm files for the ASP parsing, but not the $Session object
@@ -20,6 +21,6 @@
 	PerlSetVar Debug  2		
 	PerlSetVar CookiePath  /	
 	PerlSetVar Global  .		
-	PerlSetVar AllowSessionState  0
+	PerlSetVar NoState 1
 	PerlSetVar BufferingOn 0
 </Files>
