@@ -34,6 +34,7 @@ my $final = '&amp;&quot;&lt;&gt;';
 $t->eok($Server->HTMLEncode('&"<>') eq $final, "\$Server->HTMLEncode('$html')");
 $Server->HTMLEncode(\$html);
 $t->eok($html eq $final, "\$Server->HTMLEncode(\\\$html)");
+$t->eok($Server->MapInclude('server.t') eq './server.t', "Find executing script in Includes path");
 
 #use Benchmark;
 #my $htmlbig = '&"<>' x 25000;

@@ -3,7 +3,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.29;
+$VERSION = 2.31;
 
 use MLDBM;
 use MLDBM::Sync 0.25;
@@ -14,7 +14,7 @@ use Fcntl qw(:flock O_RDWR O_CREAT);
 use Digest::MD5 qw(md5_hex);
 
 # other common modules load now
-for my $module (qw ( Time::HiRes MLDBM::Serializer::Data::Dumper Apache::Symbol Devel::Symdump Config lib)) {
+for my $module (qw ( Time::HiRes MLDBM::Serializer::Data::Dumper Devel::Symdump Config lib)) {
     eval "use $module";
 }
 
@@ -168,7 +168,6 @@ sub handler {
 	    # and executing scripts
     
 	    $self->Execute;
-	  APACHE_ASP_EXECUTE_END:
 	}
 	$global_asa->{'exists'} && $global_asa->ScriptOnEnd();
 	! $self->{errs} && $response->EndSoft();
@@ -1264,13 +1263,17 @@ sub SearchDirs {
     if(defined $file) {
 	# test & return if absolute
 	if($file =~ m,^/|^[a-z]\:,i) {
-	    return (-e $file) ? $file : undef;
+	    if(-e $file && ! -d $file) {
+		return $file;
+	    } else {
+		return undef;
+	    }
 	}
 	
 	for my $dir (@$includes_dir) {
 	    my $path = "$dir/$file";
 	    $path =~ s|/+|/|isg;
-	    if(-e $path) {
+	    if(-e $path && ! -d $path) {
 		$self->{search_dirs_cache}{$cache_key} = $path;
 		return $path;
 	    }
@@ -1313,7 +1316,7 @@ sub CompileInclude {
     } else { # file here
 	# streamlined, SearchDirs now caches per request
 	my $file = $self->SearchDirs($include);
-	die("no file $include") unless defined $file;
+	die("no include $include") unless defined $file;
 	$include = $file;
 	
 	my $id;
@@ -1373,16 +1376,6 @@ sub UndefRoutine {
 	undef(&$code); # method for perl 5.6.1
 	undef($code);  # older perls
     }
-
-# this code is no longer needed, may never have been -- 11/11/2001
-#    if(my $code = eval { \&{$subid} }) {
-#	if($self->LoadModules('UndefRoutine', 'Apache::Symbol')) {
-#	    $self->{dbg} && $self->Debug("active undefing sub $subid code $code");
-#	    &Apache::Symbol::undef($code);
-#	} else {
-    #	}
-#    }
-
 }
 
 sub ReadFile {
@@ -1556,7 +1549,10 @@ sub Execute {
     local @INC = ($self->{global}, @INC);
 
     eval { &$subid() };
-    if($@ && $@ !~ /Apache\:\:exit/) { 
+
+  APACHE_ASP_EXECUTE_END:
+
+    if($@) { 
 	$self->Error($@); 
     }
     
@@ -2332,7 +2328,7 @@ sub StatINC {
     # to generate consistent error messages
     unless($StatINCReady) {
 	my $ready = 1;
-	for('Devel::Symdump', 'Apache::Symbol') {
+	for('Devel::Symdump') {
 	    eval "use $_";
 	    if($@) {
 		$ready = 0;
@@ -2377,7 +2373,7 @@ sub StatINC {
 	    # since last we checked, so we don't delete duplicate symbols
 	    $self->StatRegister($key, $file, $mtime);
 
-	    my $class = &Apache::Symbol::file2class($key);
+	    my $class = &File2Class($key);
 	    my $sym = Devel::Symdump->new($class);
 
 	    my $function;
@@ -2410,8 +2406,10 @@ sub StatINC {
 		}
 
 		$self->{dbg} && $self->Debug("undef code $function: $code");
-		&Apache::Symbol::undef($code);
-		delete $Apache::ASP::Codes{$code};	       
+
+		undef(&$code); # method for perl 5.6.1
+		delete $Apache::ASP::Codes{$code};
+		undef($code);  # older perls
 	    }
 
 	    # extract the lib, just incase our @INC went away
@@ -2458,7 +2456,7 @@ sub StatRegister {
     
     # keep track of codes, don't undef on codes
     # with multiple refs, since these are exported
-    my $class = &Apache::Symbol::file2class($key);
+    my $class = &File2Class($key);
 
     # we skip Apache stuff as on some platforms (RedHat 6.0)
     # Apache::OK seems to error when getting its code ref
@@ -2513,6 +2511,13 @@ sub StatRegisterAll {
     }
 
     1;
+}
+
+sub File2Class {
+    my $file = shift;
+    return $file unless $file =~ s,\.pm$,,;
+    $file =~ s,/,::,g;
+    $file;
 }
 
 sub SendMail {
@@ -2753,7 +2758,7 @@ sub LoadModules {
 	    if($LoadModuleErrors{$category}) {
 		$self->Error("cannot load $_ for $category: $LoadModuleErrors{$category}; $@");
 	    } else {
-		# don't wan't Log() output for make test when Apache::Symbol
+		# don't wan't Log() output for make test when optional modules aren't installed
 		# is not installed, --jc 6/11/2001
 		$self->Debug("cannot load $_ for $category: $@");
 	    }
@@ -3198,6 +3203,7 @@ sub new {
 #       Form => undef,
 #       QueryString => undef,
 #       ServerVariables => undef,
+       Method => $r->method || 'GET',
        TotalBytes => 0,
       };
     
@@ -3222,7 +3228,7 @@ sub new {
     # assign no matter what so Form is always defined
     my $form = {};
     my %upload;
-    if(($r->method() || '') eq 'POST') {	
+    if($self->{Method} eq 'POST') {	
 	$self->{TotalBytes} = $ENV{CONTENT_LENGTH};
 	if($ENV{CONTENT_TYPE}=~ m|^multipart/form-data|) {
 	    if($asp->{file_upload_temp} = $r->dir_config('FileUploadTemp')) {
@@ -3370,7 +3376,13 @@ sub Form { shift->{Form}->Item(@_) }
 sub FileUpload { shift->{FileUpload}->Item(@_) }
 sub QueryString { shift->{QueryString}->Item(@_) }
 sub ServerVariables { shift->{ServerVariables}->Item(@_) }
-sub Params { shift->{Params}->Item(@_) }
+
+sub Params {
+    my $self = shift; 
+    $self->{Params}
+      || die("\$Request->Params object does not exist, enable with 'PerlSetVar RequestParams 1'");
+    $self->{Params}->Item(@_);
+}
 
 sub BinaryRead {
     my($self, $length) = @_;
@@ -3547,10 +3559,22 @@ sub AUTOLOAD {
 
 sub AddHeader { 
     my($self, $name, $value) = @_;   
+
     if($name =~ /^set\-cookie$/io) {
 	$self->{r}->cgi_header_out($name, $value);
     } else {
-	$self->{r}->header_out($name, $value);
+	# if we have a member API for this header, set that value instead 
+	# to avoid duplicate headers from being sent out
+	my $lc_name = lc($name);
+	if($lc_name eq 'content-type') {
+	    $self->{ContentType} = $value;
+	} elsif($lc_name eq 'cache-control') {
+	    $self->{CacheControl} = $value;
+	} elsif($lc_name eq 'expires') {
+	    $self->{ExpiresAbsolute} = $value;
+	} else {
+	    $self->{r}->header_out($name, $value);
+	}
     }
 }   
 
@@ -3600,7 +3624,7 @@ sub Cookies {
 sub End {
     my $self = shift;
     &EndSoft($self);
-    die('Apache::exit');
+    goto APACHE_ASP_EXECUTE_END;
 }
 
 sub EndSoft {
@@ -3711,11 +3735,17 @@ sub Flush {
     if($asp->{filter}) {
 	print STDOUT $$out;
     } else {
-	if($self->{IsClientConnected}) {
+	# just in case IsClientConnected is set incorrectly, still try to print
+	# the worst thing is some extra error messages in the error_log ...
+	# there have been spurious error reported with the IsClientConnected
+	# code since it was introduced, and this will limit the errors ( if any are left )
+	# to the users explicitly using this functionality, --jc 11/29/2001
+	#
+#	if($self->{IsClientConnected}) {
 	    if(! defined $self->{Status} or ($self->{Status} >= 200 and $self->{Status} < 400)) {
 		$self->{r}->print($$out);
 	    }
-	}
+#	}
     }
 
     # update after flushes only, expensive call
@@ -3812,6 +3842,7 @@ sub IsClientConnected {
     # a user hits stop/reload
     my $conn = $self->{r}->connection;
     my $is_connected = $conn->aborted ? 0 : 1;
+
     if($is_connected) {
 	my $fileno = eval { $conn->fileno };
 	if(defined $fileno) {
@@ -3829,6 +3860,7 @@ sub IsClientConnected {
 	    }
 	}
     }
+
     $self->{IsClientConnected} = $is_connected;
     if(! $is_connected) {
 	$self->{asp}{dbg} && $self->{asp}->Debug("client is no longer connected");
@@ -4394,25 +4426,9 @@ sub Execute {
 }
 
 sub Transfer {
-    my($self, $file) = @_;
-    my $asp = $self->{'asp'};
-    
-    my $_CODE = eval { $asp->CompileInclude($file) };
-    if(! $_CODE || $@) {
-	die("error compiling transfer $file: $@");
-    } else {	
-	local *0 = \$_CODE->{file};
-	my $eval = $_CODE->{code};
-	$asp->{dbg} && $asp->Debug("executing $eval");    
-	
-	my $rc = eval { &$eval() };
-	if($@) {
-	    my $code = $_CODE;
-	    die("error executing code for transfer $code->{file}: $@");
-	}
-    }
-
-    goto APACHE_ASP_EXECUTE_END;
+    my $self = shift;
+    $self->{asp}{Response}->Include(@_);
+    $self->{asp}{Response}->End;
 }
 
 # shamelessly ripped off from CGI.pm, by Lincoln D. Stein.
@@ -4446,6 +4462,11 @@ sub RegisterCleanup {
     (ref($code) =~ /^CODE/) || 
 	$self->{asp}->Error("$code need to be a perl sub reference, see README");
     push(@Apache::ASP::Cleanup, $code);
+}
+
+sub MapInclude {
+    my($self, $file) = @_;
+    $self->{asp}->SearchDirs($file);
 }
 
 sub MapPath {
@@ -5322,7 +5343,7 @@ sub init {
     # directories everywhere you run this stuff
     defined($self->dir_config('NoState')) || $self->dir_config('NoState', 1);
 
-    $self->method($ENV{REQUEST_METHOD});
+    $self->method($ENV{REQUEST_METHOD} || 'GET');
     $self->{env} = \%ENV;
     $self->env('SCRIPT_NAME') || $self->env('SCRIPT_NAME', $filename);
 
@@ -5910,6 +5931,28 @@ the source distribution.
 
 =head1 INSTALL
 
+The installation process for Apache::ASP is geared towards those
+with experience with perl, Apache, and unix systems.  For those
+without this experience, please understand that the learning curve 
+can be significant.  But what you have at the end will be a web site
+running on superior open source software.
+
+If installing onto a Windows operating system, please see the section
+titled Win32 Install.
+
+=head2 Need Help
+
+Often, installing the mod_perl part of the Apache server
+can be the hardest part.  If this is the case for you, 
+check out the FAQ and SUPPORT sections for further help,
+as well as the "Build Apache" notes in this section.
+
+Please also see the mod_perl guide at http://perl.apache.org/guide
+which one ought to give a good read before undertaking
+a mod_perl project.
+
+=head2 Download and CPAN Install
+
 You may download the latest Apache::ASP from your nearest CPAN,
 and also:
 
@@ -5928,11 +5971,18 @@ fire up the CPAN shell like:
 
 Installing the Apache::ASP bundle will automatically install
 all the modules Apache::ASP is dependent on as well as
-Apache::ASP itself. 
+Apache::ASP itself.  If you have trouble installing the bundle,
+then try installing the necessary modules one at a time:
 
-=head2 Perl Module Install
+ cpan> install Data::Dumper
+ cpan> install MLDBM
+ cpan> install MLDBM::Sync
+ cpan> install Digest::MD5
+ cpan> install Apache::ASP
 
-Once you have downloaded it, Apache::ASP installs easily using 
+=head2 Regular Perl Module Install
+
+If not doing the CPAN install, download Apache::ASP and install it using 
 the make or nmake commands as shown below.  Otherwise, just 
 copy ASP.pm to $PERLLIB/site/Apache
 
@@ -5948,12 +5998,18 @@ Please note that you must first have the Apache Web Server
 environment.  The offline mode for building static html at
 ./cgi/asp may be used with just perl.
 
-=head2 Win32 Install
+=head2 Win32 / Windows Install
 
 If you are on a Win32 platform, like WinNT or Windows 2000, 
 you can download the win32 binaries linked to from:
 
   http://perl.apache.org/distributions.html  
+
+From here, I would recommend the mod_perl binary installation at:
+
+  ftp://theoryx5.uwinnipeg.ca/pub/other/
+
+and install the latest perl-win32-bin-*.exe file.
 
 Randy Kobes has graciously provided these, which include
 compiled versions perl, mod_perl, apache, mod_ssl,
@@ -5965,18 +6021,18 @@ file in your perl libraries with the one from the
 distribution.  Apache::ASP is written in pure perl,
 so there is no need to compile it for installation.
 
-=head2 Need Help
+=head2 WinME / 98 / 95 flock() workaround
 
-Often, installing the mod_perl part of the Apache server
-can be the hardest part.  If this is the case for you, 
-check out the FAQ and SUPPORT sections for further help,
-as well as the "Build Apache" notes in this section.
+For those on desktop Windows operation systems, Apache::ASP v2.25 and
+later needs a special work around for the lack of flock() support
+on these systems.  Please add this to your Apache httpd.conf to
+fix this problem after mod_perl is installed:
 
-Please also see the mod_perl guide at http://perl.apache.org/guide
-which one ought to give a good read before undertaking
-a mod_perl project.
+  <Perl>
+   *CORE::GLOBAL::flock = sub { 1 };
+  </Perl>
 
-=head2 Linux Distributions
+=head2 Linux DSO Distributions
 
 If you have a linux distribution, like a RedHat Linux server,
 with an RPM style Apache + mod_perl, seriously consider building 
@@ -5986,7 +6042,7 @@ not work, resulting in "no request object" error messages,
 and other oddities, and are terrible to debug, because of
 the strange kinds of things that can go wrong.
 
-=head2 Build Apache
+=head2 Build Apache and mod_perl
 
 For a quick build of apache, there is a script in the distribution at
 ./make_httpd/build_httpds.sh that can compile a statically linked
@@ -6020,7 +6076,7 @@ config file for Apache::ASP, just look at the .htaccess file in the
 So, you might add this to your Apache httpd.conf file just to get 
 the scripts in ./site/eg working:
 
-  <Directory />
+  <Directory / >
     Options FollowSymLinks
     AllowOverride All
   </Directory>
@@ -7998,6 +8054,11 @@ behave as collections.
 
 =over
 
+=item $Request->{Method}
+
+API extension.  Returns the client HTTP request method, as in
+GET or POST.  Added in version 2.31.
+
 =item $Request->{TotalBytes}
 
 The amount of data sent by the client in the body of the 
@@ -8267,6 +8328,24 @@ Using the reference passing method in benchmarks on 100K of
 data was 5% more efficient, but maybe useful for some.
 It saves on copying the 100K buffer twice.
 
+=item $Server->MapInclude($include)
+
+API extension.  Given the include $include, as an absolute or relative file name to the current
+executing script, this method returns the file path that the include would
+be found from the include search path.  The include search path is the 
+current script directory, Global, and IncludesDir directories.
+
+If the include is not found in the includes search path, then undef, or bool false,
+is returned. So one may do something like this:
+
+  if($Server->MapInclude('include.inc')) {
+    $Response->Include('include.inc');
+  }
+
+This code demonstrates how one might only try to execute an include if
+it exists, which is useful since a script will error if it tries to execute an include
+that does not exist.
+
 =item $Server->MapPath($url);
 
 Given the url $url, absolute, or relative to the current executing script,
@@ -8346,7 +8425,7 @@ this stage, as the request to the www client has already completed.
 Check out the ./site/eg/register_cleanup.asp script for an example
 of this routine in action.
 
-=item $Server->Transfer($file)
+=item $Server->Transfer($file, @args)
 
 New method from ASP 3.0.  Transfers control to another script.  
 The Response buffer will not be cleared automatically, so if you 
@@ -8357,6 +8436,13 @@ This new script will take over current execution and
 the current script will not continue to be executed
 afterwards.  It differs from Execute() because the 
 original script will not pick up where it left off.
+
+As of Apache::ASP 2.31, this method now accepts optional
+arguments like $Response->Include & $Server->Execute.  
+$Server->Transfer is now just a wrapper for:
+
+  $Response->Include($file, @args);
+  $Response->End;
 
 =item $Server->URLEncode($string)
 
@@ -8752,7 +8838,7 @@ then in your httpd.conf activate Apache::ASP cgi
 scripts like so:
 
  Alias /aspcgi/ /usr/local/apache/htdocs/aspcgi/
- <Directory /usr/local/apache/htdocs/aspcgi/eg/>
+ <Directory /usr/local/apache/htdocs/aspcgi/eg/ >
    AddType application/x-httpd-cgi .htm
    AddType application/x-httpd-cgi .html
    AddType application/x-httpd-cgi .asp
@@ -9215,11 +9301,10 @@ documents at:
   http://perl.apache.org/tuning/ 
 
 Written in late 1999 this article provides an early look at 
-how to tune your Apache::ASP web site, with most of its 
-tips & tricks valid today:
+how to tune your Apache::ASP web site:
 
   Apache::ASP Site Tuning
-  http://www.perlmonth.com/features/apacheasp/apacheasp.html?issue=7
+  http://www.chamas.com/asp/articles/perlmonth3_tune.html
 
 =head2 Tuning & Benchmarking
 
@@ -9468,6 +9553,7 @@ problems working with Apache::ASP are really mod_perl ones.
 The Apache::ASP mailing list archives are located at:
 
  http://www.mail-archive.com/asp%40perl.apache.org/
+ http://groups.yahoo.com/group/apache-asp/
 
 The mod_perl mailing list archives are located at:
 
@@ -9495,6 +9581,15 @@ Apache::ASP.  If you use the software for your site, and
 would like to show your support of the software by being listed, 
 please send your URL to me at joshua@chamas.com and I'll be 
 sure to add it to the list.
+
+        SQLRef
+        http://comclub.dyndns.org:8081/sqlref/
+
+        Bouygues Telecom Enterprises
+        http://www.b2bouygtel.com
+
+        Daniel Speicher Internet & Intranet Losungen
+	http://www.daniel-speicher.de
 
         Alumni.NET
 	http://www.alumni.net
@@ -9575,20 +9670,13 @@ sure to add it to the list.
 
 Here are some important resources listed related to 
 the use of Apache::ASP for publishing web applications.
+If you have any more to suggest, please email the Apache::ASP list
+at asp@perl.apache.org
 
 =head2 Articles
 
-	PerlMonth Online Magazine
-	http://www.perlmonth.com
-
-	Introduction to Apache::ASP ( late 1999 )
-	http://www.perlmonth.com/features/apacheasp/apacheasp.html?issue=5
-
-	Apache::ASP Site Building ( late 1999 )
-	http://www.perlmonth.com/features/apacheasp/apacheasp.html?issue=6
-
-	Apache::ASP Site Tuning ( late 1999 )
-	http://www.perlmonth.com/features/apacheasp/apacheasp.html?issue=7
+       Embedded Perl ( part of a series on Perl )
+       http://www.wdvl.com/Authoring/Languages/Perl/PerlfortheWeb/index15.html
 
 =head2 Benchmarking
 
@@ -9613,8 +9701,8 @@ the use of Apache::ASP for publishing web applications.
 
 =head2 Reference Cards
 
-       Apache & mod_perl Reference Cards
-       http://www.refcards.com/
+        Apache & mod_perl Reference Cards
+        http://www.refcards.com/
 
 =head2 Web Sites
 
@@ -9623,6 +9711,9 @@ the use of Apache::ASP for publishing web applications.
 
 	mod_perl Guide
 	http://perl.apache.org/guide/
+
+        Take23: news and resources for the mod_perl world
+        http://www.take23.org
 
 	Perl Programming Language
 	http://www.perl.com
@@ -9675,6 +9766,88 @@ means first production ready release, this would be the
 equivalent of a 1.0 release for other kinds of software.
 
  + = improvement; - = bug fix
+
+=item $VERSION = 2.29; $DATE="11/19/2001";
+
+ +Added some extra help text to the ./cgi/asp --help message
+  to clarify how to pass arguments to a script from the command line.
+
+ +When using $Server->Mail() API, if Content-Type header is set,
+  and MIME-Version is not, then a "MIME-Version: 1.0" header will be sent
+  for the email.  This is correct according to RFC 1521 which specifies
+  for the first time the Content-Type: header for email documents.
+  Thanks to Philip Mak for pointing out this correct behavior.
+
+ +Made dependent on MLDBM::Sync version .25 to pass the taint_check.t test
+
+ +Improved server_mail.t test to work with mail servers were relaying is denied
+
+ +Added <html><body> tags to MailErrorsTo email
+
+ --Fixed SessionCount / Session_OnEnd bug, where these things were not
+  working for $Sessions that never had anything written to them.
+  This bug was introduced in 2.23/2.25 release.
+
+  There was an optimization in 2.23/2.25 where a $Session that was never
+  used does not write its state lock file & dbm files to disk, only if
+  it gets written too like $Session->{MARK}++.  Tracking of these NULL $Sessions 
+  then is handled solely in the internal database.  For $Session garbage 
+  collection though which would fire Session_OnEnd events and update 
+  SessionCount, the Apache::ASP::State->GroupMembers() function was just 
+  looking for state files on disk ... now it looks in the internal database 
+  too for SessionID records for garbage collection.
+
+  Added a test at ./t/session_events.t for these things.
+
+ +Some optimizations for $Session API use.
+
+ +Added support for XSLT via XML::LibXSLT, patch courtesy of Michael Buschauer
+
+ -Got rid of an warning when recompiling changing includes under perl 5.6.1...
+  undef($code) method did not work for this perl version, rather undef(&$code) does.
+  Stopped using using Apache::Symbol for this when available.
+
+ -Make Apache::ASP script run under perl taint checking -T for perl 5.6.1...
+  $code =~ tr///; does not work to untaint here, so much use the slower:
+  $code =~ /^(.*)$/s; $code = $1; method to untaint.
+
+ -Check for inline includes changing, included in a dynamic included
+  loaded at runtime via $Response->Include().  Added test case for
+  this at t/include_change.t.  If an inline include of a dynamic include
+  changes, the dynamic include should get recompiled now.
+
+ -Make OK to use again with PerlTaintCheck On, with MLDBM::Sync 2.25.
+  Fixed in ASP.pm, t/global.asa, and created new t/taint_check.t test script
+
+ +Load more modules when Apache::ASP is loaded so parent will share more
+  with children httpd: 
+   Apache::Symbol 
+   Devel::Symdump 
+   Config 
+   lib 
+   MLDBM::Sync::SDBM_File
+
+ +When FileUploadMax bytes is exceeded for a file upload, there will not
+  be an odd error anymore resulting from $CGI::POST_MAX being triggered,
+  instead the file upload input will simply be ignored via $CGI::DISABLE_UPLOADS.
+  This gives the developer the opportunity to tell the user the the file upload
+  was too big, as demonstrated by the ./site/eg/file_upload.asp example.
+
+  To not let the web client POST a lot of data to your scripts as a form
+  of a denial of service attack use the apache config LimitRequestBody for the 
+  max limits.  You can think of PerlSetVar FileUploadMax as a soft limit, and 
+  apache's LimitRequestBody as a hard limit.
+
+ --Under certain circumstances with file upload, it seems that IsClientConnected() 
+  would return an aborted client value from $r->connection->aborted, so
+  the buffer output data would not be flushed to the client, and 
+  the HTML page would return to the browser empty.  This would be under
+  normal file upload use.  One work-around was to make sure to initialize
+  the $Request object before $Response->IsClientConnected is called,
+  then $r->connection->aborted returns the right value.
+  
+  This problem was probably introduced with IsClientConnected() code changes
+  starting in the 2.25 release.
 
 =item $VERSION = 2.27; $DATE="10/31/2001";
 
@@ -11427,7 +11600,7 @@ equivalent of a 1.0 release for other kinds of software.
 
 =head1 LICENSE
 
-Copyright (c) 1998-2001, Joshua Chamas, Chamas Enterprises Inc. 
+Copyright (c) 1998-2002, Joshua Chamas, Chamas Enterprises Inc. 
 All rights reserved.
 
 Apache::ASP is a perl native port of Active Server Pages for Apache

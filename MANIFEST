@@ -36,6 +36,7 @@ cgi/asp
 editors/aasp.vim
 editors/mmm-asp-perl.el
 lib/Bundle/Apache/ASP.pm
+lib/Bundle/Apache/ASP/Extra.pm
 make_httpd/build_httpds.sh
 site/apache_asp.gif
 site/apache_asp_small_trans.GIF
@@ -135,6 +136,7 @@ t/include.inc
 t/include.t
 t/include_asp.inc
 t/include_change.t
+t/include_change.inc
 t/include_code.inc
 t/include_code2.inc
 t/include_return.inc
@@ -144,13 +146,17 @@ t/load.inc
 t/load.t
 t/loops.t
 t/request.t
+t/request_params_none.t
 t/response.t
 t/server.t
 t/server_mail.t
+t/server_transfer.inc
+t/server_transfer.t
 t/session.inc
 t/session.t
 t/session_events/global.asa
 t/session_events.t
 t/session_serialize.t
+t/stat_inc.t
 t/taint_check.t
 t/xmlsubs.t

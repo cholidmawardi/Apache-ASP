@@ -11,6 +11,10 @@ if(%{$Request->ServerVariables()}) {
 } else {
 	$t->not_ok('could not get the environment / server variables');
 }
+
+# $Request->{Method}, defaults to GET
+$t->eok($Request->{Method} eq 'GET', "\$Request->{Method} eq 'GET'");
+
 %>
 
 <% $t->done; %>

@@ -35,7 +35,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td>
 	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP"></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP" width=267 height=44 ></td>	
 	
 		<td align=right></td>
 	
@@ -46,7 +46,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <tr>
   <td bgcolor=#005196 align=center>
     <b>
-    <font size=-1 face=verdana color=#f0e800>Web applications with Apache + mod_perl</font>  
+    <font color=#ffffff>&lt;% Web Applications with Apache &amp; mod_perl %&gt;</font>  
     </b>
   </td>
 </tr>
@@ -219,21 +219,25 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<a href=http://www.apache-asp.org/><img 
 			src=powered_by_apache_asp.jpg border=0
 			alt="Powered by Apache::ASP"
+			width=88 height=31
 			></a>
 		<br>
 		<a href=http://perl.apache.org><img 
 			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl and Apache"
+			width=88 height=31
 			></a>
 		<br>
 		<a href=http://www.perl.com><img 
 			src=rectangle_power_perl.gif border=0
 			alt="Powered by Perl"
+			width=88 height=31
 			></a>
 		<br>
 		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img 
 			src=nodecheck_button.gif border=0
 			alt="Links Checked by NodeWorks"
+			width=88 height=31
 			></a>
 		</center>
 
@@ -300,7 +304,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3ET427038b6>$Response->TrapInclude($file, @args)</a>
+			<a href=#%24Response-%3EW0307fe16>$Response->Write($data)</a>
 			</font>
 			</td>
 							
@@ -316,7 +320,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EW0307fe16>$Response->Write($data)</a>
+			
 			</font>
 			</td>
 							
@@ -330,9 +334,9 @@ and simple aliases for common functions.</font>
 			</font>
 			</td>
 		
-			<td valign=top >
+			<td valign=top bgcolor=#005196>
 			<font face="lucida console" size=-1>
-			
+			<font color=white><b><a href=#%24Request%20Objc3cab62e><font color=white>$Request Object</font></a></b></font>
 			</font>
 			</td>
 							
@@ -346,9 +350,9 @@ and simple aliases for common functions.</font>
 			</font>
 			</td>
 		
-			<td valign=top bgcolor=#005196>
+			<td valign=top >
 			<font face="lucida console" size=-1>
-			<font color=white><b><a href=#%24Request%20Objc3cab62e><font color=white>$Request Object</font></a></b></font>
+			<a href=#%24Request-%3E%7BM81641f4a>$Request->{Method}</a>
 			</font>
 			</td>
 							
@@ -732,7 +736,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EMap0fe1ebb5>$Server->MapPath($url);</a>
+			<a href=#%24Server-%3EMapd3711f06>$Server->MapInclude($include)</a>
 			</font>
 			</td>
 							
@@ -748,7 +752,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EMai1c5be650>$Server->Mail(\%mail, %smtp_args);</a>
+			<a href=#%24Server-%3EMap0fe1ebb5>$Server->MapPath($url);</a>
 			</font>
 			</td>
 							
@@ -764,7 +768,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EReg38562b5d>$Server->RegisterCleanup($sub) </a>
+			<a href=#%24Server-%3EMai1c5be650>$Server->Mail(\%mail, %smtp_args);</a>
 			</font>
 			</td>
 							
@@ -780,7 +784,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3ETra7f104569>$Server->Transfer($file)</a>
+			<a href=#%24Server-%3EReg38562b5d>$Server->RegisterCleanup($sub) </a>
 			</font>
 			</td>
 							
@@ -796,7 +800,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EURL3674cef0>$Server->URLEncode($string)</a>
+			<a href=#%24Server-%3ETra98c592dc>$Server->Transfer($file, @args)</a>
 			</font>
 			</td>
 							
@@ -812,7 +816,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EURL6c8bf743>$Server->URL($url, \%params) </a>
+			<a href=#%24Server-%3EURL3674cef0>$Server->URLEncode($string)</a>
 			</font>
 			</td>
 							
@@ -828,7 +832,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EXSLd6dded33>$Server->XSLT($xsl_data_ref, $xml_data_ref)</a>
+			<a href=#%24Server-%3EURL6c8bf743>$Server->URL($url, \%params) </a>
 			</font>
 			</td>
 							
@@ -841,7 +845,13 @@ and simple aliases for common functions.</font>
 			<a href=#%24Response-%3EI11344adb>$Response->IsClientConnected()</a>
 			</font>
 			</td>
-		<td>&nbsp;</td>					
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24Server-%3EXSLd6dded33>$Server->XSLT($xsl_data_ref, $xml_data_ref)</a>
+			</font>
+			</td>
+							
 		</tr>
 		
 		<tr>
@@ -849,6 +859,16 @@ and simple aliases for common functions.</font>
 			<td valign=top >
 			<font face="lucida console" size=-1>
 			<a href=#%24Response-%3ER0203b227>$Response->Redirect($url)</a>
+			</font>
+			</td>
+		<td>&nbsp;</td>					
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24Response-%3ET427038b6>$Response->TrapInclude($file, @args)</a>
 			</font>
 			</td>
 		<td>&nbsp;</td>					
@@ -1490,6 +1510,13 @@ on how things like $Request-&gt;QueryString() &amp; $Request-&gt;Form()
 behave as collections.</font>
 	
 	<p>
+	<a name=%24Request-%3E%7BM81641f4a></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->{Method}</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>API extension.  Returns the client HTTP request method, as in
+GET or POST.  Added in version 2.31.</font>
+	
+	<p>
 	<a name=%24Request-%3E%7BT6acbcf5a></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->{TotalBytes}</b></font><p>
 <font face="courier new" size=3><pre>
@@ -1787,6 +1814,25 @@ data was 5% more efficient, but maybe useful for some.
 It saves on copying the 100K buffer twice.</font>
 	
 	<p>
+	<a name=%24Server-%3EMapd3711f06></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->MapInclude($include)</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>API extension.  Given the include $include, as an absolute or relative file name to the current
+executing script, this method returns the file path that the include would
+be found from the include search path.  The include search path is the 
+current script directory, Global, and IncludesDir directories.
+<font face="courier new" size=3><pre>
+</pre></font>If the include is not found in the includes search path, then undef, or bool false,
+is returned. So one may do something like this:
+<font face="courier new" size=3><pre>
+  if($Server-&gt;MapInclude('include.inc')) {
+    $Response-&gt;Include('include.inc');
+  }
+</pre></font>This code demonstrates how one might only try to execute an include if
+it exists, which is useful since a script will error if it tries to execute an include
+that does not exist.</font>
+	
+	<p>
 	<a name=%24Server-%3EMap0fe1ebb5></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->MapPath($url);</b></font><p>
 <font face="courier new" size=3><pre>
@@ -1870,8 +1916,8 @@ this stage, as the request to the www client has already completed.
 of this routine in action.</font>
 	
 	<p>
-	<a name=%24Server-%3ETra7f104569></a>
-	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->Transfer($file)</b></font><p>
+	<a name=%24Server-%3ETra98c592dc></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->Transfer($file, @args)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>New method from ASP 3.0.  Transfers control to another script.  
 The Response buffer will not be cleared automatically, so if you 
@@ -1881,7 +1927,15 @@ call $Response-&gt;Clear() before calling this method.
 </pre></font>This new script will take over current execution and 
 the current script will not continue to be executed
 afterwards.  It differs from Execute() because the 
-original script will not pick up where it left off.</font>
+original script will not pick up where it left off.
+<font face="courier new" size=3><pre>
+</pre></font>As of Apache::ASP 2.31, this method now accepts optional
+arguments like $Response-&gt;Include &amp; $Server-&gt;Execute.  
+$Server-&gt;Transfer is now just a wrapper for:
+<font face="courier new" size=3><pre>
+  $Response-&gt;Include($file, @args);
+  $Response-&gt;End;
+</pre></font>
 	
 	<p>
 	<a name=%24Server-%3EURL3674cef0></a>
@@ -1950,7 +2004,7 @@ but not as of the 2.11 release.</font>
 <tr bgcolor=#063678>
 	<td colspan=3 align=center width=80%>
 	<font face=verdana color=white size=-1>
-	Copyright &copy; 1998-2001, Joshua Chamas, 
+	Copyright &copy; 1998-2002, Joshua Chamas, 
 	<a href=http://www.chamas.com><font color=white>Chamas Enterprises Inc.</font></a>
 	</font>
 	</td>

@@ -1,6 +1,6 @@
 package Bundle::Apache::ASP;
 
-$VERSION = '1.04';
+$VERSION = '1.08';
 
 1;
 
@@ -8,7 +8,7 @@ __END__
 
 =head1 NAME
 
-Bundle::Apache::ASP - Install Apache::ASP and related modules
+Bundle::Apache::ASP - Install Apache::ASP and required
 
 =head1 SYNOPSIS
 
@@ -18,31 +18,11 @@ Bundle::Apache::ASP - Install Apache::ASP and related modules
 
 MLDBM		  - This is used for reading and writing multi-level hashes on disk
 
-MLDBM::Sync       - MLDBM::Sync::SDBM_File, included in this module, is used for XSLTCache, and better StateDB than the defualt SDBM_File.
+MLDBM::Sync       - Enables safe concurrent access to MLDBM databases.
 
 Data::Dumper	  - Serializes data for MLDBM
 
 Digest::MD5	  - 32 byte hash algorithm for cookie session-id
-
-CGI		  - Required for file upload, make test, and command line ./cgi/asp script
-
-HTML::Clean	  - Compress text/html with Clean config or $Response->{Clean} set to 1-9
-
-Net::SMTP	  - Runtime errors can be mailed to the webmaster with MailErrorTo config
-
-HTTP::Date	  - Provides mapping between Perl time() and HTTP dates
-
-Devel::Symdump	  - Used for StatINC setting, which reloads modules dynamically
-
-Apache::DBI	  - Cache database connections per process
-
-Compress::Zlib    - Gzip compress HTML output on the fly
-
-Time::HiRes       - Sub second timing of execution with Debug 3 enabled
-
-HTML::Parser      - Required for HTML::FillInForm
-
-HTML::FillInForm  - FormFill functionality which autofills HTML forms from form data
 
 Apache::ASP	  - A perl ASP port to Apache
 

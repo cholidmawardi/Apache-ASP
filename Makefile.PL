@@ -12,7 +12,6 @@ my $necessary_modules = {
     'Fcntl' => 'Used for file locking constants',
     'File::Basename' => "Used for tests during 'make test'",
     'Digest::MD5' => '32 byte hash algorithm for cookie session-id',
-#    'HTTP::Date' => 'Provides mapping between Perl time() and HTTP dates',
     'Carp' => 'Provides critical error messaging with confess()',
 };
 
@@ -26,7 +25,7 @@ my $optional_modules =
    'CGI' => 'Required for file upload, make test, and command line ./cgi/asp script',
    'Compress::Zlib' => "Required for html gzip text compression for browsers that support it",
    'DB_File' => 'Optional module for StateDB & CacheDB config options',
-   'MLDBM::Sync::SDBM_File' => 'Optional module for StateDB config option that is faster than DB_File on Linux.  Also default CacheDB for XSLT caching, but DB_File may also be used.',
+   'MLDBM::Sync::SDBM_File' => 'Optional module for StateDB config option that is faster than DB_File on Linux.  Also default CacheDB for XSLT caching, but DB_File may also be used as well as Tie::TextDir.',
    'HTML::Clean' => 'Compress text/html with Clean config or $Response->{Clean} set to 1-9',
    'HTML::FillInForm' => 
    'Enables FormFill feature which will auto fill forms from $Request->Form data',
@@ -36,8 +35,9 @@ my $optional_modules =
    'Net::Config' => 'Config options for use with Net::SMTP',
    'Time::HiRes' => 'Sub second Apache::ASP response timing with Debug 3/-3 turned on.',
    'Tie::TextDir .04' => 'Fast cache for CacheDB setting for things like large XSLT transformations.',
-   'XML::XSLT 0.32' => 'XSLT transformations require this module.  Install Bundle::XML from CPAN before installing this module for the first time.',
+   'XML::XSLT 0.32' => 'XSLT, written in perl so makes for an easy install after installing Bundle::XML from CPAN.',
    'XML::Sablotron' => 'XSLT that is 10 times faster than XML::XSLT',
+   'XML::LibXSLT' => 'XSLT that is 2 times faster than XML::Sablotron',
 };
 	    
 print "Checking for the REQUIRED modules...\n";
@@ -130,9 +130,10 @@ use ExtUtils::MakeMaker;
 	       'VERSION_FROM' => 'CHANGES', # finds $VERSION
 	       'PREREQ_PM' => {
 			       'Carp' => 0,
+			       'Class::Struct' => 0,
 			       'Data::Dumper' => 0,
 			       'Fcntl' => 0,
-#			       'HTTP::Date' => 0,
+			       'File::Basename' => 0,
 			       'Digest::MD5' => 0,
 			       'MLDBM' => 0,
 			       'SDBM_File' => 0,

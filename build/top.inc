@@ -94,7 +94,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td>
 	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=asptitlelogo.gif alt="<%=$module%>"></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="<%=$module%>" width=267 height=44 ></td>	
 	<% if($Ads) { %>
 		<form action=apps/search/index.asp>
 		<td align=right valign=center>
@@ -114,7 +114,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <tr>
   <td bgcolor=<%=$NavColor%> align=center>
     <b>
-    <font size=-1 face=verdana color=#f0e800>Web applications with Apache + mod_perl</font>  
+    <font color=#ffffff>&lt;% Web Applications with Apache &amp; mod_perl %&gt;</font>  
     </b>
   </td>
 </tr>
@@ -181,21 +181,25 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<a href=http://www.apache-asp.org/><img 
 			src=powered_by_apache_asp.jpg border=0
 			alt="Powered by Apache::ASP"
+			width=88 height=31
 			></a>
 		<br>
 		<a href=http://perl.apache.org><img 
 			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl and Apache"
+			width=88 height=31
 			></a>
 		<br>
 		<a href=http://www.perl.com><img 
 			src=rectangle_power_perl.gif border=0
 			alt="Powered by Perl"
+			width=88 height=31
 			></a>
 		<br>
 		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img 
 			src=nodecheck_button.gif border=0
 			alt="Links Checked by NodeWorks"
+			width=88 height=31
 			></a>
 		</center>
 

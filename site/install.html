@@ -35,7 +35,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td>
 	<table border=0 cellpadding=1 cellspacing=0 width=100%>
 	<tr>
-	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP"></td>	
+	<td><img border=0 src=asptitlelogo.gif alt="Apache :: ASP" width=267 height=44 ></td>	
 	
 		<td align=right></td>
 	
@@ -46,7 +46,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <tr>
   <td bgcolor=#005196 align=center>
     <b>
-    <font size=-1 face=verdana color=#f0e800>Web applications with Apache + mod_perl</font>  
+    <font color=#ffffff>&lt;% Web Applications with Apache &amp; mod_perl %&gt;</font>  
     </b>
   </td>
 </tr>
@@ -219,21 +219,25 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<a href=http://www.apache-asp.org/><img 
 			src=powered_by_apache_asp.jpg border=0
 			alt="Powered by Apache::ASP"
+			width=88 height=31
 			></a>
 		<br>
 		<a href=http://perl.apache.org><img 
 			src=powered_by_modperl.gif border=0
 			alt="Powered by ModPerl and Apache"
+			width=88 height=31
 			></a>
 		<br>
 		<a href=http://www.perl.com><img 
 			src=rectangle_power_perl.gif border=0
 			alt="Powered by Perl"
+			width=88 height=31
 			></a>
 		<br>
 		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img 
 			src=nodecheck_button.gif border=0
 			alt="Links Checked by NodeWorks"
+			width=88 height=31
 			></a>
 		</center>
 
@@ -249,6 +253,106 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <font size=+0 face=verdana,arial>
 
 <font face=verdana><font class=title size=+1 color=#555555><b>INSTALL</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>The installation process for Apache::ASP is geared towards those
+with experience with perl, Apache, and unix systems.  For those
+without this experience, please understand that the learning curve 
+can be significant.  But what you have at the end will be a web site
+running on superior open source software.
+<font face="courier new" size=3><pre>
+</pre></font>If installing onto a Windows operating system, please see the section
+titled Win32 Install.</font>
+
+	<hr size=1>
+	<table width=100% border=0 cellpadding=1 cellspacing=3>
+	<tr>
+	<td valign=top><font face="lucida console" size=-1>
+	<ul>
+	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Need%20Help>Need Help</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#WinME%20%2F%2098%20%2Fdb672bf2>WinME / 98 / 95 flock() workaround</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Download%20andf2ef6195>Download and CPAN Install</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Linux%20DSO%20Di0714bb20>Linux DSO Distributions</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Regular%20Perlc8e4234f>Regular Perl Module Install</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Build%20Apache0292e216>Build Apache and mod_perl</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Win32%20%2F%20Wind0f0e8ac6>Win32 / Windows Install</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Quick%20Start>Quick Start</a>
+			</font>
+			</td>
+							
+		</tr>
+			
+	</table>
+	<hr size=1>
+	<p>
+
+	<p>
+	<a name=Need%20Help></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Need Help</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>Often, installing the <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> part of the Apache server
+can be the hardest part.  If this is the case for you, 
+check out the <a href=faq.html><font size=-1 face=verdana><b>FAQ</b></font></a> and SUPPORT sections for further help,
+as well as the &quot;Build Apache&quot; notes in this section.
+<font face="courier new" size=3><pre>
+</pre></font>Please also see the mod_perl guide at <a href=http://perl.apache.org/guide>http://perl.apache.org/guide</a>
+which one ought to give a good read before undertaking
+a mod_perl project.</font>
+	
+	<p>
+	<a name=Download%20andf2ef6195></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Download and CPAN Install</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>You may download the latest Apache::ASP from your nearest CPAN,
 and also:
@@ -266,71 +370,21 @@ fire up the CPAN shell like:
  cpan&gt; install Bundle::Apache::ASP
 </pre></font>Installing the Apache::ASP bundle will automatically install
 all the modules Apache::ASP is dependent on as well as
-Apache::ASP itself.</font>
-
-	<hr size=1>
-	<table width=100% border=0 cellpadding=1 cellspacing=3>
-	<tr>
-	<td valign=top><font face="lucida console" size=-1>
-	<ul>
-	
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Perl%20Module%207254a332>Perl Module Install</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Linux%20Distric636d369>Linux Distributions</a>
-			</font>
-			</td>
-							
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Win32%20Instal93dbe80f>Win32 Install</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Build%20Apache>Build Apache</a>
-			</font>
-			</td>
-							
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Need%20Help>Need Help</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Quick%20Start>Quick Start</a>
-			</font>
-			</td>
-							
-		</tr>
-			
-	</table>
-	<hr size=1>
-	<p>
-
-	<p>
-	<a name=Perl%20Module%207254a332></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>Perl Module Install</b></font><p>
+Apache::ASP itself.  If you have trouble installing the bundle,
+then try installing the necessary modules one at a time:
 <font face="courier new" size=3><pre>
-</pre></font>Once you have downloaded it, Apache::ASP installs easily using 
+ cpan&gt; install Data::Dumper
+ cpan&gt; install MLDBM
+ cpan&gt; install MLDBM::Sync
+ cpan&gt; install Digest::MD5
+ cpan&gt; install Apache::ASP
+</pre></font>
+	
+	<p>
+	<a name=Regular%20Perlc8e4234f></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Regular Perl Module Install</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>If not doing the CPAN install, download Apache::ASP and install it using 
 the make or nmake commands as shown below.  Otherwise, just 
 copy ASP.pm to $PERLLIB/site/Apache
 <font face="courier new" size=3><pre>
@@ -346,15 +400,20 @@ environment.  The offline mode for building static html at
 ./cgi/asp may be used with just perl.</font>
 	
 	<p>
-	<a name=Win32%20Instal93dbe80f></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>Win32 Install</b></font><p>
+	<a name=Win32%20%2F%20Wind0f0e8ac6></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Win32 / Windows Install</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>If you are on a Win32 platform, like WinNT or Windows 2000, 
 you can download the win32 binaries linked to from:
 <font face="courier new" size=3><pre>
   <a href=http://perl.apache.org/distributions.html>http://perl.apache.org/distributions.html</a>  
+</pre></font>From here, I would recommend the <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> binary installation at:
+<font face="courier new" size=3><pre>
+  <a href=ftp://theoryx5.uwinnipeg.ca/pub/other/>ftp://theoryx5.uwinnipeg.ca/pub/other/</a>
+</pre></font>and install the latest perl-win32-bin-*.exe file.
+<font face="courier new" size=3><pre>
 </pre></font>Randy Kobes has graciously provided these, which include
-compiled versions perl, <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>, apache, mod_ssl,
+compiled versions perl, mod_perl, apache, mod_ssl,
 as well as all the modules required by Apache::ASP
 and Apache::ASP itself.  In order to upgrade the 
 latest Apache::ASP without a compiler, just download
@@ -364,21 +423,22 @@ distribution.  Apache::ASP is written in pure perl,
 so there is no need to compile it for installation.</font>
 	
 	<p>
-	<a name=Need%20Help></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>Need Help</b></font><p>
+	<a name=WinME%20%2F%2098%20%2Fdb672bf2></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>WinME / 98 / 95 flock() workaround</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Often, installing the <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> part of the Apache server
-can be the hardest part.  If this is the case for you, 
-check out the <a href=faq.html><font size=-1 face=verdana><b>FAQ</b></font></a> and SUPPORT sections for further help,
-as well as the &quot;Build Apache&quot; notes in this section.
+</pre></font>For those on desktop Windows operation systems, Apache::ASP v2.25 and
+later needs a special work around for the lack of flock() support
+on these systems.  Please add this to your Apache httpd.conf to
+fix this problem after <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> is installed:
 <font face="courier new" size=3><pre>
-</pre></font>Please also see the mod_perl guide at <a href=http://perl.apache.org/guide>http://perl.apache.org/guide</a>
-which one ought to give a good read before undertaking
-a mod_perl project.</font>
+  &lt;Perl&gt;
+   *CORE::GLOBAL::flock = sub { 1 };
+  &lt;/Perl&gt;
+</pre></font>
 	
 	<p>
-	<a name=Linux%20Distric636d369></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>Linux Distributions</b></font><p>
+	<a name=Linux%20DSO%20Di0714bb20></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Linux DSO Distributions</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>If you have a linux distribution, like a RedHat Linux server,
 with an RPM style Apache + <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>, seriously consider building 
@@ -389,8 +449,8 @@ and other oddities, and are terrible to debug, because of
 the strange kinds of things that can go wrong.</font>
 	
 	<p>
-	<a name=Build%20Apache></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>Build Apache</b></font><p>
+	<a name=Build%20Apache0292e216></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Build Apache and mod_perl</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>For a quick build of apache, there is a script in the distribution at
 ./make_httpd/build_httpds.sh that can compile a statically linked
@@ -422,7 +482,7 @@ config file for Apache::ASP, just look at the .htaccess file in the
 </pre></font>So, you might add this to your Apache httpd.conf file just to get 
 the scripts in ./site/eg working:
 <font face="courier new" size=3><pre>
-  &lt;Directory /&gt;
+  &lt;Directory / &gt;
     Options FollowSymLinks
     AllowOverride All
   &lt;/Directory&gt;
@@ -447,7 +507,7 @@ problems can be found in the <a href=faq.html><font size=-1 face=verdana><b>FAQ<
 <tr bgcolor=#063678>
 	<td colspan=3 align=center width=80%>
 	<font face=verdana color=white size=-1>
-	Copyright &copy; 1998-2001, Joshua Chamas, 
+	Copyright &copy; 1998-2002, Joshua Chamas, 
 	<a href=http://www.chamas.com><font color=white>Chamas Enterprises Inc.</font></a>
 	</font>
 	</td>

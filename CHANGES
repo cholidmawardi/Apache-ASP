@@ -1,85 +1,46 @@
-$MODULE=Apache::ASP; $VERSION = 2.29; $DATE="11/19/2001";
+$MODULE=Apache::ASP; $VERSION = 2.31; $DATE="01/22/2002";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
 
- +Added some extra help text to the ./cgi/asp --help message
-  to clarify how to pass arguments to a script from the command line.
+ + $Server->MapInclude() API extension created to wrap up Apache::ASP::SearchDirs functionality
+   so one may do an conditional check for an include existence befor executing $Response->Include().
+   Added API test to server.t
 
- +When using $Server->Mail() API, if Content-Type header is set,
-  and MIME-Version is not, then a "MIME-Version: 1.0" header will be sent
-  for the email.  This is correct according to RFC 1521 which specifies
-  for the first time the Content-Type: header for email documents.
-  Thanks to Philip Mak for pointing out this correct behavior.
+ + $Server->Transfer() now allows arguments like $Response->Include(), and now acts just
+   as a wrapper for:
 
- +Made dependent on MLDBM::Sync version .25 to pass the taint_check.t test
+     $Response->Include($file, @args);
+     $Response->End();
 
- +Improved server_mail.t test to work with mail servers were relaying is denied
+   added test case at t/server_transfer.t
 
- +Added <html><body> tags to MailErrorsTo email
+ + Removed dependency of StatINC functionality on Apache::Symbol.  Apache::Symbol 
+   is no longer required.  Added test of t/stat_inc.t for correct StatINC initialization
+   for platforms where Devel::Symdump is present.
 
- --Fixed SessionCount / Session_OnEnd bug, where these things were not
-  working for $Sessions that never had anything written to them.
-  This bug was introduced in 2.23/2.25 release.
+ + Better error message when $Request->Params has not been defined with RequestParams
+   config & it gets used in script.  Added test case as t/request_params_none.t
 
-  There was an optimization in 2.23/2.25 where a $Session that was never
-  used does not write its state lock file & dbm files to disk, only if
-  it gets written too like $Session->{MARK}++.  Tracking of these NULL $Sessions 
-  then is handled solely in the internal database.  For $Session garbage 
-  collection though which would fire Session_OnEnd events and update 
-  SessionCount, the Apache::ASP::State->GroupMembers() function was just 
-  looking for state files on disk ... now it looks in the internal database 
-  too for SessionID records for garbage collection.
+ + Directories cannot now be included as scripts via $Response->Include(), added
+   test case to t/include.t
 
-  Added a test at ./t/session_events.t for these things.
+ - No longer make $Response->Flush dependent on $Response->IsClientConnected() to 
+   be true to write output to client.  There have been spurious errors reported
+   about the new ( >= 2.25 ) IsClientConnected code, and this will limit the impact 
+   of that functionality possibly not working still to those users explicitly using 
+   that API.
 
- +Some optimizations for $Session API use.
+ + $Response->AddHeader($header_name, $value) now will set $Response members
+   for these headers: Content-Type, Cache-Control, Expires.  This is to avoid
+   both the application & Apache::ASP sending out duplicate headers.  Added
+   test cases for this to t/response.t
 
- +Added support for XSLT via XML::LibXSLT, patch courtesy of Michael Buschauer
+ + split up Bundle::Apache::ASP into that, and Bundle::Apache::ASP::Extra
+   the former with just the required modules to run, and the latter 
+   for extra functionality in Apache::ASP
 
- -Got rid of an warning when recompiling changing includes under perl 5.6.1...
-  undef($code) method did not work for this perl version, rather undef(&$code) does.
-  Stopped using using Apache::Symbol for this when available.
+ + new $Request->{Method} member to return $r->method of GET or POST that 
+   client browser is requesting, added t/request.t sub test to cover this member.
 
- -Make Apache::ASP script run under perl taint checking -T for perl 5.6.1...
-  $code =~ tr///; does not work to untaint here, so much use the slower:
-  $code =~ /^(.*)$/s; $code = $1; method to untaint.
-
- -Check for inline includes changing, included in a dynamic included
-  loaded at runtime via $Response->Include().  Added test case for
-  this at t/include_change.t.  If an inline include of a dynamic include
-  changes, the dynamic include should get recompiled now.
-
- -Make OK to use again with PerlTaintCheck On, with MLDBM::Sync 2.25.
-  Fixed in ASP.pm, t/global.asa, and created new t/taint_check.t test script
-
- +Load more modules when Apache::ASP is loaded so parent will share more
-  with children httpd: 
-   Apache::Symbol 
-   Devel::Symdump 
-   Config 
-   lib 
-   MLDBM::Sync::SDBM_File
-
- +When FileUploadMax bytes is exceeded for a file upload, there will not
-  be an odd error anymore resulting from $CGI::POST_MAX being triggered,
-  instead the file upload input will simply be ignored via $CGI::DISABLE_UPLOADS.
-  This gives the developer the opportunity to tell the user the the file upload
-  was too big, as demonstrated by the ./site/eg/file_upload.asp example.
-
-  To not let the web client POST a lot of data to your scripts as a form
-  of a denial of service attack use the apache config LimitRequestBody for the 
-  max limits.  You can think of PerlSetVar FileUploadMax as a soft limit, and 
-  apache's LimitRequestBody as a hard limit.
-
- --Under certain circumstances with file upload, it seems that IsClientConnected() 
-  would return an aborted client value from $r->connection->aborted, so
-  the buffer output data would not be flushed to the client, and 
-  the HTML page would return to the browser empty.  This would be under
-  normal file upload use.  One work-around was to make sure to initialize
-  the $Request object before $Response->IsClientConnected is called,
-  then $r->connection->aborted returns the right value.
-  
-  This problem was probably introduced with IsClientConnected() code changes
-  starting in the 2.25 release.

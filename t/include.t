@@ -50,6 +50,11 @@ $$ref =~ s/1//isg;
 @rv = $Response->Include('include_return.inc');
 $t->eok(@rv == 2 and $rv[0] == 1 and $rv[1] == 2, 'include return values');
 
+if(-d '.') { # in case this is not true on some platforms
+    eval { $Response->Include('.'); };
+    $t->eok($@ && ( $@ =~ /^no include \.dsfads/i ), "Error for include of directory");
+}
+
 $t->done;
 %>
 
