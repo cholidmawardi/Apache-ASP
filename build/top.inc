@@ -14,7 +14,7 @@ $LinkColor = '#063678';
 $NavColSpan = 2;
 $DarkRowColor = $LinkColor;
 $VLinkColor = '#993399';
-$BodyWidth = '98%';
+$BodyWidth = '99%';
 $BodyColSpan = 3;
 
 my $basename = basename($0);
@@ -178,60 +178,15 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 		<br>
 		<center>
-		<a href=http://www.apache-asp.org/><img 
-			src=powered_by_apache_asp.jpg border=0
-			alt="Powered by Apache::ASP"
-			width=88 height=31
-			></a>
+		<a href=http://www.apache-asp.org/><site:img src="powered_by_apache_asp.jpg" alt="Powered by Apache::ASP"/></a>
 		<br>
-		<a href=http://perl.apache.org><img 
-			src=powered_by_modperl.gif border=0
-			alt="Powered by ModPerl and Apache"
-			width=88 height=31
-			></a>
+		<a href=http://perl.apache.org><site:img src="powered_by_modperl.gif" alt="Powered by ModPerl and Apache"/></a>
 		<br>
-		<a href=http://www.perl.com><img 
-			src=rectangle_power_perl.gif border=0
-			alt="Powered by Perl"
-			width=88 height=31
-			></a>
+		<a href=http://www.perl.com><site:img src="rectangle_power_perl.gif" alt="Powered by Perl" /></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img 
-			src=nodecheck_button.gif border=0
-			alt="Links Checked by NodeWorks"
-			width=88 height=31
-			></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><site:img src="nodecheck_button.gif" alt="Links Checked by NodeWorks" /></a>
 		</center>
 
-
-<% if($Ads && 0) { %>
-		<br>
-<center>
-<% #### Value Click %>
-<!-- VC active -->
-<SCRIPT LANGUAGE="JavaScript">
-<!--
-// ValueParameters
-ValueHost = "hs0215003";
-ValueLoaded = false;
-ValueID = "valueid";
-ValueVersion = "1.1";
-ValueWidth = 125;
-ValueHeight = 125;
-//-->
-</SCRIPT>
-<SCRIPT LANGUAGE="Javascript" SRC="http://oz.valueclick.com/jsmaster"></SCRIPT>
-<SCRIPT LANGUAGE="JavaScript">
-<!--
-if (ValueLoaded) ValueShowAd();
-//-->
-</SCRIPT>
-<NOSCRIPT>
-<A HREF="http://kansas.valueclick.com/redirect?host=hs0215003&size=125x125&b=indexpage&v=0" TARGET="_top"><IMG BORDER="0" WIDTH="125" HEIGHT="125" ALT="Click here to visit our sponsor"
-SRC="http://kansas.valueclick.com/cycle?host=hs0215003&size=125x125&b=indexpage&noscript=1"></A>
-</NOSCRIPT>
-<!-- vc active -->                        
-<% } %>
 </center>
 
 </td>
@@ -355,7 +310,7 @@ for $data (@order) {
   $basename =~ s/\.\w+$//isg;
   my $extra_include = $basename.'_extra.inc';
   warn $extra_include;
-  if(-e $extra_include) {
+  if($Server->MapInclude($extra_include)) {
      my $data = $Response->TrapInclude($extra_include);
      $$data =~ s/(<td[^>]*>)/$1<font size=-1 face=verdana,helvetica,arial>/isg;
      %>

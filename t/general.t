@@ -1,12 +1,8 @@
-use Apache::ASP;
+use Apache::ASP::CGI;
 &Apache::ASP::CGI::do_self();
 
 __END__
 <%@ LANGUAGE="PerlScript" %>
-<% use lib '.';	use T;	%>
-
-<% $t =T->new(); %>
-
 <% 
 for(@Apache::ASP::Objects) {
 	if(${$_}) {
@@ -15,6 +11,5 @@ for(@Apache::ASP::Objects) {
 		$t->not_ok("object $_ not defined in ASP namespace");
 	}
 }
-$t->done();
 %>	
 

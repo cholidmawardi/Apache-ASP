@@ -1,6 +1,5 @@
 #!/bin/bash
 
 pod2text -80 < ../ASP.pm  > ../README
-#perl ../cgi/asp -b -o ../site ./install.html ./sites.html
-perl ../cgi/asp -b -o ../site ./*.html
-#perl ../cgi/asp -b -o ../site ./index.html
+#perl ../asp-perl -b -o ../site ./install.html ./sites.html
+perl ../asp-perl -b -o ../site ./*.html

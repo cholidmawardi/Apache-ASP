@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl asp
+#!/usr/bin/perl /usr/bin/asp-perl
 
 <%
 # split the page in 2 for nice formatting and english style sorting
@@ -40,8 +40,8 @@ $title = 'Example ASP Scripts';
 		%>
 		<td valign=top>
 			<nobr>
-			<font size=-0>
-				<tt><b>
+			<font>
+				<b>
 				<a href=<%=$_->[0]%>><%=$_->[0]%></a>
 				<% if($_->[0] =~ /\.(htm|asp|ssi|xml)$/) { %>
 					&nbsp
@@ -49,7 +49,7 @@ $title = 'Example ASP Scripts';
 					(<a href=source.asp?file=<%=$_->[0]%>>source</a>)
 					</i>
 				<% } %>
-				</tt></b>
+				</b>
 			</font>
 			</nobr>
 			<br>

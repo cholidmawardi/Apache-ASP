@@ -8,8 +8,8 @@
 # use Apache::ASP;
 #
 
-use lib qw(.);
-use ASP;
+use lib qw(blib/lib lib);
+use Apache::ASP::CGI;
 
 use strict;
 #$SIG{__DIE__} = \&Carp::confess;

@@ -1,4 +1,3 @@
-#!/usr/local/bin/perl asp
 
 <!--#include file=header.inc-->
 

@@ -1,7 +1,4 @@
-use Apache::ASP;
-
-#use lib qw(.);
-#use ASP;
+use Apache::ASP::CGI;
 
 $SIG{__WARN__} = \&Carp::cluck;
 local $^W = 1;

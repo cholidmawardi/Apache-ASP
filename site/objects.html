@@ -27,7 +27,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
 <center>
-<table border=0 cellpadding=0 width=98% cellspacing=8>
+<table border=0 cellpadding=0 width=99% cellspacing=8>
 <tr><td align=center>
 
 <table border=0 cellpadding=3 width=100% cellspacing=0>
@@ -216,32 +216,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 		<br>
 		<center>
-		<a href=http://www.apache-asp.org/><img 
-			src=powered_by_apache_asp.jpg border=0
-			alt="Powered by Apache::ASP"
-			width=88 height=31
-			></a>
+		<a href=http://www.apache-asp.org/><img src="powered_by_apache_asp.jpg" width="88" height="31" alt="Powered by Apache::ASP" border="0"></a>
 		<br>
-		<a href=http://perl.apache.org><img 
-			src=powered_by_modperl.gif border=0
-			alt="Powered by ModPerl and Apache"
-			width=88 height=31
-			></a>
+		<a href=http://perl.apache.org><img src="powered_by_modperl.gif" width="88" height="31" alt="Powered by ModPerl and Apache" border="0"></a>
 		<br>
-		<a href=http://www.perl.com><img 
-			src=rectangle_power_perl.gif border=0
-			alt="Powered by Perl"
-			width=88 height=31
-			></a>
+		<a href=http://www.perl.com><img src="rectangle_power_perl.gif" width="88" height="31" alt="Powered by Perl" border="0"></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img 
-			src=nodecheck_button.gif border=0
-			alt="Links Checked by NodeWorks"
-			width=88 height=31
-			></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="Links Checked by NodeWorks" border="0"></a>
 		</center>
-
-
 
 </center>
 
@@ -260,15 +242,15 @@ and puts them in objects accessible from any
 ASP script &amp; include.  For the perl programmer, treat these objects
 as globals accessible from anywhere in your ASP application.
 <font face="courier new" size=3><pre>
- The Apache::ASP object model supports the following:
-
- Object         Function
- ------         --------
- $Session      - user session state
- $Response     - output to browser
- $Request      - input from browser
- $Application  - application state
- $Server       - general methods
+</pre></font>The Apache::ASP object model supports the following:
+<font face="courier new" size=3><pre>
+  Object         Function
+  ------         --------
+  $Session      - user session state
+  $Response     - output to browser
+  $Request      - input from browser
+  $Application  - application state
+  $Server       - general methods
 </pre></font>These objects, and their methods are further defined in the 
 following sections.
 <font face="courier new" size=3><pre>
@@ -384,7 +366,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Request-%3EBi9c9c4529>$Request->BinaryRead($length)</a>
+			<a href=#%24Request-%3EBicd243649>$Request->BinaryRead($length)</a>
 			</font>
 			</td>
 							
@@ -704,7 +686,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EGetb3d1ac42>$Server->GetLastError()</a>
+			<a href=#%24Server-%3EFileaa99842>$Server->File()</a>
 			</font>
 			</td>
 							
@@ -720,7 +702,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EHTM62a8deda>$Server->HTMLEncode( $string || \$string )</a>
+			<a href=#%24Server-%3EGetb3d1ac42>$Server->GetLastError()</a>
 			</font>
 			</td>
 							
@@ -736,7 +718,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EMapd3711f06>$Server->MapInclude($include)</a>
+			<a href=#%24Server-%3EHTMb165f10b>$Server->HTMLEncode( $string || \$string )</a>
 			</font>
 			</td>
 							
@@ -752,7 +734,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EMap0fe1ebb5>$Server->MapPath($url);</a>
+			<a href=#%24Server-%3EMapd3711f06>$Server->MapInclude($include)</a>
 			</font>
 			</td>
 							
@@ -768,7 +750,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EMai1c5be650>$Server->Mail(\%mail, %smtp_args);</a>
+			<a href=#%24Server-%3EMap0fe1ebb5>$Server->MapPath($url);</a>
 			</font>
 			</td>
 							
@@ -784,7 +766,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EReg38562b5d>$Server->RegisterCleanup($sub) </a>
+			<a href=#%24Server-%3EMai03cc9918>$Server->Mail(\%mail, %smtp_args);</a>
 			</font>
 			</td>
 							
@@ -800,7 +782,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3ETra98c592dc>$Server->Transfer($file, @args)</a>
+			<a href=#%24Server-%3EReg38562b5d>$Server->RegisterCleanup($sub) </a>
 			</font>
 			</td>
 							
@@ -816,6 +798,22 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
+			<a href=#%24Server-%3ETra98c592dc>$Server->Transfer($file, @args)</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24Response-%3EIa3beea1e>$Response->Include(\%cache_args, @sub_args) *CACHE API*</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
 			<a href=#%24Server-%3EURL3674cef0>$Server->URLEncode($string)</a>
 			</font>
 			</td>
@@ -826,7 +824,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EI3a1a8b77>$Response->Include(\%cache_args, @sub_args) *CACHE API*</a>
+			<a href=#%24Response-%3EI368566a8>$Response->Include(\$script_text, @args)</a>
 			</font>
 			</td>
 		
@@ -842,13 +840,13 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EI11344adb>$Response->IsClientConnected()</a>
+			<a href=#%24Response-%3EIbe084bb0>$Response->IsClientConnected()</a>
 			</font>
 			</td>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EXSLd6dded33>$Server->XSLT($xsl_data_ref, $xml_data_ref)</a>
+			<a href=#%24Server-%3EXSL7df794aa>$Server->XSLT(\$xsl_data, \$xml_data)</a>
 			</font>
 			</td>
 							
@@ -868,7 +866,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3ET427038b6>$Response->TrapInclude($file, @args)</a>
+			<a href=#%24Response-%3ET13ecbe6d>$Response->TrapInclude($file, @args)</a>
 			</font>
 			</td>
 		<td>&nbsp;</td>					
@@ -1352,7 +1350,7 @@ an include like:
 </pre></font>
 	
 	<p>
-	<a name=%24Response-%3EI3a1a8b77></a>
+	<a name=%24Response-%3EIa3beea1e></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->Include(\%cache_args, @sub_args) *CACHE API*</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>As of version 2.23, output from an include may be
@@ -1383,7 +1381,7 @@ in the Apache parent httpd like so:
   }, @include_args);
 
   File - include file to execute, can be file name or \$script 
-    script data passed in as scalar ref.
+    script data passed in as a string reference.
 
   Cache - activate caching, will run like normal include without this
 
@@ -1418,11 +1416,44 @@ quickly, so most developers will not need to use this feature
 at all.</font>
 	
 	<p>
-	<a name=%24Response-%3EI11344adb></a>
+	<a name=%24Response-%3EI368566a8></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->Include(\$script_text, @args)</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>Added in Apache::ASP 2.11, this method allows for executing ASP scripts
+that are generated dynamically by passing in a reference to the script
+data instead of the file name.  This works just like the normal
+$Response-&gt;Include() API, except a string reference is passed in
+instead of a filename.  For example:
+<font face="courier new" size=3><pre>
+  &lt;%
+    my $script = &quot;&lt;\% print 'TEST'; %\&gt;&quot;;
+    $Response-&gt;Include(\$script);
+  %&gt;
+</pre></font>This include would output TEST.  Note that tokens like
+&lt;% and %&gt; must be escaped so Apache::ASP does not try
+to compile those code blocks directly when compiling
+the original script.  If the $script data were fetched
+directly from some external resource like a database,
+then these tokens would not need to be escaped at all as in:
+<font face="courier new" size=3><pre>
+  &lt;%
+    my $script = $dbh-&gt;selectrow_array(
+       &quot;select script_text from scripts where script_id = ?&quot;,
+       undef, $script_id
+       );
+    $Response-&gt;Include(\$script);
+  %&gt;
+</pre></font>This method could also be used to render other types of dynamic scripts,
+like XML docs using XMLSubs for example, though for complex
+runtime XML rendering, one should use something better suited like XSLT.
+See the $Server-&gt;XSLT API for more on this topic.</font>
+	
+	<p>
+	<a name=%24Response-%3EIbe084bb0></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->IsClientConnected()</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API Extension.  1 for web client still connected, 0 if 
-disconneted which might happen if the user hits the stop button.
+disconnected which might happen if the user hits the stop button.
 The original API for this $Response-&gt;{IsClientConnected}
 is only updated after a $Response-&gt;Flush is called,
 so this method may be called for a refreshed status.
@@ -1450,20 +1481,20 @@ that value for you.</font>
 Script immediately ends.</font>
 	
 	<p>
-	<a name=%24Response-%3ET427038b6></a>
+	<a name=%24Response-%3ET13ecbe6d></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Response->TrapInclude($file, @args)</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Calls $Response-&gt;Include() with same arguments as
 passed to it, but instead traps the include output buffer
-and returns it as as a perl scalar ref.  This allows
+and returns it as as a perl string reference.  This allows
 one to postprocess the output buffer before sending
 to the client.
 <font face="courier new" size=3><pre>
   my $string_ref = $Response-&gt;TrapInclude('file.inc');
   $$string_ref =~ s/\s+/ /sg; # squash whitespace like Clean 1
   print $$string_ref;
-</pre></font>The scalar is returned as a referenece to save on what
-might be a large string copy.  You may dereference the scalar
+</pre></font>The data is returned as a referenece to save on what
+might be a large string copy.  You may dereference the data
 with the $$string_ref notation.</font>
 	
 	<p>
@@ -1525,13 +1556,18 @@ request, usually the length of the form data.  This is
 the same value as $Request-&gt;ServerVariables('CONTENT_LENGTH')</font>
 	
 	<p>
-	<a name=%24Request-%3EBi9c9c4529></a>
+	<a name=%24Request-%3EBicd243649></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Request->BinaryRead($length)</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Returns a scalar whose contents are the first $length bytes
+</pre></font>Returns a string whose contents are the first $length bytes
 of the form data, or body, sent by the client request.
 This data is the raw data sent by the client, without any
-parsing done on it by Apache::ASP.</font>
+parsing done on it by Apache::ASP.
+<font face="courier new" size=3><pre>
+</pre></font>Note that BinaryRead will not return any data for file uploads.
+Please see the $Request-&gt;FileUpload() interface for access
+to this data.  $Request-&gt;Form() data will also be available
+as normal.</font>
 	
 	<p>
 	<a name=%24Request-%3ECled50cd44></a>
@@ -1783,6 +1819,15 @@ favorite command line.</font>
 had this important functionality before the IIS/ASP camp!</font>
 	
 	<p>
+	<a name=%24Server-%3EFileaa99842></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->File()</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>Returns the absolute file path to current executing script.
+Same as Apache-&gt;request-&gt;filename when running under <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>.
+<font face="courier new" size=3><pre>
+</pre></font>ASP API extension.</font>
+	
+	<p>
 	<a name=%24Server-%3EGetb3d1ac42></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->GetLastError()</b></font><p>
 <font face="courier new" size=3><pre>
@@ -1790,7 +1835,7 @@ had this important functionality before the IIS/ASP camp!</font>
 on how IIS handles errors and is not relevant in Apache.</font>
 	
 	<p>
-	<a name=%24Server-%3EHTM62a8deda></a>
+	<a name=%24Server-%3EHTMb165f10b></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->HTMLEncode( $string || \$string )</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Returns an HTML escapes version of $string. &amp;, &quot;, &gt;, &lt;, are each
@@ -1798,7 +1843,7 @@ escapes with their HTML equivalents.  Strings encoded in this nature
 should be raw text displayed to an end user, as HTML tags become 
 escaped with this method.
 <font face="courier new" size=3><pre>
-</pre></font>As of version 2.23, $Server-&gt;HTMLEncode() may take a scalar reference
+</pre></font>As of version 2.23, $Server-&gt;HTMLEncode() may take a string reference
 for an optmization when encoding a large buffer as an API extension.
 Here is how one might use one over the other:
 <font face="courier new" size=3><pre>
@@ -1847,13 +1892,16 @@ translate the request to, regardless or whether the request would be valid.
 script.</font>
 	
 	<p>
-	<a name=%24Server-%3EMai1c5be650></a>
+	<a name=%24Server-%3EMai03cc9918></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->Mail(\%mail, %smtp_args);</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>With the Net::SMTP and Net::Config modules installed, which are part of the 
 perl libnet package, you may use this API extension to send email.  The 
 \%mail hash reference that you pass in must have values for at least
 the To, From, and Subject headers, and the Body of the mail message.
+<font face="courier new" size=3><pre>
+</pre></font>The return value of this routine is 1 for success, 0 for failure.  If the MailHost
+SMTP server is not available, this will have a return value of 0.
 <font face="courier new" size=3><pre>
 </pre></font>You could send an email like so:
 <font face="courier new" size=3><pre>
@@ -1865,6 +1913,8 @@ the To, From, and Subject headers, and the Body of the mail message.
 		 'Body of message. '.
 		 'You might have a lot to say here!',
 		Organization =&gt; 'Your Organization',
+                CC =&gt; '<b>youremailcc@yourdomain.com.foobar</b>',
+                BCC =&gt; '<b>youremailbcc@yourdomain.com.foobar</b>',
 		Debug =&gt; 0 || 1,
 	       });
 </pre></font>Any extra fields specified for the email will be interpreted
@@ -1971,17 +2021,21 @@ please read on the setting
 in the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> section, and the SESSIONS section too.</font>
 	
 	<p>
-	<a name=%24Server-%3EXSLd6dded33></a>
-	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->XSLT($xsl_data_ref, $xml_data_ref)</b></font><p>
+	<a name=%24Server-%3EXSL7df794aa></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->XSLT(\$xsl_data, \$xml_data)</b></font><p>
 <font face="courier new" size=3><pre>
- * NON-PORTABLE ASP EXTENSION *
-</pre></font>This method takes scalar refs for XSL and XML data
-and returns the XSLT output as a scalar ref like:
+ * NON-PORTABLE API EXTENSION *
+</pre></font>This method takes string references for XSL and XML data
+and returns the XSLT output as a string reference like:
 <font face="courier new" size=3><pre>
-  my $xslt_data_ref = $Server-&gt;XSLT($xsl_data_ref, $xml_data_ref)
+  my $xslt_data_ref = $Server-&gt;XSLT(\$xsl_data, \$xml_data)
+  print $$xslt_data_ref;
 </pre></font>The XSLT parser defaults to <a href=http://xmlxslt.sourceforge.net/><font size=-1 face=verdana><b>XML::XSLT</b></font></a>, and is configured with the 
-XSLTParser setting.  Please see the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> section for more 
-information on the setting.
+XSLTParser setting, which can also use XML::Sablotron ( support added in 2.11 ), 
+and XML::LibXSLT ( support added in 2.29 ). 
+Please see the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> section for more information on the 
+XSLT* settings that drive this API.  The XSLT setting itself 
+uses this API internally to do its rendering.
 <font face="courier new" size=3><pre>
 </pre></font>This API was created to allow developers easy XSLT component
 rendering without having to render the entire ASP scripts

@@ -1,9 +1,6 @@
 #!/usr/local/bin/perl
 
-use Apache::ASP;
-
-#use lib qw(. ..);
-#use ASP;
+use Apache::ASP::CGI;
 
 use strict;
 $SIG{__DIE__} = \&Carp::confess;

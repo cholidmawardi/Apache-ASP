@@ -3,14 +3,15 @@ use lib qw(../../eg);
 use File::stat;
 use File::Basename;
 use MLDBM::Sync;
-use File::Recurse;
+use File::Find qw(find);
 use DemoASP;
 use Fcntl qw(O_RDWR O_CREAT);
+use Cwd qw(cwd);
 
-use vars qw(%CONF %SDB $title);
+use vars qw(%CONF %SDB $title %TEMP_SDB);
 
 sub Script_OnStart {
-    $Response->Debug("HI");
+    %TEMP_SDB = ();
     for('DB', 'FileRoot', 'SiteRoot', 'RefreshPeriod', 'FileMatch') {
 	$CONF{$_} = Apache->dir_config('Search'.$_) || die("no config for $_");
     }
@@ -18,6 +19,10 @@ sub Script_OnStart {
       die("The FileRoot config must have a non word character in it ".
 	  "that matches \W, like '/', so a local dir may be specified ".
 	  "with ./");
+    if($CONF{FileRoot} !~ m,^(/|[a-z]:[\\/])$,) {
+	$CONF{FileRoot} = cwd().'/'.$CONF{FileRoot};
+    }
+    $Response->Debug('Search %CONF', \%CONF);
 
     # only one person allowed to search at a time, this is
     # in case we ever have to update a stale database
@@ -27,6 +32,11 @@ sub Script_OnStart {
 	  || die("can't tie to $CONF{DB}: $!");
 	$sdb_object->Lock;
 	$Server->RegisterCleanup(sub { 
+				     if(%TEMP_SDB) {
+					 $Response->Debug("start saving TEMP_SDB to SDB");
+					 %SDB = %TEMP_SDB;
+					 $Response->Debug("done saving TEMP_SDB to SDB");
+				     }
 				     untie %SDB;
 				     $sdb_object->UnLock;
 				 });
@@ -68,19 +78,22 @@ sub refresh_db {
 	$SDB{LastRefresh} = time();
 
 	my %files;
-	recurse( sub {
-		     if(! /$CONF->{FileMatch}/) {
-			 $Response->Debug("$_ does not match $CONF->{FileMatch}");
-		     } elsif(-d $_) {
-			 $Response->Debug("$_ is a directory");
-		     } elsif(-e $_) {
-			 $Response->Debug("indexing $_");
-			 my $words = &index_page($_);
-			 $files{$_} = $words;
-		     } else {
-			 $Response->Debug("no file for $_");
-		     }
-		 }
+	find( { wanted => 
+		sub {
+		    if(! /$CONF->{FileMatch}/) {
+			$Response->Debug("$_ does not match $CONF->{FileMatch}");
+		    } elsif(-d $_) {
+			$Response->Debug("$_ is a directory");
+		    } elsif(-e $_) {
+			$Response->Debug("indexing $_");
+			my $words = &index_page($_);
+			$files{$_} = $words;
+		    } else {
+			$Response->Debug("no file for $_");
+		    }
+		},
+		no_chdir => 1
+		}
 		 , $CONF->{FileRoot}
 	       );
 
@@ -90,10 +103,14 @@ sub refresh_db {
 	    my $file_dict = $files{$file};
 	    for my $word ( keys %$file_dict ) {
 		my $count = $file_dict->{$word};
-		$words{"WORD:$word"}{$file} = $count;
+		$words{"W:$word"}{$file} = $count;
 	    }
 	}
-	%SDB = ( %words, %SDB );
+	$Response->Debug("reading search database");
+	my %temp_sdb = %SDB;
+	$Response->Debug("building search database", scalar(keys %words));
+	%TEMP_SDB = ( %words, %temp_sdb );
+	$Response->Debug("done search database");
     }
 }
 
@@ -146,6 +163,7 @@ sub index_page {
     my %words;
     for(@words) {
 	next if length($_) < 3;
+	next if length($_) > 20;
 	$_ =~ s/\W+$//;
 	$_ = lc $_;
 	$words{$_}++;
@@ -166,6 +184,9 @@ sub index_page {
 			 title => $title,
 			 summary => $summary,
 			};
+    my $weight = 1 / length(scalar(keys %words));
+    $SDB{"WEIGHT:$file"} = $weight;
+
 #    $Response->Debug($SDB{$file_key});
 
     \%words;
@@ -176,13 +197,14 @@ sub search_files {
     my %files;
     my %matches;
     
+    my $DB = %TEMP_SDB ? \%TEMP_SDB : \%SDB;
     for my $word (@words) {
-	my $word_dict = $SDB{"WORD:$word"};
+	my $word_dict = $DB->{"W:$word"};
 	if($word_dict) {
 	    for my $file ( keys %$word_dict ) {
 		$matches{$word}++;
 		$files{$file} ||= 1;
-		$files{$file} *= ( $word_dict->{$file} + 2 );
+		$files{$file} *= int(( $word_dict->{$file} + 2) * $SDB{"WEIGHT:$file"}) + 1;
 	    }
 	}
     }

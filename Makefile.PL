@@ -2,6 +2,11 @@
 
 use strict;
 
+$| = 1;
+
+my $mtime_makefile = (stat('Makefile'))[9] || 0;
+my $fresh_makefile = ($mtime_makefile > time() - 1200) ? 1 : 0;
+
 my $necessary_modules = {
 #    'Apache' => 'Make sure your installation of mod_perl is complete',
     'Class::Struct' => "Apache::ASP->Loader() precompile scripts functionality",
@@ -55,7 +60,17 @@ for(sort keys %$necessary_modules) {
     }
 }
 
+print "\n";
+if(! $errors) {
+    print "GOOD NEWS!  You have all the required modules installed for Apache::ASP.\n";
+} else {
+    print "OTHER MODULES NEEDED! You need to install the above required modules before installing Apache::ASP.\n";
+}
+
+sleep(2) unless $fresh_makefile;
 print "\nChecking for the OPTIONAL modules...\n";
+sleep(2) unless $fresh_makefile;
+
 for(sort keys %$optional_modules) {
     my $data = $optional_modules->{$_};
     my $message = ref($data) ? $data->{message} : $data;
@@ -82,10 +97,14 @@ for(sort keys %$optional_modules) {
 	}
     }
 }
+if($warnings) {
+    print "\n--- OPTIONAL modules missing.  You can install Apache::ASP without these. ---\n";
+    sleep(2) unless $fresh_makefile;
+}
 
 my $CPAN = <<CPAN;
 
-=-=-= CPAN HELP
+=-=-= CPAN HELP -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=
 
 There are many modules that have to be installed in order
 to begin using Apache::ASP.  The easiest way to install
@@ -107,7 +126,7 @@ information, please view the CPAN docs with
 
 > perldoc CPAN
 
-=-=-=
+=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-=-=-=
 
 CPAN
   ;
@@ -122,7 +141,7 @@ if($errors) {
     print $CPAN;
 } 
 
-print "Looks good!\n\n";
+print "+++ Looks good!  You are ready to install Apache::ASP! +++ \n\n";
 
 use ExtUtils::MakeMaker;
 &WriteMakefile(
@@ -139,5 +158,6 @@ use ExtUtils::MakeMaker;
 			       'SDBM_File' => 0,
 			       'MLDBM::Sync' => 0,
 			      },
+               'EXE_FILES' => [ 'asp-perl' ],
 	      );
 

@@ -27,7 +27,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
 <center>
-<table border=0 cellpadding=0 width=98% cellspacing=8>
+<table border=0 cellpadding=0 width=99% cellspacing=8>
 <tr><td align=center>
 
 <table border=0 cellpadding=3 width=100% cellspacing=0>
@@ -216,32 +216,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 		<br>
 		<center>
-		<a href=http://www.apache-asp.org/><img 
-			src=powered_by_apache_asp.jpg border=0
-			alt="Powered by Apache::ASP"
-			width=88 height=31
-			></a>
+		<a href=http://www.apache-asp.org/><img src="powered_by_apache_asp.jpg" width="88" height="31" alt="Powered by Apache::ASP" border="0"></a>
 		<br>
-		<a href=http://perl.apache.org><img 
-			src=powered_by_modperl.gif border=0
-			alt="Powered by ModPerl and Apache"
-			width=88 height=31
-			></a>
+		<a href=http://perl.apache.org><img src="powered_by_modperl.gif" width="88" height="31" alt="Powered by ModPerl and Apache" border="0"></a>
 		<br>
-		<a href=http://www.perl.com><img 
-			src=rectangle_power_perl.gif border=0
-			alt="Powered by Perl"
-			width=88 height=31
-			></a>
+		<a href=http://www.perl.com><img src="rectangle_power_perl.gif" width="88" height="31" alt="Powered by Perl" border="0"></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img 
-			src=nodecheck_button.gif border=0
-			alt="Links Checked by NodeWorks"
-			width=88 height=31
-			></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="Links Checked by NodeWorks" border="0"></a>
 		</center>
-
-
 
 </center>
 
@@ -276,7 +258,7 @@ ASP implementations, as other ASP implementations will likely be more limited.</
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Standalone%20Cda318b27>Standalone CGI Mode, without mod_perl</a>
+			<a href=#Standalone%20Cbddd74cc>Standalone CGI Mode, without mod_perl</a>
 			</font>
 			</td>
 		
@@ -325,7 +307,7 @@ ASP implementations, as other ASP implementations will likely be more limited.</
 	<p>
 
 	<p>
-	<a name=Standalone%20Cda318b27></a>
+	<a name=Standalone%20Cbddd74cc></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>Standalone CGI Mode, without mod_perl</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>As of version 2.19, Apache::ASP scripts may be run as standalone
@@ -350,23 +332,23 @@ scripts like so:
    AllowOverride None
    Options +ExecCGI +Indexes
  &lt;/Directory&gt;
-</pre></font>Then copy the cgi/asp script from the distribution 
-into the installed ./site/eg directory.  This is 
+</pre></font>Then install the asp-perl script from the distribution 
+into /usr/bin, or some other directory.  This is 
 so the CGI execution line at the top of those scripts
-will invoke the asp wrapper like so:
+will invoke the asp-perl wrapper like so:
 <font face="courier new" size=3><pre>
- #!/usr/local/bin/perl asp
-</pre></font>The asp script is a cgi wrapper that sets up the 
+ #!/usr/bin/perl /usr/bin/asp-perl
+</pre></font>The asp-perl script is a cgi wrapper that sets up the 
 Apache::ASP environment in lieu of the normal mod_perl
 handler request.  Because there is no Apache-&gt;dir_config()
-data available under mod_cgi, the asp script will load
-a asp.config file that may define a hash %Config of
+data available under mod_cgi, the asp-perl script will load
+a asp.conf file that may define a hash %Config of
 data for populating the dir_config() data.  An example
-of a complex asp.config file is at <a href=eg/asp.config>./site/eg/asp.config</a>
+of a complex asp.conf file is at <a href=eg/asp.conf>./site/eg/asp.conf</a>
 <font face="courier new" size=3><pre>
-</pre></font>So, a trivial asp.config file might look like:
+</pre></font>So, a trivial asp.conf file might look like:
 <font face="courier new" size=3><pre>
- # asp.config
+ # asp.conf
  %Config = (
    'Global' =&gt; '.',
    'StateDir' =&gt; '/tmp/aspstate',

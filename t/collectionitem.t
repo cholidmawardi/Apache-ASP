@@ -1,5 +1,5 @@
-use Apache::ASP;
-&Apache::ASP::CGI::do_self('CollectionItem' => 1);
+use Apache::ASP::CGI;
+&Apache::ASP::CGI::do_self('CollectionItem' => 1, 'NoState' => 0);
 
 __END__
 

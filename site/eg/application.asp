@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl asp
+#!/usr/bin/perl /usr/bin/asp-perl
 
 <!--#include file=header.inc-->
 <% 
@@ -11,11 +11,11 @@
 	# functions
 
 	$Application->Lock();
-	$Application->{Count}+=3;
+	$Application->{Count}+=1;
 	$Application->UnLock();
 
 %>
-We just incremented the $Application->{Count} variable by 3.
+We just incremented the $Application->{Count} variable by 1.
 Here is the value of the $Application->{Count} variable... <br>
 <b><%= sprintf("%06d", $Application->{Count}) %></b>
 <p>

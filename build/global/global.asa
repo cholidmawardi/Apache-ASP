@@ -5,6 +5,7 @@ use MD5;
 use Time::HiRes;
 use Data::Dumper;
 use Digest::MD5 qw( md5_hex );
+use SiteTags;
 use strict;
 
 $DUMP = "/tmp/aspbuilddumpdata";
@@ -54,6 +55,29 @@ for(keys %FILES) {
 }
 
 $LINKS_MATCH = join('|', keys %LINKS);
+
+#exit;
+
+sub Script_OnStart {
+    unless ($DOCINIT++) {
+	doc_init();
+    }
+    if($Request->QueryString('ads')) {
+	$Ads = 1;
+    }
+}
+
+sub Script_OnEnd {
+    $Response->Write("\n");
+}
+
+sub dmp {
+    Data::Dumper->Dump([@_]);
+}
+
+sub dbg {
+    $Response->Debug(@_);
+}
 
 sub doc_init {
     local $/ = undef;
@@ -134,31 +158,6 @@ sub doc_init {
     close DUMP;
     
     dbg(dmp($ASP));
-}
-
-#exit;
-
-sub Script_OnStart {
-    unless ($DOCINIT++) {
-	doc_init();
-    }
-    if($Request->QueryString('ads')) {
-	$Ads = 1;
-    }
-    # don't clean because white space is important
-    #    $Response->{Clean} = 1;
-}
-
-sub Script_OnEnd {
-    $Response->Write("\n");
-}
-
-sub dmp {
-    Data::Dumper->Dump([@_]);
-}
-
-sub dbg {
-    $Response->Debug(@_);
 }
 
 sub pod2html {

@@ -1,5 +1,5 @@
-use Apache::ASP;
-&Apache::ASP::CGI::do_self();
+use Apache::ASP::CGI;
+&Apache::ASP::CGI::do_self(NoState => 1);
 
 __END__
 

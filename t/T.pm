@@ -30,7 +30,7 @@ sub not_ok {
     my($self, $warn) = @_;
 
     if($warn) {
-	die "[failure] $warn";
+	warn "[failure] $warn";
     }
     
     $self->{t}++;

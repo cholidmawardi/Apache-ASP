@@ -1,4 +1,4 @@
-use Apache::ASP;
+use Apache::ASP::CGI;
 use lib qw(t .);
 use T;
 use strict;
@@ -6,7 +6,7 @@ use strict;
 $SIG{__DIE__} = \&Carp::confess;
 
 chdir('t');
-my $r = &Apache::ASP::CGI::init('asp_object.t');
+my $r = Apache::ASP::CGI->init('asp_object.t');
 my %config = (
 #	      Debug => -3,
 	      NoState => 0,

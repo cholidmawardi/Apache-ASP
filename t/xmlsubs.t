@@ -1,14 +1,14 @@
-use Apache::ASP;
+use Apache::ASP::CGI;
 &Apache::ASP::CGI::do_self(
 	XMLSubsMatch => 'my:\w+',
 	NoState => 1,
 	UseStrict => 1,
-#	Debug => 3,
+	Debug => 3,
 );
 
 __END__
 
-<% my $ref = { ok => 1 }; %>
+<% my $ref = { ok => 1 } ; %>
 <my:tag>
   <my:deeptag />
   <my:deeptag></my:deeptag>

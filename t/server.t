@@ -1,4 +1,4 @@
-use Apache::ASP;
+use Apache::ASP::CGI;
 &Apache::ASP::CGI::do_self(NoState => 1, Debug => 0);
 $SIG{__DIE__} = \&Carp::confess;
 
@@ -35,6 +35,7 @@ $t->eok($Server->HTMLEncode('&"<>') eq $final, "\$Server->HTMLEncode('$html')");
 $Server->HTMLEncode(\$html);
 $t->eok($html eq $final, "\$Server->HTMLEncode(\\\$html)");
 $t->eok($Server->MapInclude('server.t') eq './server.t', "Find executing script in Includes path");
+$t->eok($Server->File =~ /server.t$/, "\$Server->File does not match");
 
 #use Benchmark;
 #my $htmlbig = '&"<>' x 25000;

@@ -27,7 +27,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
 <center>
-<table border=0 cellpadding=0 width=98% cellspacing=8>
+<table border=0 cellpadding=0 width=99% cellspacing=8>
 <tr><td align=center>
 
 <table border=0 cellpadding=3 width=100% cellspacing=0>
@@ -216,32 +216,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 		<br>
 		<center>
-		<a href=http://www.apache-asp.org/><img 
-			src=powered_by_apache_asp.jpg border=0
-			alt="Powered by Apache::ASP"
-			width=88 height=31
-			></a>
+		<a href=http://www.apache-asp.org/><img src="powered_by_apache_asp.jpg" width="88" height="31" alt="Powered by Apache::ASP" border="0"></a>
 		<br>
-		<a href=http://perl.apache.org><img 
-			src=powered_by_modperl.gif border=0
-			alt="Powered by ModPerl and Apache"
-			width=88 height=31
-			></a>
+		<a href=http://perl.apache.org><img src="powered_by_modperl.gif" width="88" height="31" alt="Powered by ModPerl and Apache" border="0"></a>
 		<br>
-		<a href=http://www.perl.com><img 
-			src=rectangle_power_perl.gif border=0
-			alt="Powered by Perl"
-			width=88 height=31
-			></a>
+		<a href=http://www.perl.com><img src="rectangle_power_perl.gif" width="88" height="31" alt="Powered by Perl" border="0"></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img 
-			src=nodecheck_button.gif border=0
-			alt="Links Checked by NodeWorks"
-			width=88 height=31
-			></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="Links Checked by NodeWorks" border="0"></a>
 		</center>
-
-
 
 </center>
 
@@ -1537,9 +1519,14 @@ with the same configuration block.  Please see
 XSLT parsing.  This is a new config as of 2.11.
 Also supported is XML::Sablotron which does not
 handle XSLT with the exact same output, but is about
-10 times faster than XML::XSLT.
+10 times faster than XML::XSLT.  XML::LibXSLT may
+also be used as of version 2.29, and seems to be
+about twice again as fast as XML::Sablotron,
+and a very complete XSLT implementation.
 <font face="courier new" size=3><pre>
+  PerlSetVar XSLTParser XML::XSLT
   PerlSetVar XSLTParser XML::Sablotron
+  PerlSetVar XSLTParser XML::LibXSLT
 </pre></font>
 	
 	<p>
@@ -1630,13 +1617,15 @@ MLDBM::Sync distribution on your system.</font>
 	<font face=verdana><font class=title size=-1 color=#555555><b>CacheDir</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>By default, the cache directory is at StateDir/cache,
-but if StateDir is not set, then CacheDir can be used
-to set the StateDir value for caching purposes.  This
-is to make things less confusing when NoState 1 is set.
+but CacheDir can be used to set the StateDir value for 
+caching purposes.  One may want the CacheDir separate
+from StateDir for example StateDir might be a centrally
+network mounted file system, while CacheDir might be
+a local file cache.
 <font face="courier new" size=3><pre>
   PerlSetVar CacheDir /tmp/asp_demo
 </pre></font>On a system like Solaris where there is a RAM disk 
-mounted on the system like /tmp, I could put the cache
+mounted on the system like /tmp, I could put the CacheDir
 there.  On a system like Linux where files are cached
 pretty well by default, this is less important.</font>
 	

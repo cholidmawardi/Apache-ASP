@@ -1,7 +1,5 @@
-#use lib qw(.. ./t);
-#use ASP;
 
-use Apache::ASP;
+use Apache::ASP::CGI;
 use strict;
 $SIG{__DIE__} = \&Carp::confess;
 
@@ -21,16 +19,18 @@ return unless $dbm_ok;
 			   CacheSize => '1K',  # auto cleanup after test		  
 			   CacheDB => $dbm_ok,
 			   UseStrict => 1,
+			   NoState => 1,
 #			   Debug => -3,
-#			   CacheDir => '/tmp/test_cache_dir',
+			   # CacheDir can be set separately from StateDir
+			   StateDir => '.state',
+			   CacheDir => '.cache',
 );
 
 __END__
 
 <% 
-
 my $asp = $Server->{asp};
-my $cache_lock = "$asp->{state_dir}/cache/Response.lock";
+my $cache_lock = ".cache/cache/Response.lock";
 
 my $reset_cache_counts = sub { map { $asp->{'cache_count_'.$_} = 0 } 
 			       qw( fetch miss store expires last_modified_expires ) 

@@ -1,6 +1,6 @@
 package Bundle::Apache::ASP;
 
-$VERSION = '1.08';
+$VERSION = '1.10';
 
 1;
 
@@ -18,11 +18,9 @@ Bundle::Apache::ASP - Install Apache::ASP and required
 
 MLDBM		  - This is used for reading and writing multi-level hashes on disk
 
-MLDBM::Sync       - Enables safe concurrent access to MLDBM databases.
-
-Data::Dumper	  - Serializes data for MLDBM
-
 Digest::MD5	  - 32 byte hash algorithm for cookie session-id
+
+MLDBM::Sync       - Enables safe concurrent access to MLDBM databases.
 
 Apache::ASP	  - A perl ASP port to Apache
 

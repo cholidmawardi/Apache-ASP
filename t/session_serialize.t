@@ -1,4 +1,4 @@
-use Apache::ASP;
+use Apache::ASP::CGI;
 &Apache::ASP::CGI::do_self(
 #	Debug => 1
 #	StateDir => '/tmp/asp_test',

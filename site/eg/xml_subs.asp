@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl asp
+#!/usr/bin/perl /usr/bin/asp-perl
 
 <my:include src='header.inc' title="XMLSubsMatch Demo"/>
 
@@ -69,7 +69,7 @@ namespaces is translated to the concept of perl packages.
 <p>
 
 <% for("yellow", "red", "blue") { %>
-	<my:table bgcolor=$_ width=200 title=ucfirst($_)." Box" border=5>
+	<my:table bgcolor=$_ width=200 title=ucfirst($_)."Box" border=5>
 		Colored Box
 	</my:table>
 	<p>

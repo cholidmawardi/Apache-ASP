@@ -4,6 +4,6 @@
 #perl /perl/bin/pod2text -80 < ../ASP.pm  > ../README
 
 #perl ../cgi/asp -b -o ../site ./index.html ads 1 
-perl ../cgi/asp -b -o ../site ./index.html ads 1 ./*.html
+perl ../asp-perl -b -o ../site ./index.html ads 1 ./*.html
 touch ../site/apps/search/index.asp
 rsync -a ../site/ /usr/local/proj/mlink/site/asp/

@@ -1,4 +1,3 @@
-#!perl
 
 package DemoASP;
 use File::Basename;

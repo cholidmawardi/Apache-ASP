@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl asp
+#!/usr/bin/perl /usr/bin/asp-perl
 
 <my:include src='header.inc' title="XMLSubsMatch Demo"/>
 

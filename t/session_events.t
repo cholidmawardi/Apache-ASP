@@ -1,9 +1,7 @@
 #!/usr/local/bin/perl
 
-#use Apache::ASP;
-
 use lib qw(. .. t);
-use ASP;
+use Apache::ASP::CGI;
 use T;
 
 use strict;
@@ -27,7 +25,7 @@ my %config = (
 	      'Global' => 'session_events',
 	      );
 
-my $r = Apache::ASP::CGI::init($0);
+my $r = Apache::ASP::CGI->init($0);
 map { $r->dir_config($_, $config{$_}) } keys %config;
 
 my $ASP = Apache::ASP->new($r);

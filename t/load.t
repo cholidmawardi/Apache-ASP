@@ -1,4 +1,4 @@
-use Apache::ASP;
+use Apache::ASP::CGI;
 use lib '.'; use lib qw(t); use T; my $t = T->new();
 
 use Carp;

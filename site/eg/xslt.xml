@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl asp
+#!/usr/bin/perl /usr/bin/asp-perl
 
 <?xml version="1.0"?>
 <page>

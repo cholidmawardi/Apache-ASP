@@ -27,7 +27,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
 <center>
-<table border=0 cellpadding=0 width=98% cellspacing=8>
+<table border=0 cellpadding=0 width=99% cellspacing=8>
 <tr><td align=center>
 
 <table border=0 cellpadding=3 width=100% cellspacing=0>
@@ -216,32 +216,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 		<br>
 		<center>
-		<a href=http://www.apache-asp.org/><img 
-			src=powered_by_apache_asp.jpg border=0
-			alt="Powered by Apache::ASP"
-			width=88 height=31
-			></a>
+		<a href=http://www.apache-asp.org/><img src="powered_by_apache_asp.jpg" width="88" height="31" alt="Powered by Apache::ASP" border="0"></a>
 		<br>
-		<a href=http://perl.apache.org><img 
-			src=powered_by_modperl.gif border=0
-			alt="Powered by ModPerl and Apache"
-			width=88 height=31
-			></a>
+		<a href=http://perl.apache.org><img src="powered_by_modperl.gif" width="88" height="31" alt="Powered by ModPerl and Apache" border="0"></a>
 		<br>
-		<a href=http://www.perl.com><img 
-			src=rectangle_power_perl.gif border=0
-			alt="Powered by Perl"
-			width=88 height=31
-			></a>
+		<a href=http://www.perl.com><img src="rectangle_power_perl.gif" width="88" height="31" alt="Powered by Perl" border="0"></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img 
-			src=nodecheck_button.gif border=0
-			alt="Links Checked by NodeWorks"
-			width=88 height=31
-			></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="Links Checked by NodeWorks" border="0"></a>
 		</center>
-
-
 
 </center>
 
@@ -289,7 +271,7 @@ titled Win32 Install.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Download%20andf2ef6195>Download and CPAN Install</a>
+			<a href=#Download%20and7728accb>Download and CPAN Install</a>
 			</font>
 			</td>
 		
@@ -351,7 +333,7 @@ which one ought to give a good read before undertaking
 a mod_perl project.</font>
 	
 	<p>
-	<a name=Download%20andf2ef6195></a>
+	<a name=Download%20and7728accb></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>Download and CPAN Install</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>You may download the latest Apache::ASP from your nearest CPAN,
@@ -366,18 +348,24 @@ to install Apache::ASP for the first time from perl is to
 fire up the CPAN shell like:
 <font face="courier new" size=3><pre>
  shell prompt&gt; perl -MCPAN -e shell
- ...
+  ... configure CPAN ...
+  ... then upgrade to latest CPAN ...
+ cpan&gt; install CPAN
+  ...
  cpan&gt; install Bundle::Apache::ASP
 </pre></font>Installing the Apache::ASP bundle will automatically install
 all the modules Apache::ASP is dependent on as well as
 Apache::ASP itself.  If you have trouble installing the bundle,
 then try installing the necessary modules one at a time:
 <font face="courier new" size=3><pre>
- cpan&gt; install Data::Dumper
  cpan&gt; install MLDBM
  cpan&gt; install MLDBM::Sync
  cpan&gt; install Digest::MD5
  cpan&gt; install Apache::ASP
+</pre></font>For extra/optional functionality in Apache::ASP 2.31 or greater, like
+support for FormFill, XSLT, or <a href=ssi.html><font size=-1 face=verdana><b>SSI</b></font></a>, you can install this bundle via CPAN:
+<font face="courier new" size=3><pre>
+  cpan&gt; install Bundle::Apache::ASP::Extra
 </pre></font>
 	
 	<p>
@@ -480,16 +468,24 @@ config file for Apache::ASP, just look at the .htaccess file in the
 ./site/eg/ directory.
 <font face="courier new" size=3><pre>
 </pre></font>So, you might add this to your Apache httpd.conf file just to get 
-the scripts in ./site/eg working:
+the scripts in ./site/eg working, where $DOCUMENT_ROOT represents
+the DocumentRoot config for your apache server:
 <font face="courier new" size=3><pre>
-  &lt;Directory / &gt;
+  &lt;Directory $DOCUMENT_ROOT/asp/eg &gt;
     Options FollowSymLinks
     AllowOverride All
   &lt;/Directory&gt;
-</pre></font>This is not a good production config, because it is insecure
+</pre></font>To copy the entire site, including the examples, you might
+do a raw directory copy as in:
+<font face="courier new" size=3><pre>
+  shell&gt; cp -rpd ./site $DOCUMENT_ROOT/asp
+</pre></font>So you could then reference the Apache::ASP docs at /asp/ at your site,
+and the examples at /asp/eg/ .
+<font face="courier new" size=3><pre>
+</pre></font>This is not a good production configuration, because it is insecure
 with the FollowSymLinks, and tells Apache to look for .htaccess 
-files all the way up to / which is bad for performance, but it
-should be handy for getting started with development.
+which is bad for performance but it should be handy for getting 
+started with development.
 <font face="courier new" size=3><pre>
 </pre></font>You will know that Apache::ASP is working normally if you 
 can run the scripts in ./site/eg/ without any errors.  Common

@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl asp
+#!/usr/bin/perl /usr/bin/asp-perl
 
 <% 
  if(! $ENV{MOD_PERL}) {
@@ -10,6 +10,7 @@
 <%
 my $file = DemoASP->new->{file};
 $Response->Status('404');
+my $padding = ' ' x 1000; # IE Error page busting ( 512 bytes needed )
 $Response->ErrorDocument('404', <<ERROR);
 <html><head><title>Custom 404 Error</title></head>
 <body>
@@ -20,6 +21,7 @@ that this script just created, utilizing the
 <a href="source.asp?file=$file">
 view this file's source
 </a>
+$padding
 </body>
 </html>
 ERROR

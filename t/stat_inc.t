@@ -1,4 +1,4 @@
-use Apache::ASP;
+use Apache::ASP::CGI;
 
 # only run test if Devel::Symdump is installed
 eval "use Devel::Symdump;";

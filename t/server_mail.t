@@ -1,4 +1,4 @@
-use Apache::ASP;
+use Apache::ASP::CGI;
 
 &Apache::ASP::CGI::do_self(NoState => 1, 
 			   Debug => 3, 
@@ -18,7 +18,13 @@ eval "use Net::SMTP";
 if($@) {
    $t->done;
    $Response->End;
-};
+} else {
+    my $smtp = Net::SMTP->new('127.0.0.1');
+    unless($smtp) {
+	$t->done;
+	$Response->End;
+    }
+}
 
 $t->eok($Server->Mail({ 
 			# won't actually send the mail in test mode

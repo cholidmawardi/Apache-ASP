@@ -23,7 +23,22 @@ sub Script_OnStart {
 }
 
 sub Script_OnEnd {
-    $t->done;
+    $t && $t->done;
+}
+
+sub Script_OnFlush {
+    my $data = $Response->{BinaryRef};
+    for ( split(/\n/, $$data) ) {
+	next if /^\s*$/;
+	unless(/^((not )?ok)|\d+\.\.\d+/) {
+	    $t->eok(0, "Garbage in output: $_");
+	}
+    }
+}
+
+sub my::print {
+    my($args, $html) = @_;
+    print $html;
 }
 
 sub my::tag {
@@ -48,28 +63,30 @@ sub my::args {
 if($0 =~ m|application\.t$|) {
 #    print STDERR "-- ASP State Initialization for Tests --\n";
     die unless (-e '../t');
-    my @dirs = ('.state');
-    my @delete_dirs;
-    while(@dirs) {
-	my $dir = shift @dirs;
-	next unless -d $dir;
-	opendir(DIR, $dir);
-	for(readdir(DIR)) {	
-	    next if /^\.\.?$/;
-	    $_ =~ tr///; # untaint
-	    my $file = "$dir/$_";
-	    if(-d $file) {
-		push(@dirs, $file);
-	    } elsif(-e $file) {
-		unlink($file);
-	    } else {
-		die("$file does not exist, but we just read it");
+    for my $dir ( qw(.cache .state) ) {
+	my @dirs = ($dir);
+	my @delete_dirs;
+	while(@dirs) {
+	    my $dir = shift @dirs;
+	    next unless -d $dir;
+	    opendir(DIR, $dir);
+	    for(readdir(DIR)) {	
+		next if /^\.\.?$/;
+		$_ =~ tr///; # untaint
+		my $file = "$dir/$_";
+		if(-d $file) {
+		    push(@dirs, $file);
+		} elsif(-e $file) {
+		    unlink($file);
+		} else {
+		    die("$file does not exist, but we just read it");
+		}
 	    }
+	    unshift(@delete_dirs, $dir);
 	}
-	unshift(@delete_dirs, $dir);
-    }
-    for(@delete_dirs) {
-	rmdir($_);
+	for(@delete_dirs) {
+	    rmdir($_);
+	}
     }
 }
 
