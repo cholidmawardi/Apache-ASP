@@ -31,6 +31,10 @@ sub new {
     my $filename = $asp->{global}.'/global.asa';
     my $id = &Apache::ASP::FileId($asp, $asp->{global}, undef, 1);
     my $package = $asp->{global_package} ? $asp->{global_package} : "Apache::ASP::Compiles::".$id;
+    $id .= 'x'.$package; # need to recompile when either file or namespace changes
+
+    # make sure that when either the file or package changes, that we 
+    # update the global.asa compilation
 
     my $self = bless {
 	asp => $asp,
@@ -46,6 +50,7 @@ sub new {
     $asp->{dbg} && $asp->Debug("GlobalASA package $self->{'package'}");
     my $compiled = $Apache::ASP::Compiled{$id};
     if($compiled && ! $asp->{stat_scripts}) {
+
 #	$asp->{dbg} && $asp->Debug("no stat: GlobalASA already compiled");
 	$self->{'exists'} = $compiled->{'exists'};
 	$self->{'compiled'} = $compiled; # for event lookups

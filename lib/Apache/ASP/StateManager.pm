@@ -13,7 +13,7 @@ use vars qw(
   $DefaultStateDB $DefaultStateSerializer
 );
 
-$SessionTimeout = 1200;
+$SessionTimeout = 20;
 $StateManager   = 10;
 
 # Some OS's have hashed directory lookups up to 16 bytes, so we leave room
@@ -31,16 +31,15 @@ sub InitState {
     ## STATE INITS
     # what percent of the session_timeout's time do we garbage collect
     # state files and run programs like Session_OnEnd and Application_OnEnd
-    $self->{state_manager} = $r->dir_config('StateManager') 
-      || $Apache::ASP::StateManager;    
+    $self->{state_manager} = &config($self, 'StateManager', undef, $Apache::ASP::StateManager);
 
     # state is the path where state files are stored, like $Session, $Application, etc.
-    $self->{state_dir}   = $r->dir_config('StateDir') || $self->{global}.'/.state';
-    $self->{state_dir}   =~ tr///; # untaint
-    $self->{no_session}  = (defined $r->dir_config('AllowSessionState')) ? (! $r->dir_config('AllowSessionState')) : 0;
-    $self->{state_serialize} = $r->dir_config('ApplicationSerialize');
+    $self->{state_dir}       = &config($self, 'StateDir', undef, $self->{global}.'/.state');
+    $self->{state_dir}       =~ tr///; # untaint
+    $self->{session_state}   = &config($self, 'AllowSessionState', undef, 1);
+    $self->{state_serialize} = &config($self, 'ApplicationSerialize');
 
-    if($self->{state_db}    = $r->dir_config('StateDB')) {
+    if($self->{state_db} = &config($self, 'StateDB')) {
 	# StateDB - Check StateDB module support 
 	$Apache::ASP::State::DB{$self->{state_db}} ||
 	  $self->Error("$self->{state_db} is not supported for StateDB, try: " . 
@@ -50,7 +49,7 @@ sub InitState {
 	# load the state database module && serializer
 	$self->LoadModule('StateDB', $self->{state_db});
     }
-    if($self->{state_serializer} = $r->dir_config('StateSerializer')) {
+    if($self->{state_serializer} = &config($self, 'StateSerializer')) {
 	$self->{state_serializer} =~ tr///; # untaint
 	$self->LoadModule('StateSerializer', $self->{state_serializer});
     }
@@ -63,10 +62,8 @@ sub InitState {
     $self->{state_serialize} && $internal->LOCK;
 
     # APPLICATION create application object
-    $self->{app_state} = (defined $r->dir_config('AllowApplicationState') ? 
-			   $r->dir_config('AllowApplicationState') : 1);
-    if($self->{app_state}) {	
-
+    $self->{app_state} = &config($self, 'AllowApplicationState', undef, 1);
+    if($self->{app_state}) {
 	# load at runtime for CGI environments, preloaded for mod_perl
 	require Apache::ASP::Application;
 
@@ -80,25 +77,24 @@ sub InitState {
 
     # SESSION if we are tracking state, set up the appropriate objects
     my $session;
-    if(! $self->{no_session}) {
+    if($self->{session_state}) {
 	## SESSION INITS
-	$self->{cookie_path}       = $r->dir_config('CookiePath') || '/';
-	$self->{paranoid_session}  = $r->dir_config('ParanoidSession') || 0;
+	$self->{cookie_path}       = &config($self, 'CookiePath', undef, '/');
+	$self->{paranoid_session}  = &config($self, 'ParanoidSession', undef, 0);
 	$self->{remote_ip}         = $r->connection()->remote_ip();
-	$self->{session_count}     = $r->dir_config('SessionCount');
+	$self->{session_count}     = &config($self, 'SessionCount');
 	
 	# cookieless session support, cascading values
-	$self->{session_url_parse_match} = $r->dir_config('SessionQueryParseMatch');
-	$self->{session_url_parse} = $self->{session_url_parse_match} || $r->dir_config('SessionQueryParse');
-	$self->{session_url_match} = $self->{session_url_parse_match} || $r->dir_config('SessionQueryMatch');
-	$self->{session_url} = $self->{session_url_parse} || $self->{session_url_match} || $r->dir_config('SessionQuery');
-	$self->{session_url_force} = $r->dir_config('SessionQueryForce');
+	$self->{session_url_parse_match} = &config($self, 'SessionQueryParseMatch');
+	$self->{session_url_parse} = $self->{session_url_parse_match} || &config($self, 'SessionQueryParse');
+	$self->{session_url_match} = $self->{session_url_parse_match} || &config($self, 'SessionQueryMatch');
+	$self->{session_url} = $self->{session_url_parse} || $self->{session_url_match} || &config($self, 'SessionQuery');
+	$self->{session_url_force} = &config($self, 'SessionQueryForce');
 	
-	$self->{session_serialize} = $r->dir_config('SessionSerialize');
-	$self->{secure_session}    = $r->dir_config('SecureSession');
+	$self->{session_serialize} = &config($self, 'SessionSerialize');
+	$self->{secure_session}    = &config($self, 'SecureSession');
 	# session timeout in seconds since that is what we work with internally
-	$self->{session_timeout}   = $r->dir_config('SessionTimeout') ? 
-	  $r->dir_config('SessionTimeout') * 60 : $Apache::ASP::SessionTimeout;
+	$self->{session_timeout}   = &config($self, 'SessionTimeout', undef, $SessionTimeout) * 60;
 	$self->{'ua'}              = $ENV{HTTP_USER_AGENT} || 'UNKNOWN UA';
 	# refresh group by some increment smaller than session timeout
 	# to withstand DoS, bruteforce guessing attacks

@@ -233,7 +233,7 @@ sub FIRSTKEY {
 sub NEXTKEY {
     my($self, $key) = @_;
     my $value = $self->{state}->NEXTKEY($key);
-    if($value eq '_UA') {
+    if(defined($value) && ($value eq '_UA')) {
 	$self->{state}->NEXTKEY($value);
     } else {
 	$value;

@@ -122,11 +122,11 @@ sub new {
 	return $self;
     }
 
-    if($asp->{r}->dir_config('StateAllWrite')) {
+    if($asp->config('StateAllWrite')) {
 	$asp->{dbg} and $asp->{state_all_write} = 1;
 	$self->{dir_perms} = 0777;
 	$self->{file_perms} = 0666;
-    } elsif($asp->{r}->dir_config('StateGroupWrite')) {
+    } elsif($asp->config('StateGroupWrite')) {
 	$asp->{dbg} and $asp->{state_group_write} = 1;
 	$self->{dir_perms} = 0770;
 	$self->{file_perms} = 0660;
@@ -172,14 +172,12 @@ sub new {
 	local $SIG{__WARN__} = sub {};
 	
 	my $error;
-	$self->UmaskClear;
 	$self->{file} =~ /^(.*)$/; # untaint
 	$self->{file} = $1;
 	local $MLDBM::RemoveTaint = 1;
 	$self->{dbm} = &MLDBM::Sync::TIEHASH('MLDBM', $self->{file}, O_RDWR|O_CREAT, $self->{file_perms});
 	$asp->{dbg} && $asp->Debug("creating dbm for file $self->{file}, db $MLDBM::UseDB, serializer: $MLDBM::Serializer");
 	$error = $! || 'Undefined Error';
-	$self->UmaskRestore;
 
 
 	if(! $self->{dbm}) {
@@ -346,6 +344,8 @@ sub FETCH {
 sub STORE {
     my $self = shift;
 
+    # don't worry about overhead of Umask* routines, the STORE
+    # being called is much heavier
     $self->UmaskClear;
     my $rv = $self->{dbm}->STORE(@_);
     $self->UmaskRestore;

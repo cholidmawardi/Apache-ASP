@@ -184,6 +184,13 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<tr>
 		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>&nbsp;</nobr></b></font></td>
 
+		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><a href="testimonials.html" style="text-decoration:none"><font color=#063678>TESTIMONIALS</font></a></nobr></b></font></td>		
+
+		</tr>
+		
+		<tr>
+		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>&nbsp;</nobr></b></font></td>
+
 		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><a href="resources.html" style="text-decoration:none"><font color=#063678>RESOURCES</font></a></nobr></b></font></td>		
 
 		</tr>
@@ -263,6 +270,22 @@ equivalent of a 1.0 release for other kinds of software.
 	<td valign=top><font face="lucida console" size=-1>
 	<ul>
 	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%202eaeef6e0>$VERSION = 2.49; $DATE="11/10/2002"</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24VERSION%20%3D%202784583b1>$VERSION = 2.00; $DATE="07/15/2000";</a>
+			</font>
+			</td>
+							
+		</tr>
+		
 		<tr>
 		
 			<td valign=top >
@@ -598,21 +621,22 @@ equivalent of a 1.0 release for other kinds of software.
 			</td>
 							
 		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#%24VERSION%20%3D%202784583b1>$VERSION = 2.00; $DATE="07/15/2000";</a>
-			</font>
-			</td>
-		<td>&nbsp;</td>					
-		</tr>
 			
 	</table>
 	<hr size=1>
 	<p>
 
+	<p>
+	<a name=%24VERSION%20%3D%202eaeef6e0></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.49; $DATE="11/10/2002"</b></font><p>
+<font face="courier new" size=3><pre>
+ -- bug introduced in 2.47 cached script compilations for executing
+    scripts ( not includes ) of the same name in different directories
+    for the same Global/GlobalPackage config for an application.
+    Fix was to remove optimization that caused problem, and
+    created test case t/same_name.t to cover bug.
+</pre></font>
+	
 	<p>
 	<a name=%24VERSION%20%3D%202a705193b></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>$VERSION = 2.47; $DATE="11/06/2002"</b></font><p>
@@ -2998,7 +3022,7 @@ equivalent of a 1.0 release for other kinds of software.
 <tr bgcolor=#063678>
 	<td colspan=3 align=center width=80%>
 	<font face=verdana color=white size=-1>
-	Copyright &copy; 1998-2002, Joshua Chamas, 
+	Copyright &copy; 1998-2003,
 	<a href=http://www.chamas.com><font color=white>Chamas Enterprises Inc.</font></a>
 	</font>
 	</td>

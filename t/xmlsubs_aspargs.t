@@ -3,8 +3,8 @@ use Apache::ASP::CGI;
 	XMLSubsMatch => 'my:\w+',
 	NoState => 1,
 	UseStrict => 1,
-	Debug => 3,
-	XMLSubsPerlArgs => 0,
+	Debug => 0,
+	XMLSubsPerlArgs => 'Off',
 );
 
 __END__

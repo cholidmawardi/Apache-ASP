@@ -6,4 +6,4 @@
 #perl ../cgi/asp -b -o ../site ./index.html ads 1 
 perl ../asp-perl -b -o ../site ./index.html ads 1 ./*.html
 touch ../site/apps/search/index.asp
-rsync --stats --exclude=CVS -a ../site/ /usr/local/proj/mlink/site/asp/
+rsync --delete --stats --exclude=CVS -a ../site/ /usr/local/proj/mlink/site/asp/

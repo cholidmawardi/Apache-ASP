@@ -38,19 +38,19 @@ sub new {
        # to end the same response
        #       Ended => 0, 
        CacheControl => 'private',
-       CH => $r->dir_config('CgiHeaders') || 0,
+       CH => &config($asp, 'CgiHeaders') || 0,
        #       Charset => undef,
-       Clean => $r->dir_config('Clean') || 0,
+       Clean => &config($asp, 'Clean') || 0,
        Cookies => bless({}, 'Apache::ASP::Collection'),
        ContentType => 'text/html',
        'Debug' => $asp->{dbg},
-       FormFill => $r->dir_config('FormFill'),
+       FormFill => &config($asp, 'FormFill'),
        IsClientConnected => 1,
        #       PICS => undef,
        #       Status => 200,
        #       header_buffer => '',
        #       header_done => 0,
-       Buffer => defined $r->dir_config('BufferingOn') ? $r->dir_config('BufferingOn') : 1,
+       Buffer => &config($asp, 'BufferingOn', undef, 1),
        BinaryRef => \$out,
        CompressGzip => ($asp->{compressgzip} and $ENV{HTTP_ACCEPT_ENCODING} =~ /gzip/io) ? 1 : 0,
        r => $r,
@@ -227,9 +227,9 @@ sub Flush {
 	$asp->{dbg} && $asp->Debug("page executed in $total_time seconds");
 	$asp->{total_time} = $total_time;
 
-	if($asp->{r}->dir_config('TimeHiRes')) {
+	if(&config($asp, 'TimeHiRes')) {
 	    if($self->{ContentType} eq 'text/html') {
-		if($asp->{r}->dir_config('Debug')) {
+		if(&config($asp, 'Debug')) {
 		    $$out .= "\n<!-- Apache::ASP v".$Apache::ASP::VERSION." served page in $total_time seconds -->";
 		}
 	    }
@@ -324,8 +324,8 @@ sub FlushXSLT {
     my $self = shift;
     my $asp = $self->{asp};
     my $xml_out = $self->{BinaryRef};
-    
-    $asp->{xslt_match} = $asp->{r}->dir_config('XSLTMatch') || '^.';
+
+    $asp->{xslt_match} = &config($asp, 'XSLTMatch') || '^.';
     return unless ($asp->{filename} =~ /$asp->{xslt_match}/);
 
     ## XSLT FETCH & CACHE
@@ -422,7 +422,7 @@ sub Redirect {
     &SendHeaders($self);
 
     # if we have soft redirects, keep processing page after redirect
-    if($r->dir_config('SoftRedirect')) {
+    if(&config($asp, 'SoftRedirect')) {
 	$asp->Debug("redirect is soft, headers already sent");
     } else {
 	# do we called End() or EndSoft() here?  As of v 2.33, End() will
@@ -454,7 +454,7 @@ sub SendHeaders {
     $r->status($status) if defined($status);
 
     # for command line script
-    return if $r->dir_config('NoHeaders');
+    return if &config($asp, 'NoHeaders');
 
     if(defined $status and $status == 401) {
 	$dbg && $asp->Debug("status 401, note basic auth failure realm ".$r->auth_name);
@@ -927,19 +927,27 @@ sub SessionQueryParseURL {
 	  my($query, $new_url, $frag);
 	  if($rel_url =~ /^([^\?]+)(\?([^\#]*))?(\#.*)?$/) {
               $new_url = $1;
-              $query = $3;
+              $query = defined $3 ? $3 : '';
 	      $frag = $4;
 	  } else {
 	      $new_url = $rel_url;
 	      $query = '';
 	  }
-	  my $new_query = join('&', 
-			       (map { 
-				   /^$Apache::ASP::SessionCookieName\=/ ? 
-				     '' : $_
-				 } 
-				split(/&/, $query)
-			       ),
+
+	  # for the split, we do not need to handle other entity references besides &amp;
+	  # because &, =, and ; should be the only special characters in the query string
+	  # and the only of these characters that are represented by an entity reference
+	  # is & as &amp; ... the rest of the special characters that might be encoded 
+	  # in a URL should be URI escaped
+	  # --jc 2/10/2003
+	  my @new_query_parts;
+	  map {
+	      (! /^$Apache::ASP::SessionCookieName\=/) && push(@new_query_parts, $_);
+	  }
+	    split(/&amp;|&/, $query);
+
+	  my $new_query = join('&amp;', 
+			       @new_query_parts,
 			       $Apache::ASP::SessionCookieName.'='.$asp->{session_id}
 			      );
 	  $new_url .= '?'.$new_query;
@@ -952,5 +960,7 @@ sub SessionQueryParseURL {
 	  $rel_url;
       }
 }
+
+*config = *Apache::ASP::config;
 
 1;

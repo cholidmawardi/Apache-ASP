@@ -134,7 +134,7 @@ sub Run {
 	my $asp = Apache::ASP->new($r);    
 
 	# if StatINC* is configured, run on first script
-	if(($COUNT == 1) && ($r->dir_config('StatINC') || $r->dir_config('StatINCMatch'))) {
+	if(($COUNT == 1) && ($asp->config('StatINC') || $asp->config('StatINCMatch'))) {
 	    $asp->StatINC;
 	}
 

@@ -67,7 +67,7 @@ sub init {
 
 	&Class::Struct::struct( 'Apache::ASP::CGI' => 
 				{
-				   'connection'=>'Apache::ASP::CGI::connection',
+				   'connection'=> 'Apache::ASP::CGI::connection',
 				   'content_type' => "\$",
 				   'dir_config'=>    "\%",
 				   'env'       =>    "\%",

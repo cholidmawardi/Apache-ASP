@@ -62,39 +62,35 @@ sub URLEncode {
 }
 
 sub HTMLDecode {
-    my($decode) = $_[1];
-
+    my($self, $decode) = @_;
+    
     $decode=~s/&gt;/>/sg;
     $decode=~s/&lt;/</sg;
     $decode=~s/&#39;/'/sg;
     $decode=~s/&quot;/\"/sg;
     $decode=~s/&amp;/\&/sg;
-
+    
     $decode;
 }
 
 sub HTMLEncode {
-    my $toencode = $_[1];
+    my($self, $toencode) = @_;
     return '' unless defined $toencode;
 
+    my $data_ref;
     if(ref $toencode) {
-	# this optimization allows for the string to be passed in
-	# as a scalar reference, and returned that way as well 
-	# to save on large string copying
-	$$toencode=~s/&/&amp;/sg;
-	$$toencode=~s/\"/&quot;/sg;
-	$$toencode=~s/\'/&#39;/sg;
-	$$toencode=~s/>/&gt;/sg;
-	$$toencode=~s/</&lt;/sg;
+	$data_ref = $toencode;
     } else {
-	$toencode=~s/&/&amp;/sg;
-	$toencode=~s/\"/&quot;/sg;
-	$toencode=~s/\'/&#39;/sg;
-	$toencode=~s/>/&gt;/sg;
-	$toencode=~s/</&lt;/sg;
+	$data_ref = \$toencode;
     }
 
-    $toencode;
+    $$data_ref =~ s/&/&amp;/sg;
+    $$data_ref =~ s/\"/&quot;/sg;
+    $$data_ref =~ s/\'/&#39;/sg;
+    $$data_ref =~ s/>/&gt;/sg;
+    $$data_ref =~ s/</&lt;/sg;
+
+    ref($toencode) ? $data_ref : $$data_ref;
 }
 
 sub RegisterCleanup {
@@ -126,6 +122,11 @@ sub Mail {
 sub URL {
     my($self, $url, $params) = @_;
     
+    if($url =~ s/\?(.*)$//is) {
+        my $old_params = $self->{asp}{Request}->ParseParams($1);
+        $params = { %$old_params, %$params };
+    }
+
     my $asp = $self->{asp};
     if($asp->{session_url} && $asp->{session_id} && ! $asp->{session_cookie}) {
 	my $match = $asp->{session_url_match};
@@ -144,7 +145,10 @@ sub URL {
     }
 
     my($k,$v, @query);
-    while(($k, $v) = each %$params) {
+
+    # changed to use sort so this function outputs the same URL every time
+    for my $k ( sort keys %$params ) {
+	my $v = $params->{$k};
 	# inline the URLEncode function for speed
 	$k =~ s/([^a-zA-Z0-9_\-.])/uc sprintf("%%%02x",ord($1))/egs;
 	my @values = (ref($v) and ref($v) eq 'ARRAY') ? @$v : ($v);
@@ -166,15 +170,7 @@ sub XSLT {
 }
 
 sub Config {
-    my($self, $key, $value) = @_;
-    
-    if(defined $value) {
-	$self->{asp}{r}->dir_config($key, $value);
-    } elsif(defined $key) {
-	$self->{asp}{r}->dir_config($key);
-    } else {
-	$self->{asp}{r}->dir_config;
-    }
+    shift->{asp}->config(@_);
 }
 
 1;

@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Apache::ASP::Sessions</title>
+<title>Apache::ASP::Testimonials</title>
 
 
 
@@ -112,9 +112,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</tr>
 		
 		<tr>
-		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>%</nobr></b></font></td>
+		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>&nbsp;</nobr></b></font></td>
 
-		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><font color=#993399>SESSIONS</font></nobr></b></font></td>		
+		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><a href="sessions.html" style="text-decoration:none"><font color=#063678>SESSIONS</font></a></nobr></b></font></td>		
 
 		</tr>
 		
@@ -182,9 +182,9 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		</tr>
 		
 		<tr>
-		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>&nbsp;</nobr></b></font></td>
+		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>%</nobr></b></font></td>
 
-		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><a href="testimonials.html" style="text-decoration:none"><font color=#063678>TESTIMONIALS</font></a></nobr></b></font></td>		
+		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><font color=#993399>TESTIMONIALS</font></nobr></b></font></td>		
 
 		</tr>
 		
@@ -248,85 +248,178 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <td valign=top bgcolor=white>
 <font size=+0 face=verdana,arial>
 
-<font face=verdana><font class=title size=+1 color=#555555><b>SESSIONS</b></font><p>
+<font face=verdana><font class=title size=+1 color=#555555><b>TESTIMONIALS</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Cookies are used by default for user $Session support ( see <a href=objects.html><font size=-1 face=verdana><b>OBJECTS</b></font></a> ).  
-In order to track a web user and associate server side data 
-with that client, the web server sets, and the web client returns 
-a 32 byte session id identifier cookie.  This implementation 
-is very secure and  may be used in secure HTTPS transactions, 
-and made stronger with SecureSession and ParanoidSession 
-settings (see <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> ).
+</pre></font>Here are testimonials from those using Apache::ASP.
+If you use this software and would like to show your 
+support please send your testimonial to <b>asp@chamas.com</b>
 <font face="courier new" size=3><pre>
-</pre></font>However good cookies are for this kind of persistent
-state management between HTTP requests, they have long 
-been under fire for security risks associated with
-JavaScript security exploits and privacy abuse by 
-large data tracking companies. 
-<font face="courier new" size=3><pre>
-</pre></font>Because of these reasons, web users will sometimes turn off
-their cookies, rendering normal ASP session implementations
-powerless, resulting in a new $Session generated every request.
-This is not good for ASP style sessions.</font>
+</pre></font>For a list of sites using Apache::ASP, please see the SITES USING section.</font>
+
+	<hr size=1>
+	<table width=100% border=0 cellpadding=1 cellspacing=3>
+	<tr>
+	<td valign=top><font face="lucida console" size=-1>
+	<ul>
+	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Concept%20Onli9b9ce434>Concept Online Ltd.</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#MFM%20Commmunid4238eea>MFM Commmunication Software, Inc.</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#WebTime>WebTime</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Planet%20of%20Muf0c0e551>Planet of Music</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#David%20Kulp>David Kulp</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Cine.gr>Cine.gr</a>
+			</font>
+			</td>
+							
+		</tr>
+			
+	</table>
+	<hr size=1>
 	<p>
-	<a name=Cookieless%20Sf057c84c></a>
-	<font face=verdana><font class=title size=+0 color=#555555><b>Cookieless Sessions</b></font><p>
+
+	<p>
+	<a name=Concept%20Onli9b9ce434></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Concept Online Ltd.</b></font><p>
 <font face="courier new" size=3><pre>
- *** See WARNING Below ***
-</pre></font>So we now have more ways to track sessions with the 
-SessionQuery* <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> settings, that allow a web developer 
-to embed the session id in URL query strings when use 
-of cookies is denied.  The implementations work such that
-if a user has cookies turned on, then cookies will be 
-used, but for those users with cookies turned off,
-the session ids will be parsed into document URLs.
+</pre></font><a href=http://www.conceptonline.com><img src=concept_online.gif border=0></a>
 <font face="courier new" size=3><pre>
-</pre></font>The first and easiest method that a web developer may use 
-to implement cookieless sessions are with SessionQueryParse*
-directives which enable Apache::ASP to the parse the session id
-into document URLs on the fly.  Because this is resource
-inefficient, there is also the SessionQuery* directives
-that may be used with the $Server-&gt;URL($url,\%params) method to 
-generate custom URLs with the session id in its query string.
+</pre></font>I would like to say that your ASP module rocks :-) We have practically stopped developing in anything else about half a year ago, and are now using Apache::ASP extensively. I just love Perl, and whereever we are not &quot;forced&quot; to use JSP, we chose ASP. It is fast, reliable, versatile, documented in a way that is the best for professionals - so thank you for writting and maintaining it!
 <font face="courier new" size=3><pre>
-</pre></font>To see an example of these cookieless sessions in action, 
-check out the <a href=eg/session_query_parse.asp>./site/eg/session_query_parse.asp</a> example.
+  -- Csongor Fagyal, Concept Online Ltd.
+</pre></font>
+	
+	<p>
+	<a name=WebTime></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>WebTime</b></font><p>
 <font face="courier new" size=3><pre>
- *** WARNING ***
-</pre></font>If you do use these methods, then be VERY CAREFUL
-of linking offsite from a page that was accessed with a 
-session id in a query string.  This is because this session
-id will show up in the HTTP_REFERER logs of the linked to 
-site, and a malicious hacker could use this information to
-compromise the security of your site&#39;s $Sessions, even if 
-these are run under a secure web server.  
+</pre></font><a href="http://webtime-project.net"><img border=0 src="webtimelogo.jpg"></a>
 <font face="courier new" size=3><pre>
-</pre></font>In order to shake a session id off an HTTP_REFERER for a link 
-taking a user offsite, you must point that link to a redirect 
-page that will redirect a user, like so:
+</pre></font>As we have seen with WebTime, Apache::ASP is not only good  for the
+development of website, but also for the development of webtools. Since
+I first discoverd it, I made it a must-have in my society by taking
+traditional PHP users to the world of perl afficionados.
 <font face="courier new" size=3><pre>
- &lt;% 
-    # &quot;cross site scripting bug&quot; prevention
-    my $sanitized_url = 
-	$Server-&gt;HTMLEncode($Response-&gt;QueryString(&#39;OffSiteUrl&#39;));
- %&gt;
- &lt;html&gt;
- &lt;head&gt;
- &lt;meta http-equiv=refresh content=&#39;0;URL=&lt;%=$sanitized_url%&gt;&#39;&gt;
- &lt;/head&gt;
- &lt;body&gt;	
-	Redirecting you offsite to 
-	<a href=&lt;%=$sanitized_url%&gt; >here</a>...
- &lt;/body&gt;
- &lt;/html&gt;
-</pre></font>Because the web browser visits a real page before being redirected
-with the &lt;meta&gt; tag, the HTTP_REFERER will be set to this page.
-Just be sure to not link to this page with a session id in its
-query string.  
+</pre></font>Having the possibility to use Apache::ASP with <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> or mod_cgi make
+it constraintless to use because of <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>&#39;s universality and perl&#39;s
+portability.
 <font face="courier new" size=3><pre>
-</pre></font>Unfortunately a simple $Response-&gt;Redirect() will not work here,
-because the web browser will keep the HTTP_REFERER of the 
-original web page if only a normal redirect is used.</font>
+  -- Grégoire Lejeune
+</pre></font>
+	
+	<p>
+	<a name=David%20Kulp></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>David Kulp</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>First, I just want to say that I am very very impressed with Apache::ASP.  I
+just want to gush with praise after looking at many other implementations of
+perl embedded code and being very underwhelmed.  This is so damn slick and
+clean.  Kudos! ...
+<font face="courier new" size=3><pre>
+</pre></font>... I&#39;m very pleased how quickly I&#39;ve been able to mock
+up the application.  I&#39;ve been writing Perl <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> off and on since 1993(!)
+and I can tell you that Apache::ASP is a pleasure.  (Last year I tried
+Zope and just about threw my computer out the window.)
+<font face="courier new" size=3><pre>
+  -- David Kulp
+</pre></font>
+	
+	<p>
+	<a name=MFM%20Commmunid4238eea></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>MFM Commmunication Software, Inc.</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font><table border=0><tr><td>
+<a href="http://www.mfm.com"><img src="communication_software.gif" border=0></a>
+<p>
+<a href=http://www.huff.com/>HUFF Realty</a>
+<br>
+<a href=http://www.starone.com/>Star One Realtors</a>
+<br>
+<a href=http://www.comey.com/>Comey & Shepherd Realtors</a>
+<br>
+<a href=http://www.unlimitedrealestate.net/>RE/MAX Unlimited Realtors</a>
+<br>
+<a href=http://www.cincinnatibuilders.com/>Cincinnati Builders</a>
+<br>
+<a href=http://www.airportdays.com/>Blue Ash Airport Days Airshow</a>
+</td></tr></table>
+<font face="courier new" size=3><pre>
+</pre></font>Working in a team environment where you have HTML coders and perl
+coders, Apache::ASP makes it easy for the HTML folks to change the look
+of the page without knowing perl. Using Apache::ASP (instead of another
+embedded perl solution) allows the HTML jockeys to use a variety of HTML
+tools that understand ASP, which reduces the amount of code they break
+when editing the HTML.  Using Apache::ASP instead of M$ ASP allows us to
+use perl (far superior to VBScript) and Apache (far superior to IIS).
+<font face="courier new" size=3><pre>
+</pre></font>We&#39;ve been very pleased with Apache::ASP and its support.</font>
+	
+	<p>
+	<a name=Planet%20of%20Muf0c0e551></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Planet of Music</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font><a href="http://www.planetofmusic.com"><img src="planetofmusic.com.gif" border=0></a>
+<font face="courier new" size=3><pre>
+</pre></font>Apache::ASP has been a great tool.  Just a little
+background.... the whole site had been in cgi flat files when I started
+here.  I was looking for a technology that would allow me to write the
+objects and NEVER invoke <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm... I found it and hopefuly I will be able to
+implement this every site I go to.
+<font face="courier new" size=3><pre>
+</pre></font>When I got here there was a huge argument about needing a game engine
+and I belive this has been the key... Games are approx. 10 time faster than
+before. The games don&#39;t break anylonger. All in all a great tool for
+advancement.
+<font face="courier new" size=3><pre>
+  -- JC Fant IV
+</pre></font>
+	
+	<p>
+	<a name=Cine.gr></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Cine.gr</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font><a href="http://www.cine.gr"><img src="cine.gr.gif" border=0></a>
+<font face="courier new" size=3><pre>
+</pre></font>...we ported our biggest yet ASP site from IIS (well, actually rewrote),
+Cine.gr and it is a killer site.  In some cases, the whole thing got almost 25 (no typo) times faster...
+None of this would ever be possible without Apache::ASP (I do not ever want to write ``print &quot;&lt;HTML&gt;\n&quot;;&#39;&#39;
+again).</font>
 	
 
 </font>

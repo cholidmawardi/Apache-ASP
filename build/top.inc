@@ -241,7 +241,7 @@ if(@order > 1) {
 	<td valign=top><font face="lucida console" size=-1>
 	<ul>
 	<% 
-	my $half = int((@links+1) / 2);
+	my $half = int((@links) / 2);
 	my $index;	
 
 	my $hilite_first;
@@ -328,7 +328,7 @@ for $data (@order) {
 <tr bgcolor=<%=$DarkRowColor%>>
 	<td colspan=<%= $BodyColSpan %> align=center width=80%>
 	<font face=verdana color=white size=-1>
-	Copyright &copy; 1998-<%= (localtime())[5] + 1900 %>, Joshua Chamas, 
+	Copyright &copy; 1998-<%= (localtime())[5] + 1900 %>,
 	<a href=http://www.chamas.com><font color=white>Chamas Enterprises Inc.</font></a>
 	</font>
 	</td>

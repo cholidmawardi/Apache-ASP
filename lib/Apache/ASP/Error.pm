@@ -20,8 +20,8 @@ sub ProcessErrors {
 	# debug of 2+ and mail_errors_to are mutually exclusive,
 	# since debugging 2+ is for development, and you don't need to 
 	# be emailed the error, if its right in your browser
-	$self->{mail_alert_to}  = $r->dir_config('MailAlertTo') || 0;
-	$self->{mail_errors_to} = $r->dir_config('MailErrorsTo') || 0;
+	$self->{mail_alert_to}  = &config($self,'MailAlertTo') || 0;
+	$self->{mail_errors_to} = &config($self,'MailErrorsTo') || 0;
 	$self->{mail_errors_to} && $self->MailErrors();
 	$self->{mail_alert_to} && $self->MailAlert();
 	
@@ -34,6 +34,7 @@ sub PrettyError {
     my $response = $self->{Response};
 
     my $out = $response->{out};
+    $response->{ContentType} = 'text/html';
     $$out = $self->PrettyErrorHelper();
     $response->Flush();
 
@@ -95,7 +96,7 @@ OUT
     }
     
     if($$response_buffer) {
-	my $length = $self->{r}->dir_config('DebugBufferLength') || 100;
+	my $length = &config($self, 'DebugBufferLength') || 100;
 	$out .= "<b><u>Last $length Bytes of Buffered Output</u></b>\n\n";
 	$out .= $self->Escape(substr($$response_buffer, -1 * $length));
 	$out .= "\n\n";
@@ -128,7 +129,7 @@ OUT
 	$frag ||= '';
 	grep($frag eq $_, @eval_error_lines) && 
 	  ($lineurl = "<b><font color=red>$lineurl</font></b>");
-	unless($self->{'r'}->dir_config('CommandLine')) {
+	unless(&config($self, 'CommandLine')) {
 	    $_ = $self->Escape($_);
 	}
 
@@ -189,7 +190,7 @@ sub MailErrors {
 		 $self->SendMail
 		   ({
 		     To => $self->{mail_errors_to},
-		     From => $self->{r}->dir_config('MailFrom') || $self->{mail_errors_to},
+		     From => &config($self, 'MailFrom') || $self->{mail_errors_to},
 		     Subject => $subject,
 		     Body => $body,
 		     'Content-Type' => 'text/html',
@@ -207,7 +208,7 @@ sub MailAlert {
     my $self = shift;
 
     unless($self->{mail_alert_period}) {
-	$self->{mail_alert_period} = $self->{r}->dir_config('MailAlertPeriod') || 20;
+	$self->{mail_alert_period} = &config($self, 'MailAlertPeriod', undef, 20);
     }
     
     # if we have the internal database defined, check last time the alert was
@@ -247,7 +248,7 @@ sub MailAlert {
 	       my $success = 
 		 $self->SendMail({
 				  To => $self->{mail_alert_to},
-				  From => $self->{r}->dir_config('MailFrom') || $self->{mail_alert_to},
+				  From => &config($self, 'MailFrom', undef, $self->{mail_alert_to}),
 				  Subject => join('-', 'ASP-ALERT', $host), 
 				  Body => "$self->{global}-$ENV{SCRIPT_NAME}",				 
 				 });

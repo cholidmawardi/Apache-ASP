@@ -76,7 +76,7 @@ INSTALL
 
      cpan> install MLDBM
      cpan> install MLDBM::Sync
-     cpan> install Digest::MD5
+     cpan> install Digest::MD5  *** may not be needed for perl 5.8+ ***
      cpan> install Apache::ASP
 
     For extra/optional functionality in Apache::ASP 2.31 or greater, like
@@ -3025,10 +3025,15 @@ FAQ
 
       PerlSetVar UseStrict 1
 
-    Apache errors on the PerlHandler directive ?
-    You do not have mod_perl correctly installed for Apache. The PerlHandler
-    directive in Apache *.conf files is an extension enabled by mod_perl and
-    will not work if mod_perl is not correctly installed.
+    Apache errors on the PerlHandler or PerlModule directives ?
+    You get an error message like this:
+
+     Invalid command 'PerlModule', perhaps mis-spelled or defined by a 
+     module not included in the server configuration.
+
+    You do not have mod_perl correctly installed for Apache. The PerlHandler and
+    PerlModule directives in Apache *.conf files are extensions enabled by
+    mod_perl and will not work if mod_perl is not correctly installed.
 
     Common user errors are not doing a 'make install' for mod_perl, which
     installs the perl side of mod_perl, and not starting the right httpd after
@@ -3387,7 +3392,13 @@ NOTES
 
      !! Doug MacEachern, for moral support and of course mod_perl
 
-     :) Broc, for keeping things filter aware & help on the list.
+     :) Peter Galbavy, for reporting numerous bugs and maintaining the OpenBSD port.
+     :) Richard Curtis, for reporting and working through interesting module 
+        loading issues under mod_perl2 & apache2.
+     :) Rune Henssel, for catching a major bug shortly after 2.47 release,
+        and going to great lengths to get me reproducing the bug quickly.
+     :) Broc, for keeping things filter aware, which broke in 2.45,
+        & much help on the list.
      :) Manabu Higashida, for fixes to work under perl 5.8.0
      :) Slaven Rezic, for suggestions on smoother CPAN installation
      :) Mitsunobu Ozato, for working on a japanese translation of the site & docs.
@@ -3500,10 +3511,23 @@ SUPPORT
      * Apache::ASP core extensions
      * Advanced support for mod_perl, MySQL, Apache, Perl, & UNIX 
 
-    We will contract for $150 per hour or $1800 per day USD. Please see:
-
      http://www.chamas.com/consulting.htm
      http://www.chamas.com/open_source.htm
+
+    AlterCom
+    We use, host and support mod_perl. We would love to be able to help anyone
+    with their mod_perl Apache::ASP needs. Our mod_perl hosting is $24.95 mo.
+
+    http://altercom.com/home.html
+
+    OmniTI
+    OmniTI supports Apache and mod_perl (including Apache::ASP) and offers
+    competitive pricing for both hourly and project-based jobs. OmniTI has
+    extensive experience managing and maintaining both large and small projects.
+    Our services range from short-term consulting to project-based development,
+    and include ongoing maintenance and hosting.
+
+      http://www.omniti.com
 
     TUX IT AG
     Main business is implementing and maintaining infrastructure for big
@@ -3513,27 +3537,36 @@ SUPPORT
     The prices for our service are about 900 EUR per day which is negotiable
     (for longer projects, etc.).
 
-    http://www.tuxit.de
-
-    AlterCom
-    We use, host and support mod_perl. We would love to be able to help anyone
-    with their mod_perl Apache::ASP needs. Our mod_perl hosting is $24.95 mo.
-
-    http://altercom.com/home.html
+      http://www.tuxit.de
 
 SITES USING
     What follows is a list of public sites that are using Apache::ASP. If you
     use the software for your site, and would like to show your support of the
-    software by being listed, please send your URL to asp@chamas.com
+    software by being listed, please send your link to asp@chamas.com
+
+    For a list of testimonials of those using Apache::ASP, please see the
+    TESTIMONIALS section.
+
+            FreeLotto
+            http://www.freelotto.com
+
+            Hungarian TOP1000
+            http://www.hungariantop1000.com
+
+            Hungarian Registry
+            http://www.hunreg.com
+
+            Kepeslap.com
+            http://www.kepeslap.com
+
+            yourpostcardsite.com
+            http://www.yourpostcardsite.com
 
             WebTime
             http://webtime-project.net
 
             Meet-O-Matic
             http://meetomatic.com/about.asp
-
-            Dr. Joel's Computer Shoppe
-            http://www.drjoelscomputers.com
 
             Apache Hello World Benchmarks
             http://chamas.com/bench/
@@ -3555,9 +3588,6 @@ SITES USING
 
             Bouygues Telecom Enterprises
             http://www.b2bouygtel.com
-
-            communtech internet services
-            http://www.communtech.info
 
             Alumni.NET
             http://www.alumni.net
@@ -3601,7 +3631,7 @@ SITES USING
             MLS of Greater Cincinnati
             http://www.cincymls.com
 
-            NodeWorks - Link Check
+            NodeWorks Link Checker
             http://www.nodeworks.com
 
             OnTheWeb Services
@@ -3624,6 +3654,78 @@ SITES USING
 
             USCD Electrical & Computer Engineering
             http://ece-local.ucsd.edu
+
+TESTIMONIALS
+    Here are testimonials from those using Apache::ASP. If you use this software
+    and would like to show your support please send your testimonial to
+    asp@chamas.com
+
+    For a list of sites using Apache::ASP, please see the SITES USING section.
+
+    Concept Online Ltd.
+    I would like to say that your ASP module rocks :-) We have practically
+    stopped developing in anything else about half a year ago, and are now using
+    Apache::ASP extensively. I just love Perl, and whereever we are not "forced"
+    to use JSP, we chose ASP. It is fast, reliable, versatile, documented in a
+    way that is the best for professionals - so thank you for writting and
+    maintaining it!
+
+      -- Csongor Fagyal, Concept Online Ltd.
+
+    WebTime
+    As we have seen with WebTime, Apache::ASP is not only good for the
+    development of website, but also for the development of webtools. Since I
+    first discoverd it, I made it a must-have in my society by taking
+    traditional PHP users to the world of perl afficionados.
+
+    Having the possibility to use Apache::ASP with mod_perl or mod_cgi make it
+    constraintless to use because of CGI's universality and perl's portability.
+
+      -- Grégoire Lejeune
+
+    David Kulp
+    First, I just want to say that I am very very impressed with Apache::ASP. I
+    just want to gush with praise after looking at many other implementations of
+    perl embedded code and being very underwhelmed. This is so damn slick and
+    clean. Kudos! ...
+
+    ... I'm very pleased how quickly I've been able to mock up the application.
+    I've been writing Perl CGI off and on since 1993(!) and I can tell you that
+    Apache::ASP is a pleasure. (Last year I tried Zope and just about threw my
+    computer out the window.)
+
+      -- David Kulp
+
+    MFM Commmunication Software, Inc.
+    Working in a team environment where you have HTML coders and perl coders,
+    Apache::ASP makes it easy for the HTML folks to change the look of the page
+    without knowing perl. Using Apache::ASP (instead of another embedded perl
+    solution) allows the HTML jockeys to use a variety of HTML tools that
+    understand ASP, which reduces the amount of code they break when editing the
+    HTML. Using Apache::ASP instead of M$ ASP allows us to use perl (far
+    superior to VBScript) and Apache (far superior to IIS).
+
+    We've been very pleased with Apache::ASP and its support.
+
+    Planet of Music
+    Apache::ASP has been a great tool. Just a little background.... the whole
+    site had been in cgi flat files when I started here. I was looking for a
+    technology that would allow me to write the objects and NEVER invoke
+    CGI.pm... I found it and hopefuly I will be able to implement this every
+    site I go to.
+
+    When I got here there was a huge argument about needing a game engine and I
+    belive this has been the key... Games are approx. 10 time faster than
+    before. The games don't break anylonger. All in all a great tool for
+    advancement.
+
+      -- JC Fant IV
+
+    Cine.gr
+    ...we ported our biggest yet ASP site from IIS (well, actually rewrote),
+    Cine.gr and it is a killer site. In some cases, the whole thing got almost
+    25 (no typo) times faster... None of this would ever be possible without
+    Apache::ASP (I do not ever want to write ``print "<HTML>\n";'' again).
 
 RESOURCES
     Here are some important resources listed related to the use of Apache::ASP
@@ -3708,6 +3810,13 @@ CHANGES
     the equivalent of a 1.0 release for other kinds of software.
 
      + = improvement   - = bug fix    (d) = documentations
+
+    $VERSION = 2.49; $DATE="11/10/2002"
+     -- bug introduced in 2.47 cached script compilations for executing
+        scripts ( not includes ) of the same name in different directories
+        for the same Global/GlobalPackage config for an application.
+        Fix was to remove optimization that caused problem, and
+        created test case t/same_name.t to cover bug.
 
     $VERSION = 2.47; $DATE="11/06/2002"
      ++ Runtime speed enhancements for 15-20% improvement including:
@@ -5911,7 +6020,7 @@ CHANGES
      cookies.
 
 LICENSE
-    Copyright (c) 1998-2002, Joshua Chamas, Chamas Enterprises Inc. All rights
+    Copyright (c) 1998-2003, Josh Chamas, Chamas Enterprises Inc. All rights
     reserved.
 
     Apache::ASP is a perl native port of Active Server Pages for Apache and

@@ -24,7 +24,7 @@ sub new {
     # set up the environment, including authentication info
     # only copy %ENV if we are changing anything
     my $env; 
-    if($r->dir_config('AuthServerVariables')) {
+    if(&config($asp, 'AuthServerVariables')) {
 	if(defined $r->get_basic_auth_pw) {
 	    $env = { %ENV };
 	    my $c = $r->connection;
@@ -47,9 +47,9 @@ sub new {
 	if($ENV{CONTENT_TYPE}=~ m|^multipart/form-data|) {
 	    # do the logic here so that the normal form POST processing will not
 	    # occur either
-	    $asp->{file_upload_process} = defined $r->dir_config('FileUploadProcess') ? $r->dir_config('FileUploadProcess') : 1;
+	    $asp->{file_upload_process} = &config($asp, 'FileUploadProcess', undef, 1);
 	    if($asp->{file_upload_process}) {
-		if($asp->{file_upload_temp} = $r->dir_config('FileUploadTemp')) {
+		if($asp->{file_upload_temp} = &config($asp, 'FileUploadTemp')) {
 		    eval "use CGI;";
 		} else {
 		    # default leaves no temp files for prying eyes
@@ -64,17 +64,21 @@ sub new {
 		# before it used to error abruptly, now it will simply skip the file 
 		# upload data
 		local $CGI::DISABLE_UPLOADS = $CGI::DISABLE_UPLOADS;
-		if($asp->{file_upload_max} = $r->dir_config('FileUploadMax')) {
+		if($asp->{file_upload_max} = &config($asp, 'FileUploadMax')) {
 		    if($self->{TotalBytes} > $asp->{file_upload_max} ) {
 			$CGI::DISABLE_UPLOADS = 1;
 		    }
 		}
 		
-		$asp->{dbg} && $asp->Debug("using CGI.pm version ".(eval { CGI->VERSION } || $CGI::VERSION).
-				       " for file upload support");
+		$asp->{dbg} && $asp->Debug("using CGI.pm version ".
+					   (eval { CGI->VERSION } || $CGI::VERSION).
+					   " for file upload support"
+					  );
+		$asp->Debug($CGI::DISABLE_UPLOADS, '---', $self, '---', $asp->{r}->dir_config);
 
 		my %form;
 		my $q = $self->{cgi} = new CGI;
+		$asp->Debug($q->param);
 		for(my @names = $q->param) {
 		    my @params = $q->param($_);
 		    $form{$_} = @params > 1 ? [ @params ] : $params[0];
@@ -124,7 +128,7 @@ ASP_REQUEST_POST_READ_DONE:
     my $parsed_query = $query ? &ParseParams($self, \$query) : {};
     $self->{'QueryString'} = bless $parsed_query, 'Apache::ASP::Collection';
 
-    if($r->dir_config('RequestParams')) {
+    if(&config($asp, 'RequestParams')) {
 	$self->{'Params'} = bless { %$parsed_query, %$form }, 'Apache::ASP::Collection';
     } 
 
@@ -166,6 +170,7 @@ sub DESTROY {
 	}
 	$self->{FileUpload}{$_} = undef;
     }
+
     %$self = ();
 }
 
@@ -291,5 +296,7 @@ sub Unescape {
     $todecode =~ s/%([0-9a-fA-F]{2})/chr(hex($1))/ge;
     $todecode;
 }
+
+*config = *Apache::ASP::config;
 
 1;

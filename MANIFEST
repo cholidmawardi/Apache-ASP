@@ -19,7 +19,6 @@ build/global/ad.inc
 build/global/box.inc
 build/global/global.asa
 build/global/index_extra.inc
-build/global/sites_extra.inc
 build/global/testimonial.inc
 build/global/testimonials.inc
 build/global/top.inc
@@ -36,6 +35,7 @@ build/ssi.html
 build/style.html
 build/support.html
 build/syntax.html
+build/testimonials.html
 build/todo.html
 build/top.inc
 build/tuning.html
@@ -85,6 +85,7 @@ site/cgi.html
 site/changes.html
 site/cine.gr.gif
 site/communication_software.gif
+site/concept_online.gif
 site/config.html
 site/eg/.bhtaccess
 site/eg/.htaccess
@@ -152,6 +153,7 @@ site/ssi.html
 site/style.html
 site/support.html
 site/syntax.html
+site/testimonials.html
 site/todo.html
 site/top.inc
 site/tuning.html
@@ -225,6 +227,7 @@ t/session.inc
 t/session.t
 t/session_events.t
 t/session_events/global.asa
+t/session_query_parse.t
 t/session_serialize.t
 t/share.t
 t/stat_inc.t

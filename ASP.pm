@@ -4,7 +4,7 @@
 
 package Apache::ASP;
 
-$VERSION = 2.49;
+$VERSION = 2.51;
 
 use Digest::MD5 qw(md5_hex);
 use Cwd qw(cwd);
@@ -45,21 +45,26 @@ unless($LoadModPerl++) {
 	# Only pre-load these if in a mod_perl environment for sharing memory post fork.
 	# These will not be loaded then for CGI until absolutely necessary at runtime
 	push(@load_modules, qw( 
-      Apache MLDBM::Serializer::Data::Dumper Devel::Symdump 
-      Apache::ASP::StateManager Apache::ASP::Session Apache::ASP::Application
-      Apache::ASP::StatINC Apache::ASP::Error
-      Apache::compat
-      )
+          Apache2 Apache::compat Apache
+          MLDBM::Serializer::Data::Dumper Devel::Symdump 
+          Apache::ASP::StateManager Apache::ASP::Session Apache::ASP::Application
+          Apache::ASP::StatINC Apache::ASP::Error
+          )
 	    );
-# this does not seem to work right yet, as it was adding for mod_perl 1.25
-# the header to the front of the server tokens
-#	eval { Apache::add_version_component("Apache::ASP/$VERSION"); };
     }
 
     for my $module ( @load_modules ) {
 	eval "use $module";
     }
 }
+
+## HEADER TOKEN TWEAK
+# This must be called outside the above load module block, so that
+# its gets run whenever this module is loaded
+# This didn't work in 1.27 mod_perl, with DSO enabled, would
+# put the Apache::ASP token in front.
+# eval {     &Apache::add_version_component("Apache::ASP/$VERSION"); };
+# $Apache::Server::AddPerlVersion = 1;
 
 #use integer; # don't use screws up important numeric logic
 
@@ -240,31 +245,36 @@ sub new {
     my $basename = $2;
     chdir($dirname) || die("can't chdir to $dirname: $!");
 
+    # temp object just to call config() on, do not bless since we
+    # do not want the object to be DESTROY()'d
+    my $self = { r => $r };
+
     # global is the default for the state dir and also 
     # a default lib path for perl, as well as where global.asa
     # can be found
-    my $global = $r->dir_config('Global') || '.';
+    my $global = &config($self, 'Global') || '.';
     $global = &AbsPath($global, $dirname);
 
     # asp object is handy for passing state around
-    my $self = bless 
+    $self = bless 
       { 
        'basename'       => $basename,
        'cleanup'        => [],
-       'dbg'            => $r->dir_config('Debug') || 0,  # debug level
+       'dbg'            => &config($self, 'Debug') || 0,  # debug level
+       'destroy'         => 1,
        filename         => $filename,
        global           => $global,
-       global_package   => $r->dir_config('GlobalPackage'),
-       inode_names      => $r->dir_config('InodeNames'),
-       no_cache         => $r->dir_config('NoCache'),
+       global_package   => &config($self, 'GlobalPackage'),
+       inode_names      => &config($self, 'InodeNames'),
+       no_cache         => &config($self, 'NoCache'),
        'r'              => $r, # apache request object 
        start_time       => $start_time,
-       stat_scripts     => defined $r->dir_config('StatScripts') ? $r->dir_config('StatScripts') : 1,
-       stat_inc         => $r->dir_config('StatINC'),    
-       stat_inc_match   => $r->dir_config('StatINCMatch'),
-       use_strict       => $r->dir_config('UseStrict'),
+       stat_scripts     => &config($self, 'StatScripts', undef, 1),
+       stat_inc         => &config($self, 'StatINC'),    
+       stat_inc_match   => &config($self, 'StatINCMatch'),
+       use_strict       => &config($self, 'UseStrict'),
        win32            => ($^O eq 'MSWin32') ? 1 : 0,
-       xslt             => $r->dir_config('XSLT'),
+       xslt             => &config($self, 'XSLT'),
       }, $class;
 
     # Only if debug is negative do we kick out all the internal stuff
@@ -290,8 +300,8 @@ sub new {
     }
 
     # filtering support
-    my $filter_config = $r->dir_config('Filter');
-    if($filter_config && ($filter_config !~ /off/io)) {
+    my $filter_config = &config($self, 'Filter');
+    if($filter_config) { 
         if($self->LoadModules('Filter', 'Apache::Filter')) {
 	    # new filter_register with Apache::Filter 1.013
 	    if($r->can('filter_register')) {
@@ -317,8 +327,8 @@ sub new {
     }
     
     # gzip content encoding option by ime@iae.nl 28/4/2000
-    my $compressgzip_config = $r->dir_config('CompressGzip');
-    if($compressgzip_config && $compressgzip_config !~ /off/io) {	
+    my $compressgzip_config = &config($self, 'CompressGzip');
+    if($compressgzip_config) {
 	if($self->LoadModule('Gzip','Compress::Zlib')) {
 	    $self->{compressgzip} = 1;
 	}
@@ -330,6 +340,18 @@ sub new {
 	-d $self->{global} or 
 	  $self->Error("global path, $self->{global}, is not a directory");
     }
+
+    # includes_dir calculation
+    if($filename =~ m,^((/|[a-zA-Z]:).*[/\\])[^/\\]+?$,) {
+	$self->{dirname} = $1;
+    } else {
+	$self->{dirname} = '.';
+    }
+    $self->{includes_dir} = [
+			     $self->{dirname},
+			     $self->{global}, 
+			     split(/;/, &config($self, 'IncludesDir') || ''),
+			    ];
 
     # register cleanup before the state files get set in InitObjects
     # this way DESTROY gets called every time this script is done
@@ -351,7 +373,7 @@ sub new {
     # After GlobalASA Init, init the package that this script will execute in
     # must be here, and not end of new before things like Application_OnStart get run
     # UniquePackages & NoCache configs do not work together, NoCache wins here
-    if($r->dir_config('UniquePackages')) {
+    if(&config($self, 'UniquePackages')) {
 	# id is not generally useful for the ASP object now, so calculate
 	# it here now, only to twist the package object for this script
 
@@ -365,12 +387,12 @@ sub new {
 	$self->{init_packages} = ['main', $global_asa->{'package'}];	
     }
 
-    $self->{state_dir}   = $r->dir_config('StateDir') || $self->{global}.'/.state';
+    $self->{state_dir}   = &config($self, 'StateDir', undef, $self->{global}.'/.state');
     $self->{state_dir}   =~ tr///; # untaint
 
     # if no state has been config'd, then set up none of the 
     # state objects: Application, Internal, Session
-    unless($r->dir_config('NoState')) {
+    unless(&config($self, 'NoState')) {
 	# load at runtime for CGI environments, preloaded for mod_perl
 	require Apache::ASP::StateManager;
 	$self->InitState;
@@ -382,7 +404,7 @@ sub new {
 # called upon every end of connection by RegisterCleanup
 sub DESTROY {
     my $self = shift;
-    return unless $self->{r}; # still active object
+    return unless $self->{destroy}; # still active object
     $self->{dbg} && $self->Debug("destroying ASP object $self");
 
     # do before undef'ing the object references in main
@@ -394,8 +416,11 @@ sub DESTROY {
 
     local $^W = 0; # suppress untie while x inner references warnings
     select(STDOUT); 
-    untie *STDIN if tied *STDIN;
     untie *RESPONSE if tied *RESPONSE;
+
+    # can't move this to Request::DESTROY(), then CGI object compatibility
+    # in test ./site/eg/cgi.htm test fails, don't know why, --jc, 12/06/2002
+    untie *STDIN if tied *STDIN;
 
     # in case there is a dummy session here by the 
     # end of object execution
@@ -427,7 +452,7 @@ sub DESTROY {
 
     if(my $caches = $self->{Caches}) {
 	# default cache size to 10M
-	$self->{cache_size} = $self->{r}->dir_config('CacheSize') || $CacheSize;
+	$self->{cache_size} = &config($self, 'CacheSize') || $CacheSize;
 	if($self->{cache_size} =~ /^([\d\.]+)(M|K|B)?$/) {
 	    my($size, $unit) = ($1, $2);
 	    if($unit eq 'M') {
@@ -441,20 +466,19 @@ sub DESTROY {
 	    }
 	}
 	for my $cache (values %$caches) {
-	    my $tied = tied(%$cache);
+	    my $tied = $cache;
 	    if($tied->{writes} && $tied->Size > $self->{cache_size}) {
 		$self->{dbg} && $self->Debug("deleting cache $cache, size: ".$tied->Size);
 		$tied->Delete;
 	    } else {
 		$self->{dbg} && $self->Debug("cache $cache OK size, size: ".$tied->Size);
 	    }
-	    untie %$cache;
 	    $tied->DESTROY();
 	}
     }
 
     #    $self->{'dbg'} && $self->Debug("END ASP DESTROY");
-    $self->{Request} && $self->{Request}->DESTROY();
+    $self->{Request} && &Apache::ASP::Request::DESTROY($self->{Request});
     $self->{Server} && ( %{$self->{Server}} = () );
     $self->{Response} && ( %{$self->{Response}} = () );
     %$self = ();
@@ -524,7 +548,7 @@ sub FileId {
 	my $r = $self->{r};
 	my $checksum = md5_hex(join('&-+', 
 				    $VERSION,
-				    map { $r->dir_config($_) || '' }
+				    map { &config($self, $_) || '' }
 				    @CompileChecksumKeys
 				   )
 			      );
@@ -537,7 +561,8 @@ sub FileId {
     my @inode_stat = ();
     if($self->{inode_names}) {
 	@inode_stat = stat($file);
-	unless($inode_stat[0] && $inode_stat[1]) {
+	# one or the other device or file ids must be not 0
+	unless($inode_stat[0] || $inode_stat[1]) {
 	    @inode_stat = ();
 	}
     }
@@ -600,24 +625,19 @@ sub Parse {
     # eval execution of scripts after compilation
     unless($self->{parse_config}) {
 	$self->{parse_config} = 1;
-
-	$self->{compile_includes} = $r->dir_config('DynamicIncludes');
-
-	$self->{pod_comments} = defined($r->dir_config('PodComments')) ? 
-	  $r->dir_config('PodComments') : 1;
-	$self->{xml_subs_strict} = $r->dir_config('XMLSubsStrict');
-
+	$self->{compile_includes} = &config($self, 'DynamicIncludes');
+	$self->{pod_comments} = &config($self, 'PodComments', undef, 1);
+	$self->{xml_subs_strict} = &config($self, 'XMLSubsStrict');
 	# default XMLSubsPerlArgs to 1 for now, until 3.0
-	$self->{xml_subs_perl_args} = defined($r->dir_config('XMLSubsPerlArgs')) ? 
-	  $r->dir_config('XMLSubsPerlArgs') : 1;
+	$self->{xml_subs_perl_args} = &config($self, 'XMLSubsPerlArgs', undef, 1);
 
 	# reduce (pattern) patterns to (?:pattern) to not create $1 side effect
-	if($self->{xml_subs_match} = $r->dir_config('XMLSubsMatch')) {
+	if($self->{xml_subs_match} = &config($self, 'XMLSubsMatch')) {
 	    $self->{xml_subs_match} =~ s/\(\?\:([^\)]*)\)/($1)/isg;
 	    $self->{xml_subs_match} =~ s/\(([^\)]*)\)/(?:$1)/isg;
 	}
 
-	my $lang = $r->dir_config('ScriptLanguage') || 'PerlScript';
+	my $lang = &config($self, 'ScriptLanguage', undef, 'PerlScript');
 	my $module = "Apache::ASP::Lang::".$lang;
 	unless($ScriptLanguages{$lang}) {
 #	    eval "use $module;";
@@ -638,7 +658,7 @@ sub Parse {
     }
 
     my $comment = $self->{lang_comment};
-    if($r->dir_config('CgiDoSelf')) {
+    if(&config($self, 'CgiDoSelf')) {
 	$data =~ s,^(.*?)__END__,,so;
     }
 
@@ -714,7 +734,7 @@ sub Parse {
 	}
 
 	# global directory, as well as includes dirs
-	my $include = $self->SearchDirs($file);
+	my $include = &SearchDirs($self, $file);
 	unless(defined $include) { 
 	    $self->Error("include file with name $file does not exist");
 	    return;
@@ -1071,30 +1091,12 @@ sub SearchDirs {
     my($self, $file) = @_;
     return unless defined $file;
 
-    my $orig_file = $file;
     my $share_search;
     if($file =~ s/^Share:://) {
 	$share_search = 1;
     }
 
-    # includes_dir calculation & cache
-    my $includes_dir = $self->{includes_dir};
-    unless($includes_dir) {
-	if($self->{filename} =~ m,^((/|[a-zA-Z]:).*[/\\])[^/\\]+?$,) {
-	    $self->{dirname} = $1;
-	} else {
-	    $self->{dirname} = '.';
-	}
-	$includes_dir = [
-			 $self->{dirname},
-			 $self->{global}, 
-			 split(/;/, $self->{r}->dir_config('IncludesDir') || ''),
-			];
-	$self->{includes_dir} = $includes_dir;
-    }
-
-    my @includes_dir = @$includes_dir;
-    $includes_dir = undef;
+    my @includes_dir = @{$self->{includes_dir}};
     if($share_search) {
 	push(@includes_dir, $ShareDir);
     }
@@ -1346,7 +1348,7 @@ sub CompilePerl {
 	$rv = undef;
     } else {
 	if($subid) {
-	    if($self->{r}->dir_config('RegisterIncludes')) {
+	    if(&config($self, 'RegisterIncludes')) {
 		$self->RegisterIncludes($script);
 	    }
 	    if($package eq $self->{GlobalASA}{'package'}) {
@@ -1493,35 +1495,34 @@ sub Execute {
 }
 
 sub Cache {
-    my($self, $cache_name, $key, $value, $expires, $last_modified) = @_;
+    my($self, $cache_name, $key, $value, $expires, $last_modified, $no_check_meta) = @_;
     $cache_name || die("no cache_name given");
     grep($cache_name eq $_, qw(XSLT Response)) || die("cache_name $cache_name is invalid");
     return unless defined($key);
 
-    my $cache = $self->{Caches}{$cache_name};
-    if(defined $cache) {
-	$self->{dbg} && $self->Debug("found cache $cache for $cache_name");
+    my $cache_dbm = $self->{Caches}{$cache_name};
+    if(defined $cache_dbm) {
+	$self->{dbg} && $self->Debug("found cache $cache_dbm for $cache_name");
     } else {
 	# load at runtime for CGI environments, preloaded for mod_perl
 	require Apache::ASP::State;
 
-	local $self->{state_dir} = $self->{r}->dir_config('CacheDir') || $self->{state_dir};
-	local $self->{state_db} = $self->{r}->dir_config('CacheDB') || 'MLDBM::Sync::SDBM_File';
+	local $self->{state_dir} = &config($self, 'CacheDir') || $self->{state_dir};
+	local $self->{state_db} = &config($self, 'CacheDB') || 'MLDBM::Sync::SDBM_File';
 	$self->{dbg} && $self->Debug("CacheDB set to $self->{state_db}");
-	my %temp;
-	tie(%temp, 'Apache::ASP::State', $self, $cache_name, 'cache')
+	$cache_dbm = Apache::ASP::State::new($self, $cache_name, 'cache')
 	  || ($self->Error("could not do cache $cache_name: $!") && return);
-	$cache = bless \%temp, 'Apache::ASP::State';
-	$self->{Caches}{$cache_name} = $cache;
-	$self->{dbg} && $self->Debug("init cache $cache for $cache_name");
+	$self->{Caches}{$cache_name} = $cache_dbm;
+	$self->{dbg} && $self->Debug("init cache $cache_dbm for $cache_name");
     }
 
     $key = (ref($key) && ($key =~ /SCALAR/)) ? $$key : $key;
     my $checksum = &md5_hex($key).'x'.length($key);
     my $metakey = $checksum . 'xMETA';
     my $rv;
+
     eval {
-	$cache->LOCK;
+	$cache_dbm->{dbm}->Lock;
 	if(defined $value) {
 	    my $meta = { ServerID => $ServerID, Creation => time() };
 	    if(defined $expires && ($expires =~ /^\-?\d+$/)) {
@@ -1529,83 +1530,88 @@ sub Cache {
 		$meta->{Timeout} = time + $expires;
 	    };
 	    $self->{dbg} && $self->Debug("storing $checksum in $cache_name cache");
-	    $cache->{$metakey} = $meta;
+	    $cache_dbm->STORE($metakey, $meta);
 	    $self->{cache_count_store}++;
-	    $rv = $cache->{$checksum} = $value;
+	    $rv = $cache_dbm->STORE($checksum, $value);
 	} else {
-#	    $self->Debug("get meta for $metakey");
-	    my $meta = $cache->{$metakey};
-#	    $self->Debug("meta key", $meta);
-	    my $new;
-	    if(! $meta) {
-		$meta = { Creation => 0, ServerID => 'NULL' };
-		$new = 1;
-	    } else {
-		# NEW EXPIRES FOR EXISTING ITEM
-		if(defined $expires && ($expires =~ /^\-?\d+$/) && ($expires != $meta->{Expires})) {
-		    $self->Debug("new expires $expires, old ".($meta->{Expires} || '')." for $checksum");
-		    $meta->{Expires} = $expires;
-		    # use creation timestamp for expires calculation, not current
-		    # time, or we would refresh the entry
-		    $meta->{Timeout} = $meta->{Creation} + $expires;
-		    $cache->{$metakey} = $meta;
-		};
-	    }
-
-	    # LastModified calculations
-	    if(defined $last_modified) {
-		if($last_modified !~ /^\d+$/) {
-		    my $old_last_modified = $last_modified;
-		    $last_modified = &Apache::ASP::Date::str2time($last_modified);
-		    $self->{dbg} && $self->Debug("converting string date for LastModified $old_last_modified to unix time $last_modified");
-		}
-		if($last_modified < 0) {
-		    $self->{dbg} && $self->Debug("negative LastModified $last_modified ignored");
-		    $last_modified = undef;
-		}
-	    }
-
-	    # EARLY TIMEOUT CALCULATION
-	    if($meta->{Timeout}) {
-		# 10% chance to expire early to prevent collision
-		my $early = ($meta->{Expires} || 0) * rand() * '.1';
-		$self->{dbg} && $self->Debug("will reduce expires for $meta->{Expires} by random $early seconds, checksum $checksum");
-		$meta->{Timeout} = $meta->{Timeout} - $early;
-	    }
-
-	    $self->{dbg} && $self->Debug("meta cache data for checksum $checksum", $meta);
-
-	    if($new) {
-		$self->{dbg} && $self->Debug("no cache entry, checksum $checksum");
-		$self->{cache_count_miss}++;
-		$rv = undef;
-	    } elsif(defined $meta->{ServerID} && ($$ ne $ServerPID) && ($meta->{ServerID} ne $ServerID)) {
-		# can only run like this when running in preloaded mod_perl mode
-		# This will allow for caching in other modes that simply does not reset
-		# upon server restart
-		$self->{dbg} && $self->Debug("cache expires new server $ServerID, was $meta->{ServerID}");
-		$self->{cache_count_restart}++;
-		$rv = undef;
-	    } elsif($meta->{Timeout} && ($meta->{Timeout} <= time())) {
-		$self->{dbg} && $self->Debug("cache expires timeout $meta->{Timeout}, checksum $checksum, time ".time);
-		$self->{cache_count_expires}++;
-		$rv = undef;
-	    } elsif(defined($last_modified) && ($last_modified >= $meta->{Creation})) {
-		$self->{dbg} && $self->Debug("cache expires, checksum $checksum, LastModified $last_modified, Creation $meta->{Creation}");
-		$self->{cache_count_last_modified_expires}++;
-		$rv = undef;
-	    } else {
-		$self->{dbg} && $self->Debug("cache $cache_name fetch checksum $checksum");
+	    # don't check meta data for XSLT since transformations don't expire ever
+	    if($no_check_meta) {
+		$self->{dbg} && $self->Debug("cache $cache_name fetch checksum $checksum no check meta");
 		$self->{cache_count_fetch}++;
-		$rv = $cache->{$checksum};
+		$rv = $cache_dbm->{dbm}->FETCH($checksum);
+	    } else {
+		my $meta = $cache_dbm->{dbm}->FETCH($metakey);
+		my $new;
+		if(! $meta) {
+		    $meta = { Creation => 0, ServerID => 'NULL' };
+		    $new = 1;
+		} else {
+		    # NEW EXPIRES FOR EXISTING ITEM
+		    if(defined $expires && ($expires =~ /^\-?\d+$/) && ($expires != $meta->{Expires})) {
+			$self->Debug("new expires $expires, old ".($meta->{Expires} || '')." for $checksum");
+			$meta->{Expires} = $expires;
+			# use creation timestamp for expires calculation, not current
+			# time, or we would refresh the entry
+			$meta->{Timeout} = $meta->{Creation} + $expires;
+			$cache_dbm->STORE($metakey, $meta);
+		    };
+		}
+		
+		# LastModified calculations
+		if(defined $last_modified) {
+		    if($last_modified !~ /^\d+$/) {
+			my $old_last_modified = $last_modified;
+			$last_modified = &Apache::ASP::Date::str2time($last_modified);
+			$self->{dbg} && $self->Debug("converting string date for LastModified $old_last_modified to unix time $last_modified");
+		    }
+		    if($last_modified < 0) {
+			$self->{dbg} && $self->Debug("negative LastModified $last_modified ignored");
+			$last_modified = undef;
+		    }
+		}
+		
+		# EARLY TIMEOUT CALCULATION
+		if($meta->{Timeout}) {
+		    # 10% chance to expire early to prevent collision
+		    my $early = ($meta->{Expires} || 0) * rand() * '.1';
+		    $self->{dbg} && $self->Debug("will reduce expires for $meta->{Expires} by random $early seconds, checksum $checksum");
+		    $meta->{Timeout} = $meta->{Timeout} - $early;
+		}
+		
+		$self->{dbg} && $self->Debug("meta cache data for checksum $checksum", $meta);
+		
+		if($new) {
+		    $self->{dbg} && $self->Debug("no cache entry, checksum $checksum");
+		    $self->{cache_count_miss}++;
+		    $rv = undef;
+		} elsif(defined $meta->{ServerID} && ($$ ne $ServerPID) && ($meta->{ServerID} ne $ServerID)) {
+		    # can only run like this when running in preloaded mod_perl mode
+		    # This will allow for caching in other modes that simply does not reset
+		    # upon server restart
+		    $self->{dbg} && $self->Debug("cache expires new server $ServerID, was $meta->{ServerID}");
+		    $self->{cache_count_restart}++;
+		    $rv = undef;
+		} elsif($meta->{Timeout} && ($meta->{Timeout} <= time())) {
+		    $self->{dbg} && $self->Debug("cache expires timeout $meta->{Timeout}, checksum $checksum, time ".time);
+		    $self->{cache_count_expires}++;
+		    $rv = undef;
+		} elsif(defined($last_modified) && ($last_modified >= $meta->{Creation})) {
+		    $self->{dbg} && $self->Debug("cache expires, checksum $checksum, LastModified $last_modified, Creation $meta->{Creation}");
+		    $self->{cache_count_last_modified_expires}++;
+		    $rv = undef;
+		} else {
+		    $self->{dbg} && $self->Debug("cache $cache_name fetch checksum $checksum");
+		    $self->{cache_count_fetch}++;
+		    $rv = $cache_dbm->{dbm}->FETCH($checksum);
+		}
 	    }
 	}
-	$cache->UNLOCK;
+	$cache_dbm->{dbm}->UnLock;
     };
     if($@) {
 	$self->Out("[ASP WARN] error using cache $cache_name: $@");
 	$self->{cache_count_error}++;
-	eval { $cache->UNLOCK; };
+	eval { $cache_dbm->{dbm}->UnLock; };
     }
 
     $rv;
@@ -1615,18 +1621,18 @@ sub XSLT {
     my($self, $xsl_data, $xml_data) = @_;
     my $asp = $self;
 
-    my $cache = $self->{r}->dir_config('XSLTCache');
+    my $cache = &config($self, 'XSLTCache');
     my $cache_data = $$xsl_data.$$xml_data;
 
     if($cache) {
-	if(my $data = $self->Cache('XSLT', \$cache_data)) {
+	if(my $data = $self->Cache('XSLT', \$cache_data, undef, undef, undef, 1)) {
 	    return $data;
 	}
     }
 
     ref($xsl_data) || die("xsl data must be a scalar ref");
 
-    my $xslt_parser = $self->{r}->dir_config('XSLTParser') || 'XML::XSLT';
+    my $xslt_parser = &config($self, 'XSLTParser') || 'XML::XSLT';
 
     my @parsers = ('XML::XSLT 0.32', 'XML::Sablotron', 'XML::LibXSLT');
     my $xslt_parser_lib;
@@ -1810,12 +1816,12 @@ sub SendMail {
     }
     
     # configure mail host
-    if($self->{mail_host} = $self->{r}->dir_config('MailHost')) {
+    if($self->{mail_host} = &config($self, 'MailHost')) {
 	unless($NetConfig{smtp_hosts} && (($NetConfig{smtp_hosts}->[0] || '') eq $self->{mail_host})) {
 	    unshift(@{$NetConfig{smtp_hosts}}, $self->{mail_host});
 	}
     }
-    $mail->{From} ||= $self->{r}->dir_config('MailFrom');
+    $mail->{From} ||= &config($self, 'MailFrom');
 
     unless($mail->{Test}) {
 	for('To', 'Body', 'Subject', 'From') {
@@ -1831,7 +1837,7 @@ sub SendMail {
     }
     if(! defined($args{Debug})) {
 	# in case of system level debugging, mark Net::SMTP debug also
-	if(($self->{r}->dir_config('Debug') || 0) < 0) {
+	if((&config($self, 'Debug') || 0) < 0) {
 	    $args{Debug} = 1;
 	}
     }
@@ -1950,12 +1956,22 @@ sub DSOError {
 
     # this could happen with a bad filtering sequence
     warn(<<ERROR);
-No valid request object ($r) passed to ASP handler; if you are getting
-this error message, you likely have a broken DSO version of mod_perl
-which often occurs when using RedHat RPMs.  One fix reported is to
-configure "PerlSendHeader On".  Another fix is to compile
-statically the apache + mod_perl build as RedHat RPMs have been trouble.
+No valid request object ($r) passed to ASP handler
+
+If you are getting this error message and are using mod_perl 1.x and Apache 1.x,
+you likely have a broken DSO version of mod_perl which often occurs
+when using RedHat RPMs.  One fix reported is to configure "PerlSendHeader On".
+Another fix is to compile statically the apache + mod_perl build as
+RedHat RPMs have been trouble.
+
+If you are using a newer mod_perl2 + Apache2, make sure you have
+upgraded to the last Apache::ASP release, and report the issue
+if problems continue to the Apache::ASP mailing list.  As of
+December 2002, mod_perl2 + Apache2 combination is still experimental
+and under development.
+
 Please check FAQ or mod_perl archives for more information.
+
 ERROR
   ;
 
@@ -1963,6 +1979,28 @@ ERROR
 }
 
 sub CompileChecksumKeys { \@CompileChecksumKeys };
+
+*Config = *config;
+sub config {
+    my($self, $key, $value, $default) = @_;
+
+    if(defined $value) {
+	$self->{r}->dir_config($key, $value);
+    } elsif(defined $key) {
+	my $rv = $self->{r}->dir_config($key);
+	if(defined($rv)) {
+	    $rv =~ s/^off$/0/i; # Off always becomes 0
+	} else {
+	    # use default value if none is returned
+	    if(defined($default)) {
+		$rv = $default;
+	    }
+	}
+	$rv;
+    } else {
+	$self->{r}->dir_config;
+    }
+}
 
 1;
 
@@ -2082,7 +2120,7 @@ then try installing the necessary modules one at a time:
 
  cpan> install MLDBM
  cpan> install MLDBM::Sync
- cpan> install Digest::MD5
+ cpan> install Digest::MD5  *** may not be needed for perl 5.8+ ***
  cpan> install Apache::ASP
 
 For extra/optional functionality in Apache::ASP 2.31 or greater, like
@@ -5442,10 +5480,15 @@ default by setting:
 
   PerlSetVar UseStrict 1
 
-=item Apache errors on the PerlHandler directive ?
+=item Apache errors on the PerlHandler or PerlModule directives ?
+
+You get an error message like this:
+
+ Invalid command 'PerlModule', perhaps mis-spelled or defined by a 
+ module not included in the server configuration.
 
 You do not have mod_perl correctly installed for Apache.  The PerlHandler
-directive in Apache *.conf files is an extension enabled by mod_perl
+and PerlModule directives in Apache *.conf files are extensions enabled by mod_perl
 and will not work if mod_perl is not correctly installed.
 
 Common user errors are not doing a 'make install' for mod_perl, which 
@@ -5854,7 +5897,13 @@ Other honorable mentions include:
 
  !! Doug MacEachern, for moral support and of course mod_perl
 
- :) Broc, for keeping things filter aware & help on the list.
+ :) Peter Galbavy, for reporting numerous bugs and maintaining the OpenBSD port.
+ :) Richard Curtis, for reporting and working through interesting module 
+    loading issues under mod_perl2 & apache2.
+ :) Rune Henssel, for catching a major bug shortly after 2.47 release,
+    and going to great lengths to get me reproducing the bug quickly.
+ :) Broc, for keeping things filter aware, which broke in 2.45,
+    & much help on the list.
  :) Manabu Higashida, for fixes to work under perl 5.8.0
  :) Slaven Rezic, for suggestions on smoother CPAN installation
  :) Mitsunobu Ozato, for working on a japanese translation of the site & docs.
@@ -5976,10 +6025,21 @@ and database systems.  We offer:
  * Apache::ASP core extensions
  * Advanced support for mod_perl, MySQL, Apache, Perl, & UNIX 
 
-We will contract for $150 per hour or $1800 per day USD.  Please see:
-
  http://www.chamas.com/consulting.htm
  http://www.chamas.com/open_source.htm
+
+=item AlterCom
+
+We use, host and support mod_perl. We would love to be able to help 
+anyone with their mod_perl Apache::ASP needs.  Our mod_perl hosting is $24.95 mo.
+
+http://altercom.com/home.html
+
+=item OmniTI
+
+OmniTI supports Apache and mod_perl (including Apache::ASP) and offers competitive pricing for both hourly and project-based jobs. OmniTI has extensive experience managing and maintaining both large and small projects. Our services range from short-term consulting to project-based development, and include ongoing maintenance and hosting.
+
+  http://www.omniti.com
 
 =item TUX IT AG
 
@@ -5990,30 +6050,37 @@ customers (Apache, Apache::ASP, PHP, Perl, MySQL, etc.)
 The prices for our service are about 900 EUR per day which is negotiable
 (for longer projects, etc.).
 
-http://www.tuxit.de
-
-=item AlterCom
-
-We use, host and support mod_perl. We would love to be able to help 
-anyone with their mod_perl Apache::ASP needs.  Our mod_perl hosting is $24.95 mo.
-
-http://altercom.com/home.html
+  http://www.tuxit.de
 
 =head1 SITES USING
 
 What follows is a list of public sites that are using 
 Apache::ASP.  If you use the software for your site, and 
 would like to show your support of the software by being listed, 
-please send your URL to asp@chamas.com
+please send your link to asp@chamas.com
+
+For a list of testimonials of those using Apache::ASP, please see the TESTIMONIALS section.
+
+        FreeLotto
+        http://www.freelotto.com
+
+        Hungarian TOP1000
+        http://www.hungariantop1000.com
+
+        Hungarian Registry
+        http://www.hunreg.com
+
+        Kepeslap.com
+        http://www.kepeslap.com
+
+        yourpostcardsite.com
+        http://www.yourpostcardsite.com
 
         WebTime
         http://webtime-project.net
 
         Meet-O-Matic
         http://meetomatic.com/about.asp
-
-        Dr. Joel's Computer Shoppe
-        http://www.drjoelscomputers.com
 
         Apache Hello World Benchmarks
         http://chamas.com/bench/
@@ -6035,9 +6102,6 @@ please send your URL to asp@chamas.com
 
         Bouygues Telecom Enterprises
         http://www.b2bouygtel.com
-
-        communtech internet services
-        http://www.communtech.info
 
         Alumni.NET
 	http://www.alumni.net
@@ -6081,7 +6145,7 @@ please send your URL to asp@chamas.com
 	MLS of Greater Cincinnati
 	http://www.cincymls.com
 
-	NodeWorks - Link Check
+	NodeWorks Link Checker
 	http://www.nodeworks.com
 
 	OnTheWeb Services
@@ -6104,6 +6168,125 @@ please send your URL to asp@chamas.com
 
 	USCD Electrical & Computer Engineering
 	http://ece-local.ucsd.edu
+
+=head1 TESTIMONIALS
+
+Here are testimonials from those using Apache::ASP.
+If you use this software and would like to show your 
+support please send your testimonial to asp@chamas.com
+
+For a list of sites using Apache::ASP, please see the SITES USING section.
+
+=item Concept Online Ltd.
+
+=begin html
+
+<a href=http://www.conceptonline.com><img src=concept_online.gif border=0></a>
+
+=end html
+
+I would like to say that your ASP module rocks :-) We have practically stopped developing in anything else about half a year ago, and are now using Apache::ASP extensively. I just love Perl, and whereever we are not "forced" to use JSP, we chose ASP. It is fast, reliable, versatile, documented in a way that is the best for professionals - so thank you for writting and maintaining it!
+
+  -- Csongor Fagyal, Concept Online Ltd.
+
+=item WebTime
+
+=begin html
+
+<a href="http://webtime-project.net"><img border=0 src="webtimelogo.jpg"></a>
+
+=end html
+
+As we have seen with WebTime, Apache::ASP is not only good  for the
+development of website, but also for the development of webtools. Since
+I first discoverd it, I made it a must-have in my society by taking
+traditional PHP users to the world of perl afficionados.
+
+Having the possibility to use Apache::ASP with mod_perl or mod_cgi make
+it constraintless to use because of CGI's universality and perl's
+portability.
+
+  -- Grégoire Lejeune
+
+=item David Kulp
+
+First, I just want to say that I am very very impressed with Apache::ASP.  I
+just want to gush with praise after looking at many other implementations of
+perl embedded code and being very underwhelmed.  This is so damn slick and
+clean.  Kudos! ...
+
+... I'm very pleased how quickly I've been able to mock
+up the application.  I've been writing Perl CGI off and on since 1993(!)
+and I can tell you that Apache::ASP is a pleasure.  (Last year I tried
+Zope and just about threw my computer out the window.)
+
+  -- David Kulp
+
+=item MFM Commmunication Software, Inc.
+
+=begin html
+
+<table border=0><tr><td>
+<a href="http://www.mfm.com"><img src="communication_software.gif" border=0></a>
+<p>
+<a href=http://www.huff.com/>HUFF Realty</a>
+<br>
+<a href=http://www.starone.com/>Star One Realtors</a>
+<br>
+<a href=http://www.comey.com/>Comey & Shepherd Realtors</a>
+<br>
+<a href=http://www.unlimitedrealestate.net/>RE/MAX Unlimited Realtors</a>
+<br>
+<a href=http://www.cincinnatibuilders.com/>Cincinnati Builders</a>
+<br>
+<a href=http://www.airportdays.com/>Blue Ash Airport Days Airshow</a>
+</td></tr></table>
+
+=end html
+
+Working in a team environment where you have HTML coders and perl
+coders, Apache::ASP makes it easy for the HTML folks to change the look
+of the page without knowing perl. Using Apache::ASP (instead of another
+embedded perl solution) allows the HTML jockeys to use a variety of HTML
+tools that understand ASP, which reduces the amount of code they break
+when editing the HTML.  Using Apache::ASP instead of M$ ASP allows us to
+use perl (far superior to VBScript) and Apache (far superior to IIS).
+
+We've been very pleased with Apache::ASP and its support.
+
+=item Planet of Music
+
+=begin html
+
+<a href="http://www.planetofmusic.com"><img src="planetofmusic.com.gif" border=0></a>
+
+=end html
+
+Apache::ASP has been a great tool.  Just a little
+background.... the whole site had been in cgi flat files when I started
+here.  I was looking for a technology that would allow me to write the
+objects and NEVER invoke CGI.pm... I found it and hopefuly I will be able to
+implement this every site I go to.
+
+When I got here there was a huge argument about needing a game engine
+and I belive this has been the key... Games are approx. 10 time faster than
+before. The games don't break anylonger. All in all a great tool for
+advancement.
+
+  -- JC Fant IV
+
+=item Cine.gr
+
+=begin html
+
+<a href="http://www.cine.gr"><img src="cine.gr.gif" border=0></a>
+
+=end html
+
+...we ported our biggest yet ASP site from IIS (well, actually rewrote),
+Cine.gr and it is a killer site.  In some cases, the whole thing got almost 25 (no typo) times faster...
+None of this would ever be possible without Apache::ASP (I do not ever want to write ``print "<HTML>\n";''
+again).
 
 =head1 RESOURCES
 
@@ -6202,6 +6385,14 @@ means first production ready release, this would be the
 equivalent of a 1.0 release for other kinds of software.
 
  + = improvement   - = bug fix    (d) = documentations
+
+=item $VERSION = 2.49; $DATE="11/10/2002"
+
+ -- bug introduced in 2.47 cached script compilations for executing
+    scripts ( not includes ) of the same name in different directories
+    for the same Global/GlobalPackage config for an application.
+    Fix was to remove optimization that caused problem, and
+    created test case t/same_name.t to cover bug.
 
 =item $VERSION = 2.47; $DATE="11/06/2002"
 
@@ -8459,7 +8650,7 @@ equivalent of a 1.0 release for other kinds of software.
 
 =head1 LICENSE
 
-Copyright (c) 1998-2002, Joshua Chamas, Chamas Enterprises Inc. 
+Copyright (c) 1998-2003, Josh Chamas, Chamas Enterprises Inc. 
 All rights reserved.
 
 Apache::ASP is a perl native port of Active Server Pages for Apache

@@ -1,11 +1,57 @@
-$MODULE=Apache::ASP; $VERSION = 2.49; $DATE="TBD"
+$MODULE=Apache::ASP; $VERSION = '2.51'; $DATE="TBD"
 
 Please see README for changes for past versions.
 
  + = improvement;    - = bug fix;    (d) = documentation
 
- -- bug introduced in 2.47 cached script compilations for executing
-    scripts ( not includes ), of the same name in different directories
-    for the same Global/GlobalPackage config for an application.
-    Fix was to remove optimization that caused problem, and
-    created test case t/same_name.t to cover bug.
+ + added t/session_query_parse.t test to cover use of SessionQueryParse
+   and $Server->URL APIs
+
+ - Fixed duplicate "&" bug associated with using $Server->URL 
+   and SessionQueryParse together
+
+ + Patch to allow $Server->URL() to be called multiple times on the same URL
+   as in $Server->URL($Server->URL($url, \%params), \%more_params)
+
+ (d) Added new testimonials & sites & created a separate testimonials page.
+
+ - SessionQueryParse will now add to &amp; to the query strings
+   embedded in the HTML, instead of & for proper HTML generation.
+   Thanks to Peter Galbavy for pointing out and Thanos Chatziathanassiou
+   for suggesting the fix.
+
+ - $Response->{ContentType} set to text/html for developer error reporting,
+   in case this was set to something else before the error occured.
+   Thanks to Philip Mak for reporting.
+
+ - Couple of minor bug fixes under PerlWarn use, thanks Peter Galbavy
+   for reporting.
+
+ + Added automatic load of "use Apache2" for compat with mod_perl2 
+   request objects when Apache::ASP is loaded via "PerlModule Apache::ASP"
+   Thanks to Richard Curtis for reporting bug & subsequent testing.
+
+ - When GlobalPackage config changes, but global.asa has not, global.asa
+   will be recompiled anyway to update the GlobalPackage correctly.
+   Changing GlobalPackage before would cause errors if global.asa was
+   already compiled.
+
+ ++ For ANY PerlSetVar type config, OFF/Off/off will be assumed 
+    to have value of 0 for that setting.  Before, only a couple settings
+    had this semantics, but they all do now for consistency.
+
+ - Fix for InodeNames config on OpenBSD, or any OS that might have
+   a device # of 0 for the file being stat()'d, thanks to Peter Galbavy
+   for bug report.
+
+ ++ Total XSLT speedups, 5-10% on large XSLT, 10-15% on small XSLT
+
+ + bypass meta data check like expires for XSLT Cache() API use
+   because XSLT tranformations don't expire, saves hit to cache dbm
+   for meta data
+
+ + use of direct Apache::ASP::State methods like FETCH/STORE
+   in Cache() layer so we don't have to go through slower tied interface.
+   This will speed up XSLT & and include output caching mostly.
+
+ + minor optimizations for speed & memory usage

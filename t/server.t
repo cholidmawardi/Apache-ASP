@@ -35,7 +35,7 @@ my $result = $Server->HTMLEncode($html);
 $t->eok($result eq $final, "\$Server->HTMLEncode('$html')");
 my $ref_result = $Server->HTMLEncode(\$html);
 $t->eok(\$html eq $ref_result, "\$Server->HTMLEncode(\\\$html) should output same ref as going in");
-$t->eok($html eq $final, "\$Server->HTMLEncode(\\\$html)");
+$t->eok($html eq $final, "$html does not equal $final");
 $t->eok($Server->MapInclude('server.t') eq './server.t', "Find executing script in Includes path");
 $t->eok($Server->File =~ /server.t$/, "\$Server->File does not match");
 

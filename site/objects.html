@@ -184,6 +184,13 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<tr>
 		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>&nbsp;</nobr></b></font></td>
 
+		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><a href="testimonials.html" style="text-decoration:none"><font color=#063678>TESTIMONIALS</font></a></nobr></b></font></td>		
+
+		</tr>
+		
+		<tr>
+		<td bgcolor=white><font size=-2 face="verdana" color=#993399><b><nobr>&nbsp;</nobr></b></font></td>
+
 		<td bgcolor=white ><font face="verdana,helvetica" size=-1><b><nobr><a href="resources.html" style="text-decoration:none"><font color=#063678>RESOURCES</font></a></nobr></b></font></td>		
 
 		</tr>
@@ -293,7 +300,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EW0307fe16>$Response->Write($data)</a>
+			<a href=#%24Response-%3ET13ecbe6d>$Response->TrapInclude($file, @args)</a>
 			</font>
 			</td>
 							
@@ -309,7 +316,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			
+			<a href=#%24Response-%3EW0307fe16>$Response->Write($data)</a>
 			</font>
 			</td>
 							
@@ -320,6 +327,22 @@ and simple aliases for common functions.</font>
 			<td valign=top >
 			<font face="lucida console" size=-1>
 			<a href=#%24Session-%3E%7BL2343b3bf>$Session->{LCID}</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24Session-%3E%7BS1049f4e8>$Session->{SessionID}</a>
 			</font>
 			</td>
 		
@@ -335,7 +358,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Session-%3E%7BS1049f4e8>$Session->{SessionID}</a>
+			<a href=#%24Session-%3E%7BTf539b225>$Session->{Timeout} [= $minutes]</a>
 			</font>
 			</td>
 		
@@ -351,7 +374,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Session-%3E%7BTf539b225>$Session->{Timeout} [= $minutes]</a>
+			<a href=#%24Session-%3EAbc5f4cea0>$Session->Abandon()</a>
 			</font>
 			</td>
 		
@@ -367,7 +390,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Session-%3EAbc5f4cea0>$Session->Abandon()</a>
+			<a href=#%24Session-%3ELocc872f91>$Session->Lock()  </a>
 			</font>
 			</td>
 		
@@ -383,7 +406,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Session-%3ELocc872f91>$Session->Lock()  </a>
+			<a href=#%24Session-%3EUnc1c1024f>$Session->UnLock()</a>
 			</font>
 			</td>
 		
@@ -399,29 +422,13 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Session-%3EUnc1c1024f>$Session->UnLock()</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#%24Request-%3ECoe6d79e01>$Request->Cookies($name [,$key])</a>
-			</font>
-			</td>
-							
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
 			
 			</font>
 			</td>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Request-%3EFi6799fcec>$Request->FileUpload($form_field, $key)</a>
+			<a href=#%24Request-%3ECoe6d79e01>$Request->Cookies($name [,$key])</a>
 			</font>
 			</td>
 							
@@ -437,7 +444,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Request-%3EFo76659178>$Request->Form($name)</a>
+			<a href=#%24Request-%3EFi6799fcec>$Request->FileUpload($form_field, $key)</a>
 			</font>
 			</td>
 							
@@ -453,7 +460,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Request-%3EPa455879ca>$Request->Params($name)</a>
+			<a href=#%24Request-%3EFo76659178>$Request->Form($name)</a>
 			</font>
 			</td>
 							
@@ -469,7 +476,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Request-%3EQu7330a0a3>$Request->QueryString($name)</a>
+			<a href=#%24Request-%3EPa455879ca>$Request->Params($name)</a>
 			</font>
 			</td>
 							
@@ -485,7 +492,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Request-%3ESe3a73f873>$Request->ServerVariables($name)</a>
+			<a href=#%24Request-%3EQu7330a0a3>$Request->QueryString($name)</a>
 			</font>
 			</td>
 							
@@ -501,7 +508,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			
+			<a href=#%24Request-%3ESe3a73f873>$Request->ServerVariables($name)</a>
 			</font>
 			</td>
 							
@@ -512,6 +519,22 @@ and simple aliases for common functions.</font>
 			<td valign=top >
 			<font face="lucida console" size=-1>
 			<a href=#%24Response-%3E%7Bd81fcef3>$Response->{Clean} = 0-9;</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#%24Response-%3E%7Bc7488fa7>$Response->{ContentType} = "text/html"</a>
 			</font>
 			</td>
 		
@@ -527,7 +550,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3E%7Bc7488fa7>$Response->{ContentType} = "text/html"</a>
+			<a href=#%24Response-%3E%7Bbbff130a>$Response->{Debug} = 1|0</a>
 			</font>
 			</td>
 		
@@ -543,7 +566,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3E%7Bbbff130a>$Response->{Debug} = 1|0</a>
+			<a href=#%24Response-%3E%7Bf2954302>$Response->{Expires} = $time</a>
 			</font>
 			</td>
 		
@@ -559,7 +582,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3E%7Bf2954302>$Response->{Expires} = $time</a>
+			<a href=#%24Response-%3E%7B0a525d33>$Response->{ExpiresAbsolute} = $date</a>
 			</font>
 			</td>
 		
@@ -575,7 +598,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3E%7B0a525d33>$Response->{ExpiresAbsolute} = $date</a>
+			<a href=#%24Response-%3E%7Bf2167225>$Response->{FormFill} = 0|1</a>
 			</font>
 			</td>
 		
@@ -591,7 +614,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3E%7Bf2167225>$Response->{FormFill} = 0|1</a>
+			<a href=#%24Response-%3E%7Bf284792c>$Response->{IsClientConnected}</a>
 			</font>
 			</td>
 		
@@ -607,7 +630,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3E%7Bf284792c>$Response->{IsClientConnected}</a>
+			<a href=#%24Response-%3E%7Bc48a3e9e>$Response->{PICS}</a>
 			</font>
 			</td>
 		
@@ -623,7 +646,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3E%7Bc48a3e9e>$Response->{PICS}</a>
+			<a href=#%24Response-%3E%7B7098f2f6>$Response->{Status} = $status</a>
 			</font>
 			</td>
 		
@@ -639,7 +662,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3E%7B7098f2f6>$Response->{Status} = $status</a>
+			<a href=#%24Response-%3EA8c17d8af>$Response->AddHeader($name, $value)</a>
 			</font>
 			</td>
 		
@@ -655,7 +678,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EA8c17d8af>$Response->AddHeader($name, $value)</a>
+			<a href=#%24Response-%3EA1b47bb43>$Response->AppendToLog($message)</a>
 			</font>
 			</td>
 		
@@ -671,7 +694,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EA1b47bb43>$Response->AppendToLog($message)</a>
+			<a href=#%24Response-%3EB202b8013>$Response->BinaryWrite($data)</a>
 			</font>
 			</td>
 		
@@ -687,7 +710,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EB202b8013>$Response->BinaryWrite($data)</a>
+			<a href=#%24Response-%3EC08958c05>$Response->Clear()</a>
 			</font>
 			</td>
 		
@@ -703,7 +726,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EC08958c05>$Response->Clear()</a>
+			<a href=#%24Response-%3ECd77d06d7>$Response->Cookies($name, [$key,] $value)</a>
 			</font>
 			</td>
 		
@@ -719,7 +742,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3ECd77d06d7>$Response->Cookies($name, [$key,] $value)</a>
+			<a href=#%24Response-%3EDe321f073>$Response->Debug(@args)</a>
 			</font>
 			</td>
 		
@@ -735,7 +758,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EDe321f073>$Response->Debug(@args)</a>
+			<a href=#%24Response-%3EE295b6523>$Response->End()</a>
 			</font>
 			</td>
 		
@@ -751,7 +774,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EE295b6523>$Response->End()</a>
+			<a href=#%24Response-%3EE0139cee1>$Response->ErrorDocument($code, $uri)</a>
 			</font>
 			</td>
 		
@@ -767,7 +790,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EE0139cee1>$Response->ErrorDocument($code, $uri)</a>
+			<a href=#%24Response-%3EF8d6e0efc>$Response->Flush()</a>
 			</font>
 			</td>
 		
@@ -783,7 +806,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EF8d6e0efc>$Response->Flush()</a>
+			<a href=#%24Response-%3EI2a8df2f3>$Response->Include($filename, @args)</a>
 			</font>
 			</td>
 		
@@ -799,7 +822,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EI2a8df2f3>$Response->Include($filename, @args)</a>
+			<a href=#%24Response-%3EIa3beea1e>$Response->Include(\%cache_args, @sub_args) *CACHE API*</a>
 			</font>
 			</td>
 		
@@ -815,7 +838,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EIa3beea1e>$Response->Include(\%cache_args, @sub_args) *CACHE API*</a>
+			<a href=#%24Response-%3EI368566a8>$Response->Include(\$script_text, @args)</a>
 			</font>
 			</td>
 		
@@ -831,7 +854,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EI368566a8>$Response->Include(\$script_text, @args)</a>
+			<a href=#%24Response-%3EIbe084bb0>$Response->IsClientConnected()</a>
 			</font>
 			</td>
 		
@@ -847,7 +870,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3EIbe084bb0>$Response->IsClientConnected()</a>
+			<a href=#%24Response-%3ER0203b227>$Response->Redirect($url)</a>
 			</font>
 			</td>
 		
@@ -857,26 +880,6 @@ and simple aliases for common functions.</font>
 			</font>
 			</td>
 							
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3ER0203b227>$Response->Redirect($url)</a>
-			</font>
-			</td>
-		<td>&nbsp;</td>					
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#%24Response-%3ET13ecbe6d>$Response->TrapInclude($file, @args)</a>
-			</font>
-			</td>
-		<td>&nbsp;</td>					
 		</tr>
 			
 	</table>
@@ -2065,7 +2068,7 @@ but not as of the 2.11 release.</font>
 <tr bgcolor=#063678>
 	<td colspan=3 align=center width=80%>
 	<font face=verdana color=white size=-1>
-	Copyright &copy; 1998-2002, Joshua Chamas, 
+	Copyright &copy; 1998-2003,
 	<a href=http://www.chamas.com><font color=white>Chamas Enterprises Inc.</font></a>
 	</font>
 	</td>
