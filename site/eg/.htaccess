@@ -51,7 +51,7 @@ PerlSetVar UseStrict 1
 	PerlHandler Apache::ASP
 	PerlSetVar NoState 1 
 	PerlSetVar XSLT template.xsl
-	PerlSetVar XSLTCacheSize 10
+	PerlSetVar XSLTCache 1
 </Files>
 
 <Files ~ (\.inc|\.htaccess)>

@@ -4,7 +4,7 @@
 
 <!--#include file="header.inc"-->
 <%
-if($ENV{GATEWAY_INTERFACE} =~ /^CGI/) {
+if(! $ENV{MOD_PERL}) {
   print "<B>WARNING:</B> Apache::SSI filtering doesn't work under normal CGI <hr>";
 }
 %>

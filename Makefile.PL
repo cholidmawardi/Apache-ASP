@@ -23,7 +23,7 @@ my $optional_modules =
    'CGI' => 'Required for file upload, make test, and command line ./cgi/asp script',
    'Compress::Zlib' => "Required for html gzip text compression for browsers that support it",
    'DB_File' => 'Optional module for StateDB config option',
-   'MLDBM::Sync::SDBM_File' => 'Optional module for StateDB config option that is faster than DB_File on Linux',
+   'MLDBM::Sync::SDBM_File' => 'Optional module for StateDB config option that is faster than DB_File on Linux.  Also default CacheDB for XSLT caching.',
    'HTML::Clean' => 'Compress text/html with Clean config or $Response->{Clean} set to 1-9',
    'HTML::FillInForm' => 
    'Enables FormFill feature which will auto fill forms from $Request->Form data',

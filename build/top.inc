@@ -341,7 +341,9 @@ for $data (@order) {
   if(-e $extra_include) {
      my $data = $Response->TrapInclude($extra_include);
      $$data =~ s/(<td[^>]*>)/$1<font size=-1 face=verdana,helvetica,arial>/isg;
-     print $$data;
+     %>
+       <%= $$data %>
+     <%
   } else {
     print "&nbsp;";
   }

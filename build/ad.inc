@@ -5,61 +5,6 @@ use vars qw ($Ads $PageCount);
 if($Ads && ( $0 !~ /index.html$/ )) { # turn off for now
 	$PageCount++;
 	%>
-<% ############# ValueClick code ########  %>
-<center>
-<table><tr><td>
-<nobr>
-<!-- VC active -->
-<SCRIPT LANGUAGE="JavaScript">
-<!--
-// ValueParameters
-ValueHost = "hs0215003";
-ValueLoaded = false;
-ValueID = "valueid";
-ValueVersion = "1.1";
-ValueWidth = 468;
-ValueHeight = 60;
-//-->
-</SCRIPT>
-<SCRIPT LANGUAGE="Javascript" SRC="http://oz.valueclick.com/jsmaster"></SCRIPT>
-<SCRIPT LANGUAGE="JavaScript">
-<!--
-if (ValueLoaded) ValueShowAd();
-//-->
-</SCRIPT>
-<NOSCRIPT>
-<A HREF="http://kansas.valueclick.com/redirect?host=hs0215003&size=468x60&b=indexpage&v=0" TARGET="_top"><IMG BORDER="0" WIDTH="468" HEIGHT="60" ALT="Click here to visit our sponsor"
-SRC="http://kansas.valueclick.com/cycle?host=hs0215003&size=468x60&b=indexpage&noscript=1"></A>
-</NOSCRIPT>
-<!-- vc active -->
-</td>
-<td>
-<!-- VC active -->
-<SCRIPT LANGUAGE="JavaScript">
-<!--
-// ValueParameters
-ValueHost = "hs0215003";
-ValueLoaded = false;
-ValueID = "valueid";
-ValueVersion = "1.1";
-ValueWidth = 120;
-ValueHeight = 60;
-//-->
-</SCRIPT>
-<SCRIPT LANGUAGE="Javascript" SRC="http://oz.valueclick.com/jsmaster"></SCRIPT>
-<SCRIPT LANGUAGE="JavaScript">
-<!--
-if (ValueLoaded) ValueShowAd();
-//-->
-</SCRIPT>
-<NOSCRIPT>
-<A HREF="http://kansas.valueclick.com/redirect?host=hs0215003&size=120x60&b=indexpage&v=0" TARGET="_top"><IMG BORDER="0" WIDTH="120" HEIGHT="60" ALT="Click here to visit our sponsor"
-SRC="http://kansas.valueclick.com/cycle?host=hs0215003&size=120x60&b=indexpage&noscript=1"></A>
-</NOSCRIPT>
-<!-- vc active -->
-</nobr>                        
-</td></tr></table>
-</center>
 
 =pod
 
@@ -76,7 +21,6 @@ SRC="http://kansas.valueclick.com/cycle?host=hs0215003&size=120x60&b=indexpage&n
                </TR></TABLE></CENTER>
                <!--- End HitExchange Code --->
 
-
 	<!-- BEGIN LINKEXCHANGE CODE --> 
 	<center><iframe src="http://leader.linkexchange.com/<%=$PageCount%>/X709880/showiframe?" 
 	width=468 height=60 marginwidth=0 marginheight=0 hspace=0 vspace=0 frameborder=0 scrolling=no>
@@ -87,9 +31,7 @@ SRC="http://kansas.valueclick.com/cycle?host=hs0215003&size=120x60&b=indexpage&n
 	target="_top"><img src="http://leader.linkexchange.com/<%=$PageCount%>/X709880/showlogo?" 
 	width=468 height=16 border=0 ismap alt=""></a><br></center>
 	<!-- END LINKEXCHANGE CODE -->
-
 =cut
-
 
 <% } %>
 

@@ -38,6 +38,7 @@ if($Request->ServerVariables('HTTP_REFERER') =~ /nodeworks\.com|chamas\.com|apac
 	%>
 	<tr><td colspan="2">
 
+
 =pod
 
 		<!--- Begin HitExchange Code --->
@@ -53,7 +54,6 @@ if($Request->ServerVariables('HTTP_REFERER') =~ /nodeworks\.com|chamas\.com|apac
                </TR></TABLE></CENTER>
                <!--- End HitExchange Code --->
 
-=cut
 
 	<!-- BEGIN LINKEXCHANGE CODE --> 
 	<center><iframe src="http://leader.linkexchange.com/<%=$PageCount%>/X709880/showiframe?" 
@@ -65,6 +65,8 @@ if($Request->ServerVariables('HTTP_REFERER') =~ /nodeworks\.com|chamas\.com|apac
 	target="_top"><img src="http://leader.linkexchange.com/<%=$PageCount%>/X709880/showlogo?" 
 	width=468 height=16 border=0 ismap alt=""></a><br></center>
 	<!-- END LINKEXCHANGE CODE -->
+
+=cut
 
 	</tr></td>
 <%

@@ -185,7 +185,7 @@ sub pod2html {
 	if(/^\s+[^\s]/ || /^\s*$/) {
 	    if(! $pre) {
 		#			$_ = "<pre>$_";
-		$pre_tag = "<font face=\"lucida console,courier new\" size=3><pre>";
+		$pre_tag = "<font face=\"courier new\" size=3><pre>";
 		$pre = 1;
 	    }
 	} else {

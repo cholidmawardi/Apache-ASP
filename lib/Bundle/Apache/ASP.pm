@@ -18,6 +18,8 @@ Bundle::Apache::ASP - Install Apache::ASP and related modules
 
 MLDBM		  - This is used for reading and writing multi-level hashes on disk
 
+MLDBM::Sync       - MLDBM::Sync::SDBM_File, included in this module, is used for XSLTCache, and better StateDB than the defualt SDBM_File.
+
 Data::Dumper	  - Serializes data for MLDBM
 
 Digest::MD5	  - 32 byte hash algorithm for cookie session-id
@@ -35,8 +37,6 @@ Devel::Symdump	  - Used for StatINC setting, which reloads modules dynamically
 Apache::DBI	  - Cache database connections per process
 
 Compress::Zlib    - Gzip compress HTML output on the fly
-
-Tie::Cache        - XLSTCacheSize, XSLT caching support
 
 Time::HiRes       - Sub second timing of execution with Debug 3 enabled
 

@@ -7,7 +7,7 @@
   <paragraph>This is my first XSLT enabled Apache::ASP XML script! </paragraph>
   <paragraph>
 	I am quite pleased with how well this works, and speedy
-	too once the XML -> XSL tranformation gets cached with Tie::Cache.
+	too once the XML -> XSL tranformation gets cached with XSLTCache setting.
   </paragraph>
   <paragraph>
 	Both the <file src="<%=&basename($0)%>" title="XML file" /> 

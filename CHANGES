@@ -1,34 +1,56 @@
-$MODULE=Apache::ASP; $VERSION = 2.19; $DATE="TBA";
+$MODULE=Apache::ASP; $VERSION = 2.21; $DATE="8/5/2001";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
 
- +update docs in various parts
+ +Documented RequestParams config in CONFIG misc section.
 
- +added ./make_httpd/build_httpds.sh scripts for quick builds
-  of apache + mod_perl + mod_ssl
+ +Documented new XSLT caching directives.
 
- ++plain CGI mode available for ASP execution.  
-  cgi/asp script can now be used to execute ASP 
-  scripts in CGI mode.  See CGI perldoc section for more info.
-  The examples in ./site/eg have been set up to run
-  in cgi mode if desired.  Configuration in CGI section
-  only testing for Apache on Linux.
+ +Updated ./site/eg/.htaccess XSLT example config
+  to use XSLTCache setting.
 
- - Fixed some faulty or out of date docs in XML/XSLT section.
+ +New FAQ section on why perl variables are sticky globals,
+  suggested by Mark Seger.
 
- +added t/server_mail.t test for $Server->Mail(), requires
-  Net::SMTP to be configured properly to succeed.
+ -push Global directory onto @INC during ASP script execution
+  Protect contents of original @INC with local.  This makes
+  things compatible with .09 Apache::ASP where we always had
+  Global in @INC.  Fixed needed by Henrik Tougaard
 
- +Net::SMTP debugging not enabled by Debug 1,2,3 configs,
-  not only when system debugging is set with Debug -1,-2,-3
-  However, a Debug param passed to $Server->Mail() will 
-  sucessfully override the Debug -1,-2,-3 setting even
-  when its Debug => 0
+ - ; is a valid separator like & for QueryString Parameters
+  Fixed wanted by Anders
 
- +Check for undef values during stats for inline includes
-  so we don't trigger unintialized warnings
+ -XSMLSubsMatch doc fix in CONFIG section
+ 
+ +Reduces number of Session groups to 16 from 32, so 
+  session manager for small user sets will be that much faster.
 
- +Documented ; may separate many directories in the IncludesDir
-  setting for creating a more flexible includes search path.
+ +optimizations for internal database, $Application, and $Session
+  creation.
+
+ +XSLTCache must be set for XSLT caching to begin using CacheDir
+
+ +CacheDB like StateDB bug sets dbm format for caching, which
+  defaults to MLDBM::Sync::SDBM_File, which works well for caching
+  output sizes < 50K
+
+ +CacheDir config for XSLT caching ... defaults to StateDir
+ 
+ +CacheSize in bytes determines whether the caches in CacheDir
+  are deleted at the end of the request.  A cache will be 
+  reset in this way back to 0 bytes. Defaults to 10000000 bytes
+  or about 10M.
+
+ +Caching infrastructure work that is being used in XSLT
+  can be leveraged later for output caching of includes,
+  or arbitrary user caching.
+
+ -t/server_mail.t test now uses valid email for testing
+  purposes ... doesn't actually send a mail, but for SMTP
+  runtime validation purposes it should be OK.
+
+ +fixed where POST data was read from under MOD_PERL,
+  harmless bug this was that just generated the wrong
+  system debugging message.

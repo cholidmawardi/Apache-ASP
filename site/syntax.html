@@ -277,12 +277,12 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<p>
 	<a name=General></a>
 	<font face=verdana><font size=+0 color=#555555><b>General</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>ASP embedding syntax allows one to embed code in html in 2 simple ways.
 The first is the &lt;% xxx %&gt; tag in which xxx is any valid perl code.
 The second is &lt;%= xxx %&gt; where xxx is some scalar value that will
 be inserted into the html directly.  An easy print.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
   A simple asp page would look like:
   
   &lt;!-- sample here --&gt;
@@ -302,17 +302,17 @@ above iterates over the html without any special syntax.</font>
 	<p>
 	<a name=XMLSubs></a>
 	<font face=verdana><font size=+0 color=#555555><b>XMLSubs</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>XMLSubs allows a developer to define custom handlers for
 HTML &amp; XML tags, which can extend the natural syntax
 of the ASP environment.  Configured like:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
   PerlSetVar XMLSubsMatch site:\w+
 </pre></font>A simple tag like:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
   &lt;site:header title=&quot;Page Title&quot; /&gt;
 </pre></font>can be constructed that could translate into:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
   sub site::header {
       my $args = shift;
       print &quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;$args-&gt;{title}&lt;/title&gt;&lt;/head&gt;\n&quot;;
@@ -320,12 +320,12 @@ of the ASP environment.  Configured like:
   }
 </pre></font>Better yet, one can use this functionality to trap
 and post process embedded HTML &amp; XML like:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
   &lt;site:page title=&quot;Page Title&quot;&gt;
     ... some HTML here ...
   &lt;/site:page&gt;
 </pre></font>and then:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
   sub site::page {
     my($args, $html) = @_;
     &amp;site::header($args);
@@ -341,12 +341,12 @@ to try an XSLT approach, also supported by Apache::ASP.</font>
 	<p>
 	<a name=Editors></a>
 	<font face=verdana><font size=+0 color=#555555><b>Editors</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>As Apache::ASP supports a mixing of perl and HTML,
 any editor which supports development of one or the 
 other would work well.  The following editors are
 known to work well for developing Apache::ASP web sites:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
  * Emacs, in perl or HTML modes.  For a mmm-mode config
    that mixes HTML &amp; perl modes in a single buffer, check 
    out the editors/mmm-asp-perl.el file in distribution.
@@ -355,8 +355,9 @@ known to work well for developing Apache::ASP web sites:
 
  * Vim, special syntax support with editors/aasp.vim file in distribution.
 
- * UltraEdit32 ( <a href=http://www.ultraedit.com/>http://www.ultraedit.com/</a> ) has syntax highlighting, good macros and a configurable
-   wordlist (so one can have syntax highlighting both for Perl and HTML).
+ * UltraEdit32 ( <a href=http://www.ultraedit.com/>http://www.ultraedit.com/</a> ) has syntax highlighting, 
+   good macros and a configurable wordlist (so one can have syntax 
+   highlighting both for Perl and HTML).
 </pre></font>Please feel free to suggest your favorite development
 environment for this list.</font>
 	

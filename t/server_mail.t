@@ -5,7 +5,7 @@ use Apache::ASP;
 			   # defaults to localhost for mail relay
 			   # but will lookup in Net::Config too for
 			   # other hosts
-			   MailHost => '127.0.0.1'
+			   MailHost => '127.0.0.1',
 			   );
 
 __END__
@@ -23,7 +23,9 @@ if($@) {
 $t->eok($Server->Mail({ 
 			# won't actually send the mail in test mode
 			Test => 1,
-			To => "INVALID_USER\@apache-asp.org",
+			# make the address fairly legit, in case the SMTP
+			# is validating in realtime
+			To => "asptest\@chamas.com",
 			# no from, since some mail gateways may not relay * addresses
 			# so we allow for From not to be set while Test is set
 			# From => "INSTALL_TEST\@apache-asp.org",

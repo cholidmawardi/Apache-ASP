@@ -236,14 +236,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <font size=+0 face=verdana,arial>
 
 <font face=verdana><font size=+1 color=#555555><b>CGI</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> has been the standard way of deploying web applications long before
 ASP came along.  In the CGI gateway world, <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> has been a widely
 used module in building CGI applications, and Apache::ASP is compatible
 with scripts written with CGI.pm.  Also, as of version 2.19, Apache::ASP
 can run in standalone CGI mode for the Apache web server without
 <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> being available.  See &quot;Standalone CGI Mode&quot; section below.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>Following are some special notes with respect to compatibility with CGI
 and CGI.pm.  Use of CGI.pm in any of these ways was made possible through 
 a great amount of work, and is not guaranteed to be portable with other perl 
@@ -310,19 +310,19 @@ ASP implementations, as other ASP implementations will likely be more limited.</
 	<p>
 	<a name=Standalone%20CGI%20Mode%2C%20without%20mod_perl></a>
 	<font face=verdana><font size=+0 color=#555555><b>Standalone CGI Mode, without mod_perl</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>As of version 2.19, Apache::ASP scripts may be run as standalone
 <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> scripts without <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> being loaded into Apache.  Work
 to date has only been done with mod_cgi scripts under Apache on a
 Unix platform, and it is unlikely to work under other web servers 
 or Win32 operating systems without further development.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>To run the ./site/eg scripts as CGI scripts, you copy the 
 ./site directory to some location accessible by your web
 server, in this example its /usr/local/apache/htdocs/aspcgi, 
 then in your httpd.conf activate Apache::ASP cgi
 scripts like so:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
  Alias /aspcgi/ /usr/local/apache/htdocs/aspcgi/
  &lt;Directory /usr/local/apache/htdocs/aspcgi/eg/&gt;
    AddType application/x-httpd-cgi .htm
@@ -337,7 +337,7 @@ scripts like so:
 into the installed ./site/eg directory.  This is 
 so the CGI execution line at the top of those scripts
 will invoke the asp wrapper like so:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
  #!/usr/local/bin/perl asp
 </pre></font>The asp script is a cgi wrapper that sets up the 
 Apache::ASP environment in lieu of the normal mod_perl
@@ -346,9 +346,9 @@ data available under mod_cgi, the asp script will load
 a asp.config file that may define a hash %Config of
 data for populating the dir_config() data.  An example
 of a complex asp.config file is at <a href=eg/asp.config>./site/eg/asp.config</a>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>So, a trivial asp.config file might look like:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
  # asp.config
  %Config = (
    'Global' =&gt; '.',
@@ -363,12 +363,12 @@ to be defined.</font>
 	<p>
 	<a name=CGI.pm></a>
 	<font face=verdana><font size=+0 color=#555555><b>CGI.pm</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm is a very useful module that aids developers in 
 the building of these applications, and Apache::ASP has been made to 
 be compatible with function calls in <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a>.  Please see cgi.htm in the 
 ./site/eg directory for a sample ASP script written almost entirely in CGI.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>As of version 0.09, use of CGI.pm for both input and output is seamless
 when working under Apache::ASP.  Thus if you would like to port existing
 cgi scripts over to Apache::ASP, all you need to do is wrap &lt;% %&gt; around
@@ -379,9 +379,9 @@ web applications.</font>
 	<p>
 	<a name=Query%20Object%20Initialization></a>
 	<font face=verdana><font size=+0 color=#555555><b>Query Object Initialization</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>You may create a <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm $query object like so:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 	use CGI;
 	my $query = new CGI;
 </pre></font>As of Apache::ASP version 0.09, form input may be read in 
@@ -393,12 +393,12 @@ routines.</font>
 	<p>
 	<a name=CGI%20headers></a>
 	<font face=verdana><font size=+0 color=#555555><b>CGI headers</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>Not only can you use the <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm $query-&gt;header() method
 to put out headers, but with the CgiHeaders config option
 set to true, you can also print &quot;Header: value\n&quot;, and add 
 similar lines to the top of your script, like:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
  Some-Header: Value
  Some-Other: OtherValue
 
@@ -406,7 +406,7 @@ similar lines to the top of your script, like:
 </pre></font>Once there are no longer any cgi style headers, or the 
 there is a newline, the body of the script begins. So
 if you just had an asp script like:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
     print join(&quot;:&quot;, %{$Request-&gt;QueryString});
 </pre></font>You would likely end up with no output, as that line is
 interpreted as a header because of the semicolon.  When doing
@@ -416,12 +416,12 @@ you will avoid this problem.</font>
 	<p>
 	<a name=print%28%29ing%20CGI></a>
 	<font face=verdana><font size=+0 color=#555555><b>print()ing CGI</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> is notorious for its print() statements, and the functions in <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> 
 usually return strings to print().  You can do this under Apache::ASP,
 since print just aliases to $Response-&gt;Write().  Note that $| has no
 affect.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 	print $query-&gt;header();
 	print $query-&gt;start_form();
 </pre></font>
@@ -429,14 +429,14 @@ affect.
 	<p>
 	<a name=File%20Upload></a>
 	<font face=verdana><font size=+0 color=#555555><b>File Upload</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm is used for implementing reading the input from file upload.  You
 may create the file upload form however you wish, and then the 
 data may be recovered from the file upload by using $Request-&gt;Form().
 Data from a file upload gets written to a file handle, that may in
 turn be read from.  The original file name that was uploaded is the 
 name of the file handle.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 	my $filehandle = $Request-&gt;Form('file_upload_field_name');
 	print $filehandle; # will get you the file name
 	my $data;
@@ -445,11 +445,11 @@ name of the file handle.
 	};
 </pre></font>Please see the docs on <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> (try perldoc CGI) for more information
 on this topic, and <a href=eg/file_upload.asp>./site/eg/file_upload.asp</a> for an example of its use.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>There is a $Request-&gt;FileUpload() API extension that you can use to get 
 more data about a file upload, so that the following properties are
 available for querying:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
   my $file_upload = $Request-&gt;{FileUpload}{upload_field};
   $file_upload-&gt;{BrowserFile}
   $file_upload-&gt;{FileHandle}

@@ -236,7 +236,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <font size=+0 face=verdana,arial>
 
 <font face=verdana><font size=+1 color=#555555><b>SESSIONS</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>Cookies are used by default for user $Session support ( see <a href=objects.html><font size=-1 face=verdana><b>OBJECTS</b></font></a> ).  
 In order to track a web user and associate server side data 
 with that client, the web server sets, and the web client returns 
@@ -244,13 +244,13 @@ a 32 byte session id identifier cookie.  This implementation
 is very secure and  may be used in secure HTTPS transactions, 
 and made stronger with SecureSession and ParanoidSession 
 settings (see <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> ).
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>However good cookies are for this kind of persistent
 state management between HTTP requests, they have long 
 been under fire for security risks associated with
 JavaScript security exploits and privacy abuse by 
 large data tracking companies. 
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>Because of these reasons, web users will sometimes turn off
 their cookies, rendering normal ASP session implementations
 powerless, resulting in a new $Session generated every request.
@@ -258,7 +258,7 @@ This is not good for ASP style sessions.</font>
 	<p>
 	<a name=Cookieless%20Sessions></a>
 	<font face=verdana><font size=+0 color=#555555><b>Cookieless Sessions</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
  *** See WARNING Below ***
 </pre></font>So we now have more ways to track sessions with the 
 SessionQuery* <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> settings, that allow a web developer 
@@ -267,7 +267,7 @@ of cookies is denied.  The implementations work such that
 if a user has cookies turned on, then cookies will be 
 used, but for those users with cookies turned off,
 the session ids will be parsed into document URLs.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>The first and easiest method that a web developer may use 
 to implement cookieless sessions are with SessionQueryParse*
 directives which enable Apache::ASP to the parse the session id
@@ -275,10 +275,10 @@ into document URLs on the fly.  Because this is resource
 inefficient, there is also the SessionQuery* directives
 that may be used with the $Server-&gt;URL($url,\%params) method to 
 generate custom URLs with the session id in its query string.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>To see an example of these cookieless sessions in action, 
 check out the <a href=eg/session_query_parse.asp>./site/eg/session_query_parse.asp</a> example.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
  *** WARNING ***
 </pre></font>If you do use these methods, then be VERY CAREFUL
 of linking offsite from a page that was accessed with a 
@@ -287,11 +287,11 @@ id will show up in the HTTP_REFERER logs of the linked to
 site, and a malicious hacker could use this information to
 compromise the security of your site's $Sessions, even if 
 these are run under a secure web server.  
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>In order to shake a session id off an HTTP_REFERER for a link 
 taking a user offsite, you must point that link to a redirect 
 page that will redirect a user, like so:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
  &lt;% 
     # &quot;cross site scripting bug&quot; prevention
     my $sanitized_url = 
@@ -310,7 +310,7 @@ page that will redirect a user, like so:
 with the &lt;meta&gt; tag, the HTTP_REFERER will be set to this page.
 Just be sure to not link to this page with a session id in its
 query string.  
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>Unfortunately a simple $Response-&gt;Redirect() will not work here,
 because the web browser will keep the HTTP_REFERER of the 
 original web page if only a normal redirect is used.</font>

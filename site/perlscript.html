@@ -236,19 +236,19 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <font size=+0 face=verdana,arial>
 
 <font face=verdana><font size=+1 color=#555555><b>PERLSCRIPT</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>Much work has been done to bring compatibility with ASP applications
 written in <a href=http://www.activestate.com/ActivePerl/><font size=-1 face=verdana><b>PerlScript</b></font></a> under IIS.  Most of that work revolved around
 bringing a Win32::OLE Collection interface to many of the objects
 in Apache::ASP, which are natively written as perl hashes.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>New as of version 2.05 is new functionality enabled with the 
 CollectionItem setting, to giver better support to more recent PerlScript syntax.
 This seems helpful when porting from an IIS/PerlScript code base.
 Please see the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> section for more info.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>The following objects in Apache::ASP respond as Collections:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
         $Application
 	$Session
 	$Request-&gt;FileUpload *
@@ -263,7 +263,7 @@ Please see the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></fon
 </pre></font>And as such may be used with the following syntax, as compared
 with the Apache::ASP native calls.  Please note the native Apache::ASP
 interface is compatible with the deprecated PerlScript interface.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
  C = PerlScript Compatibility	N = Native Apache::ASP 
   
  ## Collection-&gt;Contents($name) 
@@ -289,7 +289,7 @@ interface is compatible with the deprecated PerlScript interface.
  [N] $Response-&gt;{Cookies}{Testing} = {Value =&gt; Extra, Path =&gt; '/'};
  [N] print $Request-&gt;{Cookies}{Testing} . &quot;&lt;br&gt;\n&quot;;
 </pre></font>Several incompatibilities exist between PerlScript and Apache::ASP:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
  &gt; Collection-&gt;{Count} property has not been implemented.
  &gt; VBScript dates may not be used for Expires property of cookies.
  &gt; Win32::OLE::in may not be used.  Use keys() to iterate over.

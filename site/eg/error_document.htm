@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl asp
 
 <% 
- if($ENV{GATEWAY_INTERFACE} =~ /^CGI/) {
+ if(! $ENV{MOD_PERL}) {
    print "<b>ERROR:</b> \$Response->ErrorDocument() is not implemented in CGI mode\n";
    $Response->End;
  }

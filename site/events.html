@@ -236,14 +236,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <font size=+0 face=verdana,arial>
 
 <font face=verdana><font size=+1 color=#555555><b>EVENTS</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>The ASP platform allows developers to create Web Applications.
 In fulfillment of real software requirements, ASP allows 
 event-triggered actions to be taken, which are defined in
 a global.asa file.  The global.asa file resides in the 
 Global directory, defined as a config option , and may
 define the following actions:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 	Action			Event
 	------			------
         Script_OnStart *	Beginning of Script execution
@@ -258,7 +258,7 @@ define the following actions:
     added because they are incredibly useful
 </pre></font>These actions must be defined in the $Global/global.asa file
 as subroutines, for example:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
   sub Session_OnStart {
       $Application-&gt;{$Session-&gt;SessionID()} = started;
   }
@@ -266,7 +266,7 @@ as subroutines, for example:
 web application, each user has one unique $Session.  This 
 session expires, after which the user will have a new
 $Session upon revisiting.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>A web application starts when the user visits a page in that
 application, and has a new $Session created.  Right before
 the first $Session is created, the $Application is created.
@@ -334,30 +334,30 @@ expires also.</font>
 	<p>
 	<a name=Script_OnStart%20%26%20Script_OnEnd></a>
 	<font face=verdana><font size=+0 color=#555555><b>Script_OnStart & Script_OnEnd</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>The script events are used to run any code for all scripts
 in an application defined by a global.asa.  Often, you would
 like to run the same code for every script, which you would
 otherwise have to add by hand, or add with a file include,
 but with these events, just add your code to the global.asa,
 and it will be run.  
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>There is one caveat.  Code in Script_OnEnd is not guaranteed 
-to be run when the user hits a STOP button, since the program
+to be run when $Response-&gt;End() is called, since the program
 execution ends immediately at this event.  To always run critical
 code, use the API extension:
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 	$Server-&gt;RegisterCleanup()
 </pre></font>
 	
 	<p>
 	<a name=Session_OnStart></a>
 	<font face=verdana><font size=+0 color=#555555><b>Session_OnStart</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>Triggered by the beginning of a user's session, Session_OnStart
 gets run before the user's executing script, and if the same
 session recently timed out, after the session's triggered Session_OnEnd.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>The Session_OnStart is particularly useful for caching database data,
 and avoids having the caching handled by clumsy code inserted into
 each script being executed.</font>
@@ -365,36 +365,36 @@ each script being executed.</font>
 	<p>
 	<a name=Session_OnEnd></a>
 	<font face=verdana><font size=+0 color=#555555><b>Session_OnEnd</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>Triggered by a user session ending, Session_OnEnd can be useful
 for cleaning up and analyzing user data accumulated during a session.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>Sessions end when the session timeout expires, and the StateManager
 performs session cleanup.  The timing of the Session_OnEnd does not
 occur immediately after the session times out, but when the first 
 script runs after the session expires, and the StateManager allows
 for that session to be cleaned up.  
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>So on a busy site with default SessionTimeout (20 minutes) and 
 StateManager (10 times) settings, the Session_OnEnd for a particular 
 session should be run near 22 minutes past the last activity that Session saw.
 A site infrequently visited will only have the Session_OnEnd run
 when a subsequent visit occurs, and theoretically the last session
 of an application ever run will never have its Session_OnEnd run.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>Thus I would not put anything mission-critical in the Session_OnEnd,
 just stuff that would be nice to run whenever it gets run.</font>
 	
 	<p>
 	<a name=Script_OnFlush></a>
 	<font face=verdana><font size=+0 color=#555555><b>Script_OnFlush</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>API extension. This event will be called prior to flushing
 the $Response buffer to the web client.  At this time,
 the $Response-&gt;{BinaryRef} buffer reference may be used to modify 
 the buffered output at runtime to apply global changes to scripts 
 output without having to modify all the scripts.
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
  sub Script_OnFlush {
    my $ref = $Response-&gt;{BinaryRef};
    $$ref =~ s/\s+/ /sg; # to strip extra white space
@@ -404,7 +404,7 @@ output without having to modify all the scripts.
 	<p>
 	<a name=Application_OnStart></a>
 	<font face=verdana><font size=+0 color=#555555><b>Application_OnStart</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>This event marks the beginning of an ASP application, and 
 is run just before the Session_OnStart of the first Session
 of an application.  This event is useful to load up
@@ -413,7 +413,7 @@ $Application with data that will be used in all user sessions.</font>
 	<p>
 	<a name=Application_OnEnd></a>
 	<font face=verdana><font size=+0 color=#555555><b>Application_OnEnd</b></font><p>
-<font face="lucida console,courier new" size=3><pre>
+<font face="courier new" size=3><pre>
 </pre></font>The end of the application is marked by this event, which
 is run after the last user session has timed out for a 
 given ASP application.</font>

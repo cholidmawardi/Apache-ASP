@@ -582,7 +582,7 @@ CONFIG
 
     Please see XML/XSLT section for instructions on its use.
 
-      PerlSetVar XMLSubsMatch ^my:
+      PerlSetVar XMLSubsMatch my:\w+
 
     XMLSubsStrict
     default 0, when set XMLSubs will only take arguments that are properly
@@ -627,10 +627,49 @@ CONFIG
 
       PerlSetVar XSLTParser XML::Sablotron
 
+    XSLTCache
+    Activate XSLT file based caching through CacheDB, CacheDir, and
+    CacheSize settings. This gives cached XSLT performance near AxKit and
+    greater than Cocoon. XSLT caches transformations keyed uniquely by XML &
+    XSLT inputs.
+
+      PerlSetVar XSLTCache 1
+
     XSLTCacheSize
-    as of version 2.11, this config is no longer supported. It may be again
-    supported in the future, but would refer to the max size in bytes of a
-    file cache.
+    as of version 2.11, this config is no longer supported.
+
+  Caching
+
+    Currently only XSLTCache uses the dbm caching layer. The caching layer
+    is built generically to be able to use it for convenient output and user
+    data caching.
+
+    CacheDB
+    Like StateDB, sets dbm format for caching. Since SDBM_File only support
+    key/values pairs of around 1K max in length, the default for this is
+    MLDBM::Sync::SDBM_File, which is very fast for < 50K file sizes. For
+    caching larger data than 50K, DB_File or GDBM_File are probably better
+    to use.
+
+      PerlSetVar CacheDB MLDBM::Sync::SDBM_File
+
+    CacheDir
+    By default, the cache directory is at StateDir/cache, but if StateDir is
+    not set, then CacheDir can be used to set the StateDir value for caching
+    purposes. This is to make things less confusing when NoState 1 is set.
+
+      PerlSetVar CacheDir /tmp/asp_demo
+
+    CacheSize
+    By default, this is 10000000, or nearly 10M of data per cache. When any
+    cache, like the XSLTCache, reaches this limit, the cache will be purged
+    by deleting the cached dbm files entirely. This is better for long term
+    running of dbms than deleting individual records, because dbm formats
+    will often degrade in performance with lots of insert & deletes.
+
+      PerlSetVar CacheSize 10000000
+
+    Currently the only cache that can be used is the XSLTCache.
 
   Miscellaneous
 
@@ -667,6 +706,13 @@ CONFIG
     support the stat() call that know about device and inode numbers.
 
       PerlSetVar InodeNames 1
+
+    RequestParams
+    Default 0, if set creates $Request->Params object with combined contents
+    of $Request->QueryString and $Request->Form. This is for developer
+    convenience simlar to CGI.pm's param() method.
+
+      PerlSetVar RequestParams 1
 
     StatINC
     default 0, if true, reloads perl libraries that have changed on disk
@@ -986,8 +1032,9 @@ SYNTAX
 
      * Vim, special syntax support with editors/aasp.vim file in distribution.
 
-     * UltraEdit32 ( http://www.ultraedit.com/ ) has syntax highlighting, good macros and a configurable
-       wordlist (so one can have syntax highlighting both for Perl and HTML).
+     * UltraEdit32 ( http://www.ultraedit.com/ ) has syntax highlighting, 
+       good macros and a configurable wordlist (so one can have syntax 
+       highlighting both for Perl and HTML).
 
     Please feel free to suggest your favorite development environment for
     this list.
@@ -1037,7 +1084,7 @@ EVENTS
     code to the global.asa, and it will be run.
 
     There is one caveat. Code in Script_OnEnd is not guaranteed to be run
-    when the user hits a STOP button, since the program execution ends
+    when $Response->End() is called, since the program execution ends
     immediately at this event. To always run critical code, use the API
     extension:
 
@@ -1109,18 +1156,35 @@ OBJECTS
     these objects as globals accessible from anywhere in your ASP
     application.
 
-      Currently the Apache::ASP object model supports the following:
-      
-        Object       -      Function
-        ------              --------
-        $Session     -      user session state
-        $Response    -      output to browser
-        $Request     -      input from browser
-        $Application -      application state
-        $Server      -      general support methods
+     The Apache::ASP object model supports the following:
+
+     Object         Function
+     ------         --------
+     $Session      - user session state
+     $Response     - output to browser
+     $Request      - input from browser
+     $Application  - application state
+     $Server       - general methods
 
     These objects, and their methods are further defined in the following
     sections.
+
+    If you would like to define your own global objects for use in your
+    scripts and includes, you can initialize them in the global.asa
+    Script_OnStart like:
+
+     use vars qw( $Form $Site ); # declare globals
+     sub Script_OnStart {
+         $Site = My::Site->new;  # init $Site object
+         $Form = $Request->Form; # alias form data
+         $Server->RegisterCleanup(sub { # garbage collection
+                                      $Site->DESTROY; 
+                                      $Site = $Form = undef; 
+                                  });
+     }
+
+    In this way you can create site wide application objects and simple
+    aliases for common functions.
 
   $Session Object
 
@@ -2130,6 +2194,14 @@ XML/XSLT
 
        PerlSetVar XSLTParser XML::Sablotron
 
+    If you would like to cache XSLT tranformations, which is highly
+    recommended, just set:
+
+      PerlSetVar XSLTCache 1
+
+    Please see the Cache settings in the CONFIG section for more about how
+    to configure the XSLTCache.
+
   Reference OSS Implementations
 
     For their huge ground breaking XML efforts, these other XML OSS projects
@@ -2369,6 +2441,27 @@ FAQ
     This is most likely that Apache is not configured to execute the
     Apache::ASP scripts properly. Check the INSTALL QuickStart section for
     more info on how to quickly set up Apache to execute your ASP scripts.
+
+    Why do variables retain their values between requests?
+    Unless scoped by my() or local(), perl variables in mod_perl are treated
+    as globals, and values set may persist from one request to another. This
+    can be seen in as simple a script as this:
+
+      <HTML><BODY>
+        $counter++;
+        $Response->Write("<BR>Counter: $counter");
+      </BODY></HTML>
+
+    The value for $counter++ will remain between requests. Generally use of
+    globals in this way is a BAD IDEA, and you can spare yourself many
+    headaches if do "use strict" perl programming which forces you to
+    explicity declare globals like:
+
+      use vars qw($counter);
+
+    You can make all your Apache::ASP scripts strict by default by setting:
+
+      PerlSetVar UseStrict 1
 
     Apache errors on the PerlHandler directive ?
     You do not have mod_perl correctly installed for Apache. The PerlHandler
@@ -2803,9 +2896,6 @@ SITES USING
             Internetowa Gielda Samochodowa          
             http://www.gielda.szczecin.pl
 
-            ManBeef
-            http://www.manbeef.com
-
             Money FM
             http://www.moneyfm.gr
 
@@ -2900,6 +2990,36 @@ TODO
 
 CHANGES
      + = improvement; - = bug fix
+
+    $VERSION = 2.19; $DATE="7/10/2001";
+     +update docs in various parts
+
+     +added ./make_httpd/build_httpds.sh scripts for quick builds
+      of apache + mod_perl + mod_ssl
+
+     ++plain CGI mode available for ASP execution.  
+      cgi/asp script can now be used to execute ASP 
+      scripts in CGI mode.  See CGI perldoc section for more info.
+      The examples in ./site/eg have been set up to run
+      in cgi mode if desired.  Configuration in CGI section
+      only tested for Apache on Linux.
+
+     -Fixed some faulty or out of date docs in XML/XSLT section.
+
+     +added t/server_mail.t test for $Server->Mail(), requires
+      Net::SMTP to be configured properly to succeed.
+
+     +Net::SMTP debugging not enabled by Debug 1,2,3 configs,
+      not only when system debugging is set with Debug -1,-2,-3
+      However, a Debug param passed to $Server->Mail() will 
+      sucessfully override the Debug -1,-2,-3 setting even
+      when its Debug => 0
+
+     -Check for undef values during stats for inline includes
+      so we don't trigger unintialized warnings
+
+     +Documented ';' may separate many directories in the IncludesDir
+      setting for creating a more flexible includes search path.
 
     $VERSION = 2.17; $DATE="6/17/2001";
      +Added ASP perl mmm-mode subclass and configuration
