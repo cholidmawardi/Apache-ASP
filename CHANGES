@@ -1,13 +1,28 @@
-$MODULE=Apache::ASP; $VERSION = 2.15; $DATE="TBA";
+$MODULE=Apache::ASP; $VERSION = 2.17; $DATE="TBA";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
 
- -Fix for running under perl 5.6.1 by removing parser optimization
-  introduced in 2.11.
+ +Added ASP perl mmm-mode subclass and configuration
+  in editors/mmm-asp-perl.el file for better emacs support.
+  Updated SYNTAX/Editors documentation.
 
- -Now file upload forms, forms with ENCTYPE="multipart/form-data"
-  can have multiple check boxes and select items marked for 
-  @params = $Request->Form('param_name') functionality.  This 
-  will be demostrated via the ./site/eg/file_upload.asp example.
+ +Better debugging error message for Debug 2 or 3 settings 
+  for global.asa errors.  Limit debug output for lines
+  preceding rendered script.
+
+ -In old inline include mode, there should no longer
+  be the error "need id for includes" when using
+  $Response->Include() ... if DynamicIncludes were
+  enabled, this problem would not have likely occured
+  anyway.  DynamicIncludes are preferrable to use so
+  that compiled includes can be shared between scripts.
+  This bug was likely introduced in version 2.11.
+
+ -Removed logging from $Response->BinaryWrite() in regular
+  debug mode 1 or 2.  Logging still enabled in system Debug mode, -1 or -2
+
+ -Removed other extra system debugging call that is really not
+  necessary.
+

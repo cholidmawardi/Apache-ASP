@@ -4,10 +4,13 @@
 
 <form src=<%=$Basename%> method=POST>
 <table border=0 width=100% cellpadding=5 cellspacing=0>
-<tr bgcolor=purple>
+<tr bgcolor=<%= $DarkColor %>>
 	<td>
 	<b><font <%=$FontBase%> size=+1 color=yellow>
 		<%=$Title%>
+		<% if($Session->{user}) { %>
+		  for <%= $Session->{user} %>
+		<% } %>
 	</font></b>
 	</td>
 	<td align=right>

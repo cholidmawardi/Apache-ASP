@@ -114,11 +114,11 @@ while(my $bookmark = $sth->fetchrow_hashref()) {
 	my $half_index = int((@bookmarks+1)/2);
 	%>
 	<p>
-	<table border=0 width=80% bgcolor=purple cellspacing=0>
+	<table border=0 width=80% bgcolor=<%= $DarkColor %> cellspacing=0>
 	<tr><td align=center>
 
 	<table border=0 width=100% cellspacing=1 cellpadding=3>
-	<tr bgcolor=purple><td align=center colspan=4>
+	<tr bgcolor=<%= $DarkColor %>><td align=center colspan=4>
 		<font color=yellow><b>Bookmarks</b></font>
 	</td></tr>
 	<% for(my $i=0; $i<$half_index; $i++) { %>
@@ -139,9 +139,11 @@ while(my $bookmark = $sth->fetchrow_hashref()) {
 				"$Basename?delete=$data->{bookmark_id}"
 				%>>[DEL]</a>
 				</tt></font>
+			<% } else { %>
+			  &nbsp;
 			<% } %>
 			</td>
-			<td bgcolor=white><%=$text%></td> 
+			<td bgcolor=white><%= $text || '&nbsp;'%></td> 
 		<% } %>
 		</tr>
 	<% } %>

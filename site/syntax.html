@@ -233,6 +233,47 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <font size=+0 face=verdana,arial>
 
 <font face=verdana><font size=+1 color=#555555><b>SYNTAX</b></font><p>
+</font>
+
+	<hr size=1>
+	<table width=100% border=0 cellpadding=1 cellspacing=3>
+	<tr>
+	<td valign=top><font face="lucida console" size=-1>
+	<ul>
+	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#General>General</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Editors>Editors</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#XMLSubs>XMLSubs</a>
+			</font>
+			</td>
+		<td>&nbsp;</td>					
+		</tr>
+			
+	</table>
+	<hr size=1>
+	<p>
+
+	<p>
+	<a name=General></a>
+	<font face=verdana><font size=+0 color=#555555><b>General</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
 </pre></font>ASP embedding syntax allows one to embed code in html in 2 simple ways.
 The first is the &lt;% xxx %&gt; tag in which xxx is any valid perl code.
@@ -254,33 +295,7 @@ be inserted into the html directly.  An easy print.
   &lt;!-- end sample here --&gt;
 </pre></font>Notice that your perl code blocks can span any html.  The for loop
 above iterates over the html without any special syntax.</font>
-
-	<hr size=1>
-	<table width=100% border=0 cellpadding=1 cellspacing=3>
-	<tr>
-	<td valign=top><font face="lucida console" size=-1>
-	<ul>
 	
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#XMLSubs>XMLSubs</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Editors>Editors</a>
-			</font>
-			</td>
-							
-		</tr>
-			
-	</table>
-	<hr size=1>
-	<p>
-
 	<p>
 	<a name=XMLSubs></a>
 	<font face=verdana><font size=+0 color=#555555><b>XMLSubs</b></font><p>
@@ -329,11 +344,13 @@ any editor which supports development of one or the
 other would work well.  The following editors are
 known to work well for developing Apache::ASP web sites:
 <font face="lucida console,courier new" size=3><pre>
- * Emacs, in perl or HTML modes
+ * Emacs, in perl or HTML modes.  For a mmm-mode config
+   that mixes HTML &amp; perl modes in a single buffer, check
+   out the editors/mmm-asp-perl.el file in distribution.
 
  * Microsoft Frontpage
 
- * Vim, special syntax support with editors/aasp.vim file in distribution
+ * Vim, special syntax support with editors/aasp.vim file in distribution.
 
  * UltraEdit32 has syntax highlighting, good macros and a configurable
    wordlist (so one can have syntax highlighting both for Perl and HTML).

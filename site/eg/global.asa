@@ -29,10 +29,12 @@ sub Application_OnEnd {
 }
 
 sub Script_OnStart {
+    $Response->Debug("starting script $0 in global.asa Script_OnStart");
     $Session->{Started}++;
     $title = '';
 }
 sub Script_OnEnd {
+    $Response->Debug("ending script $0 in global.asa Script_OnEnd");
     $Session->{Ended}++;
 }
 

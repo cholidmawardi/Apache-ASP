@@ -5,6 +5,7 @@ __END__
 
 <% use lib '.';	use T;	$t =T->new(); %>
 <!--#include file="include_asp.inc"-->
+<% $Response->Include("include_asp.inc"); %>
 <%
 # normal shape of include command
 if('<!--#include file="include.inc"-->' =~ /^1/) {

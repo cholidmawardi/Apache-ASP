@@ -2,6 +2,9 @@ use File::Basename;
 use DBI;
 use DBD::CSV;
 
+use vars qw( $DarkColor $Name %Titles $FontBase $Db $Title $Basename $Form $Query );
+
+$DarkColor = '#0000aa';
 $Name = "MyBookmarks";
 %Titles = (
 	   'index.asp' => 'Introduction',
@@ -9,15 +12,13 @@ $Name = "MyBookmarks";
 	  );
 $FontBase = 'face=verdana,arial';
 
-$Db = DBI->connect("DBI:CSV:f_dir=.", '', '', 
+$Db = DBI->connect("DBI:CSV:f_dir=".Apache->dir_config('StateDir'), '', '', 
 		   { RaiseError => 1 })
   or die "Cannot connect: " . $DBI::errstr;
 
 # setup bookmark database if first time
-unless($Db->
-       do("select bookmark_id,username,title,url from bookmarks")
-      ) {
-    $Db->do("drop table bookmarks");
+unless(eval { $Db->do("select bookmark_id,username,title,url from bookmarks") }) {
+    eval { $Db->do("drop table bookmarks"); };
     $Db->do(<<CREATE) || die("can't create table $DBI::errstr");
     create table bookmarks (
 			    bookmark_id varchar(15),

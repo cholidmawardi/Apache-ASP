@@ -13,7 +13,7 @@ PerlSetVar FileUploadTemp 1
 PerlSetVar SessionQueryParse 0
 PerlSetVar SessionQuery 1
 #PerlSetVar Debug 2
-PerlSetVar Debug -3
+PerlSetVar Debug 3
 PerlSetVar StateCache 0
 PerlSetVar SessionCount 1
 PerlSetVar TimeHiRes 1

@@ -1037,10 +1037,11 @@ for the script execution only.</font>
 	<a name=%24Response-%3E%7BIsClientConnected%7D></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Response->{IsClientConnected}</b></font><p>
 <font face="lucida console,courier new" size=3><pre>
-</pre></font>Not implemented, but returns 1 currently for portability.  This is
-value is not yet relevant, and may not be until apache 1.3.6, which will
-be tested shortly.  Apache versions less than 1.3.6 abort the perl code
-immediately upon the client dropping the connection.</font>
+</pre></font>1 if web client is connected, 0 if not.  This value
+starts set to 1, and will be updated whenever a
+$Response-&gt;Flush() is called.  If BufferingOn is
+set, by default $Response-&gt;Flush() will only be
+called at the end of the HTML output.</font>
 	
 	<p>
 	<a name=%24Response-%3E%7BPICS%7D></a>

@@ -898,6 +898,8 @@ CONFIG
       PerlSetVar FileUploadTemp 0
 
 SYNTAX
+  General
+
     ASP embedding syntax allows one to embed code in html in 2 simple ways.
     The first is the <% xxx %> tag in which xxx is any valid perl code. The
     second is <%= xxx %> where xxx is some scalar value that will be
@@ -967,11 +969,13 @@ SYNTAX
     supports development of one or the other would work well. The following
     editors are known to work well for developing Apache::ASP web sites:
 
-     * Emacs, in perl or HTML modes
+     * Emacs, in perl or HTML modes.  For a mmm-mode config
+       that mixes HTML & perl modes in a single buffer, check 
+       out the editors/mmm-asp-perl.el file in distribution.
 
      * Microsoft Frontpage
 
-     * Vim, special syntax support with editors/aasp.vim file in distribution
+     * Vim, special syntax support with editors/aasp.vim file in distribution.
 
      * UltraEdit32 has syntax highlighting, good macros and a configurable
        wordlist (so one can have syntax highlighting both for Perl and HTML).
@@ -1292,10 +1296,10 @@ OBJECTS
         execution only.
 
     $Response->{IsClientConnected}
-        Not implemented, but returns 1 currently for portability. This is
-        value is not yet relevant, and may not be until apache 1.3.6, which
-        will be tested shortly. Apache versions less than 1.3.6 abort the
-        perl code immediately upon the client dropping the connection.
+        1 if web client is connected, 0 if not. This value starts set to 1,
+        and will be updated whenever a $Response->Flush() is called. If
+        BufferingOn is set, by default $Response->Flush() will only be
+        called at the end of the HTML output.
 
     $Response->{PICS}
         If this property has been set, a PICS-Label HTTP header will be sent
@@ -2840,6 +2844,15 @@ TODO
 
 CHANGES
      + = improvement; - = bug fix
+
+    $VERSION = 2.15; $DATE="06/12/2001";
+     -Fix for running under perl 5.6.1 by removing parser optimization
+      introduced in 2.11.
+
+     -Now file upload forms, forms with ENCTYPE="multipart/form-data"
+      can have multiple check boxes and select items marked for 
+      @params = $Request->Form('param_name') functionality.  This 
+      will be demonstrated via the ./site/eg/file_upload.asp example.
 
     $VERSION = 2.11; $DATE="05/29/2001";
      +Parser optimization from Dariusz Pietrzak

@@ -4,7 +4,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.15;
+$VERSION = 2.17;
 
 use MLDBM;
 use SDBM_File;
@@ -23,6 +23,7 @@ use vars qw($LOADED $COUNT $VERSION %includes $StatINCReady $StatINCInit
 	    $DefaultStateDB $DefaultStateSerializer
 	    @Objects $Register %ScriptSubs %XSLT
 	    $ServerID %SrandPids $CleanupGroups $CleanupSessions
+            $CompileErrorSize
 	   );
 
 #use integer; # don't use screws up important numeric logic
@@ -52,6 +53,7 @@ $ServerID = substr(md5_hex($$.rand().time().(-M('..')||'').(-M('/')||'')), 0, 16
 $Apache::ASP::SessionTimeout = 1200;
 $Apache::ASP::StateManager   = 10;
 $Apache::ASP::StartTime      = time();
+$Apache::ASP::CompileErrorSize = 500;
 
 %Apache::ASP::LoadModuleErrors = 
   (
@@ -153,8 +155,7 @@ ERROR
 
     # there could be runtime errors in StatINC
     if(! $self->{errs} && $self->IsChanged) {
-	$self->Debug($self);
-	my $script = $self->Parse($self->{filehandle} || $self->{basename}, $self->{subid});
+	my $script = $self->Parse($self->{filehandle} || $self->{basename});
 	! $self->{errs} && $self->Compile($script);
     }
     
@@ -855,8 +856,8 @@ sub IsChanged {
     # support for includes, changes to included files
     # cause script to recompile
     if($self->{stat_scripts} and 
-       my $includes = $Apache::ASP::Includes{$self->{id}}) 
-      { 
+       my $includes = $Apache::ASP::Includes{$self->{basename}}) 
+      {
 	  for my $k (keys %$includes) {
 	      my $v = $includes->{$k};
 	      if((stat($k))[9] > $v) {
@@ -890,9 +891,9 @@ sub IsChanged {
 # in the case of filtering, but we can also pass in text to parse,
 # which is useful for doing includes separately for compiling
 sub Parse {
-    my($self, $file, $subid) = @_;
+    my($self, $file) = @_;
     my $file_exists = 0;
-    my $id = $subid;
+    my $parse_file = $file;
     my $data;
 
     # get script data, from varied data sources; 
@@ -1043,8 +1044,10 @@ sub Parse {
 	    
 	    # put the included text into what we are parsing, allows for
 	    # includes having includes
-	    $id || $self->Error("need id for includes");
-	    $Apache::ASP::Includes{$id}->{$include} = (stat($include))[9];
+	    if ($file_exists && $parse_file) {
+		$self->{dbg} && $self->Debug("include $include found for file $parse_file");
+		$Apache::ASP::Includes{$parse_file}->{$include} = (stat($include))[9];
+	    }
 	    my $text = $self->ReadFile($include);
 	    $text =~ s/\n$//sg;
 	    $text =~ s/^\#\![^\n]+(\n\n?)/$1/s; #X cgi compat ?
@@ -1871,6 +1874,14 @@ sub PrettyErrorHelper {
 	      push(@eval_error_lines, $url);	      
 	  }
     }
+
+    # trim the compile error output, for global.asa errors in particular
+    # it can often be quite long
+    if($self->{compile_error}) {
+	$errors_out = substr($errors_out, 0, $CompileErrorSize);
+	$errors_out .= '... see compile error for rest';
+    }
+
     my $out = <<OUT;
 <tt>
 <b><u>Errors Output</u></b>
@@ -1880,11 +1891,10 @@ $errors_out
 
 <b><u>Debug Output</u></b>
 <ol>
-@{[join("\n<li> ", '', map { $self->Escape($_) } @{$self->{debugs_output}}) ]}
+@{[join("\n<li> ", '', map { $self->Escape($self->{compile_error} ? substr($_, 0, $CompileErrorSize).' ... ' : $_) } @{$self->{debugs_output}}) ]}
 </ol>
 </tt>
 <pre>
-
 OUT
     ;
 
@@ -1894,7 +1904,8 @@ OUT
     my $script;     
     if($self->{compile_error}) {    
 	$out .= "<b><u>Compile Error</u></b>\n\n";
-	$out .= $self->Escape($self->{compile_error}) . "\n";
+	my $compile_error = substr($self->{compile_error}, 0, $CompileErrorSize);
+	$out .= $self->Escape($compile_error) . " ...\n\n";
 	$script = $self->{compile_eval};
     }
     
@@ -1959,10 +1970,10 @@ OUT
 
 sub Log {
     my($self, @msg) = @_;
-    my $msg = join(' ', @msg);
-    $msg =~ s/[\r\n]+/ \<\-\-\> /sg;
+    my $msg = join(" ", @msg);
+    $msg =~ s/[\r\n]+/ \<\-\-\> /sg;    
     $self->{r}->log_error("[asp] [$$] $msg");
-}    
+}
 
 sub CompileError {
     my($self, $eval) = (shift, shift);
@@ -1990,7 +2001,10 @@ sub Error {
     push(@{$self->{errors_output}}, $msg);
     push(@{$self->{debugs_output}}, $msg);
     
-    $self->Log("[error] $msg");
+#    my @lines = split(/[\r\n]+/, $msg);
+#    for my $line (@lines) {
+	$self->Log("[error] $msg");
+#    }
     
     1;
 }   
@@ -2666,23 +2680,26 @@ sub new {
 	if($self->{mtime} > $compiled->{mtime}) {
 	    # if the modification time is greater than the compile time
 	    $changed = 1;
-	} 
+	}
     }
     $changed || return($self);
 
-    my $code = $exists ? "#line 1 $filename\n".$asp->ReadFile($filename) : "";
+    my $code = $exists ? $asp->ReadFile($filename) : "";
     my $strict = $asp->{use_strict} ? "use strict" : "no strict";
     $code =~ s/\<\/?script?.*?\>/\#script tag removed here/igs;
-    $code = join(" ;; ",
-		 "package $self->{'package'};",
-		 $strict,
-		 "use vars qw(\$".join(" \$",@Apache::ASP::Objects).');',
-		 "use lib qw($self->{asp}->{global});",
-		 $code,
-		 'sub exit { $main::Response->End(); } ',
-		 "no lib qw($self->{asp}->{global});",
-		 '1;',
-		 );
+    $code = (
+	     "\n#line 1 $filename\n".
+	     join(" ;; ",
+		  "package $self->{'package'};",
+		  $strict,
+		  "use vars qw(\$".join(" \$",@Apache::ASP::Objects).');',
+		  "use lib qw($self->{asp}->{global});",
+		  $code,
+		  'sub exit { $main::Response->End(); } ',
+		  "no lib qw($self->{asp}->{global});",
+		  '1;',
+		 )
+	     );
 
     $asp->{dbg} && $asp->Debug("compiling global.asa $self->{'package'} $id exists $exists", $self, '---', $compiled);
     $code =~ tr///; # untaint
@@ -3212,8 +3229,8 @@ sub Debug {
 
 sub BinaryWrite {
     $_[0]->Flush();
-    $_[0]->{asp}{dbg} && $_[0]->{asp}->Out("binary write of ".length($_[1])." bytes");
-    &Write;    
+    $_[0]->{asp}{dbg} && $_[0]->{asp}->Debug("binary write of ".length($_[1])." bytes");
+    &Write;
 }
 
 sub Clear { my $out = shift->{out}; $$out = ''; }
@@ -6486,6 +6503,8 @@ section in OBJECTS.
 
 =head1 SYNTAX
 
+=head2 General
+
 ASP embedding syntax allows one to embed code in html in 2 simple ways.
 The first is the <% xxx %> tag in which xxx is any valid perl code.
 The second is <%= xxx %> where xxx is some scalar value that will
@@ -6557,11 +6576,13 @@ any editor which supports development of one or the
 other would work well.  The following editors are
 known to work well for developing Apache::ASP web sites:
 
- * Emacs, in perl or HTML modes
+ * Emacs, in perl or HTML modes.  For a mmm-mode config
+   that mixes HTML & perl modes in a single buffer, check 
+   out the editors/mmm-asp-perl.el file in distribution.
 
  * Microsoft Frontpage
 
- * Vim, special syntax support with editors/aasp.vim file in distribution
+ * Vim, special syntax support with editors/aasp.vim file in distribution.
 
  * UltraEdit32 has syntax highlighting, good macros and a configurable
    wordlist (so one can have syntax highlighting both for Perl and HTML).
@@ -6914,10 +6935,11 @@ for the script execution only.
 
 =item $Response->{IsClientConnected}
 
-Not implemented, but returns 1 currently for portability.  This is 
-value is not yet relevant, and may not be until apache 1.3.6, which will 
-be tested shortly.  Apache versions less than 1.3.6 abort the perl code 
-immediately upon the client dropping the connection.
+1 if web client is connected, 0 if not.  This value
+starts set to 1, and will be updated whenever a
+$Response->Flush() is called.  If BufferingOn is
+set, by default $Response->Flush() will only be
+called at the end of the HTML output.
 
 =item $Response->{PICS}
 
@@ -8599,6 +8621,16 @@ interest to you, and I will give it higher priority.
 =head1 CHANGES
 
  + = improvement; - = bug fix
+
+=item $VERSION = 2.15; $DATE="06/12/2001";
+
+ -Fix for running under perl 5.6.1 by removing parser optimization
+  introduced in 2.11.
+
+ -Now file upload forms, forms with ENCTYPE="multipart/form-data"
+  can have multiple check boxes and select items marked for 
+  @params = $Request->Form('param_name') functionality.  This 
+  will be demonstrated via the ./site/eg/file_upload.asp example.
 
 =item $VERSION = 2.11; $DATE="05/29/2001";
 
