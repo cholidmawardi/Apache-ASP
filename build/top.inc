@@ -58,7 +58,7 @@ if($0 =~ /index.html$/) {
  marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
-<% if($Ads and $0 !~ /index.html/) { %>
+<% if($Ads) { %>
 <center>
 <table bgcolor=#bb4488 border=0 cellpadding=2 cellspacing=5 width=100%>
 <tr>

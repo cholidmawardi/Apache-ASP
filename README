@@ -30,8 +30,8 @@ DESCRIPTION
     miscellaneous issues please read the FAQ section.
 
 WEBSITE
-    The Apache::ASP web site is at http://www.nodeworks.com/asp/ which you
-    can also find in the ./site directory of the source distribution.
+    The Apache::ASP web site is at http://www.apache-asp.org/ which you can
+    also find in the ./site directory of the source distribution.
 
 INSTALL
     The latest Apache::ASP can be found at your nearest CPAN, and also:
@@ -2395,7 +2395,7 @@ NOTES
      :) Gerald Richter, for his Embperl, collaboration and competition!
      :) Geert Josten, for his wonderful work on XML::XSLT
      :) Craig Samuel, at LRN, for his faith in open source for his LCEC.
-     :) Vee McMillen, for his tried and true patience.
+     :) Vee McMillen, for OSS patience & understanding.
 
 SUPPORT
   MAILING LIST ARCHIVE
@@ -2465,7 +2465,7 @@ SITES USING
             http://www.cincymls.com
 
             NodeWorks - web link monitoring                         
-            http://nodeworks.com
+            http://www.nodeworks.com
 
             OnTheWeb Services
             http://www.ontheweb.nu
@@ -2550,13 +2550,21 @@ TODO
 CHANGES
      + = improvement; - = bug fix
 
+    $VERSION = 2.03; $DATE="08/01/00";
+     +License change to GPL.  See LICENSE section.
+
+     +Setup of www.apache-asp.org site, finally!
+
+     -get rid of Apache::ASP->Loader() warning message for perl 5.6.0
+
     $VERSION = 2.01; $DATE="07/22/00";
-    + $data_ref = $Response->TrapInclude('file.inc') API extension which
-    allows for easy post processing of data from includes
+     +$data_ref = $Response->TrapInclude('file.inc') API
+      extension which allows for easy post processing of
+      data from includes
 
-    + ./site/eg/source.inc syntax highlighting improvements
+     +./site/eg/source.inc syntax highlighting improvements
 
-    + XMLSubsMatch compile time parsing performance improvement
+     +XMLSubsMatch compile time parsing performance improvement
 
     $VERSION = 2.00; $DATE="07/15/00";
      -UniquePackages config works again, broke a couple versions back
@@ -3673,9 +3681,30 @@ CHANGES
      exist.  Should stop hackers, since there is no wire speed guessing
      cookies.
 
-COPYRIGHT
-    Copyright (c) 1998-2000, Joshua Chamas, Chamas Enterprises Inc.
+LICENSE
+    Copyright (c) 1998-2000, Joshua Chamas, Chamas Enterprises Inc. All
+    rights reserved.
 
-    All rights reserved. This program is free software; you can redistribute
-    it and/or modify it under the same terms as Perl itself.
+    Apache::ASP is a perl native port of Active Server Pages for Apache and
+    mod_perl. This software is licensed under the GPL.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version.
+
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+    Public License for more details.
+
+    For the full text of the GPL, see the license file in the distribution
+    of this software, visit the GPL site at
+    http://www.gnu.org/copyleft/gpl.html or write to the Free Software
+    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+    USA.
+
+    For general licensing questions, please see the SUPPORT section.
+
+    To contact us about licensing terms, please email asp@chamas.com.
 

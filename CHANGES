@@ -1,14 +1,6 @@
-$MODULE=Apache::ASP; $VERSION = 2.01; $DATE="07/22/00";
+$MODULE=Apache::ASP; $VERSION = 2.03; $DATE="TBA";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
-
-+ $data_ref = $Response->TrapInclude('file.inc') API
-  extension which allows for easy post processing of
-  data from includes
-
-+ ./site/eg/source.inc syntax highlighting improvements
-
-+ XMLSubsMatch compile time parsing performance improvement
 

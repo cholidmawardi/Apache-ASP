@@ -4,7 +4,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.00;
+$VERSION = 2.03;
 
 use MLDBM;
 use SDBM_File;
@@ -269,7 +269,7 @@ sub Loader {
 
     # now the real work
     unless($file =~ /$match/) {
-	if($args{Debug} < 0) {
+	if($args{Debug} and $args{Debug} < 0) {
 	    Apache::ASP::Loader->log_error("skipping compile of $file no match $match");
 	}
 	return;
@@ -1011,9 +1011,10 @@ sub Parse {
 #    $self->Debug("parsing includes done $self->{'basename'}");
 
     # strip carriage returns; do this as early as possible, but after includes
-    # since we want to rip out the carriage returns from them too
-    my $CRLF = "\015\012";
-    $data =~ s/$CRLF/\n/sgo;
+    # since we want to rip out the carriage returns from them too, these
+    # changes should make things Win & Mac compatible
+#    my $CRLF = "\015\012";
+    $data =~ s/\015?\012/\n/sgo;
     $data =~ s/^\#\![^\n]+(\n\n?)/$1/s; #X cgi compat ?
 
     # JUST ONCE
@@ -1047,10 +1048,9 @@ sub ParseHelper {
 	$$data =~ s|\<\s*($self->{xml_subs_match})([^\>]*)/\>
 	  | {
 	     my($func, $args) = ($1, $2);
-	     $func =~ s/\:/\:\:/g;
+	     $func =~ s/\:+/\:\:/g;
 	     $args =~ s/( [^\s]+\s*)\=/,$1\=\>/sg;
 	     $args =~ s/^,//s;
-#	     $args =~ s/([^\s]+\s*)\=(\s*)([\"\'\b]?)([^\3]*?)(\3)(\s*)/$1\=\>$2$3$4$5,$6/sg;
 	     "<% $func({ $args }, ''); %>"
 	    } |sgex;	    
 	$$data =~ s|
@@ -1058,7 +1058,7 @@ sub ParseHelper {
 	    | {
 	       my($func, $args, $text) = ($1, $2, $3, $4);
 	       
-	       $func =~ s/\:/\:\:/g;
+	       $func =~ s/\:+/\:\:/g;
 	       $args =~ s/( [^\s]+\s*)\=/,$1\=\>/sg;
 	       $args =~ s/^,//s;
 	       
@@ -1710,10 +1710,10 @@ OUT
 An error has occured with the Apache::ASP script just run. 
 If you are the developer working on this script, and cannot work 
 through this problem, please try researching the it at the 
-<a href=http://www.nodeworks.com/asp/>Apache::ASP web site</a>,
-specifically the <a href=http://www.nodeworks.com/asp/faq.html>FAQ section</a>.
+<a href=http://www.apache-asp.org/>Apache::ASP web site</a>,
+specifically the <a href=http://www.apache-asp.org/faq.html>FAQ section</a>.
 Failing that, check out your 
-<a href=http://www.nodeworks.com/asp/support.html>support options</a>, and 
+<a href=http://www.apache-asp.org/support.html>support options</a>, and 
 if necessary include this debug output with any query. 
 
 OUT
@@ -5089,7 +5089,7 @@ miscellaneous issues please read the FAQ section.
 
 =head1 WEBSITE
 
-The Apache::ASP web site is at http://www.nodeworks.com/asp/
+The Apache::ASP web site is at http://www.apache-asp.org/
 which you can also find in the ./site directory of 
 the source distribution.
 
@@ -7706,7 +7706,7 @@ ASP + Apache, web development could not be better!  Kudos go out to:
  :) Gerald Richter, for his Embperl, collaboration and competition!
  :) Geert Josten, for his wonderful work on XML::XSLT
  :) Craig Samuel, at LRN, for his faith in open source for his LCEC.
- :) Vee McMillen, for his tried and true patience.
+ :) Vee McMillen, for OSS patience & understanding.
 
 =head1 SUPPORT
 
@@ -7782,7 +7782,7 @@ sure to add it to the list.
 	http://www.cincymls.com
 
 	NodeWorks - web link monitoring				
-	http://nodeworks.com
+	http://www.nodeworks.com
 
 	OnTheWeb Services
 	http://www.ontheweb.nu
@@ -7871,15 +7871,23 @@ interest to you, and I will give it higher priority.
 
  + = improvement; - = bug fix
 
+=item $VERSION = 2.03; $DATE="08/01/00";
+
+ +License change to GPL.  See LICENSE section.
+
+ +Setup of www.apache-asp.org site, finally!
+
+ -get rid of Apache::ASP->Loader() warning message for perl 5.6.0
+
 =item $VERSION = 2.01; $DATE="07/22/00";
 
-+ $data_ref = $Response->TrapInclude('file.inc') API
+ +$data_ref = $Response->TrapInclude('file.inc') API
   extension which allows for easy post processing of
   data from includes
 
-+ ./site/eg/source.inc syntax highlighting improvements
+ +./site/eg/source.inc syntax highlighting improvements
 
-+ XMLSubsMatch compile time parsing performance improvement
+ +XMLSubsMatch compile time parsing performance improvement
 
 =item $VERSION = 2.00; $DATE="07/15/00";
 
@@ -9028,12 +9036,32 @@ interest to you, and I will give it higher priority.
  exist.  Should stop hackers, since there is no wire speed guessing
  cookies.
 
-=head1 COPYRIGHT
+=head1 LICENSE
 
 Copyright (c) 1998-2000, Joshua Chamas, Chamas Enterprises Inc. 
+All rights reserved.
 
-All rights reserved.  This program is free software; you can 
-redistribute it and/or modify it under the same terms as Perl itself. 
+Apache::ASP is a perl native port of Active Server Pages for Apache
+and mod_perl.  This software is licensed under the GPL.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+For the full text of the GPL, see the license file in the 
+distribution of this software, visit the GPL site at 
+http://www.gnu.org/copyleft/gpl.html or write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+For general licensing questions, please see the SUPPORT section.
+
+To contact us about licensing terms, please email asp@chamas.com.
 
 =cut
 
