@@ -216,7 +216,8 @@ sub CleanupGroup {
     my $id = $self->{Session}->SessionID();
     my $deleted = 0;
     $internal->LOCK();
-    for(@$ids) {
+    $asp->{dbg} && $asp->Debug("checking group ids", $ids);
+    for my $id (@$ids) {
 #	if($id eq $_) {
 #	    $asp->{dbg} && $asp->Debug("skipping delete self", {id => $id});
 #	    next;
@@ -226,7 +227,7 @@ sub CleanupGroup {
 	# while we are garbage collecting it... we release it every
 	# time so we don't starve session creation if this is a large
 	# directory that we are garbage collecting
-	my $idata = $internal->{$_};
+	my $idata = $internal->{$id};
 	my $timeout = $idata->{timeout} || 0;
 	
 	unless($timeout) {
@@ -236,8 +237,8 @@ sub CleanupGroup {
 	    # a timeout now, so we will be sure to clean it up 
 	    # eventualy
 	    $idata->{timeout} = time() + $asp->{session_timeout};
-	    $internal->{$_} = $idata;
-	    $asp->Debug("resetting timeout for $_ to $idata->{timeout}");
+	    $internal->{$id} = $idata;
+	    $asp->Debug("resetting timeout for $id to $idata->{timeout}");
 	    next;
 	}	
 	# only delete sessions that have timed out
@@ -252,9 +253,9 @@ sub CleanupGroup {
 	
 	# set the timeout for this session forward so it won't
 	# get garbage collected by another process
-	$asp->{dbg} && $asp->Debug("resetting timeout for deletion lock on $_");
-	$internal->{$_} = {
-			   %{$internal->{$_}},
+	$asp->{dbg} && $asp->Debug("resetting timeout for deletion lock on $id");
+	$internal->{$id} = {
+			   %{$internal->{$id}},
 			   'timeout' => time() + $asp->{session_timeout},
 			   'end' => 1,
 			  };
@@ -262,21 +263,21 @@ sub CleanupGroup {
 	
 	# unlock many times in case we are locked above this loop
 	for (1..3) { $internal->UNLOCK() }
-	$asp->{GlobalASA}->SessionOnEnd($_);
+	$asp->{GlobalASA}->SessionOnEnd($id);
 	$internal->LOCK;
 	
 	# set up state
-	my($member_state) = Apache::ASP::State::new($asp, $_);	
+	my($member_state) = Apache::ASP::State::new($asp, $id);	
 	if(my $count = $member_state->Delete()) {
 	    $asp->{dbg} && 
 	      $asp->Debug("deleting session", {
-					       session_id => $_, 
+					       session_id => $id, 
 					       files_deleted => $count,
 					      });
 	    $deleted++;
-	    delete $internal->{$_};
+	    delete $internal->{$id};
 	} else {
-	    $asp->Error("can't delete session id: $_");
+	    $asp->Error("can't delete session id: $id");
 	    next;
 	}
     }

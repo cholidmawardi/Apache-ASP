@@ -171,14 +171,14 @@ sub pod2html {
 	$title = "<font class=title size=$size color=#555555><b>$title</b></font><p>\n";
     }
 
-
-    if (($body =~ /^(.*?)(<table.*?>.*?<\/table>)(.*)$/is)) {
+    if (($body =~ /^(.*?)(<table [^\>]*class=\"noescape\"[^\>]*>.*?<\/table>)(.*)$/is)) {
 	my($pre,$html,$post) = ($1, $2, $3);
 #	$html =~ s/\s+/ /isg;
 	$body = $Server->HTMLEncode($pre).$html.$Server->HTMLEncode($post);
     } else {
 	$body = $Server->HTMLEncode($body);
     }
+    $body =~ s/(\<\%|\%\>)/$Server->HTMLEncode($1);/esg;
 
     my @lines = split(/\n/, $body);
     my $pre = 0;

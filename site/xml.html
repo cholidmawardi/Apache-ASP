@@ -313,15 +313,15 @@ perl package or whereever like so
 
   &lt;!-- # employee.inc file somewhere else --&gt;
   &lt;% my($attributes, $body) = @_; %&gt;
-  <table>
-  <% for('name', 'last', 'phone') { %>
-    <tr>
-      <td><b><%=ucfirst $_ %></b>:</td>
-      <td><%= $attributes->{$_} %></td>
-    </tr>
-  <% } %>
-  <tr><td colspan=2><%= $body %></td></tr>
-  </table>
+  &lt;table&gt;
+  &lt;% for('name', 'last', 'phone') { %&gt;
+    &lt;tr&gt;
+      &lt;td&gt;&lt;b&gt;&lt;%=ucfirst $_ %&gt;&lt;/b&gt;:&lt;/td&gt;
+      &lt;td&gt;&lt;%= $attributes-&gt;{$_} %&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;% } %&gt;
+  &lt;tr&gt;&lt;td colspan=2&gt;&lt;%= $body %&gt;&lt;/td&gt;&lt;/tr&gt;
+  &lt;/table&gt;
   &lt;!-- # end employee.inc file --&gt;
 </pre></font>The $Response-&gt;Include() would then delegate the rendering
 of the employee to the employee.inc ASP script include.

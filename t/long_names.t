@@ -7,4 +7,4 @@ use Apache::ASP::CGI;
 
 __END__
 
-<% $Response->Include('ok.inc'); %>
+<% $Response->Include('long_names/long_directory_path/long_directory_path/long_directory_path/long_directory_path/long_directory_path/ok.inc'); %>

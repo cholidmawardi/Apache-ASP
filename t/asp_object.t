@@ -19,6 +19,7 @@ my $t = T->new;
 
 my $ASP_1 = Apache::ASP->new($r);
 #$ASP_1->Out($ASP_1);
+
 $t->eok($ASP_1->Session && $ASP_1->Application, "ASP Objects 1");
 my $app_1 = $ASP_1->Application;
 	

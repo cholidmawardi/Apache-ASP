@@ -60,10 +60,18 @@ We've been very pleased with Apache::ASP and its support.
     title="Planet of Music"
     image="planetofmusic.com.gif"
     href="http://www.planetofmusic.com"
+    from="JC Fant IV"
     >
-     ...<b><a href="http://www.planetofmusic.com">www.planetofmusic.com</a></b> 
-     is running Apache::ASP. so far so good... thousands of hits a day 
-     and it doesn't blink an eye...
+Apache::ASP has been a great tool.  Just a little
+background.... the whole site had been in cgi flat files when I started
+here.  I was looking for a technology that would allow me to write the
+objects and NEVER invoke CGI.pm... I found it and hopefuly I will be able to
+implement this every site I go to.
+<p>
+    When I got here there was a huge argument about needing a game engine
+and I belive this has been the key... Games are approx. 10 time faster than
+before. The games don't break anylonger. All in all a great tool for
+advancement.
   </site:testimonial>
 
   <site:testimonial 

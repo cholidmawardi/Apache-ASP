@@ -261,7 +261,7 @@ titled Win32 Install.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#WinME%20%2F%2098%20%2Fdb672bf2>WinME / 98 / 95 flock() workaround</a>
+			<a href=#WinME%20%2F%2098%20%2Fce25d199>WinME / 98 / 95 flock() workaround</a>
 			</font>
 			</td>
 							
@@ -411,7 +411,7 @@ distribution.  Apache::ASP is written in pure perl,
 so there is no need to compile it for installation.</font>
 	
 	<p>
-	<a name=WinME%20%2F%2098%20%2Fdb672bf2></a>
+	<a name=WinME%20%2F%2098%20%2Fce25d199></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>WinME / 98 / 95 flock() workaround</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>For those on desktop Windows operation systems, Apache::ASP v2.25 and
@@ -422,7 +422,9 @@ fix this problem after <a href=http://perl.apache.org><font size=-1 face=verdana
   &lt;Perl&gt;
    *CORE::GLOBAL::flock = sub { 1 };
   &lt;/Perl&gt;
-</pre></font>
+  PerlModule  Apache::ASP
+</pre></font>Please be sure to add this configuration before Apache::ASP is loaded
+via PerlModule, or a PerlRequire statement.</font>
 	
 	<p>
 	<a name=Linux%20DSO%20Di0714bb20></a>

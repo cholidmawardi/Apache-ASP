@@ -3,7 +3,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 2.33;
+$VERSION = 2.35;
 
 use Digest::MD5 qw(md5_hex);
 use Cwd qw(cwd);
@@ -381,6 +381,11 @@ sub new {
 	$self->InitState;
     }
 
+    # init package globals as soon as possible so if there is an error before
+    # the first Execute() during which this is run, core system templates will
+    # still have access to the variables in the global namespace
+    &InitPackageGlobals($self);
+
     $self;
 }
 
@@ -463,6 +468,8 @@ sub DESTROY {
 
     #    $self->{'dbg'} && $self->Debug("END ASP DESTROY");
     $self->{Request} && $self->{Request}->DESTROY();
+    $self->{Server} && ( %{$self->{Server}} = () );
+    $self->{Response} && ( %{$self->{Response}} = () );
     %$self = ();
 
     1;
@@ -1337,6 +1344,8 @@ sub RegisterSubs {
 sub InitPackageGlobals {
     my $self = shift;
 
+#    $self->Debug("init package globals");
+
     # init objects, skip if already done for this asp object,
     # which will speed execution of GlobalASA subs
     my($object, $import_package);
@@ -1593,7 +1602,11 @@ sub Log {
     my($self, @msg) = @_;
     my $msg = join(" ", @msg);
     $msg =~ s/[\r\n]+/ \<\-\-\> /sg;    
-    $self->{r}->log_error("[asp] [$$] $msg");
+    if($self->{r}) {
+	$self->{r}->log_error("[asp] [$$] $msg");
+    } else {
+	print STDERR "[WARN] [asp] [$$] [Invalid ASP Object $self] $msg\n";
+    }
 }
 
 sub CompileError {
@@ -1903,7 +1916,7 @@ and new events not originally part of the ASP API!
 
 =begin html
 
-<table><tr><td>
+<table class="noescape" border="0"><tr><td>
 <b>Apache::ASP's features include:</b>
 <font face=verdana,helvetica,arial size=-1>
 <ul>
@@ -2052,6 +2065,10 @@ fix this problem after mod_perl is installed:
   <Perl>
    *CORE::GLOBAL::flock = sub { 1 };
   </Perl>
+  PerlModule  Apache::ASP
+
+Please be sure to add this configuration before Apache::ASP is loaded
+via PerlModule, or a PerlRequire statement.
 
 =head2 Linux DSO Distributions
 
@@ -2742,7 +2759,7 @@ running on a Linux 2.2.14 dual PIII-450.
 The variables are output size being cached & the CacheDB used,
 the default being MLDBM::Sync::SDBM_File. 
 
-<table>
+<table class="noescape" border="0">
 <tr><th>CacheDB</th><th>Output Cached</th><th>Operation</th><th>Ops/sec</th></tr>
 <tr><td>MLDBM::Sync::SDBM_File</td>	<td>3200 bytes</td>	<td>read</td>	<td>177</td></tr>
 <tr><td>DB_File</td>			<td>3200 bytes</td>	<td>read</td>	<td>59</td></tr>
@@ -5318,8 +5335,8 @@ work for most cases.
 =item How is database connectivity handled?
 
 Database connectivity is handled through perl's DBI & DBD interfaces.
-Please see http://www.symbolstone.org/technology/perl/DBI/ for more information.
 In the UNIX world, it seems most databases have cross platform support in perl.
+You can find the book on DBI programming at http://www.oreilly.com/catalog/perldbi/
 
 DBD::ODBC is often your ticket on Win32.  On UNIX, commercial vendors
 like OpenLink Software (http://www.openlinksw.com/) provide the nuts and 
@@ -5429,7 +5446,8 @@ documents at:
   http://perl.apache.org/tuning/ 
 
 Written in late 1999 this article provides an early look at 
-how to tune your Apache::ASP web site:
+how to tune your Apache::ASP web site.  It has since been
+updated to remain current with Apache::ASP v2.29+
 
   Apache::ASP Site Tuning
   http://www.chamas.com/asp/articles/perlmonth3_tune.html
@@ -5626,6 +5644,8 @@ ASP + Apache, web development could not be better!  Kudos go out to:
 
  !! Doug MacEachern, for moral support and of course mod_perl
 
+ :) Mitsunobu Ozato, for working on a japanese translation of the site & docs.
+ :) Eamon Daly for persistence in resolving a MailErrors bug.
  :) Gert, for help on the mailing list, and pushing the limits of use on Win32 
     in addition to XSLT.
  :) Maurice Aubrey, for one of the early fixes to the long file name problem.
@@ -5685,8 +5705,8 @@ problems working with Apache::ASP are really mod_perl ones.
 
 The Apache::ASP mailing list archives are located at:
 
- http://www.mail-archive.com/asp%40perl.apache.org/
  http://groups.yahoo.com/group/apache-asp/
+ http://www.mail-archive.com/asp%40perl.apache.org/
 
 The mod_perl mailing list archives are located at:
 
@@ -5714,6 +5734,12 @@ Apache::ASP.  If you use the software for your site, and
 would like to show your support of the software by being listed, 
 please send your URL to me at joshua@chamas.com and I'll be 
 sure to add it to the list.
+
+        AmericanGamers.com
+        http://www.AmericanGamers.com/
+
+        SEAWA, Software Engineering Australia
+        http://www.seawa.org.au/
 
         WebTime
         http://webtime.sourceforge.net
@@ -5772,7 +5798,7 @@ sure to add it to the list.
 	MLS of Greater Cincinnati
 	http://www.cincymls.com
 
-	NodeWorks - web link monitoring				
+	NodeWorks - Web Link Check
 	http://www.nodeworks.com
 
 	OnTheWeb Services
@@ -5780,9 +5806,6 @@ sure to add it to the list.
 
 	Planet Of Music
 	http://www.planetofmusic.com 
-
-	Provillage
-	http://www.provillage.com
 
 	Prices for Antiques
 	http://www.p4a.com
@@ -5833,13 +5856,19 @@ at asp@perl.apache.org
        mod_perl Developer's Cookbook
        http://www.modperlcookbook.org
 
+       Programming the Perl DBI
+       http://www.oreilly.com/catalog/perldbi/
+
 =head2 Presentations
 
        Apache::ASP Tutorial, 2000 Open Source Convention ( PowerPoint )
        http://www.chamas.com/asp/OSS_convention_2000.pps
 
        Advanced Apache::ASP Tutorial, 2001 Open Source Convention ( Zipped PDF )
-       http://www.chamas.com/asp/OSS_convention_2001.zip 
+       http://www.chamas.com/asp/OSS_convention_2001.zip
+
+       Advanced Apache::ASP Tutorial, 2001 Open Source Convention ( PDF )
+       http://www.chamas.com/asp/OSS_convention_2001.pdf
 
 =head2 Reference Cards
 
@@ -5863,9 +5892,6 @@ at asp@perl.apache.org
 	Apache Web Server
 	http://www.apache.org
  
-	Perl DBI Database Access
-	http://www.symbolstone.org/technology/perl/DBI/		
-
 =head1 TODO
 
 There is no specific time frame in which these things will be 
@@ -5908,6 +5934,189 @@ means first production ready release, this would be the
 equivalent of a 1.0 release for other kinds of software.
 
  + = improvement; - = bug fix
+
+=item $VERSION = 2.33; $DATE="04/29/2002"
+
+ - fixed up t/server_mail.t test to skip if a sendmail server
+   is not available on localhost.  We only want the test to run
+   if there is a server to test against.
+
+ + removed cgi/asp script, just a symlink now to the ./asp-perl script
+   which in this way deprecates it.  I had it hard linked, but the 
+   distribution did not untar very well on win32 platform.
+
+ + Reordered the modules in Bundle::Apache::ASP for a cleaner install.
+
+ - Fixed bug where XMLSubs where removing <?xml version ... ?> tag
+   when it was needed in XSLT mode.
+
+ + $Server->Mail({ CC => '...', BCC => '...' }), now works to send
+   CC & BCC headers/recipients.
+
+ + Removed $Apache::ASP::Register definition which defined the current
+   executing Apache::ASP object.  Only one part of the application was
+   using it, and this has been fixed.  This would have been an unsafe
+   use of globals for a threaded environment.
+
+ + Decreased latency when doing Application_OnStart, used to sleep(1) 
+   for CleanupMaster sync, but this is not necessary for Application_OnStart 
+   scenario
+
+ + Restructure code / core templates for MailErrorsTo funcationality.  
+   Wrote test mail_error.t to cover this.  $ENV{REMOTE_USER} will now be displayed
+   in the MailErrorsTo message when defined from 401 basic auth.
+
+ + $Server->RegisterCleanup should be thread safe now, as it no longer relies
+   on access to @Apache::ASP::Cleanup for storing the CODE ref stack.
+
+ + test t/inode_names.t for InodeNames and other file tests covering case
+   of long file names.
+
+ - Fixed long file name sub identifier bug.  Added test t/long_names.t.
+
+ + CacheDir may now be set independently of StateDir.  It used to default
+   to StateDir if it was set.
+
+ ++ Decomposition of modules like Apache::ASP::Session & Apache::ASP::Application
+   out of ASP.pm file.  This should make the source more developer friendly.  
+
+   This selective code compilation also speeds up CGI requests that do not 
+   need to load unneeded modules like Apache::ASP::Session, by about 50%,
+   so where CGI mode ran at about 2.1 hits/sec before, now for 
+   light requests that do not load $Session & $Application, requests
+   run at 3.4 hits/sec, this is on a dual PIII-450 linux 2.4.x
+
+ - Caching like for XSLTCache now works in CGI mode.  
+   This was a bug that it did not before.
+
+ + $Server->File() API added, acts as a wrapper around Apache->request->filename
+   Added test in t/server.t
+
+ ++  *** EXPERIMENTAL / ALPHA FEATURE NOTE BEGIN ***
+
+   New $PERLLIB/Apache/ASP/Share/ directory created to 
+   hold system & user contributed components, which will be found
+   on the $Server->MapInclude() path, which helps $Response->Include
+   search '.',Global,IncludesDir, and now Apache::ASP::Share for
+   includes to load at runtime.  
+
+   The syntax for loading a shared include is to prefix the file
+   name with Share:: as in:
+
+    $Response->TrapInclude('Share::CORE/MailError.inc');
+
+   New test to cover this at t/share.t
+
+   This feature is experimental.  The naming convention may change
+   and the feature may disappear altogether, so only use if you
+   are interesting in experimenting with this feature & will
+   provide feedback about how it works.
+
+   *** EXPERIMENTAL / ALPHA FEATURE NOTE END ***
+
+ + asp-perl script now uses ./asp.conf instead of ./asp.config
+   for runtime configuration via %Config defined there.  Update docs
+   for running in standalone CGI mode
+
+ + Make use of MANFEST.SKIP to not publish the dev/* files anymore.
+
+ - Script_OnEnd guaranteed to run after $Response->End, but 
+   it will not run if there was an error earlier in the request.
+
+ + lots of new test cases covering behaviour of $Response->End
+   and $Response->Redirect under various conditions like XMLSubs
+   and SoftRedirect and global.asa Script_OnStart
+
+ + asp-perl will be installed into the bin executables when
+   Apache::ASP is installed.  asp-perl is the command line version
+   of Apache::ASP that can also be used to run script in CGI mode.
+   Test case covering asp-perl functionality.
+
+ + asp CGI/command line script now called asp-perl.  I picked this 
+   name because Apache::ASP often has the name asp-perl in distributions
+   of the module.
+
+ + Apache::ASP::CGI::Test class now subclass of Apache::ASP::CGI.  To facilitate
+   this Apache::ASP::CGI::init() now called OO like Apache::ASP::CGI->init()
+   Fixed up places where the old style was called.  New Test class allows
+   a dummy Apache request object to be built which caches header & body output
+   for later inspection instead of writing it to STDOUT.
+
+ - $Response->Redirect() under SoftRedirect 1 will not first Clear() buffer
+
+ - $Response->Redirect() in an XMLSubs will work now ... behavior
+   of $Response->Flush() being turned off in an XMLSubs was interfering with this.
+
+ + srand() init tracking done better, thanks for patch from Ime Smits
+
+ + Added file/directory being used for precompilation in 
+   Apache::ASP->Loader($file, ...) to output like:
+
+    [Mon Feb 04 20:19:22 2002] [error] [asp] 4215 (re)compiled 22 scripts of 22 loaded for $file
+
+   This is so that when precompiling multiple web sites
+   each with different directories, one can easier see the 
+   compile output relevant to the Loader() command being run.
+
+ + better decomp of Apache::ASP site build files at ./build/* files,
+   which is good should anyone look at it for ideas.
+
+ + improved test suite to error when unintended output results from
+   t/*.t test scripts.
+
+ - () now supported in XMLSubsMatch config, added xmlsubsmatch.t test...
+   specifically a config like 
+
+     PerlSetVar (aaa|bbb):\w+ 
+
+   should now work.  Thanks for bug report from David Kulp.
+
+ + Added an early srand() for better $ServerID creation
+
+ + Work around for DSO problems where $r is not always correctly 
+   defined in Apache::ASP::handler().  Thanks to Tom Lear for patch.
+
+=item $VERSION = 2.31; $DATE="01/22/2002";
+
+ + $Server->MapInclude() API extension created to wrap up Apache::ASP::SearchDirs functionality
+   so one may do an conditional check for an include existence befor executing $Response->Include().
+   Added API test to server.t
+
+ + $Server->Transfer() now allows arguments like $Response->Include(), and now acts just
+   as a wrapper for:
+
+     $Response->Include($file, @args);
+     $Response->End();
+
+   added test case at t/server_transfer.t
+
+ + Removed dependency of StatINC functionality on Apache::Symbol.  Apache::Symbol 
+   is no longer required.  Added test of t/stat_inc.t for correct StatINC initialization
+   for platforms where Devel::Symdump is present.
+
+ + Better error message when $Request->Params has not been defined with RequestParams
+   config & it gets used in script.  Added test case as t/request_params_none.t
+
+ + Directories cannot now be included as scripts via $Response->Include(), added
+   test case to t/include.t
+
+ - No longer make $Response->Flush dependent on $Response->IsClientConnected() to 
+   be true to write output to client.  There have been spurious errors reported
+   about the new ( >= 2.25 ) IsClientConnected code, and this will limit the impact 
+   of that functionality possibly not working still to those users explicitly using 
+   that API.
+
+ + $Response->AddHeader($header_name, $value) now will set $Response members
+   for these headers: Content-Type, Cache-Control, Expires.  This is to avoid
+   both the application & Apache::ASP sending out duplicate headers.  Added
+   test cases for this to t/response.t
+
+ + split up Bundle::Apache::ASP into that, and Bundle::Apache::ASP::Extra
+   the former with just the required modules to run, and the latter 
+   for extra functionality in Apache::ASP
+
+ + new $Request->{Method} member to return $r->method of GET or POST that 
+   client browser is requesting, added t/request.t sub test to cover this member.
 
 =item $VERSION = 2.29; $DATE="11/19/2001";
 
