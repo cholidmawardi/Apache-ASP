@@ -1,10 +1,11 @@
 
 use Data::Dumper;
-use vars qw(%FILES %ALIASES %LINKS $ASP $DOCINIT $DUMP);
+use vars qw(%FILES %ALIASES %LINKS $ASP $DOCINIT $DUMP $Ads $LINKS_MATCH $VAR1);
 use MD5;
 use Time::HiRes;
 use Data::Dumper;
 use Digest::MD5 qw( md5_hex );
+use strict;
 
 $DUMP = "/tmp/aspbuilddumpdata";
 %FILES = ('index' => 'INTRO',
@@ -52,6 +53,7 @@ for(keys %FILES) {
     $LINKS{$FILES{$_}} = "$_.html";
 }
 
+$LINKS_MATCH = join('|', keys %LINKS);
 
 sub doc_init {
     local $/ = undef;
@@ -173,7 +175,7 @@ sub pod2html {
 
     if (($body =~ /^(.*?)(<table.*?>.*?<\/table>)(.*)$/is)) {
 	my($pre,$html,$post) = ($1, $2, $3);
-	$html =~ s/\s+/ /isg;
+#	$html =~ s/\s+/ /isg;
 	$body = $Server->HTMLEncode($pre).$html.$Server->HTMLEncode($post);
     } else {
 	$body = $Server->HTMLEncode($body);
@@ -214,7 +216,7 @@ sub pod2html {
 #print STDERR $body;
 
     #$body =~ s/\n\s*\n+/<p>/isg;
-    $body =~ s/([^\="])((http|ftp):\/\/[\w\.\/\-]+\.[\w\.\/\-\#\,\%]+[^\.\s\)])/$1<a href=$2>$2<\/a>/sg;
+    $body =~ s/([^\=\"])((http|ftp):\/\/[\w\.\/\-]+\.[\w\.\/\-\#\,\%]+[^\.\s\)])/$1<a href=$2>$2<\/a>/sg;
 #    $1 && warn "link: $1\n";
     $body =~ s|(http://localhost[\S]*[^\.\s\,]?)|<tt>$1</tt>|sg;
     $body =~ s|([\w\-]+\@[\w\.\,\@\-]+)(\?[\w\=\:]+)?|<b>$1</b>|sg;
@@ -223,9 +225,20 @@ sub pod2html {
 
     $body =~ s|\n\n</pre>|\n</pre>|isg;
 #    my $match_links = join('|', keys %LINKS);
-    for(keys %LINKS) {
-	$body =~ s/(\b)($_)(\b)/"$1<a href=$LINKS{$_}><font size=-1 face=verdana><b>$_<\/b><\/font><\/a>$3"/se;
+
+    my %matched;
+    $body =~ s:([^\n]*?)\b($LINKS_MATCH)(?=[^<])\b:
+    {
+	my($head, $match) = ($1, $2);
+	if(! $matched{$match}++ and $head !~ /\>$/ and $head !~ /^\s+/ and $LINKS{$match}) {
+	    "$head<a href=$LINKS{$match}><font size=-1 face=verdana><b>$match<\/b><\/font><\/a>";
+	} else	 {
+	    $head.$match;
+	}
     }
+    :sgex;
 
     '<font face=verdana>'.$title.$body.'</font>';
 }
+
+

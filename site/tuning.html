@@ -256,15 +256,7 @@ Apache::ASP, you can easily take a poorly tuned site running at
 10 hits/second to 50+ hits/second just with the right configuration.
 <font face="courier new" size=3><pre>
 </pre></font>Documented below are some simple things you can do to make the 
-most of your site.
-<font face="courier new" size=3><pre>
-</pre></font>For more tips &amp; tricks on tuning Apache and <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>, please see the tuning
-documents at:
-<font face="courier new" size=3><pre>
-  <a href="http://perl.apache.org/guide/">Stas Bekman's mod_perl guide</a>
-
-  <a href="http://perl.apache.org/tuning/">Vivek Khera's mod_perl performance tuning</a>
-</pre></font>
+most of your site.</font>
 
 	<hr size=1>
 	<table width=100% border=0 cellpadding=1 cellspacing=3>
@@ -276,7 +268,23 @@ documents at:
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Application941f90bf>$Application & $Session State</a>
+			<a href=#Online%20Resou0de520e2>Online Resources</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Precompile%20S36827838>Precompile Scripts</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Tuning%20%26%20Ben0cdacf8c>Tuning & Benchmarking</a>
 			</font>
 			</td>
 		
@@ -292,7 +300,7 @@ documents at:
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Low%20MaxClien5a8237ea>Low MaxClients</a>
+			<a href=#%24Application941f90bf>$Application & $Session State</a>
 			</font>
 			</td>
 		
@@ -308,7 +316,7 @@ documents at:
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#High%20MaxRequ0724a06d>High MaxRequestsPerChild</a>
+			<a href=#Low%20MaxClien5a8237ea>Low MaxClients</a>
 			</font>
 			</td>
 		
@@ -324,7 +332,7 @@ documents at:
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Precompile%20M39676a96>Precompile Modules</a>
+			<a href=#High%20MaxRequ0724a06d>High MaxRequestsPerChild</a>
 			</font>
 			</td>
 		
@@ -340,7 +348,7 @@ documents at:
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Precompile%20S36827838>Precompile Scripts</a>
+			<a href=#Precompile%20M39676a96>Precompile Modules</a>
 			</font>
 			</td>
 		<td>&nbsp;</td>					
@@ -350,6 +358,36 @@ documents at:
 	<hr size=1>
 	<p>
 
+	<p>
+	<a name=Online%20Resou0de520e2></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Online Resources</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>For more tips &amp; tricks on tuning Apache and <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>, please see the tuning
+documents at:
+<font face="courier new" size=3><pre>
+  <a href="http://perl.apache.org/guide/">Stas Bekman's mod_perl guide</a>
+
+  <a href="http://perl.apache.org/tuning/">Vivek Khera's mod_perl performance tuning</a>
+</pre></font>Written in late 1999 this article provides an early look at 
+how to tune your Apache::ASP web site, with most of its 
+tips &amp; tricks valid today:
+<font face="courier new" size=3><pre>
+  <a href="http://www.perlmonth.com/features/apacheasp/apacheasp.html?issue=7">Apache::ASP Site Tuning</a>
+</pre></font>
+	
+	<p>
+	<a name=Tuning%20%26%20Ben0cdacf8c></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Tuning & Benchmarking</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>When performance tuning, it is important to have a tool to
+measure the impact of your tuning change by change.
+The program ab, or Apache Bench, provides this functionality
+well, and is freely included in the apache distribution.
+<font face="courier new" size=3><pre>
+</pre></font>Because performance tuning can be a neverending affair,
+it is a good idea to establish a threshold where performance
+is &quot;good enough&quot;, that once reached, tuning stops.</font>
+	
 	<p>
 	<a name=%24Application941f90bf></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>$Application & $Session State</b></font><p>

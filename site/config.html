@@ -1138,21 +1138,11 @@ is handled.
 	<a name=StateCache></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>StateCache</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Default 0, set to 1 for lock files that are acquired for $Application 
-and an internal database used for session management to be cached
-and held open between requests, for up to a 10% performance
-gain.  Per ASP application this is will keep up to 2 extra
-file handles open per httpd process, one for the internal
-database, and one for $Application.
-<font face="courier new" size=3><pre>
-</pre></font>The only problem with this caching is that you can only
-delete the StateDir if you have first shutdown the web server,
-as the lock files will not be recreated between requests.
-Not that you should be deleting your StateDir anyway, but
-if you are, there is more to worry about. 
-<font face="courier new" size=3><pre>
-  PerlSetVar StateCache 0
-</pre></font>
+</pre></font>Deprecated as of 2.23.  There is no equivalent config for
+the functionality this represented from that version on.
+The 2.23 release represented a significant rewrite
+of the state management, moving to MLDBM::Sync for its
+subsystem.</font>
 	
 	<p>
 	<a name=StateSeriali106736b1></a>
@@ -1605,28 +1595,31 @@ just running under <a href=http://perl.apache.org><font size=-1 face=verdana><b>
 </pre></font>Like StateDB, sets dbm format for caching.  Since SDBM_File
 only support key/values pairs of around 1K max in length,
 the default for this is MLDBM::Sync::SDBM_File, which is very
-fast for &lt; 20K file sizes.  For caching larger data than 20K,
+fast for &lt; 20K output sizes.  For caching larger data than 20K,
 DB_File or GDBM_File are probably better to use.
 <font face="courier new" size=3><pre>
   PerlSetVar CacheDB MLDBM::Sync::SDBM_File
+
 </pre></font>Here are some benchmarks about the CacheDB when used 
 with caching output from $Response-&gt;Include(\%cache)
 running on a Linux 2.2.14 dual PIII-450. 
 The variables are output size being cached &amp; the CacheDB used,
 the default being MLDBM::Sync::SDBM_File. 
 <font face="courier new" size=3><pre>
- CacheDB                 Output Cached   Cache Fetch/sec
- -------                 -------------   ---------------
- MLDBM::Sync::SDBM_File  32000 bytes     41.7
- DB_File                 32000 bytes     53
- MLDBM::Sync::SDBM_File   3200 bytes     177
- DB_File                  3200 bytes     59
-
- CacheDB                 Output Cached   Cache Store/sec
- -------                 -------------   ---------------
- MLDBM::Sync::SDBM_File   3200 bytes     42
- DB_File                  3200 bytes     39
-</pre></font>
+</pre></font><table>
+<tr><th>CacheDB</th><th>Output Cached</th><th>Operation</th><th>Ops/sec</th></tr>
+<tr><td>MLDBM::Sync::SDBM_File</td>	<td>3200 bytes</td>	<td>read</td>	<td>177</td></tr>
+<tr><td>DB_File</td>			<td>3200 bytes</td>	<td>read</td>	<td>59</td></tr>
+<tr><td>MLDBM::Sync::SDBM_File</td>	<td>32000 bytes</td>	<td>read</td>	<td>42</td></tr>
+<tr><td>DB_File</td>			<td>32000 bytes</td>	<td>read</td>	<td>53</td></tr>
+<tr><td>MLDBM::Sync::SDBM_File</td>	<td>3200 bytes</td>	<td>write</td>	<td>42</td></tr>
+<tr><td>DB_File</td>			<td>3200 bytes</td>	<td>write</td>	<td>39</td></tr>
+</table>
+<font face="courier new" size=3><pre>
+</pre></font>For your own benchmarks to test the relative speeds of the
+various DBMs under MLDBM::Sync, which is used by CacheDB,
+you may run the ./bench/bench_sync.pl script from the 
+MLDBM::Sync distribution on your system.</font>
 	
 	<p>
 	<a name=CacheDir></a>

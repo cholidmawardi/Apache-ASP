@@ -327,7 +327,15 @@ perl package or whereever like so
 
   &lt;!-- # employee.inc file somewhere else --&gt;
   &lt;% my($attributes, $body) = @_; %&gt;
-  <table> <% for('name', 'last', 'phone') { %> <tr> <td><b><%=ucfirst $_ %></b>:</td> <td><%= $attributes->{$_} %></td> </tr> <% } %> <tr><td colspan=2><%= $body %></td></tr> </table>
+  <table>
+  <% for('name', 'last', 'phone') { %>
+    <tr>
+      <td><b><%=ucfirst $_ %></b>:</td>
+      <td><%= $attributes->{$_} %></td>
+    </tr>
+  <% } %>
+  <tr><td colspan=2><%= $body %></td></tr>
+  </table>
   &lt;!-- # end employee.inc file --&gt;
 </pre></font>The $Response-&gt;Include() would then delegate the rendering
 of the employee to the employee.inc ASP script include.
@@ -413,9 +421,9 @@ projects need mention:
 <font face="courier new" size=3><pre>
   <a href="http://xml.apache.org/cocoon/">Cocoon - XML-based web publishing, in Java</a>
 
-  <a href="http://www.axkit.org/">AxKit - XML web publishing with Apache &amp; <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a></a>
+  <a href="http://www.axkit.org/">AxKit - XML web publishing with Apache &amp; mod_perl</a>
 
-  <a href="http://xmlxslt.sourceforge.net/"><a href=http://xmlxslt.sourceforge.net/><font size=-1 face=verdana><b>XML::XSLT</b></font></a> - Core engine that Apache::ASP uses for XSLT</a>
+  <a href="http://xmlxslt.sourceforge.net/">XML::XSLT - Core engine that Apache::ASP uses for XSLT</a>
 </pre></font>
 	
 

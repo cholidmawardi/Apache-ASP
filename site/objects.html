@@ -748,7 +748,7 @@ and simple aliases for common functions.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Server-%3EMai9b6fc85e>$Server->Mail(\%mail, %smtp_args);</a>
+			<a href=#%24Server-%3EMai1c5be650>$Server->Mail(\%mail, %smtp_args);</a>
 			</font>
 			</td>
 							
@@ -1589,7 +1589,7 @@ name as a file handle as in:
 <font face="courier new" size=3><pre>
  while(read($Request-&gt;Form('file_field_name'), $data, 1024)) {};
 </pre></font>For more information, please see the <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> / File Upload section,
-as file uploads are implemented via the <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> module.  An
+as file uploads are implemented via the CGI.pm module.  An
 example can be found in the installation 
 samples <a href=eg/file_upload.asp>./site/eg/file_upload.asp</a></font>
 	
@@ -1801,7 +1801,7 @@ translate the request to, regardless or whether the request would be valid.
 script.</font>
 	
 	<p>
-	<a name=%24Server-%3EMai9b6fc85e></a>
+	<a name=%24Server-%3EMai1c5be650></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>$Server->Mail(\%mail, %smtp_args);</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>With the Net::SMTP and Net::Config modules installed, which are part of the 
@@ -1819,6 +1819,7 @@ the To, From, and Subject headers, and the Body of the mail message.
 		 'Body of message. '.
 		 'You might have a lot to say here!',
 		Organization =&gt; 'Your Organization',
+		Debug =&gt; 0 || 1,
 	       });
 </pre></font>Any extra fields specified for the email will be interpreted
 as headers for the email, so to send an HTML email, you 
@@ -1834,7 +1835,14 @@ success of the mail being sent.
 </pre></font>If you would like to specially configure the Net::SMTP 
 object used internally, you may set %smtp_args and they
 will be passed on when that object is initialized.
-&quot;perldoc Net::SMTP&quot; for more into on this topic.</font>
+&quot;perldoc Net::SMTP&quot; for more into on this topic.
+<font face="courier new" size=3><pre>
+</pre></font>If you would like to include the output of an ASP page as the
+body of the mail message, you might do something like:
+<font face="courier new" size=3><pre>
+  my $mail_body = $Response-&gt;TrapInclude('mail_body.inc');
+  $Server-&gt;Mail({ %mail, Body =&gt; $$mail_body });
+</pre></font>
 	
 	<p>
 	<a name=%24Server-%3EReg38562b5d></a>
@@ -1906,7 +1914,7 @@ URL will also have the session id inserted into the query string,
 making this a critical part of that method of implementing 
 cookieless sessions.  For more information on that topic 
 please read on the setting
-in the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> section, and the <a href=sessions.html><font size=-1 face=verdana><b>SESSIONS</b></font></a> section too.</font>
+in the <a href=config.html><font size=-1 face=verdana><b>CONFIG</b></font></a> section, and the SESSIONS section too.</font>
 	
 	<p>
 	<a name=%24Server-%3EXSLd6dded33></a>

@@ -13,7 +13,7 @@
   <td><img border="0" src="<%=$gifdir%>/asptitlelogo.gif" alt="Apache::ASP" /></td>
   <td align="right" width="300">
     <a href="http://perl.apache.org"><img src="<%=$gifdir%>/powered_by_modperl.gif" border="0" alt="Powered by ModPerl &amp; Apache" /></a> 
-    <a href="http://www.nodeworks.com/asp/"><img src="<%=$gifdir%>/powered_by_apache_asp.jpg" border="0" alt="Powered by Apache::ASP" /></a> 
+    <a href="http://www.apache-asp.org"><img src="<%=$gifdir%>/powered_by_apache_asp.jpg" border="0" alt="Powered by Apache::ASP" /></a> 
     <a href="http://www.nodeworks.com/partner.htm?partner_id=apacheasp"><img 
       src="<%=$gifdir%>/nodecheck_button.gif" border="0" alt="Links Checked by NodeWorks" /></a>
   </td>
@@ -22,7 +22,7 @@
   <td><font size="+0" color="white"><b><%=$title || $demo->{title}%></b></font></td>
   <td align="right">
     <% 
-       my $date = HTTP::Date::time2iso(); 
+       my $date = &Apache::ASP::Date::time2iso(); 
        $date =~ s/\s*\d\d:\d\d:\d\d$//;
      %>
     <font color="white" size="-1"><%=$date %></font>

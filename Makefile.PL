@@ -11,7 +11,7 @@ my $necessary_modules = {
     'Data::Dumper' => 'Serializes data for MLDBM',
     'Fcntl' => 'Used for file locking constants',
     'Digest::MD5' => '32 byte hash algorithm for cookie session-id',
-    'HTTP::Date' => 'Provides mapping between Perl time() and HTTP dates',
+#    'HTTP::Date' => 'Provides mapping between Perl time() and HTTP dates',
     'Carp' => 'Provides critical error messaging with confess()',
 };
 
@@ -32,8 +32,9 @@ my $optional_modules =
    'Apache::Filter' => 'Full SSI support via Apache::Filter & Apache::SSI',
    'Apache::SSI' => 'Full SSI support via Apache::Filter & Apache::SSI',
    'Net::SMTP' => 'Runtime errors can be mailed to the webmaster with MailErrorTo config',
-   'Net::Config' => 'Config options for use with Net::SMTP',	     
+   'Net::Config' => 'Config options for use with Net::SMTP',
    'Time::HiRes' => 'Sub second Apache::ASP response timing with Debug 3/-3 turned on.',
+   'Tie::TextDir .04' => 'Fast cache for CacheDB setting for things like large XSLT transformations.',
    'XML::XSLT 0.32' => 'XSLT transformations require this module.  Install Bundle::XML from CPAN before installing this module for the first time.',
    'XML::Sablotron' => 'XSLT that is 10 times faster than XML::XSLT',
 };
@@ -84,9 +85,9 @@ execute the following:
 
 > perl -MCPAN -eshell
 
-Then to install any required modules, like HTTP::Date
+Then to install any required modules, like MLDBM::Sync
 
- cpan> install HTTP::Date
+ cpan> install MLDBM::Sync
 
 To install the modules commonly used with Apache::ASP, do:
 
@@ -122,10 +123,11 @@ use ExtUtils::MakeMaker;
 			       'Carp' => 0,
 			       'Data::Dumper' => 0,
 			       'Fcntl' => 0,
-			       'HTTP::Date' => 0,
+#			       'HTTP::Date' => 0,
 			       'Digest::MD5' => 0,
 			       'MLDBM' => 0,
 			       'SDBM_File' => 0,
+			       'MLDBM::Sync' => 0,
 			      },
 	      );
 

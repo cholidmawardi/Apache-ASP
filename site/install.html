@@ -250,14 +250,23 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 <font face=verdana><font class=title size=+1 color=#555555><b>INSTALL</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>The latest Apache::ASP can be found at your nearest CPAN,
+</pre></font>You may download the latest Apache::ASP from your nearest CPAN,
 and also:
 <font face="courier new" size=3><pre>
-  <a href=http://www.perl.com/CPAN-local/modules/by-module/Apache/>http://www.perl.com/CPAN-local/modules/by-module/Apache/</a>
+  <a href=http://www.cpan.org/modules/by-module/Apache/>http://www.cpan.org/modules/by-module/Apache/</a>
   <a href=ftp://ftp.duke.edu/pub/perl/modules/by-module/Apache/>ftp://ftp.duke.edu/pub/perl/modules/by-module/Apache/</a>
 </pre></font>As a perl user, you should make yourself familiar with 
 the CPAN.pm module, and how it may be used to install
-Apache::ASP, and other related modules.</font>
+Apache::ASP, and other related modules.  The easiest way
+to install Apache::ASP for the first time from perl is to 
+fire up the CPAN shell like:
+<font face="courier new" size=3><pre>
+ shell prompt&gt; perl -MCPAN -e shell
+ ...
+ cpan&gt; install Bundle::Apache::ASP
+</pre></font>Installing the Apache::ASP bundle will automatically install
+all the modules Apache::ASP is dependent on as well as
+Apache::ASP itself.</font>
 
 	<hr size=1>
 	<table width=100% border=0 cellpadding=1 cellspacing=3>
@@ -270,6 +279,22 @@ Apache::ASP, and other related modules.</font>
 			<td valign=top >
 			<font face="lucida console" size=-1>
 			<a href=#Perl%20Module%207254a332>Perl Module Install</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Linux%20Distric636d369>Linux Distributions</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Win32%20Instal93dbe80f>Win32 Install</a>
 			</font>
 			</td>
 		
@@ -296,16 +321,6 @@ Apache::ASP, and other related modules.</font>
 			</td>
 							
 		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Linux%20Distric636d369>Linux Distributions</a>
-			</font>
-			</td>
-		<td>&nbsp;</td>					
-		</tr>
 			
 	</table>
 	<hr size=1>
@@ -325,10 +340,28 @@ copy ASP.pm to $PERLLIB/site/Apache
   &gt; make install
 
   * use nmake for win32
-</pre></font>Please note that you must first have the <a href=http://www.apache.org><font size=-1 face=verdana><b>Apache Web Server</b></font></a>
+</pre></font>Please note that you must first have the Apache Web Server
 &amp; <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> installed before using this module in a web server
 environment.  The offline mode for building static html at
 ./cgi/asp may be used with just perl.</font>
+	
+	<p>
+	<a name=Win32%20Instal93dbe80f></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Win32 Install</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>If you are on a Win32 platform, like WinNT or Windows 2000, 
+you can download the win32 binaries linked to from:
+<font face="courier new" size=3><pre>
+  <a href=http://perl.apache.org/distributions.html>http://perl.apache.org/distributions.html</a>  
+</pre></font>Randy Kobes has graciously provided these, which include
+compiled versions perl, <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>, apache, mod_ssl,
+as well as all the modules required by Apache::ASP
+and Apache::ASP itself.  In order to upgrade the 
+latest Apache::ASP without a compiler, just download
+the latest Apache::ASP version and replace the ASP.pm
+file in your perl libraries with the one from the
+distribution.  Apache::ASP is written in pure perl,
+so there is no need to compile it for installation.</font>
 	
 	<p>
 	<a name=Need%20Help></a>
@@ -336,7 +369,7 @@ environment.  The offline mode for building static html at
 <font face="courier new" size=3><pre>
 </pre></font>Often, installing the <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> part of the Apache server
 can be the hardest part.  If this is the case for you, 
-check out the <a href=faq.html><font size=-1 face=verdana><b>FAQ</b></font></a> and <a href=support.html><font size=-1 face=verdana><b>SUPPORT</b></font></a> sections for further help,
+check out the <a href=faq.html><font size=-1 face=verdana><b>FAQ</b></font></a> and SUPPORT sections for further help,
 as well as the &quot;Build Apache&quot; notes in this section.
 <font face="courier new" size=3><pre>
 </pre></font>Please also see the mod_perl guide at <a href=http://perl.apache.org/guide>http://perl.apache.org/guide</a>
@@ -378,7 +411,7 @@ complex builds with great success.</font>
 	<a name=Quick%20Start></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>Quick Start</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Once you have successfully built the <a href=http://www.apache.org><font size=-1 face=verdana><b>Apache Web Server</b></font></a> with <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>,
+</pre></font>Once you have successfully built the Apache Web Server with <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>,
 copy the ./site/eg/ directory from the Apache::ASP installation 
 to your Apache document tree and try it out!  You must put &quot;AllowOverride All&quot;
 in your httpd.conf &lt;Directory&gt; config section to let the .htaccess file in the 

@@ -96,7 +96,7 @@ for(1..3) {
 &$reset_cache_counts;
 
 # LAST MODIFIED EXPIRE/CACHE
-for my $last_modified ( time + 10, HTTP::Date::time2str(time + 10), time-10, HTTP::Date::time2str(time-10) ) {
+for my $last_modified ( time + 10, Apache::ASP::Date::time2str(time + 10), time-10, Apache::ASP::Date::time2str(time-10) ) {
     my $out = $Response->TrapInclude({
 	File => \$script,
 	Cache => 1,

@@ -654,7 +654,7 @@ configuration directive.</font>
 	<font face=verdana><font class=title size=-1 color=#555555><b>How are file uploads handled?</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Please see the <a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> section.  File uploads are implemented
-through <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> which is loaded at runtime only for this purpose.
+through CGI.pm which is loaded at runtime only for this purpose.
 This is the only time that CGI.pm will be loaded by Apache::ASP,
 which implements all other cgi-ish functionality natively.  The
 rationale for not implementing file uploads natively is that 

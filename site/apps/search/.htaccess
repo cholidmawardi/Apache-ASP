@@ -13,6 +13,6 @@ DirectoryIndex index.asp
 	PerlSetVar SearchDB /tmp/asp_search/search
 	PerlSetVar SearchFileRoot ../..
 	PerlSetVar SearchSiteRoot ../..
-	PerlSetVar SearchRefreshPeriod 3600
+	PerlSetVar SearchRefreshPeriod 86400
 	PerlSetVar SearchFileMatch (\.asp|\.html?)$
 </Files>

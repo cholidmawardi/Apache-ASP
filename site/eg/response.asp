@@ -8,7 +8,7 @@
 	# Expires
 	$form->{expires} ||= 0;
 	$Response->{Expires} = $form->{expires};
-	my $update_time = &HTTP::Date::time2str(time()+$form->{expires});
+	my $update_time = &Apache::ASP::Date::time2str(time()+$form->{expires});
 
 	# Buffer
 	(defined $Session->{buffer}) 

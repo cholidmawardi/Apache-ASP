@@ -67,6 +67,7 @@ sub refresh_db {
 	%SDB = ();
 	$SDB{LastRefresh} = time();
 
+	my %files;
 	recurse( sub {
 		     if(! /$CONF->{FileMatch}/) {
 			 $Response->Debug("$_ does not match $CONF->{FileMatch}");
@@ -74,13 +75,25 @@ sub refresh_db {
 			 $Response->Debug("$_ is a directory");
 		     } elsif(-e $_) {
 			 $Response->Debug("indexing $_");
-			 &index_page($_);
+			 my $words = &index_page($_);
+			 $files{$_} = $words;
 		     } else {
 			 $Response->Debug("no file for $_");
 		     }
 		 }
 		 , $CONF->{FileRoot}
 	       );
+
+	$Response->Debug("indexing words for ".scalar(keys %files)." files");
+	my %words;
+	for my $file ( keys %files ) {
+	    my $file_dict = $files{$file};
+	    for my $word ( keys %$file_dict ) {
+		my $count = $file_dict->{$word};
+		$words{"WORD:$word"}{$file} = $count;
+	    }
+	}
+	%SDB = ( %words, %SDB );
     }
 }
 
@@ -138,15 +151,15 @@ sub index_page {
 	$words{$_}++;
     }
 
-    for my $word ( keys %words ) {
-	my $count = $words{$word};
-	my $word_key = "WORD:$word";
-	my $word_dict = $SDB{$word_key} || {};
-	$word_dict->{$file} = $count;
-	$SDB{$word_key} = $word_dict;
-    }
+#    for my $word ( keys %words ) {
+#	my $count = $words{$word};
+#	my $word_key = "WORD:$word";
+#	my $word_dict = $SDB{$word_key} || {};
+#	$word_dict->{$file} = $count;
+#	$SDB{$word_key} = $word_dict;
+#    }
 
-    $Response->Debug("indexed words for $file"); # : ".join(", ", sort keys %words));
+    $Response->Debug("fetched words for $file"); # : ".join(", ", sort keys %words));
 
     $SDB{$mtime_key} = stat($file)->mtime;
     $SDB{$file_key} = {
@@ -154,6 +167,8 @@ sub index_page {
 			 summary => $summary,
 			};
 #    $Response->Debug($SDB{$file_key});
+
+    \%words;
 }
 
 sub search_files {
@@ -164,8 +179,8 @@ sub search_files {
     for my $word (@words) {
 	my $word_dict = $SDB{"WORD:$word"};
 	if($word_dict) {
-	    $matches{$word}++;
 	    for my $file ( keys %$word_dict ) {
+		$matches{$word}++;
 		$files{$file} += $word_dict->{$file};
 	    }
 	}

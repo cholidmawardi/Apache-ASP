@@ -250,8 +250,8 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 <font face=verdana><font class=title size=+1 color=#555555><b>CGI</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> has been the standard way of deploying web applications long before
-ASP came along.  In the CGI gateway world, <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> has been a widely
+</pre></font>CGI has been the standard way of deploying web applications long before
+ASP came along.  In the CGI gateway world, CGI.pm has been a widely
 used module in building CGI applications, and Apache::ASP is compatible
 with scripts written with CGI.pm.  Also, as of version 2.19, Apache::ASP
 can run in standalone CGI mode for the Apache web server without
@@ -325,7 +325,7 @@ ASP implementations, as other ASP implementations will likely be more limited.</
 	<font face=verdana><font class=title size=+0 color=#555555><b>Standalone CGI Mode, without mod_perl</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>As of version 2.19, Apache::ASP scripts may be run as standalone
-<a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> scripts without <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> being loaded into Apache.  Work
+<a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> scripts without mod_perl being loaded into Apache.  Work
 to date has only been done with mod_cgi scripts under Apache on a
 Unix platform, and it is unlikely to work under other web servers 
 or Win32 operating systems without further development.
@@ -377,9 +377,9 @@ to be defined.</font>
 	<a name=CGI.pm></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>CGI.pm</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm is a very useful module that aids developers in 
+</pre></font>CGI.pm is a very useful module that aids developers in 
 the building of these applications, and Apache::ASP has been made to 
-be compatible with function calls in <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a>.  Please see cgi.htm in the 
+be compatible with function calls in CGI.pm.  Please see cgi.htm in the 
 ./site/eg directory for a sample ASP script written almost entirely in CGI.
 <font face="courier new" size=3><pre>
 </pre></font>As of version 0.09, use of CGI.pm for both input and output is seamless
@@ -398,7 +398,7 @@ web applications.</font>
 	use CGI;
 	my $query = new CGI;
 </pre></font>As of Apache::ASP version 0.09, form input may be read in 
-by <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> upon initialization.  Before, Apache::ASP would 
+by CGI.pm upon initialization.  Before, Apache::ASP would 
 consume the form input when reading into $Request-&gt;Form(), 
 but now form input is cached, and may be used by CGI.pm input
 routines.</font>
@@ -430,7 +430,7 @@ you will avoid this problem.</font>
 	<a name=print%28%29ing%20C99232b52></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>print()ing CGI</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a> is notorious for its print() statements, and the functions in <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> 
+</pre></font>CGI is notorious for its print() statements, and the functions in CGI.pm 
 usually return strings to print().  You can do this under Apache::ASP,
 since print just aliases to $Response-&gt;Write().  Note that $| has no
 affect.
@@ -443,7 +443,7 @@ affect.
 	<a name=File%20Upload></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>File Upload</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font><a href=cgi.html><font size=-1 face=verdana><b>CGI</b></font></a>.pm is used for implementing reading the input from file upload.  You
+</pre></font>CGI.pm is used for implementing reading the input from file upload.  You
 may create the file upload form however you wish, and then the 
 data may be recovered from the file upload by using $Request-&gt;Form().
 Data from a file upload gets written to a file handle, that may in
@@ -456,7 +456,7 @@ name of the file handle.
 	while(read($filehandle, $data, 1024)) {
 		# data from the uploaded file read into $data
 	};
-</pre></font>Please see the docs on <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html><font size=-1 face=verdana><b>CGI.pm</b></font></a> (try perldoc CGI) for more information
+</pre></font>Please see the docs on CGI.pm (try perldoc CGI) for more information
 on this topic, and <a href=eg/file_upload.asp>./site/eg/file_upload.asp</a> for an example of its use.
 <font face="courier new" size=3><pre>
 </pre></font>There is a $Request-&gt;FileUpload() API extension that you can use to get 
