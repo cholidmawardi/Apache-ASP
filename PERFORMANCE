@@ -1,0 +1,46 @@
+PERFORMANCE: Benchmarks + Hints (Below)
+
+== BENCHMARKS ===========================================================
+
+Hits/Sec	Processor	OS	Static	ASP	State	DBI	Logic	S+C
+--------	---------	--	------	---	-----	---	-----	---
+25		PII 300		WinNT	Y	-	-	-	-	Y
+16		PII 300		WinNT   -	Y	-	-	-	Y
+11		PII 300		WinNT	-	Y	Y	-	-	Y
+10		PII 300		WinNT	-	Y	-	-	Y	Y
+7		PII 300		WinNT	-	Y	Y	Oracle	Y	Y
+
+* all benchmarks run with clients and server on same machine
+** please mail me some of your results if you conduct your own benchmark
+
+Static	-	Static content, the fastest, included for control purposes.
+ASP	-	ASP script, as opposed to static content.
+State	-	Defined $Application and $Session objects.
+DBI     -	Persistent Database connection part of script, with Apache::DBI.
+Logic	-	Real web application logic, extra modules, etc.  A "Real Site".
+
+== HINTS ============================================================
+
+1) Use NoState 1 setting if you don't need the $Application or $Session objects.
+   State objects such as these tie to files on disk and will incur a performace
+   penalty.
+
+2) If you need the State objects, and if running an OS that caches files in memory, 
+   set your Global directory to a cached file system.  On WinNT, all files 
+   may be cached, and you have no control of this.  On Solaris, /tmp is cached
+   and would be a good place to set the Global to.  When cached file systems are
+   used there is little performance penalty for using state files.
+
+3) Don't use .htaccess files or the StatINC setting in a production system
+   as there are many more files read per request using these features.  I've
+   seen performance slow down by half because of use of these.  For eliminating
+   the .htaccess file, move settings into *.conf Apache files.
+
+4) Set your max request per child / process (in httpd.conf) high, so that
+   ASP scripts have a better chance being cached, which happens after they
+   are first compiled.  You will also avoid the process fork penalty on 
+   UNIX systems.  Somewhere between 100 - 1000 is probably pretty good.
+
+5) For more tips and tricks for general Apache and mod_perl performance
+   tuning, please reference the docs at http://perl.apache.org
+

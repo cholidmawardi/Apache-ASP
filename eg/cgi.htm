@@ -3,7 +3,7 @@
 	$demo = &DemoASP::new();
 
 	use CGI qw(:standard :html2);
-	my $query = new CGI;
+	my $query = new CGI({});
 	my $cookie = $query->cookie(-name=>'sessionID',
 				    -value=>'xyzzy',
 				    -expires=>'+1h',

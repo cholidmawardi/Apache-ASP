@@ -1,6 +1,24 @@
-$VERSION = .04;
+$VERSION = .05
 
 + = improvement; - = bug fix
+
++ Added PERFORMANCE doc, which includes benchmarks + hints.
++ Better installation warnings and errors for other modules required. 
+- Turned off StatINC in eg/.htaccess, as not everyone installs Devel::Symdump
+- Fixed AUTOLOAD state bug, which wouldn't let you each through state
+  objects, like %{$Session}, or each %$Session, (bug introduced in v.04)
++ Parses ASP white space better.  HTML output matches author's intent
+  by better dealing with white space surrounding <% perl blocks %>
+- Scalar insertion code <%=$foo%> can now span many lines.
++ Added include.t test script for includes.
++ Script recompiles when included files change.
++ Files can be included in script with 
+  SSI <!--#include file="filename"--> syntax, needs to be
+  done in ASP module to allow compilation of included code and html 
+  into script.  Future chaining with Apache::SSI will allow static 
+  html includes, and other SSI directives
+
+$VERSION = .04;
 
 + Example script eg/cgi.htm demonstrating CGI.pm use for output.
 + Optimized ASP parsing, faster and more legible executing code

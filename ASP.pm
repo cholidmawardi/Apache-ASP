@@ -19,15 +19,15 @@ it allows a developer to create web applications with session
 management and perl embedded in static html files.
 
 This is a portable solution, similar to ActiveWare's PerlScript
-and MKS's PScript implementation of perl for IIS ASP.  Theoretically,
-one should be able to take a solution that runs under Apache::ASP
-and run it without change under PerlScript or PScript for IIS.
+and MKS's PScript implementation of perl for IIS ASP.  Work has
+been done and will continue to make ports to and from these
+other implementations as seemless as possible.
 
 =cut Documentation continues at the end of the module.
 
 package Apache::ASP;
 
-sub VERSION { .04; }
+sub VERSION { .05; }
 
 #use strict;
 use Apache();
@@ -65,7 +65,13 @@ $Apache::ASP::Md5         = new MD5();
 @Apache::ASP::Objects     = ('Application', 'Session', 'Response', 
 			      'Server', 'Request');
 $Apache::ASP::SessionCookieName = 'session-id';
-%Apache::ASP::StatINC     = (); # used only if StatINC setting is on
+
+# keep track of included libraries and function codes for StatINC
+%Apache::ASP::StatINC     = (); 
+%Apache::ASP::Codes       = (); 
+
+# used to keep track of modification time of included files 
+%Apache::Includes         = (); 
 
 # only if we support active objects on Win32 do we create
 # the server object, which is in charge of object creation
@@ -97,6 +103,7 @@ sub handler {
 
     # ASP object creation, a lot goes on in there!
     my($self) = new($r);
+    $self->Debug('ASP object created', $self) if $self->{debug};    
 
     #X: GLOBAL.ASA not supported yet, its lame
     # $self->ProcessGlobalASA(); 
@@ -199,8 +206,6 @@ sub new {
     
     $self->{id} = $self->{filename};
     $self->{id} =~ s/\W/_/gso;
-    
-    $self->Debug('creating asp', $self) if $self->{debug};
     
     # make sure we have a cookie path config'd if we need one for state
     if(! $self->{no_session} && ! $self->{cookie_path}) {
@@ -315,6 +320,19 @@ sub IsChanged {
 	return(1) if $self->StatINC(); 
     }
 
+    # support for includes, changes to included files
+    # cause script to recompile
+    my $includes;
+    if($includes = $Apache::ASP::Includes{$self->{id}}) { 
+	# initial test for performance?
+	while(my($k, $v) = each %$includes) {
+	    if(stat($k)->mtime > $v) {
+		warn "new include $k, $v\n";
+		return 1;
+	    }
+	}
+    }
+
     my $last_update = $Apache::ASP::Compiled{$self->{id}}->{mtime} || 0;
     ($self->{mtime} > $last_update) ? 1 : 0;
 }        
@@ -328,18 +346,50 @@ sub Parse {
 	$data =~ s/^(.*?)__END__//gso;
     }
 
+    # this section is for file includes, we do this here instead of ssi
+    # so it can be parsed and compiled with the script
+    my $munge = $data;
+    while($munge =~ s/^(.*?)\<!--\#include\s+file\s*\=\s*\"([^\"]*)\"\s*--\>(.*)$/$3/so) {
+	my $file = $2;
+	unless(-e $file) {
+	    $self->Error("include file with name $file does not exist");
+	    next;
+	}
+	$Apache::ASP::Includes{$self->{id}}{$file} = stat($file)->mtime;
+	my $text = $self->ReadFile($file);
+	$data =~ s/\<!--\#include\s+file\s*\=\s*\"$file\"\s*--\>/$text/sg;
+    }
+    
     # there should only be one of these, rip it out
     $data =~ s/\<\%\@(.*?)\%\>//so; 
     $data .= "\n<%;%>\n"; # always end with some perl code for parsing.
-    my(@out);
+    my(@out, $perl_block, $last_perl_block);
     while($data =~ s/^(.*?)\<\%(?:\s*\n)?(.*?)\s*\%\>//so) {
 	($text, $perl) = ($1,$2);
 	$perl =~ s/^\s+$//gso;
 	$text =~ s/^\s$//gso;
+	$perl_block = ($perl =~ /^\s*\=(.*)$/so) ? 0 : 1;
 
+	# with some extra text parsing, we remove asp formatting from
+	# influencing the generated html formatting, in particular
+	# dealing with perl blocks and new lines
 	if($text) {
 	    $text =~ s/\\/\\\\/gso;
 	    $text =~ s/\'/\\\'/gso;
+
+	    # remove the tail white space from the text before
+	    # a perl block, as long as there is a newline there
+	    if($perl_block) {
+		$text =~ s/\n\s*?$/\n/so;
+	    }
+
+	    # remove the head white space from the text after a perl block
+	    # as long as there is a newline there
+	    if($last_perl_block) {
+		$text =~ s/^\s*?\n//so;
+		$last_perl_block = 0;
+	    }
+
 	    push(@out, "\'".$text."\'")
 	}
 
@@ -357,9 +407,11 @@ sub Parse {
 		     );
 	    }
 	    
-	    if($perl =~ /^\s*\=(.*)/o) {
+	    if(! $perl_block) {
+		# we have a scalar assignment here
 		push(@out, '('.$1.')');
 	    } else {
+		$last_perl_block = 1;
 		if(@out) {
 		    $script .= join
 			("\n",
@@ -483,20 +535,26 @@ sub Execute {
     # alias $0 to filename
     my $filename = $self->{filename};
     local *0 = \$filename;
-
+    
     # init objects
     my($object, $import_package);
     no strict 'refs';
     for $object (@Apache::ASP::Objects) {
 	for $import_package ('main', $package) {
 	    my $init_var = $import_package.'::'.$object;
-	    ${$init_var} = $self->{$object};
+	    $$init_var = $self->{$object};
 	}
     }
+
 
     # set printing to Response object
     tie *RESPONSE, 'Apache::ASP::Response', $self->{Response};
     select(RESPONSE);
+    $| = 1; # flush immediately
+
+    # set reading from Request Object
+    #   untie *STDIN;
+    # tie *STDIN, 'Apache::ASP::Request', $self->{Request};
 
     # run the script now, then check for errors
     eval ' &{$handler}($self, $routine) ';  
@@ -504,6 +562,7 @@ sub Execute {
     
     # so we don't interfere with the printing mechanism of 
     # other perl-handlers
+    untie *STDIN;
     select(STDOUT); 
 
     # undef objects
@@ -766,8 +825,16 @@ package Apache::ASP::Request;
 
 sub new {
     my($r) = $_[0]->{r};
-    my($self) = bless { asp=> $_[0]};
     my(%query, %form, %env, %cookies);
+
+    my($self) = bless { 
+	asp => $_[0],
+	content => '',
+	Cookies => '',
+	Form => '',
+	QueryString => '',
+	ServerVariables => '',
+    };
     
     %query = $r->args();
     $self->{'QueryString'} = \%query;
@@ -778,7 +845,22 @@ sub new {
     # assign no matter what so Form is always defined
     if(($r->method() || '') eq "POST") {
 	%form = $r->content();
-    }
+    } 
+
+    #X: optimize for non-cgi
+    # save content for CGI
+#	my(@contents) = ();
+#	while(my($k,$v) = each %form) {
+#	    push(@contents, Apache::ASP::Server->URLEncode($k) . '=' .
+#	       Apache::ASP::Server->URLEncode($v)
+#		 );;
+#	}
+#	$self->{content} = join("&", @contents);
+#	while(my($k,$v) = each %env) {
+#	    $ENV{$k} = $v;
+#	}
+#    $self->{asp}->Debug($self->{content});
+
     $self->{'Form'} = \%form;
 
     # do cookies now
@@ -796,6 +878,15 @@ sub new {
     $self->{Cookies} = \%cookies;
 
     $self;
+}
+
+# just returns itself
+sub TIEHANDLE { $_[1] };
+
+sub READ {
+    my($self, $buf, $len) = @_;
+    $buf ||= "";
+    $buf .= substr($self->{content}, 0, $len);
 }
 
 sub DESTROY {}
@@ -1690,7 +1781,7 @@ sub AUTOLOAD {
 	$value = $self->{dbm}->$AUTOLOAD(@_);
     } else {
 	$self->WriteLock();
-	my $value = $self->{dbm}->$AUTOLOAD(@_);
+	$value = $self->{dbm}->$AUTOLOAD(@_);
 	$self->UnLock();
     }
 
@@ -2094,6 +2185,14 @@ defaults are fine...
  # redirect is specified.
  #
  SoftRedirect 0
+
+ # NoState
+ # -------
+ # default 0, if true, neither the $Application nor $Session objects will
+ # be created.  Use this for a performance increase.  Please note that 
+ # this setting takes precedence over the AllowSessionState setting.
+ #
+ NoState 0
 
  </Location>
 
