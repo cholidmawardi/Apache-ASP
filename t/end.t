@@ -44,7 +44,7 @@ for my $tester (@tests) {
     my $r = Apache::ASP::CGI::Test->init($file);
     $r->init_dir_config( %args, %$args );
     my $status = Apache::ASP->handler($r);
-    unless($status == 200) {
+    unless($status == 0) {
 	$r->log_error("[failure] error status $status for $file");
 	next;
     }

@@ -28,6 +28,10 @@ $t->eok($Server->URL('test.asp', { 'test' => ['value', 'value2'] })
 	eq 'test.asp?test=value&test=value2',
 	'multi params $Server->URL() encoding did not work'
 	);
+$t->eok($Server->URL('test.asp')
+	eq 'test.asp',
+	'no args $Server->URL() encoding did not work'
+	);
 
 my $html = q(&"<>'abc);
 my $final = '&amp;&quot;&lt;&gt;&#39;abc';
@@ -44,6 +48,5 @@ $t->eok($Server->File =~ /server.t$/, "\$Server->File does not match");
 #timethis(10, sub { my $copy = $htmlbig; $copy = $Server->HTMLEncode($copy) });
 #timethis(10, sub { my $copy = $htmlbig; $Server->HTMLEncode(\$copy) });
 
+$Server->Transfer('transfer.inc');
 %>
-
-<% $t->done; %>

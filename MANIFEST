@@ -241,6 +241,8 @@ t/stat_inc.t
 t/strict_error.inc
 t/strict_error.t
 t/taint_check.t
+t/transfer.inc
+t/transfer2.inc
 t/unique_packages.inc
 t/unique_packages.t
 t/xmlsubs.t

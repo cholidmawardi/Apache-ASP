@@ -24,45 +24,6 @@
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
-<center>
-<table border=0 cellpadding=3 cellspacing=0 width=100%>
-<tr>
-<td>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</td>
-</tr></table>
-</center>
-
 
 
 <center>
@@ -76,14 +37,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<tr>
 	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
-		<form action=apps/search/index.asp>
-		<td align=right valign=center>
-		  <input type=text name=search size=20>
-		</td>
-		<td align=left valign=center>
-  		  <input type=submit value=Search>
-		</td>
-		</form>		
+		<td align=right></td>
 	
 	</tr>
 	</table>
@@ -319,7 +273,7 @@ most of your site.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Precompile%20S36827838>Precompile Scripts</a>
+			<a href=#Precompile%20Sfb36ef6e>Precompile Scripts</a>
 			</font>
 			</td>
 							
@@ -488,7 +442,7 @@ file, or loaded with PerlModule in your httpd.conf, so
 that your modules are compiled pre-fork in the parent httpd.</font>
 	
 	<p>
-	<a name=Precompile%20S36827838></a>
+	<a name=Precompile%20Sfb36ef6e></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>Precompile Scripts</b></font>
 <font face="courier new" size=3><pre>
 </pre></font>Precompile your scripts by using the Apache::ASP-&gt;Loader() routine
@@ -514,11 +468,11 @@ will be recursed, and all files in it whose file name matches $pattern
 will be compiled.  $pattern defaults to .*, which says that all scripts
 in a directory will be compiled by default.  
 <font face="courier new" size=3><pre>
-</pre></font>The %config args, are the config options that you want set that affect 
-compilation.  These options include Debug, Global, GlobalPackage, 
-DynamicIncludes, StatINC, StatINCMatch, XMLSubsMatch, and XMLSubsStrict.  
-If your scripts are later run with different config options, your 
-scripts may have to be recompiled.
+</pre></font>The %config args, are the config options that you may want set that affect 
+compilation.  These options include: Debug, Global, GlobalPackage, 
+DynamicIncludes, IncludesDir, InodeNames, PodComments, StatINC, StatINCMatch, UseStrict, 
+XMLSubsPerlArgs, XMLSubsMatch, and XMLSubsStrict. If your scripts are later run 
+with different config options, your scripts may have to be recompiled.
 <font face="courier new" size=3><pre>
 </pre></font>Here is an example of use in a *.conf file:
 <font face="courier new" size=3><pre>
@@ -618,7 +572,7 @@ these limits HIGH!</font>
 <tr bgcolor=#063678>
 	<td colspan=3 align=center width=80%>
 	<font face=verdana color=white size=-1>
-	Copyright &copy; 1998-2003,
+	Copyright &copy; 1998-2004,
 	<a href=http://www.chamas.com><font color=white>Chamas Enterprises Inc.</font></a>
 	</font>
 	</td>

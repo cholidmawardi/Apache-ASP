@@ -50,7 +50,22 @@ sub File {
 
 sub Transfer {
     my $self = shift;
-    $self->{asp}{Response}->Include(@_);
+
+    my $file = shift;
+    
+    # find the file we are about to execute, and alias $0 to it
+    my $file_found;
+    if(ref($file)) {
+	if($file->{File}) {
+	    $file_found = $self->{asp}->SearchDirs($file->{File});
+	}
+    } else {
+	$file_found = $self->{asp}->SearchDirs($file);
+    }
+    my $file_final = defined($file_found) ? $file_found : $0;
+    
+    local *0 = \$file_final;
+    $self->{asp}{Response}->Include($file, @_);
     $self->{asp}{Response}->End;
 }
 
@@ -121,9 +136,11 @@ sub Mail {
 
 sub URL {
     my($self, $url, $params) = @_;
+    $params ||= {};
     
     if($url =~ s/\?(.*)$//is) {
         my $old_params = $self->{asp}{Request}->ParseParams($1);
+	$old_params ||= {};
         $params = { %$old_params, %$params };
     }
 

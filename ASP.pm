@@ -4,7 +4,7 @@
 
 package Apache::ASP;
 
-$VERSION = 2.55;
+$VERSION = 2.57;
 
 #require DynaLoader;
 #@ISA = qw(DynaLoader);
@@ -178,7 +178,7 @@ sub handler {
 
     # ASP object creation, a lot goes on in there!
     # method call used for speed optimization, as OO calls are slow
-    my $self = Apache::ASP::new('Apache::ASP', $r, $filename);
+    my $self = &Apache::ASP::new('Apache::ASP', $r, $filename);
 
     # for runtime use/require library loads from global/INCDir
     # do this in the handler section to cover all the execution stages
@@ -224,6 +224,10 @@ sub handler {
 
     if($self->{filter} || ($status == 500) || ( $r->isa('Apache::ASP::CGI'))) {
 	$self->DESTROY();
+    }
+
+    if($status eq '200') {
+	$status = 0; # OK status code is default unless there was an internal error
     }
 
     $status;
@@ -4368,10 +4372,11 @@ The amount of data sent by the client in the body of the
 request, usually the length of the form data.  This is
 the same value as $Request->ServerVariables('CONTENT_LENGTH')
 
-=item $Request->BinaryRead($length)
+=item $Request->BinaryRead([$length])
 
 Returns a string whose contents are the first $length bytes
 of the form data, or body, sent by the client request.
+If $length is not given, will return all of the form data.
 This data is the raw data sent by the client, without any
 parsing done on it by Apache::ASP.
 
@@ -5148,7 +5153,7 @@ For their huge ground breaking XML efforts, these other XML OSS
 projects need mention:
 
   Cocoon - XML-based web publishing, in Java 
-  http://xml.apache.org/cocoon/
+  http://cocoon.apache.org/
 
   AxKit - XML web publishing with Apache & mod_perl
   http://www.axkit.org/
@@ -5853,11 +5858,11 @@ will be recursed, and all files in it whose file name matches $pattern
 will be compiled.  $pattern defaults to .*, which says that all scripts
 in a directory will be compiled by default.  
 
-The %config args, are the config options that you want set that affect 
-compilation.  These options include Debug, Global, GlobalPackage, 
-DynamicIncludes, StatINC, StatINCMatch, XMLSubsMatch, and XMLSubsStrict.  
-If your scripts are later run with different config options, your 
-scripts may have to be recompiled.
+The %config args, are the config options that you may want set that affect 
+compilation.  These options include: Debug, Global, GlobalPackage, 
+DynamicIncludes, IncludesDir, InodeNames, PodComments, StatINC, StatINCMatch, UseStrict, 
+XMLSubsPerlArgs, XMLSubsMatch, and XMLSubsStrict. If your scripts are later run 
+with different config options, your scripts may have to be recompiled.
 
 Here is an example of use in a *.conf file:
 
@@ -6131,6 +6136,9 @@ please send your link to asp@chamas.com
 
 For a list of testimonials of those using Apache::ASP, please see the TESTIMONIALS section.
 
+        NodeWorks Directory
+        http://dir.nodeworks.com
+
         FreeLotto
         http://www.freelotto.com
 
@@ -6187,9 +6195,6 @@ For a list of testimonials of those using Apache::ASP, please see the TESTIMONIA
 
 	Condo-Mart Web Service
 	http://www.condo-mart.com 
-
-        Direct.it
-        http://www.direct.it/
 
         Discountclick.com
         http://www.discountclick.com/
@@ -6262,6 +6267,15 @@ community and maintainer have been very helpful whenever we've had
 questions.
 
   -- Tom Lancaster, Red Hat
+
+=item D. L. Fox
+
+I had programmed in Perl for some time ... but, 
+since I also knew VB, I had switched to VB in IIS-ASP for 
+web stuff because of its ease of use in embedding code
+with HTML ...  When I discovered
+Apache-ASP, it was like a dream come true.  I would much rather code in Perl
+than any other language.  Thanks for such a fine product!
 
 =item HOSTING 321, LLC.
 
@@ -6483,6 +6497,31 @@ means first production ready release, this would be the
 equivalent of a 1.0 release for other kinds of software.
 
  + = improvement   - = bug fix    (d) = documentations
+
+=item $VERSION = 2.55; $DATE="08/09/2003"
+
+ - Bug fixes for running on standalone CGI mode on Win32 submitted
+   by Francesco Pasqualini
+
+ + Added Apache::ASP::Request::BINMODE for binmode() being
+   called on STDIN after STDIN is tied to $Request object
+
+ + New RequestBinaryRead configuration created, may be turned off
+   to prevent $Request object from reading POST data
+
+ ++ mod_perl 2 optmizations, there was a large code impact on this,
+   as much code was restructured to reduce the differences between
+   mod_perl 1 and mod_perl 2, most importantly, Apache::compat is
+   no longer used
+
+ + preloaded CGI for file uploads in the mod_perl environment
+
+ - When XSLT config is set, $Response->Redirect() should work now
+   Thanks to Marcus Zoller for pointing problem out
+
+ + Added CookieDomain setting, documented, and added test to cover 
+   it in t/cookies.t . Setting suggested by Uwe Riehm, who nicely 
+   submitted some code for this.
 
 =item $VERSION = 2.53; $DATE="04/10/2003"
 
@@ -8843,7 +8882,7 @@ equivalent of a 1.0 release for other kinds of software.
 
 =head1 LICENSE
 
-Copyright (c) 1998-2003, Josh Chamas, Chamas Enterprises Inc. 
+Copyright (c) 1998-2004, Josh Chamas, Chamas Enterprises Inc. 
 All rights reserved.
 
 Apache::ASP is a perl native port of Active Server Pages for Apache

@@ -42,7 +42,7 @@ The @arguments will be written as space separated
 words, and will be initialized as an associate array where
 %arguments = @arguments.  As an example:
 
- asp file.asp key1 value1 key2 value2
+ asp-perl file.asp key1 value1 key2 value2
 
 would be similar to calling the file.asp in a web environment like
 
@@ -59,7 +59,7 @@ perldoc Apache::ASP, and also http://www.apache-asp.org
 
 =head1 COPYRIGHT
 
-Copyright 1998-2002 Joshua Chamas, Chamas Enterprises Inc.
+Copyright 1998-2004 Joshua Chamas, Chamas Enterprises Inc.
 
 This program is distributed under the GPL.  Please see the LICENSE
 file in the Apache::ASP distribution for more information.

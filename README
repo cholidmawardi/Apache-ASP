@@ -1991,10 +1991,11 @@ OBJECTS
         usually the length of the form data. This is the same value as
         $Request->ServerVariables('CONTENT_LENGTH')
 
-    $Request->BinaryRead($length)
+    $Request->BinaryRead([$length])
         Returns a string whose contents are the first $length bytes of the form
-        data, or body, sent by the client request. This data is the raw data
-        sent by the client, without any parsing done on it by Apache::ASP.
+        data, or body, sent by the client request. If $length is not given, will
+        return all of the form data. This data is the raw data sent by the
+        client, without any parsing done on it by Apache::ASP.
 
         Note that BinaryRead will not return any data for file uploads. Please
         see the $Request->FileUpload() interface for access to this data.
@@ -2689,7 +2690,7 @@ XML/XSLT
     need mention:
 
       Cocoon - XML-based web publishing, in Java 
-      http://xml.apache.org/cocoon/
+      http://cocoon.apache.org/
 
       AxKit - XML web publishing with Apache & mod_perl
       http://www.axkit.org/
@@ -3102,29 +3103,40 @@ FAQ
       $Session->{complex}{object} = $data;
 
     How can I keep search engine spiders from killing the session manager?
-    If you want to dissallow session creation for certain non web browser user
-    agents, like search engine spiders, you can use an init handler like:
+    If you want to disallow session creation for certain non web browser user
+    agents, like search engine spiders, you can use a mod_perl PerlInitHandler
+    like this to set configuration variables at runtime:
 
-      PerlInitHandler "sub { $_[0]->dir_config('NoState', 1) }"
+     # put the following code into httpd.conf and stop/start apache server
+     PerlInitHandler My::InitHandler
+
+     <Perl>
+
+      package My::InitHandler;
+      use Apache;
+
+      sub handler {
+        my $r = shift; # get the Apache request object
+
+        # if not a Mozilla User Agent, then disable sessions explicitly
+        unless($r->headers_in('User-Agent') =~ /^Mozilla/) {
+           $r->dir_config('AllowSessionState', 'Off');
+        }
+
+        return 200; # return OK mod_perl status code
+      }
+
+      1;
+
+     </Perl>
 
     This will configure your environment before Apache::ASP executes and sees
     the configuration settings. You can use the mod_perl API in this way to
     configure Apache::ASP at runtime.
 
-    Insecure dependency in eval while running with - T switch ?
-    If you are running your mod_perl with "PerlTaintCheck On", which is
-    recommended if you are highly concerned about security issues, you may get
-    errors like "Insecure dependency ... with - T switch".
-
-    Apache::ASP automatically untaints data internally so that you may run
-    scripts with PerlTaintCheck On, but if you are using state objects like
-    $Session or $Application, you must also notify MLDBM, which Apache::ASP uses
-    internally, to also untaint data read from disk, with this setting:
-
-      $MLDBM::RemoveTaint = 1;
-
-    You could put the above line in your global.asa, which is just like a perl
-    module, outside any event handlers you define there.
+    Note that the Session Manager is very robust on its own, and denial of
+    service attacks of the types that spiders and other web bots normally
+    execute are not likely to affect the Session Manager significantly.
 
     How can I use $Session to store a $dbh database handle ?
     You cannot use $Session to store a $dbh handle. This can be awkward for
@@ -3315,11 +3327,12 @@ TUNING
     $pattern defaults to .*, which says that all scripts in a directory will be
     compiled by default.
 
-    The %config args, are the config options that you want set that affect
-    compilation. These options include Debug, Global, GlobalPackage,
-    DynamicIncludes, StatINC, StatINCMatch, XMLSubsMatch, and XMLSubsStrict. If
-    your scripts are later run with different config options, your scripts may
-    have to be recompiled.
+    The %config args, are the config options that you may want set that affect
+    compilation. These options include: Debug, Global, GlobalPackage,
+    DynamicIncludes, IncludesDir, InodeNames, PodComments, StatINC,
+    StatINCMatch, UseStrict, XMLSubsPerlArgs, XMLSubsMatch, and XMLSubsStrict.
+    If your scripts are later run with different config options, your scripts
+    may have to be recompiled.
 
     Here is an example of use in a *.conf file:
 
@@ -3572,6 +3585,9 @@ SITES USING
     For a list of testimonials of those using Apache::ASP, please see the
     TESTIMONIALS section.
 
+            NodeWorks Directory
+            http://dir.nodeworks.com
+
             FreeLotto
             http://www.freelotto.com
 
@@ -3628,9 +3644,6 @@ SITES USING
 
             Condo-Mart Web Service
             http://www.condo-mart.com 
-
-            Direct.it
-            http://www.direct.it/
 
             Discountclick.com
             http://www.discountclick.com/
@@ -3694,6 +3707,24 @@ TESTIMONIALS
     and maintainer have been very helpful whenever we've had questions.
 
       -- Tom Lancaster, Red Hat
+
+    D. L. Fox
+    I had programmed in Perl for some time ... but, since I also knew VB, I had
+    switched to VB in IIS-ASP for web stuff because of its ease of use in
+    embedding code with HTML ... When I discovered Apache-ASP, it was like a
+    dream come true. I would much rather code in Perl than any other language.
+    Thanks for such a fine product!
+
+    HOSTING 321, LLC.
+    After discontinuing Windows-based hosting due to the high cost of software,
+    our clients are thrilled with Apache::ASP and they swear ASP it's faster
+    than before. Installation was a snap on our 25-server web farm with a small
+    shell script and everything is running perfectly! The documentation is very
+    comprehensive and everyone has been very helpful during this migration.
+
+    Thank you!
+
+     -- Richard Ward, HOSTING 321, LLC.
 
     Concept Online Ltd.
     I would like to say that your ASP module rocks :-) We have practically
@@ -3849,6 +3880,30 @@ CHANGES
     the equivalent of a 1.0 release for other kinds of software.
 
      + = improvement   - = bug fix    (d) = documentations
+
+    $VERSION = 2.55; $DATE="08/09/2003"
+     - Bug fixes for running on standalone CGI mode on Win32 submitted
+       by Francesco Pasqualini
+
+     + Added Apache::ASP::Request::BINMODE for binmode() being
+       called on STDIN after STDIN is tied to $Request object
+
+     + New RequestBinaryRead configuration created, may be turned off
+       to prevent $Request object from reading POST data
+
+     ++ mod_perl 2 optmizations, there was a large code impact on this,
+       as much code was restructured to reduce the differences between
+       mod_perl 1 and mod_perl 2, most importantly, Apache::compat is
+       no longer used
+
+     + preloaded CGI for file uploads in the mod_perl environment
+
+     - When XSLT config is set, $Response->Redirect() should work now
+       Thanks to Marcus Zoller for pointing problem out
+
+     + Added CookieDomain setting, documented, and added test to cover 
+       it in t/cookies.t . Setting suggested by Uwe Riehm, who nicely 
+       submitted some code for this.
 
     $VERSION = 2.53; $DATE="04/10/2003"
      + XMLSubs tags with "-" in them will have "-" replaced with "_" or underscore, so a
@@ -6152,7 +6207,7 @@ CHANGES
      cookies.
 
 LICENSE
-    Copyright (c) 1998-2003, Josh Chamas, Chamas Enterprises Inc. All rights
+    Copyright (c) 1998-2004, Josh Chamas, Chamas Enterprises Inc. All rights
     reserved.
 
     Apache::ASP is a perl native port of Active Server Pages for Apache and

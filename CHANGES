@@ -1,28 +1,13 @@
-$MODULE=Apache::ASP; $VERSION = '2.55'; $DATE="08/09/2003"
+$MODULE=Apache::ASP; $VERSION = '2.57'; $DATE="TBD"
 
 Please see README for changes for past versions.
 
  + = improvement;    - = bug fix;    (d) = documentation
 
- - Bug fixes for running on standalone CGI mode on Win32 submitted
-   by Francesco Pasqualini
+ - $Server->Transfer will update $0 correctly
 
- + Added Apache::ASP::Request::BINMODE for binmode() being
-   called on STDIN after STDIN is tied to $Request object
+ - return 0 for mod_perl handler to work with latest mod_perl 2 release
 
- + New RequestBinaryRead configuration created, may be turned off
-   to prevent $Request object from reading POST data
-
- ++ mod_perl 2 optmizations, there was a large code impact on this,
-  as much code was restructured to reduce the differences between
-  mod_perl 1 and mod_perl 2
-
- + preloaded CGI for file uploads in the mod_perl environment
-
- - When XSLT config is set, $Response->Redirect() should work now
-   Thanks to Marcus Zoller for pointing problem out
-
- + Added CookieDomain setting, documented, and added test to cover 
-   it in t/cookies.t . Setting suggested by Uwe Riehm, who nicely 
-   submitted some code for this.
-
+ - fixed bug in $Server->URL when called like $Server->URL($url)
+   without parameters.  Its not clear which perl versions this bug 
+   affected.
