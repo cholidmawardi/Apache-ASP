@@ -9,7 +9,8 @@
 	 'File::Basename',
 	 'FileHandle',
 	 'Fcntl',
-	 'MD5'
+	 'MD5',
+	 'HTTP::Date'
 	 );
 
 print "Checking for the prerequisite modules...\n";

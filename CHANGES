@@ -1,8 +1,29 @@
-$VERSION = .02;
+$VERSION = .03;
 
 + = improvement; - = bug fix
 
-+ Fleshed out $Response object, almost full implementation.
++ Installation 'make test' now works
++ ActiveX objects on Win32 implemented with $Server->CreateObject() 
++ Cookies implemented: $Response->Cookies() & $Request->Cookies()
+- Fixed $Response object API, converting some methods to object members.
+  Deprecated methods, but backwards compatible.
++ Improved error messaging, debug output
++ $, influences $Response->Write(@strings) behavior
++ perl print() works, sending output to $Response object
++ $Response->Write() prints scalars, arrays, and hashes.  Before only scalars.
++ Begin implementation of $Server object.
++ Implemented $Response->{Expires} and $Response->{ExpiresAbsolute}
++ Added "PerlSetVar StatINC" config option
++ $0 is aliased to current script filename
++ ASP Objects ($Response, etc.) are set in main package
+  Thus notation like $main::Response->Write() can be used anywhere.
+
+$VERSION = .02;
+
+++ Session Manager, won't break under denial of service attack
++ Fleshed out $Response, $Session objects, almost full implementation.
++ Enormously more documentation.
+- Fixed error handling with Debug = 2.
 - Documentation fixed for pod2man support.  README now more man-like.
 - Stripped \r\n dos characters from installation files
 - 755 mode set for session state directory when created

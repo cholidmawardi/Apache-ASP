@@ -14,14 +14,27 @@ Apache::ASP - Active Server Pages for Apache (all platforms)
 
 =end text
 
+=head1 DESCRIPTION
+
+This module provides a Active Server Pages port to Apache.  
+Active Server Pages is a web application platform that originated
+with Microsoft's IIS server.  Under Apache for both Win32 and Unix,
+it allows a developer to create web applications with session
+management and perl embedded in static html files.
+
+This is a portable solution, similar to ActiveWare's PerlScript
+and MKS's PScript implementation of perl for IIS ASP.  Theoretically,
+one should be able to take a solution that runs under Apache::ASP
+and run it without change under PerlScript or PScript for IIS.
+
 =cut Documentation continues at the end of the module.
 
 package Apache::ASP;
 
-sub VERSION { .02; }
+sub VERSION { .03; }
 
 use Apache();
-use Apache::Constants qw(:common);
+#use Apache::Constants qw(:common);
 use MLDBM;
 use SDBM_File;
 use Data::Dumper;
@@ -30,6 +43,7 @@ use File::Basename;
 use FileHandle;
 use Fcntl qw( O_RDWR O_CREAT );
 use MD5;
+use HTTP::Date;
 
 # use Storable;
 # problem with Storable with MLDBM, when referencing empty undefined
@@ -37,13 +51,6 @@ use MD5;
 # $MLDBM::Serializer = "Storable"; # faster than using Data::Dumper
 #
 $MLDBM::Serializer = "Data::Dumper";
-
-%Apache::ASP::Compiled     = ();
-$Apache::ASP::OLESupport   = 0;
-$Apache::ASP::GlobalASA    = 0;
-$Apache::ASP::Md5          = new MD5();
-@Apache::ASP::Objects      = ('Application', 'Session', 'Response', 
-			      'Server', 'Request', 'Internal');
 
 # these define the default routines that get parsed out of the 
 # GLOBAL.ASA file
@@ -53,6 +60,15 @@ $Apache::ASP::Md5          = new MD5();
      "Session_OnStart", "Session_OnEnd"
      );
 
+@Apache::ASP::Contacts = ('modperl@apache.org', 'chamas@alumni.stanford.org');
+%Apache::ASP::Compiled  = ();
+$Apache::ASP::OLESupport  = 0;
+$Apache::ASP::GlobalASA   = 0;
+$Apache::ASP::Md5         = new MD5();
+@Apache::ASP::Objects     = ('Application', 'Session', 'Response', 
+			      'Server', 'Request');
+$Apache::ASP::SessionCookieName = 'session-id';
+
 # only if we support active objects on Win32 do we create
 # the server object, which is in charge of object creation
 eval 'require("Win32/OLE.pm")';
@@ -60,6 +76,12 @@ unless($@) {
     require("Win32/OLE.pm");
     $Apache::ASP::OLESupport = 1;
 }
+
+# export Objects for easier coding
+use Exporter;
+@Apache::ASP::ISA = qw(Exporter);
+@Apache::ASP::EXPORT_OK = @Apache::ASP::Objects;
+%Apache::ASP::EXPORT_TAGS = ('all' => \@EXPORT_OK);
 
 sub handler {
     my($r) = @_;
@@ -81,15 +103,18 @@ sub handler {
     
     unless($self->{errors}) {
 	$self->Execute();
-	$status = OK;
+	$status = 200;
     }
     
     # error processing
     if($self->{errors} && ($self->{debug} >= 2)) {
 	$self->PrettyError();
-	$status = OK;
+	$status = 200;
+    } elsif($self->{errors} && $self->{Response}{header_done}) {
+	$self->{r}->print("<!-- Error -->");
+	$status = 200;
     } elsif($self->{errors}) {
-	$status = SERVER_ERROR;
+	$status = 500;
     }
 
     $self->Debug({'num errors' => $self->{errors}}) if $self->{debug};
@@ -104,30 +129,36 @@ sub new {
 
     # like cgi, operate in the scripts directory
     chdir(File::Basename::dirname($r->filename()));
+    my($basename) = File::Basename::basename($r->filename());
 
     # asp object is handy for passing state around
     my $self = bless { 
 	app_start      => 0,  # set this if the application is starting
-	buffering_on   => (defined $r->dir_config(BufferingOn)) ?
-	    $r->dir_config(BufferingOn) : 1, # buffer output on by default
+	'basename'     => $basename,
+
+	buffering_on   => (defined $r->dir_config(BufferingOn)) ? $r->dir_config(BufferingOn) : 1, # buffer output on by default
+	    
+	# if this is set we are parsing ourself through cgi
+	cgi_do_self        => $r->dir_config(CgiDoSelf) || 0, # parse self
 
 	# this is the server path that the client responds to 
 	cookie_path    => $r->dir_config(CookiePath) || '/',
-
+	
 	# these are set by the Compile routine
 	compile_error  => '', 
-
-	debug          => $r->dir_config(Debug),  # debug level
+	
+	debug          => $r->dir_config(Debug) || 0,  # debug level
 	errors         => 0,
 	errors_output  => [],
 	filename       => $r->filename(),
 	id             => '', # parsed version of filename
 	
 	# where all the state and config files lie
-	global         => $r->dir_config(Global),
-
-	mtime          => stat($r->filename())->mtime,  # better than -M
-
+	global         => $r->dir_config(Global) || '.',
+	
+	# assume we already chdir'd to where the file is
+	mtime          => stat($basename)->mtime,  # better than -M
+	
 	# set this if you don't want an Application or Session object
 	# available to your scripts
 	no_session     => 0,
@@ -135,7 +166,8 @@ sub new {
 	r              => $r, # apache request object 
 	remote_ip      => $r->connection()->remote_ip(),
 	session_start  => 0,  # set this if we have a new session beginning
-	session_timeout => ($r->dir_config(SessionTimeout) * 60) || 1200,
+	session_timeout => (($r->dir_config(SessionTimeout) || 0)*60) || 1200,
+	stat_inc       => $r->dir_config(StatINC),    
 
 	# special objects for ASP app
 	Application    => '',
@@ -187,15 +219,23 @@ sub DESTROY {
     while(($k, $v) = each %{$self}) {
 	undef $self->{$k};
     }
-    
+
+    # so we don't interfere with the printing mechanism of 
+    # other perl-handlers
+    select STDOUT; 
 }
 
 sub InitObjects {
     my($self) = @_;
 
     # always create these
-    $self->{Request}  = &Apache::ASP::Request::new($self);
     $self->{Response} = &Apache::ASP::Response::new($self);
+    $self->{Request}  = &Apache::ASP::Request::new($self);
+
+    # set printing to Response object
+#X:    local(*RESPONSE);
+    tie *RESPONSE, 'Apache::ASP::Response', $self->{Response};
+    select(RESPONSE);
 
     # cut out now before we get to the big objects
     return if ($self->{errors});
@@ -249,14 +289,19 @@ sub ProcessGlobalASA {
 
 sub IsChanged {
     my($self) = @_;
-    ($self->{mtime} > $Apache::ASP::Compiled{$self->{id}}->{mtime}) ? 1 : 0;
+    my $last_update = $Apache::ASP::Compiled{$self->{id}}->{mtime} || 0;
+    ($self->{mtime} > $last_update) ? 1 : 0;
 }        
 
 sub Parse {
     my($self) = @_;
     my($script, $text, $perl);
 
-    my($data) = $self->ReadFile($self->{filename});
+    my($data) = $self->ReadFile($self->{'basename'});
+    if($self->{cgi_do_self}) {
+	$data =~ s/^(.*?)__END__//s;
+    }
+
     $data =~ s/\<\%\@(.*?)\%\>//s; # there should only be one of these
     while($data =~ s/^(.*?)\<\%\s*(.*?)\%\>//s) {
 	($text, $perl) = ($1,$2);
@@ -318,14 +363,24 @@ sub Compile {
 		 {'package'=> $package, id=>$id, no_cache=>$no_cache}
 		 );
     undef &{"Apache::ASP::Compiles::" . $package . "::handler"};
+
+    # dynamically update libraries, if config'd
+    my @stat_inc;
+    if($self->{stat_inc}) {
+	@stat_inc = ('use Apache::StatINC;',
+		     '&Apache::StatINC::handler();',
+		     ''
+		     );
+    }
+
     my($eval) = 
 	join("\n", 
 	     "package Apache::ASP::Compiles::" . $package . ";" ,
 	     '',
 	     '# allow developers to place modules in global directory',
 	     "use lib qw($self->{global});",
-#	     'use Apache();',
 	     '',
+	     @stat_inc,
 	     '# aliases here ',
 	     'sub exit { $Response->End(); } ',
 	     '',
@@ -347,14 +402,15 @@ sub Compile {
 	     '#######################################################',
 	     '## End script insert',
 	     '#######################################################',
-	     '',
-	     '  # if $Response->End() is not already called, do so now',
+#	     '',
+#	     '  # if $Response->End() is not already called, do so now',
 	     '  $Response->End(); ',
 	     '}',
 	     '1;'
 	     );
 
-    Apache->untaint($eval);
+# X: for now
+#    Apache->untaint($eval);
     
     eval $eval;
     my($rv) = (! $@);
@@ -382,19 +438,29 @@ sub Execute {
     my $package = "Apache::ASP::Compiles::".$id; 
     my $handler = \&{$package."::handler"};
     
+    # alias $0 to filename
+    my $filename = $self->{filename};
+    local *0 = \$filename;
+
     # init objects
-    for(@Apache::ASP::Objects) {
-	my($object) = $package . '::' . $_;
-	$$object = $self->{$_};
+    for $object (@Apache::ASP::Objects) {
+	for $import_package ('main', $package) {
+	    my $init_var = $import_package.'::'.$object;
+	    $$init_var = $self->{$object};
+	}
     }
 
+    # run the script now, then check for errors
     eval ' &{$handler}($self, $routine) ';  
     if($@ !~ /Apache\:\:exit/) { $self->Error($@); } 
     
-    # clean up objects
-    for(@Apache::ASP::Objects) {
-	my($object) = $package . '::' . $_;
-	undef $$object;
+    # undef objects
+    for $object (@Apache::ASP::Objects) {
+	for $import_package ('main', $package) {
+	    my $init_var = $import_package.'::'.$object;
+	    undef $$init_var;
+#	    $self->Debug({$init_var => $$init_var});
+	}
     }
 
     my($rv) = (! $@);
@@ -406,15 +472,15 @@ sub PrettyError {
     my($r) = $self->{Response};
 
     $r->Clear();
-    $r->ContentType("text/html");
+    $r->{ContentType} = "text/html";
     $r->Write("\n\n");
     $r->Write("<pre>");
     
     $r->Write("Errors Output:\n");
-    $r->Write($self->Escape(join("\n", @{$self->{errors_output}}, "\n")));
+    $r->Write(join("\n", @{$self->{errors_output}}, "\n"));
     
     $r->Write("Debug Output:\n");
-    $r->Write($self->Escape(join("\n", @{$self->{debugs_output}}, "\n")));
+    $r->Write(join("\n", @{$self->{debugs_output}}, "\n"));
     
     if($self->{compile_error}) {
 	$r->Write("Compile Error:\n");
@@ -429,6 +495,17 @@ sub PrettyError {
     }
     $r->Write("\n\n");
     $r->Write("</pre>");
+
+    # help section
+    $r->Write("<hr width=20% size=1>\n<font size=-1>");
+    $r->Write("<i>If you can't help yourself, please send mail to ");
+    my @emails;
+    for(@Apache::ASP::Contacts) {
+	push(@emails, "<a href=\"mailto:$_?Subject=Apache::ASP\">$_</a>");
+    }
+    $r->Write(join(' or ', @emails));
+    $r->Write(" about your problem, including this output.</font>");
+
     $r->Flush();
 	
     1;
@@ -448,6 +525,10 @@ sub Error {
     
     # error logging in $self
     $self->{errors}++;
+    my $pretty_msg = $msg;
+    $pretty_msg = $self->Escape($pretty_msg);
+    $pretty_msg =~ s/\n/<br>/sg;
+
     push(@{$self->{errors_output}}, $msg);
     push(@{$self->{debugs_output}}, $msg);
     
@@ -461,6 +542,9 @@ sub Debug {
     return unless $_[0]->{debug};
     
     my($self, $msg, $data) = @_;
+    $data ||= '';
+    $msg ||= '';
+
     if(ref $msg) {
 	$data = $msg;
 	$msg = '';
@@ -492,13 +576,15 @@ sub SessionId {
 
     #X: should we set the secure variable here? 
     if($id) {
-	$self->{r}->header_out("Set-Cookie", "id=$id; path=$self->{cookie_path}");
+	$self->{r}->header_out("Set-Cookie", "$SessionCookieName=$id; path=$self->{cookie_path}");
     } else {
 	my($cookie) = $self->{r}->header_in("Cookie");
-	my(@parts) = split(/\;/, $cookie);
+	$cookie ||= '';
+	my(@parts) = split(/\;\s*/, $cookie);
 	my(%cookie) = map { split(/\=/, $_)} @parts;
 	
-	$id = $cookie{'id'};
+	$id = $cookie{$SessionCookieName};
+	$self->Debug($id);
     }
 
     $id;
@@ -532,8 +618,8 @@ package Apache::ASP::Request;
 
 sub new {
     my($r) = $_[0]->{r};
-    my($self) = bless {};
-    my(%query, %form, %env);
+    my($self) = bless { asp=> $_[0]};
+    my(%query, %form, %env, %cookies);
     
     %query = $r->args();
     $self->{'QueryString'} = \%query;
@@ -542,10 +628,24 @@ sub new {
     $self->{'ServerVariables'} = \%env;
 
     # assign no matter what so Form is always defined
-    if($r->method eq "POST") {
+    if(($r->method() || '') eq "POST") {
 	%form = $r->content();
     }
     $self->{'Form'} = \%form;
+
+    # do cookies now
+    my @parts = split(/;\s*/, ($r->header_in("Cookie") || ''));
+    for(@parts) {	
+	my($name, $value) = split(/\=/, $_, 2);
+	$name = $self->Unescape($name);
+
+	next if ($name eq $Apache::ASP::SessionCookieName);
+	next if $cookies{$name};
+
+	$cookies{$name} = ($value =~ /\=/) ? 
+	    $self->ParseParams($value) : $self->Unescape($value);
+    }
+    $self->{Cookies} = \%cookies;
 
     $self;
 }
@@ -562,6 +662,42 @@ sub AUTOLOAD {
     }
 }
 
+sub Cookies {
+    my($self, $name, $key) = @_;
+
+    return($self->{Cookies}) unless $name;
+
+    if($key) {
+	$self->{Cookies}{$name}{$key};
+    } else {
+	$self->{Cookies}{$name};
+    }
+
+}
+
+sub ParseParams {
+    my($self,$tosplit) = @_;
+    my(@pairs) = split('&',$tosplit);
+    my($param,$value,%params);
+
+    foreach (@pairs) {
+	($param,$value) = split('=');
+	$param = $self->Unescape($param);
+	$value = $self->Unescape($value);
+	$params{$param} = $value;
+    }
+
+    \%params;
+}
+
+# unescape URL-encoded data
+sub Unescape {
+    my($self, $todecode) = @_;
+    $todecode =~ tr/+/ /;       # pluses become spaces
+    $todecode =~ s/%([0-9a-fA-F]{2})/pack("c",hex($1))/ge;
+    return $todecode;
+}
+
 1;
 
 # Response Object
@@ -569,99 +705,46 @@ package Apache::ASP::Response;
 use Apache qw(exit);
 
 sub new {
+    $, ||= '';
+
     return bless {
 	asp => $_[0],
 	buffer => '',
+	ContentType => 'text/html',
 	header_done => 0,
-	is_buffered => $_[0]->{buffering_on},
+	Buffer => $_[0]->{buffering_on},
 	r => $_[0]->{r}
 	};
 }
-    
-sub Write {
-    my($self, $send) = @_;
 
-    $self->{buffer} .= $send;
-    unless($self->{is_buffered}) {
-	$self->Flush();
-    } else {
-#	$self->{asp}->Debug("buffering");
-    }
-
-    1;
-}
-
-sub AppendToLog {
-    my($self, $msg) = @_;
-    $self->{asp}->Log($msg);
-}
-
-sub AddHeader {
-    my($self, $name, $value) = @_;
-    $self->{r}->header_out($name, $value);
-}
-
-sub Buffer {
+# allow for deprecated use of routines that should be direct member access
+sub AUTOLOAD {
     my($self, $value) = @_;
-    $self->{is_buffered} = $value;
-}
 
-sub Clear {
-    my($self) = @_;
-    $self->{buffer} = '';
-}
-
-sub ContentType {
-    my($self, $type) = @_;
-    $self->{r}->header_out('Content-Type', $type);
-}
-
-# X: do relative times
-sub Expires {
-    my($self, $ttl) = @_;
-    #X: how do we handle non 0 ttl's?
-    $self->{r}->no_cache() if ($ttl == 0);
-}
-
-# use the apache internal redirect?  Thought that would be counter
-# to portability, but is still something to consider
-sub Redirect {
-    my($self, $location) = @_;
-
-    $self->{asp}->Debug('redirect called', {location=>$location});
-    $self->{r}->header_out('Location', $location);
-    $self->{r}->status(302);
-    $self->Clear();
-    $self->End(); # we should assume this page is done now, right?
-
-    1;
-}
-
-sub Status {
-    my($self, $status) = @_;
-    $self->{r}->status($status);
-}
-
-sub Flush {
-    my($self) = @_;
-
-    # if this is the first writing from the page, flush a newline, to 
-    # get the headers out properly
-    if(! $self->{header_done}) {
-	$self->{asp}->Debug("sending headers", {response => $self});
-	unless($self->{r}->content_type) {
-		$self->{asp}->Debug("setting content-type to text/html");
-		$self->{r}->content_type("text/html");
-	}
-	
-	$self->{r}->send_http_header();
-	$self->{header_done}++;
+    $AUTOLOAD =~ /::([^:]*)$/;
+    $AUTOLOAD = $1;
+    
+    my @DEPRECATED = ('Buffer', 'ContentType', 'Expires', 'ExpiresAbsolute', 'Status');
+    if(grep($AUTOLOAD eq $_, @DEPRECATED)) {
+	$self->{asp}->Debug("Response->$AUTOLOAD() deprecated ".
+			    "please access member directly with ".
+			    "Response->{$AUTOLOAD} notation"
+			    );
+	$self->{$AUTOLOAD} = $value;
+    } else {
+	die "Response::$AUTOLOAD not defined"; 
     }
+}
 
-#    $self->{asp}->Debug("flushing buffer");
-    $self->{r}->print($self->{buffer});
-    $self->{buffer} = '';
-    1;
+sub AddHeader { $_[0]->{r}->header_out($_[1], $_[2]); }
+sub AppendToLog { $_[0]->{asp}->Log($_[1]); }
+*BinaryWrite = *Write; # someone needs to explain the difference to me
+sub Clear { $_[0]->{buffer} = ''; }
+
+sub Cookies {
+    my($self, $name, $key, $value) = @_;
+    $key ||= 'Value';
+    $self->{Cookies}{$name}{$key} = $value;
 }
 
 sub End {
@@ -678,8 +761,145 @@ sub End {
     $self->Write(); 
     $self->Flush();
 #    &Apache::exit('Apache::exit'); ## this die's, no good for now
+
     die('Apache::exit');
 }
+
+sub Flush {
+    my($self) = @_;
+
+    # if this is the first writing from the page, flush a newline, to 
+    # get the headers out properly
+    if(! $self->{header_done}) {
+	$self->{header_done}++;
+	$self->{asp}->Debug("sending headers", {response => $self});
+	$self->{r}->content_type($self->{ContentType});
+
+	# do page status
+	if(defined $self->{Status}) {
+	    $self->{r}->status($self->{Status});
+	}
+	    
+	# do the expiration time
+	if(defined $self->{Expires}) {
+	    my $ttl = $self->{Expires};
+	    $self->{r}->header_out('Expires', &HTTP::Date::time2str(time()+$ttl));
+	    $self->{asp}->Debug("expires in $self->{Expires}");
+	} elsif(defined $self->{ExpiresAbsolute}) {
+	    my $date = $self->{ExpiresAbsolute};
+	    my $time = &HTTP::Date::str2time($date);
+	    if(defined $time) {
+		$self->{r}->header_out('Expires', &HTTP::Date::time2str($time));
+	    } else {
+		die("Response->ExpiresAbsolute(): date format $date not accepted");
+	    }
+	}
+
+	# do cookies, try our best to emulate cookie collections
+	my($cookies, $cookie);
+	if($cookies = $self->{'Cookies'}) {
+	    for $cookie_name (keys %{$cookies}) {
+		# skip key used for session id
+		if($Apache::ASP::SessionCookieName eq $cookie_name) {
+		    die("You can't use $cookie_name for a cookie name ".
+			"since it is reserved for session management"
+			);
+		}
+
+		my($k, $v, @data, $header, %dict, $is_ref, $cookie);
+
+		$cookie = $cookies->{$cookie_name};
+		unless(ref $cookie) {
+		    $cookie->{Value} = $cookie;
+		} 
+		$cookie->{Path} ||= $self->{asp}{cookie_path};
+
+		for $k (sort keys %$cookie) {
+		    $v = $cookie->{$k};
+		    $k = lc $k;
+
+		    if($k eq 'secure') {
+			push(@data, 'secure');
+		    } elsif($k eq 'value') {
+			# we set the value later, nothing for now
+		    } elsif($k eq 'expires') {
+			my $time = &HTTP::Date::str2time($v);
+			my $date = &HTTP::Date::time2str($time);
+			$v = $date;
+			push(@data, "$k=$v");
+		    } elsif(grep($k eq $_, 'path', 'domain')) {
+			push(@data, "$k=$v");
+		    } else {
+			$dict{$k} = $v;
+		    }			
+		} 
+
+		my $server = $self->{asp}{Server}; # for the URLEncode routine
+		if($cookie->{Value}) {
+		    $cookie->{Value} = $server->URLEncode($cookie->{Value});
+		} else {
+		    my @dict;
+		    while(($k, $v) = each %dict) {
+			push(@dict, $server->URLEncode($k) 
+			     . '=' . $server->URLEncode($v));
+		    }
+		    $cookie->{Value} = join('&', @dict);
+		} 
+		unshift(@data, "$cookie_name=$cookie->{Value}");
+
+		my $cookie_header = join('; ', @data);
+		$self->{r}->header_out("Set-Cookie", $cookie_header);
+		$self->{asp}->Debug({cookie_header=>$cookie_header});
+	    }
+	}
+
+	# avoid the cgi circularity here with printing to STDOUT
+	my $buffer = $self->{buffer};
+	$self->{buffer} = '';
+	$self->{r}->send_http_header();
+	$self->{buffer} = $buffer;
+    }
+
+    $self->{r}->print($self->{buffer});
+    $self->{buffer} = '';
+
+    1;
+}
+
+# use the apache internal redirect?  Thought that would be counter
+# to portability, but is still something to consider
+sub Redirect {
+    my($self, $location) = @_;
+
+    $self->{asp}->Debug('redirect called', {location=>$location});
+    $self->{r}->header_out('Location', $location);
+    $self->{r}->status(302);
+    $self->Clear();
+    $self->End(); # we should assume this page is done now, right?
+
+    1;
+}
+
+sub Write {
+    my($self, @send) = @_;
+    return unless @send;
+
+    $send[0] ||= '';
+    $self->{buffer} .= join($,, @send);
+    unless($self->{Buffer}) {
+	$self->Flush();
+    } else {
+#	$self->{asp}->Debug("buffering");
+    }
+
+    1;
+}
+*write = *Write;
+
+# alias printing to the response object
+sub TIEHANDLE { my($class, $self) = @_; $self; }
+*PRINT = *Write;
+
 1;
 
 # Server Object
@@ -693,7 +913,6 @@ sub DESTROY {
     my($self) = @_;
     my($k, $v);
 
-    my(%oles) = %{$self->{oles}};
     while(($k, $v) = each %oles) {
 	undef $v;
     }
@@ -706,36 +925,40 @@ sub CreateObject {
     my($asp) = $self->{asp};
 
     unless($Apache::ASP::OLESupport) {
-	$self->{asp}->Error("OLE-active objects not supported for this platform, ".
-			    "try installing Win32::OLE"
-			    );
-	return;
+	die "OLE-active objects not supported for this platform, ".
+	    "try installing Win32::OLE";
     }
 
     unless($name) {
-	$asp->Error("no object to create");
-	return;
+	die "no object to create";
     }
 
-    my($ole) = Win32::OLE->GetActiveObject($name);
-    unless($ole) {
-	$ole = Win32::OLE->new($name);
-    }
-    
-    if($ole) {
-	$self->{oles}{$name} = $ole;
-    } else {
-	$asp->Error("can't create OLE $name");
-    }
+    Win32::OLE->new($name);
+}
 
-    $ole;
+# shamelessly ripped off from CGI.pm, by Lincoln D. Stein.
+sub URLEncode {
+    my($self, $toencode) = @_;
+    $toencode=~s/([^a-zA-Z0-9_\-.])/uc sprintf("%%%02x",ord($1))/eg;
+    return $toencode;
+}
+
+# shamelessly ripped off from CGI.pm, by Lincoln D. Stein.
+sub HTMLEncode {
+    my($self,$toencode) = @_;
+    return undef unless defined($toencode);
+    $toencode=~s/&/&amp;/g;
+    $toencode=~s/\"/&quot;/g;
+    $toencode=~s/>/&gt;/g;
+    $toencode=~s/</&lt;/g;
+    return $toencode;
 }
 
 1;
 
 # Application Object
 package Apache::ASP::Application;
-use Fcntl qw( O_RDWR O_CREAT );
+use Fcntl qw( O_RDWR O_CREAT LOCK_EX LOCK_UN);
 
 sub new {
     my($asp) = @_;
@@ -751,11 +974,25 @@ sub new {
     bless \%self;
 }
 
-sub DESTROY { 
-    my($self) = @_;   
-    untie $self;
+sub DESTROY { untie $_[0]; }
+sub File { "$_[0]->{_FILE}.dir"; }
+
+sub Lock {
+    my($self) = @_;
+
+    my($file) = $self->File;
+    open(LOCKFILE, "$file") || die("can't read $file: $!");
+    flock(LOCKFILE, LOCK_EX) || die("can't lock application data $file: $!");
 }
 
+sub UnLock {
+    my($self) = @_;
+
+    my($file) = $self->File;
+    flock(LOCKFILE, LOCK_UN);
+    close(LOCKFILE);
+}    
+    
 1;
 
 # Session Object
@@ -854,7 +1091,7 @@ sub new {
 
     # cleanup timed out sessions, from current group
     my($group_id) = "GroupId" . $state->GroupId();
-    my($group_check) = $asp->{Internal}{$group_id};
+    my($group_check) = $asp->{Internal}{$group_id} || 0;
     $asp->Debug("group check at: $group_check, time:" . time());
     if($group_check < time()) {
 	$ids = $state->GroupMembers();
@@ -862,7 +1099,9 @@ sub new {
 	for(@{$ids}) {
 	    my($timeout) = $asp->{Internal}{$_}{timeout};
 	    unless($timeout) {
-		$asp->Error("no timeout found for id:$_; group:$group_id");
+		#X: sometimes this happens !!  default gets rid of 
+		# old timeout, which errs on security
+		$asp->Log("no timeout found for id:$_; group:$group_id");
 		next;
 	    }	
 
@@ -1036,14 +1275,25 @@ sub Do {
     # create group directory
     my($group_dir) = $self->{group_dir};
     unless(-d $group_dir) {
-	mkdir($group_dir, 0755)
-	    || $self->{asp}->Error("can't create group dir $group_dir");
+	if(mkdir($group_dir, 0755)) {
+	    $self->{asp}->Debug("creating group dir $group_dir");
+	} else {
+	    $self->{asp}->Error("can't create group dir $group_dir");	    
+	}
     }    
     $self->{dir} = $group_dir;
 
     # tie to file
     $self->{dbm} = &MLDBM::TIEHASH('MLDBM', $self->{file}, $permissions, 0666);
-    $self->{dbm} || $self->{asp}->Error("can't tie to file $self->{file}");
+    unless($self->{dbm}) {
+	$self->{asp}->Error("Can't tie to file $self->{file}!! \n".
+			    "Make sure you have the permissions on the \n".
+			    "directory set correctly, and that your \n".
+			    "version of Data::Dumper is up to date. \n".
+			    "Also, make sure you have set Global to \n".
+			    "to a good directory in the config file."
+			    );
+    }
 
     $self->{dbm};
 }
@@ -1100,6 +1350,16 @@ sub TIEHASH {
     bless &new(@_), $type;
 }
 
+sub FETCH {
+    my($self, $index) = @_;
+    
+    if($index eq '_FILE') {
+	$self->{file};
+    } else {
+	$self->{dbm}->FETCH($index);
+    }
+}
+
 sub AUTOLOAD {
     return if ($AUTOLOAD =~ /DESTROY/);
     my($self) = shift;
@@ -1111,20 +1371,99 @@ sub AUTOLOAD {
 
 1;
 
+# this package emulates an Apache request object with a CGI backend
+package Apache::ASP::CGI;
+
+sub do_self {
+    my($r) = &init($0, @ARGV);
+    $r->dir_config('CgiDoSelf', 1);
+    &Apache::ASP::handler($r);
+}
+
+sub init {
+    my($filename, @args) = @_;
+    $filename ||= $0;
+    
+    for('CGI.pm', 'Class/Struct.pm') {
+	next if require $_;
+	die("can't load the $_ library.  please make sure you installed it");
+    }
+    
+    &Class::Struct::struct( Apache::ASP::CGI::connection => 
+			   { 'remote_ip' => "\$" }
+			   );    
+
+    &Class::Struct::struct( Apache::ASP::CGI => 
+			   {
+			       'cgi'       =>    "\$",
+			       'connection'=>'Apache::ASP::CGI::connection',
+			       'content_type' => "\$",
+			       'dir_config'=>    "\%",
+			       'env'       =>    "\%",
+			       'filename'  =>    "\$",
+			       'header_in' =>    "\%",
+			       'header_out'=>    "\%",
+			       'method'    =>    "\$",
+			   }
+			   );
+
+    # create struct
+    my $self = new();
+    my $cgi = CGI->new({@args});
+
+    $self->cgi($cgi);
+    $self->filename($filename);
+    $self->header_in('Cookie', $ENV{HTTP_COOKIE});
+    $self->connection->remote_ip($cgi->remote_host());
+    $self->dir_config('Global') || $self->dir_config('Global', '.');
+    $self->method($cgi->request_method());
+
+    $self->{env} = \%ENV;
+    $self->env('SCRIPT_NAME') || $self->env('SCRIPT_NAME', $filename);
+
+    $self;
+}
+    
+sub status { $_[0]->header_out('status', $_[1]); }
+sub cgi_env { %{$_[0]->env} ; }
+
+sub send_http_header {
+    my($self) = @_;
+    my($k, $v, $header);
+    
+    $header = "Content-Type: " .$self->content_type()."\n";
+    $headers = $self->header_out();
+    while(($k, $v) = each %$headers) {
+	$header .= "$k: $v\n";
+    }
+    $header .= "\n";
+ 	
+    $self->print($header);
+}
+
+sub print { shift; print STDOUT @_; }
+
+sub args {
+    my($self) = @_;
+    my %params;
+
+    my @params = $self->cgi()->param();
+    for (@params) {
+	$params{$_} = $self->cgi()->param($_);
+    }
+
+    %params;
+}
+*content = *args;
+
+sub log_error {
+    my($self, @args) = @_;
+    print STDERR @args, "\n";
+}
+
+1;
+
 __END__
-
-=head1 DESCRIPTION
-
-This module provides a Active Server Pages port to Apache.  
-Active Server Pages is a web application platform that originated
-with Microsoft's IIS server.  Under Apache for both Win32 and Unix,
-it allows a developer to create web applications with session
-management and perl embedded in static html files.
-
-This is a portable solution, similar to ActiveWare's PerlScript
-and MKS's PScript implementation of perl for IIS ASP.  Theoretically,
-one should be able to take a solution that runs under Apache::ASP
-and run it without change under PerlScript or PScript for IIS.
 
 =head2 INSTALLATION
 
@@ -1161,9 +1500,9 @@ defaults are fine...
 
 =begin text 
 
-###########################################################
+##ASP##PERL##APACHE##ASP##ASP##PERL##APACHE##ASP##ASP##PERL##APACHE##ASP
 ## INSERT INTO Apache *.conf file, probably access.conf
-###########################################################
+##ASP##PERL##APACHE##ASP##ASP##PERL##APACHE##ASP##ASP##PERL##APACHE##ASP
 
 <Location /asp/>    
 
@@ -1236,11 +1575,19 @@ PerlSetVar Debug 2
 #
 PerlSetVar BufferingOn 1
 
+# StatINC
+# -------
+# default 0, if true, reloads perl libraries that have changed
+# on disk automatically for ASP scripts.  If false, the www server
+# must be restarted for library changes to take effect.
+#
+PerlSetVar StatINC 1
+
 </Location>
 
-###########################################################
+##ASP##PERL##APACHE##ASP##ASP##PERL##APACHE##ASP##ASP##PERL##APACHE##ASP
 ## END INSERT
-###########################################################
+##ASP##PERL##APACHE##ASP##ASP##PERL##APACHE##ASP##ASP##PERL##APACHE##ASP
 
 =end text
 
@@ -1296,7 +1643,7 @@ Currently the Apache::ASP object model supports the following:
 	$Response	--	output
 	$Request	--	input
 	$Application	--	application state
-	$Server		--	! not yet implemented !
+	$Server		--	OLE support + misc
 
 =end text
 
@@ -1373,30 +1720,42 @@ This object manages the output from the ASP Application and the
 client's web browser.  It does store state information like the 
 $Session object but does have a wide array of methods to call.
 
-=item $Response->Buffer($boolean)
+=item $Response->{Buffer}
 
-When set to true, output to client is buffered.  Defaults to false.
+Default 1, when TRUE sends output from script to client only at
+the end of processing the script.  When 0, response is not buffered,
+and client is sent output as output is generated by the script.
 
-=item $Response->ContentType($content_type)
+=item $Response->{ContentType} = "text/html"
 
-Sets the MIME content type of the current response.
+Sets the MIME type for the current response being sent to the client.
+Sent as an HTTP header.
 
-=item $Response->Cookies($name, $key, $value);
+=item $Response->{Expires} = $time
 
-Not implemented.
+Sends a response header to the client indicating the $time 
+in SECONDS in which the document should expire.  A time of 0 means
+immediate expiration.  The header generated is a standard
+HTTP date like: "Wed, 09 Feb 1994 22:23:32 GMT".
 
-=item $Response->Expires($time)
+=item $Response->{ExpiresAbsolute} = $date
 
-Not implemented.
+Sends a response header to the client with $date being an absolute
+time to expire.  Formats accepted are all those accepted by 
+HTTP::Date::str2time(), e.g.
 
-=item $Response->ExpiresAbsolute($date)
+=text begin
 
-Not implemented.
+     "Wed, 09 Feb 1994 22:23:32 GMT"       -- HTTP format
+     "Tuesday, 08-Feb-94 14:15:29 GMT"     -- old rfc850 HTTP format
 
-=item $Response->Status($status)
+     "08-Feb-94"         -- old rfc850 HTTP format    (no weekday, no time)
+     "09 Feb 1994"       -- proposed new HTTP format  (no weekday, no time)
 
-Sets the status code returned by the server.  Can be used to
-set messages like 500, internal server error
+     "Feb  3  1994"      -- Unix 'ls -l' format
+     "Feb  3 17:03"      -- Unix 'ls -l' format
+
+=text end
 
 =item $Response->AddHeader($name, $value)
 
@@ -1410,11 +1769,50 @@ Adds $message to the server log.
 
 =item $Response->BinaryWrite($data)
 
-Not implemented.
+Writes binary data to a page for use by client objects.
+Could someone explain this to me?  This currently does
+nothing more than a Write($data), since binary data can
+be in a scalar.
 
 =item $Response->Clear()
 
 Erases buffered ASP output.
+
+=item $Response->Cookies($name,$key,$value) (alpha)
+
+Sets the key or attribute of cookie with name $name to the value $value.
+If $key is not defined, then the Value of the cookie is assumed.
+ASP CookiePath is assumed to be / in these examples.
+
+=text begin
+
+	$Response->Cookies("Test Name", "", "Test Value"); # script
+	Set-Cookie: Test+Name=Test+Value path=/            # header output
+
+	$Response->Cookies("Test", "Secure", 1);               # script
+	$Response->Cookies("Test", "data1", "test value");     # script 
+	$Response->Cookies("Test", "data2", "more test");      # script
+	Set-Cookie: Test=data1=test+value&data2=more+test path=/ secure 
+
+=text end
+
+Because this is perl, you can (also not portable) reference the cookies
+directly through hash notation.  The same 3 commands above could be compressed to:
+
+=text begin
+
+	$Response->{Cookies}{Test} = 
+		{Secure => 1, data1 => 'test value', data2 => 'more test'};
+
+=text end
+
+and the first command would be:
+
+=text begin
+
+$Response->{Cookies}{'Test Name'} = {Value => 'Test Value'}; 
+
+=text end
 
 =item $Response->End()
 
@@ -1429,6 +1827,11 @@ Sends buffered output to client and clears buffer.
 
 Sends the client a command to go to a different url $url.  
 Script immediately ends.
+
+=item $Response->{Status} = $status
+
+Sets the status code returned by the server.  Can be used to
+set messages like 500, internal server error
 
 =item $Response->Write($data)
 
@@ -1464,9 +1867,19 @@ a technique, it will not be portable.
 
 Not implemented.
 
-=item $Request->Cookies($index)
+=item $Request->Cookies($name, $key) (alpha)
 
-Not implemented.
+Returns the value of the Cookie with name $name.  If a $key is
+specified, then a lookup will be done on the cookie as if it were
+a query string.  So, a cookie set by:
+
+Set-Cookie: test=data1=1&data2=2
+would have a value of 2 returned by $Request->Cookies('test', 'data2')
+
+If no name is specified, a hash will be returned of cookie names 
+as keys and cookie values as values.  If the cookie value is a query string, 
+it will automatically be parsed, and the value will be a hash reference to 
+these values.
 
 =item $Request->Form($name)
 
@@ -1524,7 +1937,54 @@ Not implemented.
 
 =head2 $Server Object
 
-Not implemented.
+The server object is that object that handles everything that the other
+objects don't.  The best part of the server object for Win32 users is 
+the CreateObject method which allows developers to create instances of
+ActiveX components, like the ADO component.
+
+=item $Server->ScriptTimeout($seconds)
+
+Not implemented
+
+=item $Server->CreateObject($program_id)
+
+Allows use of ActiveX objects on Win32.  This routine returns
+a reference to an Win32::OLE object upon success, and nothing upon
+failure.  It is through this mechanism that a developer can 
+utilize ADO.  The equivalent syntax in VBScript is 
+
+Set object = Server.CreateObject(program_id)
+
+For further information, try 'perldoc Win32::OLE' from your
+favorite command line.
+
+=item $Server->HTMLEncode($string)
+
+Returns an HTML escapes version of $string. &, ", >, <, are each
+escapes with their HTML equivalents.  Strings encoded in this nature
+should be raw text displayed to an end user, as HTML tags become 
+escaped with this method.
+
+=item $Server->MapPath($virtual_directory);
+
+Not implemented
+
+=item $Server->URLEncode($string)
+
+Returns the URL-escaped version of the string $string. +'s are substituted in
+for spaces and special characters are escaped to the ascii equivalents.
+Strings encoded in this manner are safe to put in url's... they are especially
+useful for encoding data used in a query string as in:
+
+=begin text
+
+	$data = $Server->URLEncode("test data");
+	$url = "http://localhost?data=$data";
+
+	$url evaluates to http://localhost?data=test+data, and is a 
+	valid URL for use in anchor <a> tags and redirects, etc.
+
+=end text
 
 =head1 EXAMPLES
 
@@ -1550,13 +2010,14 @@ Whoever said you couldn't do ASP on UNIX?  Kudos go out to:
 	:) Doug MacEachern, for moral support and of course mod_perl
 	:) Ryan Whelan, for boldly testing on Unix in its ASP's early infancy
 	:) Lupe Christoph, for his immaculate and stubborn testing skills
+	:) Bryan Murphy, for being a PerlScript wiz.
 
 =end text
 
 =head1 AUTHOR
 
-Please send any questions or comments to Joshua Chamas
-at chamas@alumni.stanford.org
+Please send any questions or comments to the Apache modperl mailing
+list at modperl@apache.org or to me at chamas@alumni.stanford.org.
 
 =head1 COPYRIGHT
 

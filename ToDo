@@ -1,11 +1,12 @@
 WILL BE DONE
 ============
-- Server Object, integrate with Win32::OLE, so one can use ADO, etc.
+- Cache Scripts LRU style, so large sites won't choke server
+- asp.pl, cgi method of doing asp
+- GLOBAL.ASA support
 - Performance tuning (clients & server running on same machine)
 	- 10 pages served / sec on PII 300 with session management 
 	- 15 pages served / sec on PII 300 without session management
 	- 25 pages served / sec on PII 300 static html (control)
-- Installation testing (make test)
 
 MAY BE DONE
 ===========

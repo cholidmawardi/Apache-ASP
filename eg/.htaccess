@@ -18,6 +18,7 @@
 	SetHandler perl-script
 	PerlHandler Apache::ASP
 	PerlSetVar Debug  2		
+	PerlSetVar CookiePath  /	
 	PerlSetVar Global  .		
 	PerlSetVar AllowSessionState  0
 	PerlSetVar BufferingOn 0
