@@ -24,6 +24,45 @@
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
+<center>
+<table border=0 cellpadding=3 cellspacing=0 width=100%>
+<tr>
+<td>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</td>
+</tr></table>
+</center>
+
 
 
 <center>
@@ -37,7 +76,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<tr>
 	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
-		<td align=right></td>
+		<form action=apps/search/index.asp>
+		<td align=right valign=center>
+		  <input type=text name=search size=20>
+		</td>
+		<td align=left valign=center>
+  		  <input type=submit value=Search>
+		</td>
+		</form>		
 	
 	</tr>
 	</table>
@@ -236,7 +282,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<br>
 		<a href=http://www.perl.com><img src="rectangle_power_perl.gif" width="88" height="31" alt="Powered by Perl" border="0"></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="Links Checked by NodeWorks" border="0"></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="NodeWorks Link Checker" border="0"></a>
 		</center>
 
 </center>
@@ -257,29 +303,12 @@ about Apache::ASP.</font>
 	<table width=100% border=0 cellpadding=1 cellspacing=3>
 	<tr>
 	<td valign=top><font face="lucida console" size=-1>
-	<ul>
 	
 		<tr>
 		
 			<td valign=top bgcolor=#005196>
 			<font face="lucida console" size=-1>
 			<font color=white><b><a href=#Installation><font color=white>Installation</font></a></b></font>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			
-			</font>
-			</td>
-							
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Examples%20donf48a0968>Examples don't work, I see the ASP script in the browser?</a>
 			</font>
 			</td>
 		
@@ -295,7 +324,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Apache%20Expat3f8589db>Apache Expat vs. XML perl parsing causing segfaults, what do I do?</a>
+			<a href=#Examples%20donf48a0968>Examples don't work, I see the ASP script in the browser?</a>
 			</font>
 			</td>
 		
@@ -311,7 +340,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Why%20do%20varia68e97184>Why do variables retain their values between requests?</a>
+			<a href=#Apache%20Expat3f8589db>Apache Expat vs. XML perl parsing causing segfaults, what do I do?</a>
 			</font>
 			</td>
 		
@@ -327,7 +356,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Apache%20errorf0bcd572>Apache errors on the PerlHandler or PerlModule directives ?</a>
+			<a href=#Why%20do%20varia68e97184>Why do variables retain their values between requests?</a>
 			</font>
 			</td>
 		
@@ -343,7 +372,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Error%3A%20no%20reb1d13fcf>Error: no request object (Apache=SCALAR(0x???????):)</a>
+			<a href=#Apache%20errorf0bcd572>Apache errors on the PerlHandler or PerlModule directives ?</a>
 			</font>
 			</td>
 		
@@ -359,7 +388,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#I%20am%20getting272ca0df>I am getting a tie or MLDBM / state error message, what do I do?</a>
+			<a href=#Error%3A%20no%20reb1d13fcf>Error: no request object (Apache=SCALAR(0x???????):)</a>
 			</font>
 			</td>
 		
@@ -375,13 +404,29 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			
+			<a href=#I%20am%20getting272ca0df>I am getting a tie or MLDBM / state error message, what do I do?</a>
 			</font>
 			</td>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
 			<a href=#Can%20I%20print%2874ba394b>Can I print() in ASP?</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Do%20I%20have%20aca178cfb4>Do I have access to ActiveX objects?</a>
 			</font>
 			</td>
 							
@@ -397,22 +442,6 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Do%20I%20have%20aca178cfb4>Do I have access to ActiveX objects?</a>
-			</font>
-			</td>
-							
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#How%20can%20I%20us9eb242f1>How can I use $Session to store complex data structures.</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
 			
 			</font>
 			</td>
@@ -423,7 +452,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#How%20can%20I%20kef206b910>How can I keep search engine spiders from killing the session manager?</a>
+			<a href=#How%20can%20I%20us9eb242f1>How can I use $Session to store complex data structures.</a>
 			</font>
 			</td>
 		
@@ -439,7 +468,7 @@ about Apache::ASP.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Insecure%20depec6cd400>Insecure dependency in eval while running with - T switch ?</a>
+			<a href=#How%20can%20I%20ke601a6c31>How can I keep search engine spiders from killing the session manager?</a>
 			</font>
 			</td>
 		
@@ -465,6 +494,16 @@ about Apache::ASP.</font>
 			</font>
 			</td>
 							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			
+			</font>
+			</td>
+		<td>&nbsp;</td>					
 		</tr>
 			
 	</table>
@@ -602,36 +641,42 @@ an assignment like:
 </pre></font>
 	
 	<p>
-	<a name=How%20can%20I%20kef206b910></a>
+	<a name=How%20can%20I%20ke601a6c31></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>How can I keep search engine spiders from killing the session manager?</b></font>
 <font face="courier new" size=3><pre>
-</pre></font>If you want to dissallow session creation for certain non web 
-browser user agents, like search engine spiders, you can use an 
-init handler like:
+</pre></font>If you want to disallow session creation for certain non web 
+browser user agents, like search engine spiders, you can use a <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>
+PerlInitHandler like this to set configuration variables at runtime:
 <font face="courier new" size=3><pre>
-  PerlInitHandler &quot;sub { $_[0]-&gt;dir_config(&#39;NoState&#39;, 1) }&quot;
+ # put the following code into httpd.conf and stop/start apache server
+ PerlInitHandler My::InitHandler
+
+ &lt;Perl&gt;
+
+  package My::InitHandler;
+  use Apache;
+
+  sub handler {
+    my $r = shift; # get the Apache request object
+
+    # if not a Mozilla User Agent, then disable sessions explicitly
+    unless($r-&gt;headers_in(&#39;User-Agent&#39;) =~ /^Mozilla/) {
+       $r-&gt;dir_config(&#39;AllowSessionState&#39;, &#39;Off&#39;);
+    }
+
+    return 200; # return OK mod_perl status code
+  }
+
+  1;
+
+ &lt;/Perl&gt;
 </pre></font>This will configure your environment before Apache::ASP executes
-and sees the configuration settings.  You can use the <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>
-API in this way to configure Apache::ASP at runtime.</font>
-	
-	<p>
-	<a name=Insecure%20depec6cd400></a>
-	<font face=verdana><font class=title size=-1 color=#555555><b>Insecure dependency in eval while running with - T switch ?</b></font>
+and sees the configuration settings.  You can use the mod_perl
+API in this way to configure Apache::ASP at runtime.
 <font face="courier new" size=3><pre>
-</pre></font>If you are running your <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> with &quot;PerlTaintCheck On&quot;, which 
-is recommended if you are highly concerned about security issues,
-you may get errors like &quot;Insecure dependency ... with - T switch&quot;.
-<font face="courier new" size=3><pre>
-</pre></font>Apache::ASP automatically untaints data internally so that you
-may run scripts with PerlTaintCheck On, but if you are using
-state objects like $Session or $Application, you must also
-notify MLDBM, which Apache::ASP uses internally, to also 
-untaint data read from disk, with this setting:
-<font face="courier new" size=3><pre>
-  $MLDBM::RemoveTaint = 1;
-</pre></font>You could put the above line in your global.asa, which is
-just like a perl module, outside any event handlers
-you define there.</font>
+</pre></font>Note that the Session Manager is very robust on its own, and denial
+of service attacks of the types that spiders and other web bots 
+normally execute are not likely to affect the Session Manager significantly.</font>
 	
 	<p>
 	<a name=How%20can%20I%20us50054dc6></a>

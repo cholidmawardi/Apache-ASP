@@ -13,7 +13,7 @@ my %config = (
 #	      Debug => -3,
 	      );
 for(keys %config) {
-    $r->dir_config($_, $config{$_});
+    $r->dir_config->set($_, $config{$_});
 }
 
 my $t = T->new;

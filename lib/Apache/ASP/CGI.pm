@@ -29,15 +29,14 @@ sub do_self {
     $class ||= 'Apache::ASP::CGI';
 
     my $r = $class->init($0, @ARGV);
-    $r->dir_config('CgiDoSelf', 1);
-    $r->dir_config('NoState', 0);
+    $r->dir_config->set('CgiDoSelf', 1);
+    $r->dir_config->set('NoState', 0);
 
     # init passed in config
     for(keys %config) {
-	$r->dir_config($_, $config{$_});
+	$r->dir_config->set($_, $config{$_});
     }
 
-#    $r->dir_config('Debug', -1);
     &Apache::ASP::handler($r);
 
     $r;
@@ -69,13 +68,15 @@ sub init {
 				{
 				   'connection'=> 'Apache::ASP::CGI::connection',
 				   'content_type' => "\$",
-				   'dir_config'=>    "\%",
+				   'current_callback' => "\$",
+				   'dir_config'=>    "Apache::ASP::CGI::Table",
 				   'env'       =>    "\%",
 				   'filename'  =>    "\$",
 				   'get_basic_auth_pw' => "\$",
-				   'header_in' =>    "\%",
-				   'header_out'=>    "\%",
+				   'headers_in' =>    "Apache::ASP::CGI::Table",
+				   'headers_out'=>    "Apache::ASP::CGI::Table",
 				   'err_headers_out' => "Apache::ASP::CGI::Table",
+				   'subprocess_env'  => "Apache::ASP::CGI::Table",
 				   'method'    =>    "\$",
 				   'sent_header' =>  "\$",
 				   'OUT'    =>    "\$",
@@ -93,17 +94,33 @@ sub init {
 	$ENV{QUERY_STRING} = join('&', map { "$_=$args{$_}" } keys %args);
     }
     
-    $self->filename($filename);
-    $self->header_in('Cookie', $ENV{HTTP_COOKIE});
     $self->connection(Apache::ASP::CGI::connection->new);
+    $self->dir_config(Apache::ASP::CGI::Table->new);
     $self->err_headers_out(Apache::ASP::CGI::Table->new);
+    $self->headers_out(Apache::ASP::CGI::Table->new);
+    $self->headers_in(Apache::ASP::CGI::Table->new);
+    $self->subprocess_env(Apache::ASP::CGI::Table->new);
+
+    my $env = $self->subprocess_env;
+    %$env = %ENV;
+
+    $self->filename($filename);
     $self->connection->remote_ip($ENV{REMOTE_HOST} || $ENV{REMOTE_ADDR} || '0.0.0.0');
     $self->connection->aborted(0);
-#    $self->dir_config('Global') || $self->dir_config('Global', '.');
+    $self->current_callback('PerlHandler');
+
+    # $self->headers_in->set('Cookie', $ENV{HTTP_COOKIE});
+    for my $env_key ( sort keys %ENV ) {
+	if($env_key =~ /^HTTP_(.+)$/ or $env_key =~ /^(CONTENT_TYPE|CONTENT_LENGTH)$/) {
+	    my $env_header_in = $1;
+	    my $header_key = join('-', map { ucfirst(lc($_)) } split(/\_/, $env_header_in));
+	    $self->headers_in->set($header_key, $ENV{$env_key});
+	}
+    }
 
     # we kill the state for now stuff for now, as it's just leaving .state
     # directories everywhere you run this stuff
-    defined($self->dir_config('NoState')) || $self->dir_config('NoState', 1);
+    defined($self->dir_config->get('NoState')) || $self->dir_config->set('NoState', 1);
 
     $self->method($ENV{REQUEST_METHOD} || 'GET');
 
@@ -111,6 +128,9 @@ sub init {
 	$self->env($env_key, $ENV{$env_key});
     }
     $self->env('SCRIPT_NAME') || $self->env('SCRIPT_NAME', $filename);
+
+    # fix truncated output in standalone CGI mode under Win32
+    binmode(STDOUT);
 
     bless $self, $class;
 }
@@ -122,24 +142,16 @@ sub init_dir_config {
     $dir_config;
 }
 
-sub status { $_[0]->header_out('status', $_[1]); }
-sub cgi_env { %{$_[0]->env} ; }
-sub cgi_header_out {
-    my($self, $name, $value) = @_;
-    if($name =~ /^set\-cookie$/i) {
-	my $cookie = $self->header_out('Set-Cookie');
-	$cookie ||= [];
-	if(ref $cookie) {
-	    # if there is already an array of cookies, push another one
-	    push(@$cookie, $value);
-	} else {
-	    $cookie = [$cookie, $value];
-	}
-	$self->header_out('Set-Cookie', $cookie);
+sub status { 
+    my($self, $status) = @_;
+    if(defined($status)) {
+	$self->headers_out->set('status', $status);
     } else {
-	$self->header_out($name, $value);
+	$self->headers_out->get('status');
     }
 }
+
+sub cgi_env { %{$_[0]->env} ; }
 
 sub send_http_header {
     my($self) = @_;
@@ -148,7 +160,7 @@ sub send_http_header {
     $self->sent_header(1);
     $header = "Content-Type: " .$self->content_type()."\n";
     
-    for my $headers ($self->header_out, $self->err_headers_out) {
+    for my $headers ($self->headers_out, $self->err_headers_out) {
         while(($k, $v) = each %$headers) {
 	    next if ($k =~ /^content\-type$/i);
 	    if(ref $v) {

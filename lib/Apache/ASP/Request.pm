@@ -20,13 +20,15 @@ sub new {
        Method => $r->method || 'GET',
        TotalBytes => 0,
       };
-    
+
+    # calculate whether to read POST data here
+    my $request_binary_read = &config($asp, 'RequestBinaryRead', undef, 1);
+    $asp->{request_binary_read} = $request_binary_read;
+
     # set up the environment, including authentication info
-    # only copy %ENV if we are changing anything
-    my $env; 
+    my $env = { %{$r->subprocess_env}, %ENV };
     if(&config($asp, 'AuthServerVariables')) {
 	if(defined $r->get_basic_auth_pw) {
-	    $env = { %ENV };
 	    my $c = $r->connection;
 	    #X: this needs to be extended to support Digest authentication
 	    $env->{AUTH_TYPE} = $c->auth_type;
@@ -36,15 +38,15 @@ sub new {
 	    $env->{AUTH_PASSWD} = $r->get_basic_auth_pw;
 	}
     }
-    $env ||= \%ENV;
     $self->{'ServerVariables'} = bless $env, 'Apache::ASP::Collection';
 
     # assign no matter what so Form is always defined
     my $form = {};
     my %upload;
-    if($self->{Method} eq 'POST') {	
-	$self->{TotalBytes} = $ENV{CONTENT_LENGTH};
-	if($ENV{CONTENT_TYPE}=~ m|^multipart/form-data|) {
+    my $headers_in = $self->{asp}{headers_in};
+    if($self->{Method} eq 'POST' and $request_binary_read) {
+	$self->{TotalBytes} = defined($ENV{CONTENT_LENGTH}) ? $ENV{CONTENT_LENGTH} : $headers_in->get('Content-Length');
+	if($headers_in->get('Content-Type') =~ m|^multipart/form-data|) {
 	    # do the logic here so that the normal form POST processing will not
 	    # occur either
 	    $asp->{file_upload_process} = &config($asp, 'FileUploadProcess', undef, 1);
@@ -74,7 +76,6 @@ sub new {
 					   (eval { CGI->VERSION } || $CGI::VERSION).
 					   " for file upload support"
 					  );
-		$asp->Debug($CGI::DISABLE_UPLOADS, '---', $self, '---', $asp->{r}->dir_config);
 
 		my %form;
 		my $q = $self->{cgi} = new CGI;
@@ -111,7 +112,7 @@ sub new {
 	    if(my $len = $self->{TotalBytes}) {
 		$self->{content} = $self->BinaryRead($len) || '';
 		tie(*STDIN, 'Apache::ASP::Request', $self);
-		if($ENV{CONTENT_TYPE} eq 'application/x-www-form-urlencoded') {
+		if($headers_in->get('Content-Type') eq 'application/x-www-form-urlencoded') {
 		    $form = &ParseParams($self, \$self->{content});
 		} else {
 		    $form = {};
@@ -134,8 +135,8 @@ ASP_REQUEST_POST_READ_DONE:
 
     # do cookies now
     my %cookies; 
-    if($r->header_in('Cookie')) {
-	my @parts = split(/;\s*/, ($r->header_in('Cookie') || ''));
+    if(my $cookie = $headers_in->get('Cookie')) {
+	my @parts = split(/;\s*/, ($cookie || ''));
 	for(@parts) {	
 	    my($name, $value) = split(/\=/, $_, 2);
 	    $name = &Unescape($self, $name);
@@ -188,6 +189,8 @@ sub READ {
     $self->{ServerVariables}{CONTENT_LENGTH};
 }
 
+sub BINMODE { };
+
 # COLLECTIONS, normal, Cookies are special, with the dictionary lookup
 # directly aliased as this should be faster than autoloading
 sub Form { shift->{Form}->Item(@_) }
@@ -205,8 +208,9 @@ sub Params {
 sub BinaryRead {
     my($self, $length) = @_;
     my $data;
+    return undef unless $self->{TotalBytes};
 
-    if(tied(*STDIN) eq $self) {
+    if(ref(tied(*STDIN)) && tied(*STDIN)->isa('Apache::ASP::Request')) {
 	if($self->{TotalBytes}) {
 	    if(defined $length) {
 		return substr($self->{content}, 0, $length);

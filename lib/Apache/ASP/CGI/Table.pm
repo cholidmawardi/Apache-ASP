@@ -1,6 +1,8 @@
 
 package Apache::ASP::CGI::Table;
 
+use Carp qw(confess);
+
 =pod
 
 =head1 NAME
@@ -19,7 +21,12 @@ sub new {
     bless {}, $class;
 }
 
-sub set { shift()->{shift()} = shift(); }
+sub set { 
+    my($self, $key, $value) = @_;
+    defined($key) || confess("no key to set value $value");
+    $self->{$key} = $value;
+}
+
 sub get { shift()->{shift()}; }
 sub unset { delete shift()->{shift()} };
 sub clear { %{shift()} = (); };

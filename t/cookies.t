@@ -5,7 +5,12 @@ use T;
 use strict;
 
 my $t = T->new;
-my $r = Apache::ASP::CGI::Test->do_self(NoState => 1, UseStrict => 1);
+my $r = Apache::ASP::CGI::Test->do_self(
+					UseStrict => 1, 
+					CookieDomain => 'apache-asp.com', 
+					SecureSession => 1,
+					CookiePath => '/eg/'
+					);
 my $header = $r->test_header_out;
 my $body = $r->test_body_out;
 
@@ -13,10 +18,11 @@ my @cookie_tests = (
 		    'Set-Cookie: test=cookie; path=/',
 		    'Set-Cookie: test2=value; expires=Wed, 06 Nov 2002 21:52:30 GMT; path=/path/; domain=test.com; secure',
 		    'Set-Cookie: test3=key1=value1&key2=value2; path=/',
+		    'Set-Cookie: session-id=[0-9a-f]+; path=/eg/; domain=apache-asp.com; secure',
 		    );
 
 for my $cookie_test ( @cookie_tests ) {
-    $cookie_test =~ s/(\W)/$1/isg;
+#    $cookie_test =~ s/(\W)/$1/isg;
     $t->eok(($header =~ /$cookie_test/s) ? 1 : 0, "Cookies header test");
 }
 

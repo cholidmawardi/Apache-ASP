@@ -27,7 +27,7 @@ my %config = (
 	      );
 
 my $r = Apache::ASP::CGI->init($0);
-map { $r->dir_config($_, $config{$_}) } keys %config;
+map { $r->dir_config->set($_, $config{$_}) } keys %config;
 
 my $ASP = Apache::ASP->new($r);
 $ASP->Session->{MARK} = 1;

@@ -1,6 +1,7 @@
 package Apache::ASP::Load;
 
 use Apache::ASP;
+use Apache::ASP::CGI::Table;
 
 use strict;
 no strict qw(refs);
@@ -16,11 +17,16 @@ use vars qw(@Days @Months $AUTOLOAD $LOADED $COUNT);
 sub new {
     my($file) = @_;
     bless {
+	current_callback => 'PerlHandler',
 	filename => $file,
 	remote_ip => '127.0.0.1',
 	user => undef,
 	method => 'GET',
 	NoState => 1,
+	headers_in     => Apache::ASP::CGI::Table->new,
+	headers_out    => Apache::ASP::CGI::Table->new,
+	dir_config     => Apache::ASP::CGI::Table->new,
+	subprocess_env => Apache::ASP::CGI::Table->new,
     };
 }
 
@@ -42,17 +48,6 @@ sub log_error {
 		   $times[5] + 1900,
 		   join('', @_),
 		   );
-}
-
-sub dir_config {
-    my($self, $key, $value) = @_;
-    if(defined $value) {
-	$self->{$key} = $value;
-    } elsif(defined $key) {
-	$self->{$key};
-    } else {
-	$self;
-    }
 }
 
 sub connection { shift; }
@@ -119,14 +114,14 @@ sub Run {
 		 @{Apache::ASP->CompileChecksumKeys} 
 		) 
       {
-	  $r->dir_config($key, $args{$key});
+	  $r->dir_config->set($key, $args{$key});
       }
-    $r->dir_config('NoState', 1);
+    $r->dir_config->set('NoState', 1);
 
     # RegisterIncludes created for precompilation, on by default here
-    $r->dir_config('RegisterIncludes', 1);
+    $r->dir_config->set('RegisterIncludes', 1);
     if ((defined $args{'RegisterIncludes'})) {
-	$r->dir_config('RegisterIncludes', $args{'RegisterIncludes'});
+	$r->dir_config->set('RegisterIncludes', $args{'RegisterIncludes'});
     }
 
     eval {

@@ -66,6 +66,7 @@ sleep 1;
     --enable-module=ssl \
     --enable-module=proxy \
     --enable-module=so \
+    --enable-module=rewrite \
     --disable-rule=EXPAT
 
 #    --activate-module=src/modules/php4/libphp4.a \

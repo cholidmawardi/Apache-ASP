@@ -80,7 +80,8 @@ sub InitState {
     if($self->{session_state}) {
 	## SESSION INITS
 	$self->{cookie_path}       = &config($self, 'CookiePath', undef, '/');
-	$self->{paranoid_session}  = &config($self, 'ParanoidSession', undef, 0);
+	$self->{cookie_domain}     = &config($self, 'CookieDomain');
+	$self->{paranoid_session}  = &config($self, 'ParanoidSession');
 	$self->{remote_ip}         = $r->connection()->remote_ip();
 	$self->{session_count}     = &config($self, 'SessionCount');
 	
@@ -95,7 +96,7 @@ sub InitState {
 	$self->{secure_session}    = &config($self, 'SecureSession');
 	# session timeout in seconds since that is what we work with internally
 	$self->{session_timeout}   = &config($self, 'SessionTimeout', undef, $SessionTimeout) * 60;
-	$self->{'ua'}              = $ENV{HTTP_USER_AGENT} || 'UNKNOWN UA';
+	$self->{'ua'}              = $self->{headers_in}->get('User-Agent') || 'UNKNOWN UA';
 	# refresh group by some increment smaller than session timeout
 	# to withstand DoS, bruteforce guessing attacks
 	# defaults to checking the group once every 2 minutes
@@ -439,7 +440,8 @@ sub SessionId {
 	unless($self->{session_url_force}) {
 	    # don't set the cookie when we are just using SessionQuery* configs
 	    my $secure = $self->{secure_session} ? '; secure' : '';
-	    $self->{r}->header_out('Set-Cookie', "$SessionCookieName=$id; path=$self->{cookie_path}".$secure);
+	    my $domain = $self->{cookie_domain}  ? '; domain='.$self->{cookie_domain} : '';
+	    $self->{r}->err_headers_out->add('Set-Cookie', "$SessionCookieName=$id; path=$self->{cookie_path}".$domain.$secure);
 	}
 	$self->{session_id} = $id;
     } else {
@@ -452,7 +454,7 @@ sub SessionId {
 
 	unless($self->{session_url_force}) {
 	    # don't read the cookie when we are just using SessionQuery* configs
-	    my $cookie = $self->{r}->header_in("Cookie") || '';
+	    my $cookie = $self->{r}->headers_in->{"Cookie"} || '';
 	    my(@parts) = split(/\;\s*/, $cookie);
 	    for(@parts) {	
 		my($name, $value) = split(/\=/, $_, 2);

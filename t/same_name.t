@@ -17,7 +17,7 @@ for my $test_num (1..2) {
 		  GlobalPackage => 'SameName',
 #		  Debug => -3,
 		  );
-    for(keys %config) { $r->dir_config($_, $config{$_}); }
+    for(keys %config) { $r->dir_config->set($_, $config{$_}); }
     
     my $rv = Apache::ASP->handler($r);
 

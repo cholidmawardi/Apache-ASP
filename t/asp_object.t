@@ -12,7 +12,7 @@ my %config = (
 	      NoState => 0,
 	      );
 for(keys %config) {
-    $r->dir_config($_, $config{$_});
+    $r->dir_config->set($_, $config{$_});
 }
 
 my $t = T->new;

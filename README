@@ -114,11 +114,19 @@ INSTALL
 
     Randy Kobes has graciously provided these, which include compiled versions
     perl, mod_perl, apache, mod_ssl, as well as all the modules required by
-    Apache::ASP and Apache::ASP itself. In order to upgrade the latest
-    Apache::ASP without a compiler, just download the latest Apache::ASP version
-    and replace the ASP.pm file in your perl libraries with the one from the
-    distribution. Apache::ASP is written in pure perl, so there is no need to
-    compile it for installation.
+    Apache::ASP and Apache::ASP itself.
+
+    You may also try the more recent Perl-5.8-win32-bin.exe distribution which
+    is built on Apache 2. This should be treated as BETA release software until
+    mod_perl 2.x is released as stable. Some notes from Randy Kobes about
+    getting this release to work are here:
+
+      After installing this distribution, in Apache2\conf\perl.conf
+      (pulled in via Apache2\conf\httpd.conf) there's directives that
+      have Apache::ASP handle files placed under the Apache2\asp\
+      directory. There should be a sample Apache::ASP script there,
+      printenv.html, accessed as http://127.0.0.1/asp/printenv.html
+      which, if working, will print out your environment variables.
 
   WinME / 98 / 95 flock() workaround
     For those on desktop Windows operation systems, Apache::ASP v2.25 and later
@@ -203,9 +211,9 @@ CONFIG
     below. Make sure Global is set to where your web applications global.asa is
     if you have one!
 
+     PerlModule  Apache::ASP
      <Files ~ (\.asp)>    
        SetHandler  perl-script
-       PerlModule  Apache::ASP
        PerlHandler Apache::ASP
        PerlSetVar  Global .
        PerlSetVar  StateDir /tmp/asp
@@ -416,6 +424,19 @@ CONFIG
     same server, with different user sessions for each application.
 
       PerlSetVar CookiePath /   
+
+    CookieDomain
+    Default 0, this NON-PORTABLE configuration will allow sessions to span
+    multiple web sites that match the same domain root. This is useful if your
+    web sites are hosted on the same machine and can share the same StateDir
+    configuration, and you want to shared the $Session data across web sites.
+    Whatever this is set to, that will add a
+
+      ; domain=$CookieDomain
+
+    part to the Set-Cookie: header set for the session-id cookie.
+
+      PerlSetVar CookieDomain .your.global.domain
 
     SessionTimeout
     Default 20 minutes, when a user's session has been inactive for this period
@@ -825,6 +846,16 @@ CONFIG
     simlar to CGI.pm's param() method.
 
       PerlSetVar RequestParams 1
+
+    RequestBinaryRead
+    Default On, if set to Off will not read POST data into $Request->Form().
+
+    One potential reason for configuring this to Off might be to initialize the
+    Apache::ASP object in an Apache handler phase earlier than the normal
+    PerlRequestHandler phase, so that it does not interfere with normal reading
+    of POST data later in the request.
+
+      PerlSetVar RequestBinaryRead On
 
     StatINC
     default 0, if true, reloads perl libraries that have changed on disk
@@ -1319,7 +1350,7 @@ EVENTS
      <Perl>
        sub My::Access::handler {
          my $r = shift;
-         if($r->header_in('USER_AGENT') =~ /HSlide/) {
+         if($r->headers_in->{'USER_AGENT'} =~ /HSlide/) {
              403;
          } else {
              200;
@@ -2880,9 +2911,6 @@ STYLE GUIDE
     Here are some general style guidelines. Treat these as tips for best
     practices on Apache::ASP development if you will.
 
-    This is a new section as of 8/2002, and will sure to be fleshed out better
-    in the near future.
-
   UseStrict
     One of perl's blessings is also its bane, variables do not need to be
     declared, and are by default globally scoped. The problem with this in
@@ -3369,13 +3397,6 @@ SEE ALSO
     perl(1), mod_perl(3), Apache(3), MLDBM(3), HTTP::Date(3), CGI(3),
     Win32::OLE(3)
 
-KEYWORDS
-    Apache, ASP, perl, apache, mod_perl, asp, Active Server Pages, perl, asp,
-    web application, ASP, session management, Active Server, scripting, dynamic
-    html, asp, perlscript, Unix, Linux, Solaris, Win32, WinNT, cgi compatible,
-    asp, response, ASP, request, session, application, server, Active Server
-    Pages
-
 NOTES
     Many thanks to those who helped me make this module a reality. With Apache +
     ASP + Perl, web development could not be better!
@@ -3386,10 +3407,12 @@ NOTES
     Other honorable mentions include:
 
      !! Doug MacEachern, for moral support and of course mod_perl
-
+     :) Francesco Pasqualini, for bug fixes with stand alone CGI mode on Win32
+     :) Szymon Juraszczyk, for better ContentType handling for settings like Clean.
+     :) Oleg Kobyakovskiy, for identifying the double Session_OnEnd cleanup bug.
      :) Peter Galbavy, for reporting numerous bugs and maintaining the OpenBSD port.
      :) Richard Curtis, for reporting and working through interesting module 
-        loading issues under mod_perl2 & apache2.
+        loading issues under mod_perl2 & apache2, and pushing on the file upload API.
      :) Rune Henssel, for catching a major bug shortly after 2.47 release,
         and going to great lengths to get me reproducing the bug quickly.
      :) Broc, for keeping things filter aware, which broke in 2.45,
@@ -3506,6 +3529,8 @@ SUPPORT
      * Apache::ASP core extensions
      * Advanced support for mod_perl, MySQL, Apache, Perl, & UNIX 
 
+    For more information please see:
+
      http://www.chamas.com/consulting.htm
      http://www.chamas.com/open_source.htm
 
@@ -3513,12 +3538,12 @@ SUPPORT
     We use, host and support mod_perl. We would love to be able to help anyone
     with their mod_perl Apache::ASP needs. Our mod_perl hosting is $24.95 mo.
 
-    http://altercom.com/home.html
+      http://altercom.com/home.html
 
     The Cyberchute Connection
     Our hosting services support Apache:ASP along with Mod_Perl, PHP and MySQL.
 
-       http://www.Cyberchute.com
+      http://www.Cyberchute.com
 
     OmniTI
     OmniTI supports Apache and mod_perl (including Apache::ASP) and offers
@@ -3636,9 +3661,6 @@ SITES USING
 
             OnTheWeb Services
             http://www.ontheweb.nu
-
-            Planet Of Music
-            http://www.planetofmusic.com 
 
             Prices for Antiques
             http://www.p4a.com
@@ -3827,6 +3849,46 @@ CHANGES
     the equivalent of a 1.0 release for other kinds of software.
 
      + = improvement   - = bug fix    (d) = documentations
+
+    $VERSION = 2.53; $DATE="04/10/2003"
+     + XMLSubs tags with "-" in them will have "-" replaced with "_" or underscore, so a
+       tag like <my:render-table /> will be translated to &my::render_table() ... tags with
+       - in them are common in extended XML syntaxes, but perl subs cannot have - in them only.
+
+     + Clean setting now works on output when $Response->{ContentType} begins with text/html;
+       like "text/html; charset=iso-8859-2" ... before Clean would only work on output marked
+       with ContentType text/html.  Thanks to Szymon Juraszczyk for recommending fix.
+
+     --Fixed a bug which would cause Session_OnEnd to be called twice on sessions in a certain case,
+       particularly when an old expired session gets reused by and web browser... this bug was
+       a result of a incomplete session cleanup method in this case.  Thanks to Oleg Kobyakovskiy 
+       for reporting this bug.  Added test in t/session_events.t to cover this problem going forward.
+
+     - Compile errors from Apache::ASP->Loader() were not being reported.  They will
+       be reported again now.  Thanks to Thanos Chatziathanassiou for discovering and
+       documenting this bug.  Added test in t/load.t to cover this problem going forward.
+
+     + use of chr(hex($1)) to decode URI encoded parameters instead of pack("c",hex($1))
+       faster & more correct, thanks to Nikolay Melekhin for pointing out this need.
+
+     (d) Added old perlmonth.com articles to ./site/articles in distribution
+       and linked to them from the docs RESOURCES section
+
+     (d) Updated documention for the $Application->SessionCount API
+
+     + Scripts with named subroutines, which is warned against in the style guide,
+       will not be cached to help prevent my closure problems that often
+       hurt new developers working in mod_perl environments.  The downside
+       is that these script will have a performance penalty having to be
+       recompiled each invocation, but this will kill many closure caching 
+       bugs that are hard to detect.
+
+     - $Request->FileUpload('upload_file', 'BrowserFile') would return
+       a glob before that would be the file name in scalar form.  However
+       this would be interpreted as a reference incorrectly.  The fix
+       is to make sure this is always a scalar by stringifying 
+       this data internally.  Thanks to Richard Curtis for pointing
+       out this bug.
 
     $VERSION = 2.51; $DATE="02/10/2003"
      + added t/session_query_parse.t test to cover use of SessionQueryParse

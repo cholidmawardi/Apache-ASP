@@ -24,6 +24,45 @@
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
+<center>
+<table border=0 cellpadding=3 cellspacing=0 width=100%>
+<tr>
+<td>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</td>
+</tr></table>
+</center>
+
 
 
 <center>
@@ -37,7 +76,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<tr>
 	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
-		<td align=right></td>
+		<form action=apps/search/index.asp>
+		<td align=right valign=center>
+		  <input type=text name=search size=20>
+		</td>
+		<td align=left valign=center>
+  		  <input type=submit value=Search>
+		</td>
+		</form>		
 	
 	</tr>
 	</table>
@@ -236,7 +282,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<br>
 		<a href=http://www.perl.com><img src="rectangle_power_perl.gif" width="88" height="31" alt="Powered by Perl" border="0"></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="Links Checked by NodeWorks" border="0"></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="NodeWorks Link Checker" border="0"></a>
 		</center>
 
 </center>
@@ -257,9 +303,9 @@ The settings are documented below.
 Make sure Global is set to where your web applications global.asa is 
 if you have one!
 <font face="courier new" size=3><pre>
+ PerlModule  Apache::ASP
  &lt;Files ~ (\.asp)&gt;    
    SetHandler  perl-script
-   PerlModule  Apache::ASP
    PerlHandler Apache::ASP
    PerlSetVar  Global .
    PerlSetVar  StateDir /tmp/asp
@@ -280,7 +326,6 @@ better for performance.</font>
 	<table width=100% border=0 cellpadding=1 cellspacing=3>
 	<tr>
 	<td valign=top><font face="lucida console" size=-1>
-	<ul>
 	
 		<tr>
 		
@@ -591,6 +636,22 @@ better for performance.</font>
 			<td valign=top >
 			<font face="lucida console" size=-1>
 			<a href=#CookiePath>CookiePath</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#RequestBinarc4419e4b>RequestBinaryRead</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#CookieDomain>CookieDomain</a>
 			</font>
 			</td>
 		
@@ -1215,6 +1276,22 @@ different user sessions for each application.
 </pre></font>
 	
 	<p>
+	<a name=CookieDomain></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>CookieDomain</b></font>
+<font face="courier new" size=3><pre>
+</pre></font>Default 0, this NON-PORTABLE configuration will allow sessions to span
+multiple web sites that match the same domain root.  This is useful if
+your web sites are hosted on the same machine and can share the same
+StateDir configuration, and you want to shared the $Session data 
+across web sites.  Whatever this is set to, that will add a 
+<font face="courier new" size=3><pre>
+  ; domain=$CookieDomain
+</pre></font>part to the Set-Cookie: header set for the session-id cookie.
+<font face="courier new" size=3><pre>
+  PerlSetVar CookieDomain .your.global.domain
+</pre></font>
+	
+	<p>
 	<a name=SessionTimeo21fc354e></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>SessionTimeout</b></font>
 <font face="courier new" size=3><pre>
@@ -1795,6 +1872,20 @@ is for developer convenience simlar to <a href=cgi.html><font size=-1 face=verda
 </pre></font>
 	
 	<p>
+	<a name=RequestBinarc4419e4b></a>
+	<font face=verdana><font class=title size=-1 color=#555555><b>RequestBinaryRead</b></font>
+<font face="courier new" size=3><pre>
+</pre></font>Default On, if set to Off will not read POST data into $Request-&gt;Form().
+<font face="courier new" size=3><pre>
+</pre></font>One potential reason for configuring this to Off might be to initialize the Apache::ASP
+object in an Apache handler phase earlier than the normal PerlRequestHandler
+phase, so that it does not interfere with normal reading of POST data later
+in the request.
+<font face="courier new" size=3><pre>
+  PerlSetVar RequestBinaryRead On
+</pre></font>
+	
+	<p>
 	<a name=StatINC></a>
 	<font face=verdana><font class=title size=-1 color=#555555><b>StatINC</b></font>
 <font face="courier new" size=3><pre>
@@ -2030,7 +2121,7 @@ primary server not be working.
 in the From: mail header for the $Server-&gt;Mail() API extension, 
 as well as MailErrorsTo and MailAlertTo.
 <font face="courier new" size=3><pre>
-  PerlSetVar MailFrom <b>youremail@yourdomain.com.foobar</b>
+  PerlSetVar MailFrom <b>&#121;&#111;&#117;&#114;&#101;&#109;&#097;&#105;&#108;&#064;&#121;&#111;&#117;&#114;&#100;&#111;&#109;&#097;&#105;&#110;&#046;&#099;&#111;&#109;&#046;&#102;&#111;&#111;&#098;&#097;&#114;</b>
 </pre></font>
 	
 	<p>
@@ -2052,7 +2143,7 @@ as Debug 2 is a development setting where errors are displayed in the browser,
 and MailErrorsTo is a production setting so that errors are silently logged
 and sent via email to the web admin.
 <font face="courier new" size=3><pre>
-  PerlSetVar MailErrorsTo <b>youremail@yourdomain.com</b>
+  PerlSetVar MailErrorsTo <b>&#121;&#111;&#117;&#114;&#101;&#109;&#097;&#105;&#108;&#064;&#121;&#111;&#117;&#114;&#100;&#111;&#109;&#097;&#105;&#110;&#046;&#099;&#111;&#109;</b>
 </pre></font>
 	
 	<p>
@@ -2068,7 +2159,7 @@ that server error.
 </pre></font>This config does not work when Debug 2 is set, as it is a setting for
 use in production only, where Debug 2 is for development use.
 <font face="courier new" size=3><pre>
-  PerlSetVar MailAlertTo <b>youremail@yourdomain.com</b>
+  PerlSetVar MailAlertTo <b>&#121;&#111;&#117;&#114;&#101;&#109;&#097;&#105;&#108;&#064;&#121;&#111;&#117;&#114;&#100;&#111;&#109;&#097;&#105;&#110;&#046;&#099;&#111;&#109;</b>
 </pre></font>
 	
 	<p>

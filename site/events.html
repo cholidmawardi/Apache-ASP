@@ -24,6 +24,45 @@
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
+<center>
+<table border=0 cellpadding=3 cellspacing=0 width=100%>
+<tr>
+<td>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</td>
+</tr></table>
+</center>
+
 
 
 <center>
@@ -37,7 +76,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<tr>
 	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
-		<td align=right></td>
+		<form action=apps/search/index.asp>
+		<td align=right valign=center>
+		  <input type=text name=search size=20>
+		</td>
+		<td align=left valign=center>
+  		  <input type=submit value=Search>
+		</td>
+		</form>		
 	
 	</tr>
 	</table>
@@ -236,7 +282,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<br>
 		<a href=http://www.perl.com><img src="rectangle_power_perl.gif" width="88" height="31" alt="Powered by Perl" border="0"></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="Links Checked by NodeWorks" border="0"></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="NodeWorks Link Checker" border="0"></a>
 		</center>
 
 </center>
@@ -255,29 +301,12 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<table width=100% border=0 cellpadding=1 cellspacing=3>
 	<tr>
 	<td valign=top><font face="lucida console" size=-1>
-	<ul>
 	
 		<tr>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
 			<a href=#Overview>Overview</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Script_OnFludc73a8d8>Script_OnFlush</a>
-			</font>
-			</td>
-							
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Script_OnSta6a4cfa7f>Script_OnStart & Script_OnEnd</a>
 			</font>
 			</td>
 		
@@ -293,7 +322,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Session_OnSt3cfacd72>Session_OnStart</a>
+			<a href=#Script_OnSta6a4cfa7f>Script_OnStart & Script_OnEnd</a>
 			</font>
 			</td>
 		
@@ -309,7 +338,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Session_OnEne9575396>Session_OnEnd</a>
+			<a href=#Session_OnSt3cfacd72>Session_OnStart</a>
 			</font>
 			</td>
 		
@@ -319,6 +348,32 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 			</font>
 			</td>
 							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Session_OnEne9575396>Session_OnEnd</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#mod_perl%20han02da5c9c>mod_perl handlers</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Script_OnFludc73a8d8>Script_OnFlush</a>
+			</font>
+			</td>
+		<td>&nbsp;</td>					
 		</tr>
 			
 	</table>
@@ -474,7 +529,7 @@ Precompile Scripts subsection. It is could be called like:
 </pre></font>So a &lt;Perl&gt; section is your Server_OnStart routine!</font>
 	
 	<p>
-	<a name=mod_perl%20han4ea2575f></a>
+	<a name=mod_perl%20han02da5c9c></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>mod_perl handlers</b></font>
 <font face="courier new" size=3><pre>
 </pre></font>If one wants to extend one&#39;s environment with <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>
@@ -530,7 +585,7 @@ handler programming...
  &lt;Perl&gt;
    sub My::Access::handler {
      my $r = shift;
-     if($r-&gt;header_in(&#39;USER_AGENT&#39;) =~ /HSlide/) {
+     if($r-&gt;headers_in-&gt;{&#39;USER_AGENT&#39;} =~ /HSlide/) {
 	 403;
      } else {
 	 200;

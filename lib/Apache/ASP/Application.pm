@@ -63,10 +63,10 @@ sub GetSession {
 		$session_obj && $session_obj->DESTROY;
 	    }
 	    $asp->{get_session_last} = $new_session;
-	    $asp->{r}->register_cleanup(sub {
-					    my $session_obj = tied %$new_session;
-					    $session_obj && $session_obj->DESTROY;
-					});
+	    $asp->RegisterCleanup(sub {
+				      my $session_obj = tied %$new_session;
+				      $session_obj && $session_obj->DESTROY;
+				  });
 	}
 	$new_session;
     }

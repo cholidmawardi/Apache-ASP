@@ -4,7 +4,11 @@
 
 package Apache::ASP;
 
-$VERSION = 2.53;
+$VERSION = 2.55;
+
+#require DynaLoader;
+#@ISA = qw(DynaLoader);
+#bootstrap Apache::ASP $VERSION;
 
 use Digest::MD5 qw(md5_hex);
 use Cwd qw(cwd);
@@ -35,6 +39,7 @@ use vars qw($VERSION
             $QuickStartTime
             $SessionCookieName
             $LoadModPerl
+            $ModPerl2
 	   );
 
 # other common modules load now, these are optional though, so we do not error upon failure
@@ -45,16 +50,23 @@ unless($LoadModPerl++) {
 	# Only pre-load these if in a mod_perl environment for sharing memory post fork.
 	# These will not be loaded then for CGI until absolutely necessary at runtime
 	push(@load_modules, qw( 
-          Apache2 Apache::compat Apache
-          MLDBM::Serializer::Data::Dumper Devel::Symdump 
+          Apache2 mod_perl
+          MLDBM::Serializer::Data::Dumper Devel::Symdump CGI
           Apache::ASP::StateManager Apache::ASP::Session Apache::ASP::Application
           Apache::ASP::StatINC Apache::ASP::Error
           )
 	    );
     }
-
+    
     for my $module ( @load_modules ) {
-	eval "use $module";
+         eval "use $module ();";
+    }
+
+    if($ENV{MOD_PERL}) {
+	$ModPerl2 = ($mod_perl::VERSION >= 1.99);
+	if($ModPerl2) {
+	    eval "use Apache::ASP::ApacheCommon ();";
+	}
     }
 }
 
@@ -247,12 +259,14 @@ sub new {
 
     # temp object just to call config() on, do not bless since we
     # do not want the object to be DESTROY()'d
-    my $self = { r => $r };
+    my $dir_config = $r->dir_config;
+    my $headers_in = $r->headers_in;
+    my $self = { r => $r, dir_config => $dir_config };
 
     # global is the default for the state dir and also 
     # a default lib path for perl, as well as where global.asa
     # can be found
-    my $global = &config($self, 'Global') || '.';
+    my $global = &get_dir_config($dir_config, 'Global') || '.';
     $global = &AbsPath($global, $dirname);
 
     # asp object is handy for passing state around
@@ -260,21 +274,23 @@ sub new {
       { 
        'basename'       => $basename,
        'cleanup'        => [],
-       'dbg'            => &config($self, 'Debug') || 0,  # debug level
-       'destroy'         => 1,
+       'dbg'            => &get_dir_config($dir_config, 'Debug') || 0,  # debug level
+       'destroy'        => 1,
+       'dir_config'     => $dir_config,
+       'headers_in'     => $headers_in,
        filename         => $filename,
        global           => $global,
-       global_package   => &config($self, 'GlobalPackage'),
-       inode_names      => &config($self, 'InodeNames'),
-       no_cache         => &config($self, 'NoCache'),
+       global_package   => &get_dir_config($dir_config, 'GlobalPackage'),
+       inode_names      => &get_dir_config($dir_config, 'InodeNames'),
+       no_cache         => &get_dir_config($dir_config, 'NoCache'),
        'r'              => $r, # apache request object 
        start_time       => $start_time,
        stat_scripts     => &config($self, 'StatScripts', undef, 1),
-       stat_inc         => &config($self, 'StatINC'),    
-       stat_inc_match   => &config($self, 'StatINCMatch'),
-       use_strict       => &config($self, 'UseStrict'),
+       stat_inc         => &get_dir_config($dir_config, 'StatINC'),    
+       stat_inc_match   => &get_dir_config($dir_config, 'StatINCMatch'),
+       use_strict       => &get_dir_config($dir_config, 'UseStrict'),
        win32            => ($^O eq 'MSWin32') ? 1 : 0,
-       xslt             => &config($self, 'XSLT'),
+       xslt             => &get_dir_config($dir_config, 'XSLT'),
       }, $class;
 
     # Only if debug is negative do we kick out all the internal stuff
@@ -300,7 +316,7 @@ sub new {
     }
 
     # filtering support
-    my $filter_config = &config($self, 'Filter');
+    my $filter_config = &get_dir_config($dir_config, 'Filter');
     if($filter_config) { 
         if($self->LoadModules('Filter', 'Apache::Filter')) {
 	    # new filter_register with Apache::Filter 1.013
@@ -327,7 +343,7 @@ sub new {
     }
     
     # gzip content encoding option by ime@iae.nl 28/4/2000
-    my $compressgzip_config = &config($self, 'CompressGzip');
+    my $compressgzip_config = &get_dir_config($dir_config, 'CompressGzip');
     if($compressgzip_config) {
 	if($self->LoadModule('Gzip','Compress::Zlib')) {
 	    $self->{compressgzip} = 1;
@@ -356,7 +372,7 @@ sub new {
     # register cleanup before the state files get set in InitObjects
     # this way DESTROY gets called every time this script is done
     # we must cache $self for lookups later
-    $r->register_cleanup(sub { $self->DESTROY });
+    &RegisterCleanup($self, sub { $self->DESTROY });
 
     #### WAS INIT OBJECTS, REMOVED DECOMP FOR SPEED
 
@@ -392,10 +408,10 @@ sub new {
 
     # if no state has been config'd, then set up none of the 
     # state objects: Application, Internal, Session
-    unless(&config($self, 'NoState')) {
+    unless(&get_dir_config($dir_config, 'NoState')) {
 	# load at runtime for CGI environments, preloaded for mod_perl
 	require Apache::ASP::StateManager;
-	$self->InitState;
+	&InitState($self);
     }
 
     $self;
@@ -484,6 +500,16 @@ sub DESTROY {
     %$self = ();
 
     1;
+}
+
+sub RegisterCleanup {
+    my $self = shift;
+
+    if($ModPerl2) {
+	$self->{r}->pool->cleanup_register(@_);
+    } else {
+	$self->{r}->register_cleanup(@_);
+    }
 }
 
 sub InitPaths {
@@ -1641,7 +1667,9 @@ sub XSLT {
     eval "use $xslt_parser_lib";
     $@ && die("failed to load $xslt_parser_lib: $@");
 
-    my $xslt_data;
+    my $xslt_data = '';
+    return \$xslt_data unless(length($$xsl_data) && length($$xml_data));
+
     if ($xslt_parser eq 'XML::XSLT') {
 	my $xslt = XML::XSLT->new($xsl_data);
 	$xslt->transform($xml_data);
@@ -1975,18 +2003,29 @@ ERROR
 	500;
 }
 
-sub CompileChecksumKeys { \@CompileChecksumKeys };
+sub CompileChecksumKeys() { \@CompileChecksumKeys };
+
+sub get_dir_config {
+    my $rv = shift->get(shift);
+    if(lc($rv) eq 'off') {
+	$rv = 0; # Off always becomes 0
+    }
+    $rv;
+}
 
 *Config = *config;
 sub config {
     my($self, $key, $value, $default) = @_;
+    my $dir_config = $self->{dir_config};
 
     if(defined $value) {
-	$self->{r}->dir_config($key, $value);
+	$dir_config->set($key, $value);
     } elsif(defined $key) {
-	my $rv = $self->{r}->dir_config($key);
+	my $rv = $dir_config->get($key);
 	if(defined($rv)) {
-	    $rv =~ s/^off$/0/i; # Off always becomes 0
+	    if(lc($rv) eq 'off') {
+		$rv = 0; # Off always becomes 0
+	    }
 	} else {
 	    # use default value if none is returned
 	    if(defined($default)) {
@@ -1995,7 +2034,7 @@ sub config {
 	}
 	$rv;
     } else {
-	$self->{r}->dir_config;
+	$dir_config;
     }
 }
 
@@ -2159,12 +2198,20 @@ and install the latest perl-win32-bin-*.exe file.
 Randy Kobes has graciously provided these, which include
 compiled versions perl, mod_perl, apache, mod_ssl,
 as well as all the modules required by Apache::ASP
-and Apache::ASP itself.  In order to upgrade the 
-latest Apache::ASP without a compiler, just download
-the latest Apache::ASP version and replace the ASP.pm
-file in your perl libraries with the one from the
-distribution.  Apache::ASP is written in pure perl,
-so there is no need to compile it for installation.
+and Apache::ASP itself.
+
+You may also try the more recent Perl-5.8-win32-bin.exe
+distribution which is built on Apache 2.  This should be
+treated as BETA release software until mod_perl 2.x is 
+released as stable. Some notes from Randy Kobes about 
+getting this release to work are here:
+
+  After installing this distribution, in Apache2\conf\perl.conf
+  (pulled in via Apache2\conf\httpd.conf) there's directives that
+  have Apache::ASP handle files placed under the Apache2\asp\
+  directory. There should be a sample Apache::ASP script there,
+  printenv.html, accessed as http://127.0.0.1/asp/printenv.html
+  which, if working, will print out your environment variables.
 
 =head2 WinME / 98 / 95 flock() workaround
 
@@ -2257,9 +2304,9 @@ The settings are documented below.
 Make sure Global is set to where your web applications global.asa is 
 if you have one!
 
+ PerlModule  Apache::ASP
  <Files ~ (\.asp)>    
    SetHandler  perl-script
-   PerlModule  Apache::ASP
    PerlHandler Apache::ASP
    PerlSetVar  Global .
    PerlSetVar  StateDir /tmp/asp
@@ -2505,6 +2552,20 @@ you to run different applications on the same server, with
 different user sessions for each application.
 
   PerlSetVar CookiePath /   
+
+=item CookieDomain
+
+Default 0, this NON-PORTABLE configuration will allow sessions to span
+multiple web sites that match the same domain root.  This is useful if
+your web sites are hosted on the same machine and can share the same
+StateDir configuration, and you want to shared the $Session data 
+across web sites.  Whatever this is set to, that will add a 
+
+  ; domain=$CookieDomain
+
+part to the Set-Cookie: header set for the session-id cookie.
+
+  PerlSetVar CookieDomain .your.global.domain
 
 =item SessionTimeout
 
@@ -3007,6 +3068,17 @@ contents of $Request->QueryString and $Request->Form.  This
 is for developer convenience simlar to CGI.pm's param() method.
 
   PerlSetVar RequestParams 1
+
+=item RequestBinaryRead
+
+Default On, if set to Off will not read POST data into $Request->Form().
+
+One potential reason for configuring this to Off might be to initialize the Apache::ASP
+object in an Apache handler phase earlier than the normal PerlRequestHandler
+phase, so that it does not interfere with normal reading of POST data later
+in the request.
+
+  PerlSetVar RequestBinaryRead On
 
 =item StatINC
 
@@ -3569,7 +3641,7 @@ handler programming...
  <Perl>
    sub My::Access::handler {
      my $r = shift;
-     if($r->header_in('USER_AGENT') =~ /HSlide/) {
+     if($r->headers_in->{'USER_AGENT'} =~ /HSlide/) {
 	 403;
      } else {
 	 200;
@@ -5317,9 +5389,6 @@ Several incompatibilities exist between PerlScript and Apache::ASP:
 Here are some general style guidelines.  Treat these as tips for
 best practices on Apache::ASP development if you will.
 
-This is a new section as of 8/2002, and will sure to be fleshed 
-out better in the near future.
-
 =head2 UseStrict
 
 One of perl's blessings is also its bane, variables do not need to be
@@ -5535,33 +5604,40 @@ an assignment like:
 
 =item How can I keep search engine spiders from killing the session manager?
 
-If you want to dissallow session creation for certain non web 
-browser user agents, like search engine spiders, you can use an 
-init handler like:
+If you want to disallow session creation for certain non web 
+browser user agents, like search engine spiders, you can use a mod_perl
+PerlInitHandler like this to set configuration variables at runtime:
 
-  PerlInitHandler "sub { $_[0]->dir_config('NoState', 1) }"
+ # put the following code into httpd.conf and stop/start apache server
+ PerlInitHandler My::InitHandler
+
+ <Perl>
+
+  package My::InitHandler;
+  use Apache;
+
+  sub handler {
+    my $r = shift; # get the Apache request object
+
+    # if not a Mozilla User Agent, then disable sessions explicitly
+    unless($r->headers_in('User-Agent') =~ /^Mozilla/) {
+       $r->dir_config('AllowSessionState', 'Off');
+    }
+
+    return 200; # return OK mod_perl status code
+  }
+
+  1;
+
+ </Perl>
 
 This will configure your environment before Apache::ASP executes
 and sees the configuration settings.  You can use the mod_perl
 API in this way to configure Apache::ASP at runtime.
 
-=item Insecure dependency in eval while running with - T switch ?
-
-If you are running your mod_perl with "PerlTaintCheck On", which 
-is recommended if you are highly concerned about security issues,
-you may get errors like "Insecure dependency ... with - T switch".
-
-Apache::ASP automatically untaints data internally so that you
-may run scripts with PerlTaintCheck On, but if you are using
-state objects like $Session or $Application, you must also
-notify MLDBM, which Apache::ASP uses internally, to also 
-untaint data read from disk, with this setting:
-
-  $MLDBM::RemoveTaint = 1;
-
-You could put the above line in your global.asa, which is
-just like a perl module, outside any event handlers
-you define there.
+Note that the Session Manager is very robust on its own, and denial
+of service attacks of the types that spiders and other web bots 
+normally execute are not likely to affect the Session Manager significantly.
 
 =item How can I use $Session to store a $dbh database handle ?
 
@@ -5868,13 +5944,6 @@ these limits HIGH!
 perl(1), mod_perl(3), Apache(3), MLDBM(3), HTTP::Date(3), CGI(3),
 Win32::OLE(3)
 
-=head1 KEYWORDS
-
-Apache, ASP, perl, apache, mod_perl, asp, Active Server Pages, perl, asp, web application, ASP,
-session management, Active Server, scripting, dynamic html, asp, perlscript, Unix, Linux, Solaris,
-Win32, WinNT, cgi compatible, asp, response, ASP, request, session, application, server,
-Active Server Pages
-
 =head1 NOTES
 
 Many thanks to those who helped me make this module a reality.
@@ -5887,10 +5956,12 @@ would have been possible.
 Other honorable mentions include:
 
  !! Doug MacEachern, for moral support and of course mod_perl
-
+ :) Francesco Pasqualini, for bug fixes with stand alone CGI mode on Win32
+ :) Szymon Juraszczyk, for better ContentType handling for settings like Clean.
+ :) Oleg Kobyakovskiy, for identifying the double Session_OnEnd cleanup bug.
  :) Peter Galbavy, for reporting numerous bugs and maintaining the OpenBSD port.
  :) Richard Curtis, for reporting and working through interesting module 
-    loading issues under mod_perl2 & apache2.
+    loading issues under mod_perl2 & apache2, and pushing on the file upload API.
  :) Rune Henssel, for catching a major bug shortly after 2.47 release,
     and going to great lengths to get me reproducing the bug quickly.
  :) Broc, for keeping things filter aware, which broke in 2.45,
@@ -6016,6 +6087,8 @@ and database systems.  We offer:
  * Apache::ASP core extensions
  * Advanced support for mod_perl, MySQL, Apache, Perl, & UNIX 
 
+For more information please see:
+
  http://www.chamas.com/consulting.htm
  http://www.chamas.com/open_source.htm
 
@@ -6024,13 +6097,13 @@ and database systems.  We offer:
 We use, host and support mod_perl. We would love to be able to help 
 anyone with their mod_perl Apache::ASP needs.  Our mod_perl hosting is $24.95 mo.
 
-http://altercom.com/home.html
+  http://altercom.com/home.html
 
 =item The Cyberchute Connection
 
 Our hosting services support Apache:ASP along with Mod_Perl, PHP and MySQL.
 
-   http://www.Cyberchute.com
+  http://www.Cyberchute.com
 
 =item OmniTI
 
@@ -6148,9 +6221,6 @@ For a list of testimonials of those using Apache::ASP, please see the TESTIMONIA
 	OnTheWeb Services
 	http://www.ontheweb.nu
 
-	Planet Of Music
-	http://www.planetofmusic.com 
-
 	Prices for Antiques
 	http://www.p4a.com
 
@@ -6192,6 +6262,18 @@ community and maintainer have been very helpful whenever we've had
 questions.
 
   -- Tom Lancaster, Red Hat
+
+=item HOSTING 321, LLC.
+
+After discontinuing Windows-based hosting due to the high cost of software, 
+our clients are thrilled with Apache::ASP and they swear ASP it's faster 
+than before. Installation was a snap on our 25-server web farm with a small 
+shell script and everything is running perfectly! The documentation is 
+very comprehensive and everyone has been very helpful during this migration.
+
+Thank you!
+
+ -- Richard Ward, HOSTING 321, LLC.
 
 =item Concept Online Ltd.
 
@@ -6271,12 +6353,6 @@ use perl (far superior to VBScript) and Apache (far superior to IIS).
 We've been very pleased with Apache::ASP and its support.
 
 =item Planet of Music
-
-=begin html
-
-<a href="http://www.planetofmusic.com"><img src="planetofmusic.com.gif" border=0></a>
-
-=end html
 
 Apache::ASP has been a great tool.  Just a little
 background.... the whole site had been in cgi flat files when I started
@@ -6407,6 +6483,47 @@ means first production ready release, this would be the
 equivalent of a 1.0 release for other kinds of software.
 
  + = improvement   - = bug fix    (d) = documentations
+
+=item $VERSION = 2.53; $DATE="04/10/2003"
+
+ + XMLSubs tags with "-" in them will have "-" replaced with "_" or underscore, so a
+   tag like <my:render-table /> will be translated to &my::render_table() ... tags with
+   - in them are common in extended XML syntaxes, but perl subs cannot have - in them only.
+
+ + Clean setting now works on output when $Response->{ContentType} begins with text/html;
+   like "text/html; charset=iso-8859-2" ... before Clean would only work on output marked
+   with ContentType text/html.  Thanks to Szymon Juraszczyk for recommending fix.
+
+ --Fixed a bug which would cause Session_OnEnd to be called twice on sessions in a certain case,
+   particularly when an old expired session gets reused by and web browser... this bug was
+   a result of a incomplete session cleanup method in this case.  Thanks to Oleg Kobyakovskiy 
+   for reporting this bug.  Added test in t/session_events.t to cover this problem going forward.
+
+ - Compile errors from Apache::ASP->Loader() were not being reported.  They will
+   be reported again now.  Thanks to Thanos Chatziathanassiou for discovering and
+   documenting this bug.  Added test in t/load.t to cover this problem going forward.
+
+ + use of chr(hex($1)) to decode URI encoded parameters instead of pack("c",hex($1))
+   faster & more correct, thanks to Nikolay Melekhin for pointing out this need.
+
+ (d) Added old perlmonth.com articles to ./site/articles in distribution
+   and linked to them from the docs RESOURCES section
+
+ (d) Updated documention for the $Application->SessionCount API
+
+ + Scripts with named subroutines, which is warned against in the style guide,
+   will not be cached to help prevent my closure problems that often
+   hurt new developers working in mod_perl environments.  The downside
+   is that these script will have a performance penalty having to be
+   recompiled each invocation, but this will kill many closure caching 
+   bugs that are hard to detect.
+
+ - $Request->FileUpload('upload_file', 'BrowserFile') would return
+   a glob before that would be the file name in scalar form.  However
+   this would be interpreted as a reference incorrectly.  The fix
+   is to make sure this is always a scalar by stringifying 
+   this data internally.  Thanks to Richard Curtis for pointing
+   out this bug.
 
 =item $VERSION = 2.51; $DATE="02/10/2003"
 

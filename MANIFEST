@@ -37,11 +37,11 @@ build/support.html
 build/syntax.html
 build/testimonials.html
 build/todo.html
-build/top.inc
 build/tuning.html
 build/xml.html
 editors/aasp.vim
 editors/mmm-asp-perl.el
+lib/Apache/ASP/ApacheCommon.pm
 lib/Apache/ASP/Application.pm
 lib/Apache/ASP/CGI.pm
 lib/Apache/ASP/CGI/Table.pm

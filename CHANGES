@@ -1,45 +1,28 @@
-$MODULE=Apache::ASP; $VERSION = '2.53'; $DATE="TBD"
+$MODULE=Apache::ASP; $VERSION = '2.55'; $DATE="08/09/2003"
 
 Please see README for changes for past versions.
 
  + = improvement;    - = bug fix;    (d) = documentation
 
- + XMLSubs tags with "-" in them will have "-" replaced with "_" or underscore, so a
-   tag like <my:render-table /> will be translated to &my::render_table() ... tags with
-   - in them are common in extended XML syntaxes, but perl subs cannot have - in them only.
+ - Bug fixes for running on standalone CGI mode on Win32 submitted
+   by Francesco Pasqualini
 
- + Clean setting now works on output when $Response->{ContentType} begins with text/html;
-   like "text/html; charset=iso-8859-2" ... before Clean would only work on output marked
-   with ContentType text/html.  Thanks to Szymon Juraszczyk for recommending fix.
+ + Added Apache::ASP::Request::BINMODE for binmode() being
+   called on STDIN after STDIN is tied to $Request object
 
- --Fixed a bug which would cause Session_OnEnd to be called twice on sessions in a certain case,
-   particularly when an old expired session gets reused by and web browser... this bug was
-   a result of a incomplete session cleanup method in this case.  Thanks to Oleg Kobyakovskiy 
-   for reporting this bug.  Added test in t/session_events.t to cover this problem going forward.
+ + New RequestBinaryRead configuration created, may be turned off
+   to prevent $Request object from reading POST data
 
- - Compile errors from Apache::ASP->Loader() were not being reported.  They will
-   be reported again now.  Thanks to Thanos Chatziathanassiou for discovering and
-   documenting this bug.  Added test in t/load.t to cover this problem going forward.
+ ++ mod_perl 2 optmizations, there was a large code impact on this,
+  as much code was restructured to reduce the differences between
+  mod_perl 1 and mod_perl 2
 
- + use of chr(hex($1)) to decode URI encoded parameters instead of pack("c",hex($1))
-   faster & more correct, thanks to Nikolay Melekhin for pointing out this need.
+ + preloaded CGI for file uploads in the mod_perl environment
 
- (d) Added old perlmonth.com articles to ./site/articles in distribution
-   and linked to them from the docs RESOURCES section
+ - When XSLT config is set, $Response->Redirect() should work now
+   Thanks to Marcus Zoller for pointing problem out
 
- (d) Updated documention for the $Application->SessionCount API
-
- + Scripts with named subroutines, which is warned against in the style guide,
-   will not be cached to help prevent my closure problems that often
-   hurt new developers working in mod_perl environments.  The downside
-   is that these script will have a performance penalty having to be
-   recompiled each invocation, but this will kill many closure caching 
-   bugs that are hard to detect.
-
- - $Request->FileUpload('upload_file', 'BrowserFile') would return
-   a glob before that would be the file name in scalar form.  However
-   this would be interpreted as a reference incorrectly.  The fix
-   is to make sure this is always a scalar by stringifying 
-   this data internally.  Thanks to Richard Curtis for pointing
-   out this bug.
+ + Added CookieDomain setting, documented, and added test to cover 
+   it in t/cookies.t . Setting suggested by Uwe Riehm, who nicely 
+   submitted some code for this.
 

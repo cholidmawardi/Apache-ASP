@@ -35,13 +35,13 @@ my %meta = (
 	);
 
 $data || die("can't get data for $section");
-my $module = "Apache :: ASP";
+my $module = "Apache::ASP";
 
 my $title;
 if($basename eq 'index.html') {
     $title = $module;
 } else {
-    $title = $module." - ".ucfirst(lc $data->{name});
+    $title = $module."::".ucfirst(lc $data->{name});
 }
 
 %>
@@ -186,7 +186,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<br>
 		<a href=http://www.perl.com><site:img src="rectangle_power_perl.gif" alt="Powered by Perl" /></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><site:img src="nodecheck_button.gif" alt="Links Checked by NodeWorks" /></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><site:img src="nodecheck_button.gif" alt="NodeWorks Link Checker" /></a>
 		</center>
 
 </center>
@@ -239,9 +239,8 @@ if(@order > 1) {
 	<table width=100% border=0 cellpadding=1 cellspacing=3>
 	<tr>
 	<td valign=top><font face="lucida console" size=-1>
-	<ul>
 	<% 
-	my $half = int((@links+1) / 2);
+	my $half = int((@links + 1) / 2);
 	my $index;	
 
 	my $hilite_first;
@@ -328,7 +327,7 @@ for $data (@order) {
 <tr bgcolor=<%=$DarkRowColor%>>
 	<td colspan=<%= $BodyColSpan %> align=center width=80%>
 	<font face=verdana color=white size=-1>
-	Copyright &copy; 1998-<%= (localtime())[5] + 1900 %>, Joshua Chamas, 
+	Copyright &copy; 1998-<%= (localtime())[5] + 1900 %>,
 	<a href=http://www.chamas.com><font color=white>Chamas Enterprises Inc.</font></a>
 	</font>
 	</td>

@@ -17,7 +17,7 @@ my $file_id3 = '';
 if(my $stat = (stat('.'))[1]) {
 
     # need both here, inode_names is not cached at new() time
-    $ASP->{r}->dir_config('InodeNames', 1);
+    $ASP->{r}->dir_config->set('InodeNames', 1);
     $ASP->{inode_names} = 1;
 
     $file_id3 = $ASP->FileId(basename($Server->File));

@@ -54,8 +54,9 @@ sub new {
        #       header_done => 0,
        Buffer => &config($asp, 'BufferingOn', undef, 1),
        BinaryRef => \$out,
-       CompressGzip => ($asp->{compressgzip} and $ENV{HTTP_ACCEPT_ENCODING} =~ /gzip/io) ? 1 : 0,
+       CompressGzip => ($asp->{compressgzip} and ($asp->{headers_in}->get('Accept-Encoding') =~ /gzip/io)) ? 1 : 0,
        r => $r,
+       headers_out => scalar($r->headers_out()),
       };
 
     &IsClientConnected($self); # update now
@@ -78,7 +79,7 @@ for my $member ( @Members ) {
     my $subdef = "sub $member { shift->DeprecatedMemberAccess('$member', shift); }";
     eval $subdef;
     if($@) {
-	die("error definiing Apache::ASP::Response sub -- $subdef -- $@");
+	die("error defining Apache::ASP::Response sub -- $subdef -- $@");
     }
 }
 
@@ -99,7 +100,7 @@ sub AddHeader {
 	} elsif($lc_name eq 'expires') {
 	    $self->{ExpiresAbsolute} = $value;
 	} else {
-	    $self->{r}->header_out($name, $value);
+	    $self->{headers_out}->set($name, $value);
 	}
     }
 }   
@@ -154,7 +155,7 @@ sub End {
     # even if we are in a situation where Flush() has been made null like
     # in an XMLSubs or cached or trapped include
 #    &EndSoft($self);
-    goto APACHE_ASP_EXECUTE_END;
+    eval { goto APACHE_ASP_EXECUTE_END; };
 }
 
 sub EndSoft {
@@ -252,11 +253,11 @@ sub Flush {
 		# gzip the buffer if CompressGzip && browser accepts it &&
 		# the script is flushed once
 		if($self->{CompressGzip} && $asp->LoadModule('Gzip','Compress::Zlib')) {
-		    $self->{r}->header_out('Content-Encoding','gzip');
+		    $self->{headers_out}->set('Content-Encoding','gzip');
 		    $$out = Compress::Zlib::memGzip($out);
 		}
 
-		$self->{r}->header_out('Content-Length', length($$out));
+		$self->{headers_out}->set('Content-Length', length($$out));
 	    }
 	}
 	
@@ -326,6 +327,7 @@ sub FlushXSLT {
     my $self = shift;
     my $asp = $self->{asp};
     my $xml_out = $self->{BinaryRef};
+    return unless length($$xml_out); # could happen after a redirect
 
     $asp->{xslt_match} = &config($asp, 'XSLTMatch') || '^.';
     return unless ($asp->{filename} =~ /$asp->{xslt_match}/);
@@ -413,7 +415,7 @@ sub Redirect {
 	$asp->{dbg} && $asp->Debug("new location after session query parsing $location");
     }
        
-    $r->header_out('Location', $location);
+    $r->headers_out->set('Location', $location);
     $self->{Status} = 302;
     $r->status(302);
 
@@ -435,7 +437,8 @@ sub Redirect {
 	# Finally we also call End() so we will jump out of the executing code.
 	#
 	&Clear($self);
-	&EndSoft($self);
+	$self->{Ended} = 1; # just marked Ended so future EndSoft() cannot be called
+#	&EndSoft($self);
 	&End($self);
     }
 
@@ -483,28 +486,28 @@ sub SendHeaders {
     # do the expiration time
     if(defined $self->{Expires}) {
 	my $ttl = $self->{Expires};
-	$r->header_out('Expires', &Apache::ASP::Date::time2str(time()+$ttl));
+	$r->headers_out->set('Expires', &Apache::ASP::Date::time2str(time()+$ttl));
 	$dbg && $self->{asp}->Debug("expires in $self->{Expires}");
     } elsif(defined $self->{ExpiresAbsolute}) {
 	my $date = $self->{ExpiresAbsolute};
 	my $time = &Apache::ASP::Date::str2time($date);
 	if(defined $time) {
-	    $r->header_out('Expires', &Apache::ASP::Date::time2str($time));
+	    $r->headers_out->set('Expires', &Apache::ASP::Date::time2str($time));
 	} else {
 	    confess("Response->ExpiresAbsolute(): date format $date not accepted");
 	}
     }
 
     # do the Cache-Control header
-    $r->header_out('Cache-Control', $self->{CacheControl});
+    $r->headers_out->set('Cache-Control', $self->{CacheControl});
     
     # do PICS header
-    defined($self->{PICS}) && $r->header_out('PICS-Label', $self->{PICS});
+    defined($self->{PICS}) && $r->headers_out->set('PICS-Label', $self->{PICS});
     
     # don't send headers with filtering, since filter will do this for
     # all the modules once
     # doug sanctioned this one
-    unless($r->header_out("Content-type")) {
+    unless($r->headers_out->get("Content-type")) {
 	# if filtering, we don't send out a header from ASP
 	# this means that Filtered scripts can use CGI headers
 	# we order the test this way in case Ken comes on
@@ -517,7 +520,10 @@ sub SendHeaders {
 		$r->send_cgi_header($self->{header_buffer} . "\n");
 		$self->{header_buffer} = undef;
 	    } else {
-		$r->send_http_header();
+		unless($Apache::ASP::ModPerl2) {
+		    # don't need this for mod_perl2 it seems from Apache::compat
+		    $r->send_http_header();
+		}
 	    }
 	}
     }

@@ -24,6 +24,45 @@
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
+<center>
+<table border=0 cellpadding=3 cellspacing=0 width=100%>
+<tr>
+<td>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</td>
+</tr></table>
+</center>
+
 
 
 <center>
@@ -37,7 +76,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<tr>
 	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
-		<td align=right></td>
+		<form action=apps/search/index.asp>
+		<td align=right valign=center>
+		  <input type=text name=search size=20>
+		</td>
+		<td align=left valign=center>
+  		  <input type=submit value=Search>
+		</td>
+		</form>		
 	
 	</tr>
 	</table>
@@ -236,7 +282,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<br>
 		<a href=http://www.perl.com><img src="rectangle_power_perl.gif" width="88" height="31" alt="Powered by Perl" border="0"></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="Links Checked by NodeWorks" border="0"></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="NodeWorks Link Checker" border="0"></a>
 		</center>
 
 </center>
@@ -263,7 +309,6 @@ titled Win32 Install.</font>
 	<table width=100% border=0 cellpadding=1 cellspacing=3>
 	<tr>
 	<td valign=top><font face="lucida console" size=-1>
-	<ul>
 	
 		<tr>
 		
@@ -317,7 +362,7 @@ titled Win32 Install.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Win32%20%2F%20Wind0f0e8ac6>Win32 / Windows Install</a>
+			<a href=#Win32%20%2F%20Wind784e394f>Win32 / Windows Install</a>
 			</font>
 			</td>
 		
@@ -402,7 +447,7 @@ environment.  The offline mode for building static html at
 ./cgi/asp may be used with just perl.</font>
 	
 	<p>
-	<a name=Win32%20%2F%20Wind0f0e8ac6></a>
+	<a name=Win32%20%2F%20Wind784e394f></a>
 	<font face=verdana><font class=title size=+0 color=#555555><b>Win32 / Windows Install</b></font>
 <font face="courier new" size=3><pre>
 </pre></font>If you are on a Win32 platform, like WinNT or Windows 2000, 
@@ -417,12 +462,21 @@ you can download the win32 binaries linked to from:
 </pre></font>Randy Kobes has graciously provided these, which include
 compiled versions perl, mod_perl, apache, mod_ssl,
 as well as all the modules required by Apache::ASP
-and Apache::ASP itself.  In order to upgrade the 
-latest Apache::ASP without a compiler, just download
-the latest Apache::ASP version and replace the ASP.pm
-file in your perl libraries with the one from the
-distribution.  Apache::ASP is written in pure perl,
-so there is no need to compile it for installation.</font>
+and Apache::ASP itself.
+<font face="courier new" size=3><pre>
+</pre></font>You may also try the more recent Perl-5.8-win32-bin.exe
+distribution which is built on Apache 2.  This should be
+treated as BETA release software until mod_perl 2.x is 
+released as stable. Some notes from Randy Kobes about 
+getting this release to work are here:
+<font face="courier new" size=3><pre>
+  After installing this distribution, in Apache2\conf\perl.conf
+  (pulled in via Apache2\conf\httpd.conf) there&#39;s directives that
+  have Apache::ASP handle files placed under the Apache2\asp\
+  directory. There should be a sample Apache::ASP script there,
+  printenv.html, accessed as <a href=http://127.0.0.1/asp/printenv.html>http://127.0.0.1/asp/printenv.html</a>
+  which, if working, will print out your environment variables.
+</pre></font>
 	
 	<p>
 	<a name=WinME%20%2F%2098%20%2Fce25d199></a>

@@ -24,6 +24,45 @@
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
+<center>
+<table border=0 cellpadding=3 cellspacing=0 width=100%>
+<tr>
+<td>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</td>
+</tr></table>
+</center>
+
 
 
 <center>
@@ -37,7 +76,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<tr>
 	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
-		<td align=right></td>
+		<form action=apps/search/index.asp>
+		<td align=right valign=center>
+		  <input type=text name=search size=20>
+		</td>
+		<td align=left valign=center>
+  		  <input type=submit value=Search>
+		</td>
+		</form>		
 	
 	</tr>
 	</table>
@@ -236,7 +282,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<br>
 		<a href=http://www.perl.com><img src="rectangle_power_perl.gif" width="88" height="31" alt="Powered by Perl" border="0"></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="Links Checked by NodeWorks" border="0"></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="NodeWorks Link Checker" border="0"></a>
 		</center>
 
 </center>
@@ -251,16 +297,12 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <font face=verdana><font class=title size=+1 color=#555555><b>STYLE GUIDE</b></font>
 <font face="courier new" size=3><pre>
 </pre></font>Here are some general style guidelines.  Treat these as tips for
-best practices on Apache::ASP development if you will.
-<font face="courier new" size=3><pre>
-</pre></font>This is a new section as of 8/2002, and will sure to be fleshed 
-out better in the near future.</font>
+best practices on Apache::ASP development if you will.</font>
 
 	<hr size=1>
 	<table width=100% border=0 cellpadding=1 cellspacing=3>
 	<tr>
 	<td valign=top><font face="lucida console" size=-1>
-	<ul>
 	
 		<tr>
 		
@@ -272,10 +314,20 @@ out better in the near future.</font>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Do%20not%20definc430b103>Do not define subroutines in scripts.</a>
+			<a href=#Use%20global.ae21f52dc>Use global.asa's Script_On* Events</a>
 			</font>
 			</td>
 							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Do%20not%20definc430b103>Do not define subroutines in scripts.</a>
+			</font>
+			</td>
+		<td>&nbsp;</td>					
 		</tr>
 			
 	</table>

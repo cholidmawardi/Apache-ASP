@@ -24,6 +24,45 @@
 marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 
 
+<center>
+<table border=0 cellpadding=3 cellspacing=0 width=100%>
+<tr>
+<td>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</td>
+</tr></table>
+</center>
+
 
 
 <center>
@@ -37,7 +76,14 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 	<tr>
 	<td><img border=0 src=asptitlelogo.gif alt="Apache::ASP" width=267 height=44 ></td>	
 	
-		<td align=right></td>
+		<form action=apps/search/index.asp>
+		<td align=right valign=center>
+		  <input type=text name=search size=20>
+		</td>
+		<td align=left valign=center>
+  		  <input type=submit value=Search>
+		</td>
+		</form>		
 	
 	</tr>
 	</table>
@@ -236,7 +282,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<br>
 		<a href=http://www.perl.com><img src="rectangle_power_perl.gif" width="88" height="31" alt="Powered by Perl" border="0"></a>
 		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="Links Checked by NodeWorks" border="0"></a>
+		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><img src="nodecheck_button.gif" width="88" height="31" alt="NodeWorks Link Checker" border="0"></a>
 		</center>
 
 </center>
@@ -260,10 +306,12 @@ would have been possible.
 </pre></font>Other honorable mentions include:
 <font face="courier new" size=3><pre>
  !! Doug MacEachern, for moral support and of course mod_perl
-
+ :) Francesco Pasqualini, for bug fixes with stand alone CGI mode on Win32
+ :) Szymon Juraszczyk, for better ContentType handling for settings like Clean.
+ :) Oleg Kobyakovskiy, for identifying the double Session_OnEnd cleanup bug.
  :) Peter Galbavy, for reporting numerous bugs and maintaining the OpenBSD port.
  :) Richard Curtis, for reporting and working through interesting module 
-    loading issues under mod_perl2 &amp; apache2.
+    loading issues under mod_perl2 &amp; apache2, and pushing on the file upload API.
  :) Rune Henssel, for catching a major bug shortly after 2.47 release,
     and going to great lengths to get me reproducing the bug quickly.
  :) Broc, for keeping things filter aware, which broke in 2.45,

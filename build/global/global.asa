@@ -220,8 +220,7 @@ sub pod2html {
     $body =~ s/([^\=\"])((http|ftp):\/\/[\w\.\/\-]+\.[\w\.\/\-\#\,\%]+[^\.\s\)])/$1<a href=$2>$2<\/a>/sg;
 #    $1 && warn "link: $1\n";
     $body =~ s|(http://localhost[\S]*[^\.\s\,]?)|<tt>$1</tt>|sg;
-    $body =~ s|([\w\-]+\@[\w\.\,\@\-]+)(\?[\w\=\:]+)?|<b>$1</b>|sg;
-#    $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<a href=mailto:$1$2>$1</a>|sg;
+    $body =~ s|([\w\-]+\@[\w\.\,\@\-]+)(\?[\w\=\:]+)?|'<b>'.&html_encode_hide($1).'</b>'|esg;
     $body =~ s|(\./site/)(eg/[\w\.]+[^\.\s])|<a href=$2>$1$2</a>|sg;
 
     $body =~ s|\n\n</pre>|\n</pre>|isg;
@@ -244,4 +243,12 @@ sub pod2html {
     '<font face=verdana>'.$title.$body.'</font>';
 }
 
-
+# we use this to mask email addresses in the documentation
+sub html_encode_hide {
+    my $word = shift;
+    join('',
+	 map{
+	     sprintf(qq(&#%03d;),ord($_))
+	 } split(//, $word)
+	);
+}
