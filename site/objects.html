@@ -2,17 +2,8 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: OBJECTS</title>
+<title>Apache :: ASP :: OBJECTS [ Active Server Pages for Apache with mod_perl ]</title>
 
-	<meta name="keywords" content="apache,asp,perl,mod_perl,active server pages,web application,session management,
-scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible">
-
-	<meta name="description" content="This perl module provides an Active Server Pages port to the 
-Apache HTTP Server with perl as the host scripting language. 
-Active Server Pages is a web application platform that originated 
-with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
-it allows a developer to create dynamic web applications with session 
-management and perl code embedded in static html files.">
 
 
 </head>
@@ -107,7 +98,7 @@ burden of <a href=cgi.html>CGI</a> and Session Management off the developer,
 and puts them in objects accessible from any
 ASP script &amp; include.  For the perl programmer, treat these objects
 as globals accesible from anywhere in your ASP application.
-<pre>
+<font face="courier new"><pre>
   Currently the Apache::ASP object model supports the following:
 
     Object	 -	Function
@@ -117,7 +108,7 @@ as globals accesible from anywhere in your ASP application.
     $Request	 -	input
     $Application -	application state
     $Server	 -	OLE support + misc
-</pre>These objects, and their methods are further defined in the 
+</pre></font>These objects, and their methods are further defined in the 
 following sections.</font>
 
 	<hr size=1>
@@ -138,32 +129,32 @@ a persistent manner, making it relatively easy to develop web
 applications.  The $Session state is stored accross HTTP connections,
 in database files in the Global directory, and will persist across
 server restarts.
-<pre>
-</pre>The user session is referenced by a 128 bit / 32 byte MD5 hex hashed cookie, 
+<font face="courier new"><pre>
+</pre></font>The user session is referenced by a 128 bit / 32 byte MD5 hex hashed cookie, 
 and can be considered secure from session_id guessing, or session hijacking.
 When a hacker fails to guess a session, the system times out for a
 second, and with 2**128 (3.4e38) keys to guess, a hacker will not be 
 guessing an id any time soon.  
-<pre>
-</pre>If an incoming cookie matches a timed out or non-existent session,
+<font face="courier new"><pre>
+</pre></font>If an incoming cookie matches a timed out or non-existent session,
 a new session is created with the incoming id.  If the id matches a
 currently active session, the session is tied to it and returned.
 This is also similar to the Microsoft ASP implementation.
-<pre>
-</pre>The $Session refererence is a hash ref, and can be used as such to 
+<font face="courier new"><pre>
+</pre></font>The $Session refererence is a hash ref, and can be used as such to 
 store data as in: 
-<pre>
+<font face="courier new"><pre>
     $Session-&gt;{count}++;	# increment count by one
     %{$Session} = ();	# clear $Session data
-</pre>The $Session object state is implemented through MLDBM,
+</pre></font>The $Session object state is implemented through MLDBM,
 and a user should be aware of the limitations of MLDBM.  
 Basically, you can read complex structures, but not write 
 them, directly:
-<pre>
+<font face="courier new"><pre>
   $data = $Session-&gt;{complex}{data};     # Read ok.
   $Session-&gt;{complex}{data} = $data;     # Write NOT ok.
   $Session-&gt;{complex} = {data =&gt; $data}; # Write ok, all at once.
-</pre>Please see MLDBM for more information on this topic.
+</pre></font>Please see MLDBM for more information on this topic.
 $Session can also be used for the following methods and properties:</font>
 	
 	<p>
@@ -190,8 +181,8 @@ which is exchanged between the client and the server as a cookie.</font>
 Timeout property, if minutes is being assigned, sets this 
 default timeout for the user session, else returns 
 the current session timeout.  
-<pre>
-</pre>If a user session is inactive for the full
+<font face="courier new"><pre>
+</pre></font>If a user session is inactive for the full
 timeout, the session is destroyed by the system.
 No one can access the session after it times out, and the system
 garbage collects it eventually.</font>
@@ -208,21 +199,21 @@ data is cleared in the process, just as when any session times out.</font>
 API extension. If you are about to use $Session for many consecutive 
 reads or writes, you can improve performance by explicitly locking 
 $Session, and then unlocking, like:
-<pre>
+<font face="courier new"><pre>
   $Session-&gt;Lock();
   $Session-&gt;{count}++;
   $Session-&gt;{count}++;
   $Session-&gt;{count}++;
   $Session-&gt;UnLock();
-</pre>This sequence causes $Session to be locked and unlocked only
+</pre></font>This sequence causes $Session to be locked and unlocked only
 1 time, instead of the 6 times that it would be locked otherwise,
 2 for each increment with one to read and one to write.
-<pre>
-</pre>Because of flushing issues with SDBM_File and DB_File databases,
+<font face="courier new"><pre>
+</pre></font>Because of flushing issues with SDBM_File and DB_File databases,
 each lock actually ties fresh to the database, so the performance
 savings here can be considerable.  
-<pre>
-</pre>Note that if you have SessionSerialize set, $Session is
+<font face="courier new"><pre>
+</pre></font>Note that if you have SessionSerialize set, $Session is
 already locked for each script invocation automatically, as if
 you had called $Session-&gt;Lock() in Script_OnStart.  Thus you 
 do not need to worry about $Session locking for performance.
@@ -262,7 +253,7 @@ in the HTTP header Cache-Control</font>
 This member when set appends itself to the value of the Content-Length
 HTTP header.  If $Response-&gt;{Charset} = 'ISO-LATIN-1' is set, the 
 corresponding header would look like:
-<pre>
+<font face="courier new"><pre>
   Content-Type:text/html; charset=ISO-LATIN-1</pre></font>
 	
 	<p>
@@ -292,7 +283,7 @@ HTTP date like: &quot;Wed, 09 Feb 1994 22:23:32 GMT&quot;.</font>
 Sends a response header to the client with $date being an absolute
 time to expire.  Formats accepted are all those accepted by 
 HTTP::Date::str2time(), e.g.
-<pre>
+<font face="courier new"><pre>
  &quot;Wed, 09 Feb 1994 22:23:32 GMT&quot;       -- HTTP format
  &quot;Tuesday, 08-Feb-94 14:15:29 GMT&quot;     -- old rfc850 HTTP format
 
@@ -345,16 +336,16 @@ difference from $Response-&gt;Write() is that $Response-&gt;Flush()
 is called internally first, so the data cannot be parsed 
 as an html header.  Flushing flushes the header if has not
 already been written.
-<pre>
-</pre>If you have set the $Reponse-&gt;{ContentType}
+<font face="courier new"><pre>
+</pre></font>If you have set the $Reponse-&gt;{ContentType}
 to something other than text/html, cgi header parsing (see <a href=cgi.html>CGI</a>
 notes), will be automatically be turned off, so you will not
 necessarily need to use BinaryWrite for writing binary data.
-<pre>
-</pre>For an example of BinaryWrite, see the gif.htm example 
+<font face="courier new"><pre>
+</pre></font>For an example of BinaryWrite, see the gif.htm example 
 in ./site/eg/gif.htm
-<pre>
-</pre>Please note that if you are on Win32, you will need to 
+<font face="courier new"><pre>
+</pre></font>Please note that if you are on Win32, you will need to 
 call binmode on a file handle before reading, if 
 its data is binary.</font>
 	
@@ -369,7 +360,7 @@ Erases buffered ASP output.</font>
 Sets the key or attribute of cookie with name $name to the value $value.
 If $key is not defined, the Value of the cookie is set.
 ASP CookiePath is assumed to be / in these examples.
-<pre>
+<font face="courier new"><pre>
  $Response-&gt;Cookies('name', 'value');
   --&gt; Set-Cookie: name=value; path=/
 
@@ -385,15 +376,15 @@ ASP CookiePath is assumed to be / in these examples.
   --&gt;	Set-Cookie:Test=data1=test%20value&amp;data2=more%20test;	\
  		expires=Fri, 23 Apr 1999 07:19:52 GMT;		\
  		path=/; domain=host.com; secure
-</pre>The latter use of $key in the cookies not only sets cookie attributes
+</pre></font>The latter use of $key in the cookies not only sets cookie attributes
 such as Expires, but also treats the cookie as a hash of key value pairs
 which can later be accesses by
-<pre>
+<font face="courier new"><pre>
  $Request-&gt;Cookies('Test', 'data1');
  $Request-&gt;Cookies('Test', 'data2');
-</pre>Because this is perl, you can (NOT PORTABLE) reference the cookies
+</pre></font>Because this is perl, you can (NOT PORTABLE) reference the cookies
 directly through hash notation.  The same 5 commands above could be compressed to:
-<pre>
+<font face="courier new"><pre>
  $Response-&gt;{Cookies}{Test} =
 	{
 		Secure	=&gt; 1,
@@ -406,19 +397,19 @@ directly through hash notation.  The same 5 commands above could be compressed t
 		Domain	=&gt; 'host.com',
 		Path    =&gt; '/'
 	};
-</pre>and the first command would be:
-<pre>
+</pre></font>and the first command would be:
+<font face="courier new"><pre>
  # you don't need to use hash notation when you are only setting
  # a simple value
  $Response-&gt;{Cookies}{'Test Name'} = 'Test Value';
-</pre>I prefer the hash notation for cookies, as this looks nice, and is 
+</pre></font>I prefer the hash notation for cookies, as this looks nice, and is 
 quite perlish.  It is here to stay.  The Cookie() routine is 
 very complex and does its best to allow access to the 
 underlying hash structure of the data.  This is the best emulation 
 I could write trying to match the Collections functionality of 
 cookies in <a href=http://www.microsoft.com/iis/>IIS</a> ASP.
-<pre>
-</pre>For more information on Cookies, please go to the source at
+<font face="courier new"><pre>
+</pre></font>For more information on Cookies, please go to the source at
 <a href=http://home.netscape.com/newsref/std/cookie_spec.html>http://home.netscape.com/newsref/std/cookie_spec.html</a></font>
 	
 	<p>
@@ -429,35 +420,35 @@ this routine will write @args out to server error log.  refs in @args
 will be expanded one level deep, so data in simple data structures
 like one-level hash refs and array refs will be displayed.  CODE
 refs like
-<pre>
+<font face="courier new"><pre>
  $Response-&gt;Debug(sub { &quot;some value&quot; });
-</pre>will be executed and their output added to the debug output.
+</pre></font>will be executed and their output added to the debug output.
 This extension allows the user to tie directly into the
 debugging capabilities of this module.
-<pre>
-</pre>While developing an app on a production server, it is often 
+<font face="courier new"><pre>
+</pre></font>While developing an app on a production server, it is often 
 useful to have a separate error log for the application
 to catch debuging output separately.  One way of implementing 
 this is to use the Apache ErrorLog configuration directive to 
 create a separate error log for a virtual host. 
-<pre>
-</pre>If you want further debugging support, like stack traces
+<font face="courier new"><pre>
+</pre></font>If you want further debugging support, like stack traces
 in your code, consider doing things like:
-<pre>
+<font face="courier new"><pre>
  $Response-&gt;Debug( sub { Carp::longmess('debug trace') };
  $SIG{__WARN__} = \&amp;Carp::cluck; # then warn() will stack trace
-</pre>The only way at present to see exactly where in your script
+</pre></font>The only way at present to see exactly where in your script
 an error occured is to set the Debug config directive to 2,
 and match the error line number to perl script generated
 from your ASP script.  
-<pre>
-</pre>However, as of version 0.10, the perl script generated from the 
+<font face="courier new"><pre>
+</pre></font>However, as of version 0.10, the perl script generated from the 
 asp script should match almost exactly line by line, except in 
 cases of inlined includes, which add to the text of the original script, 
 pod comments which are entirely yanked out, and &lt;% # comment %&gt; style
 comments which have a \n added to them so they still work.
-<pre>
-</pre>If you would like to see the HTML preceeding an error 
+<font face="courier new"><pre>
+</pre></font>If you would like to see the HTML preceeding an error 
 while developing, consider setting the BufferingOn 
 config directive to 0.</font>
 	
@@ -478,11 +469,11 @@ Sends buffered output to client and clears buffer.</font>
 This API extension calls the routine compiled from asp script
 in $filename with the args @args.  This is a direct translation
 of the <a href=ssi.html>SSI</a> tag 
-<pre>
+<font face="courier new"><pre>
   &lt;!--#include file=$filename args=@args--&gt;
-</pre>Please see the <a href=ssi.html>SSI</a> section for more on <a href=ssi.html>SSI</a> in general.
-<pre>
-</pre>This API extension was created to allow greater modularization
+</pre></font>Please see the <a href=ssi.html>SSI</a> section for more on <a href=ssi.html>SSI</a> in general.
+<font face="courier new"><pre>
+</pre></font>This API extension was created to allow greater modularization
 of code by allowing includes to be called with runtime 
 arguments.  Files included are compiled once, and the 
 anonymous coderef from that compilation is cached, thus
@@ -511,7 +502,7 @@ if an index is specified, or a collection / perl hash ref if no index
 is specified.  WARNING, the latter property is not supported in 
 Activeware PerlScript, so if you use the hashes returned by such
 a technique, it will not be portable.
-<pre>
+<font face="courier new"><pre>
  # A normal use of this feature would be to iterate through the
  # form variables in the form hash...
 
@@ -549,22 +540,22 @@ Not implemented.</font>
 Returns the value of the Cookie with name $name.  If a $key is
 specified, then a lookup will be done on the cookie as if it were
 a query string.  So, a cookie set by:
-<pre>
+<font face="courier new"><pre>
  Set-Cookie: test=data1=1&amp;data2=2
-</pre>would have a value of 2 returned by $Request-&gt;Cookies('test','data2').
-<pre>
-</pre>If no name is specified, a hash will be returned of cookie names 
+</pre></font>would have a value of 2 returned by $Request-&gt;Cookies('test','data2').
+<font face="courier new"><pre>
+</pre></font>If no name is specified, a hash will be returned of cookie names 
 as keys and cookie values as values.  If the cookie value is a query string, 
 it will automatically be parsed, and the value will be a hash reference to 
 these values.
-<pre>
-</pre>When in doubt, try it out.  Remember that unless you set the Expires
+<font face="courier new"><pre>
+</pre></font>When in doubt, try it out.  Remember that unless you set the Expires
 attribute of a cookie with $Response-&gt;Cookies('cookie', 'Expires', $xyz),
 the cookies that you set will only last until you close your browser, 
 so you may find your self opening &amp; closing your browser a lot when 
 debugging cookies.
-<pre>
-</pre>For more information on cookies in ASP, please read $Response-&gt;Cookies()</font>
+<font face="courier new"><pre>
+</pre></font>For more information on cookies in ASP, please read $Response-&gt;Cookies()</font>
 	
 	<p>
 	<a name=%24Request-%3EForm%28%24name%29></a>
@@ -572,14 +563,14 @@ debugging cookies.
 Returns the value of the input of name $name used in a form
 with POST method.  If $name is not specified, returns a ref to 
 a hash of all the form data.  
-<pre>
-</pre>File upload data will be loaded into $Request-&gt;Form('file_field'), 
+<font face="courier new"><pre>
+</pre></font>File upload data will be loaded into $Request-&gt;Form('file_field'), 
 where the value is the actual file name of the file uploaded, and 
 the contents of the file can be found by reading from the file
 name as a file handle as in:
-<pre>
+<font face="courier new"><pre>
  while(read($Request-&gt;Form('file_field_name'), $data, 1024)) {};
-</pre>For more information, please see the <a href=cgi.html>CGI</a> / File Upload section,
+</pre></font>For more information, please see the <a href=cgi.html>CGI</a> / File Upload section,
 as file uploads are implemented via the <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> module.  An
 example can be found in the installation 
 samples ./site/eg/file_upload.asp</font>
@@ -600,7 +591,7 @@ Returns the value of the server variable / environment variable
 with name $name.  If $name is not specified, returns a ref to 
 a hash of all the server / environment variables data.  The following
 would be a common use of this method:
-<pre>
+<font face="courier new"><pre>
  $env = $Request-&gt;ServerVariables();
  # %{$env} here would be equivalent to the cgi %ENV in perl.</pre></font>
 	
@@ -613,9 +604,9 @@ page in the ASP application always has access to this object.
 So if you wanted to keep track of how many visitors there where
 to the application during its lifetime, you might have a line
 like this:
-<pre>
+<font face="courier new"><pre>
  $Application-&gt;{num_users}++
-</pre>The Lock and Unlock methods are used to prevent simultaneous 
+</pre></font>The Lock and Unlock methods are used to prevent simultaneous 
 access to the $Application object.</font>
 	
 	<p>
@@ -625,12 +616,12 @@ Locks the Application object for the life of the script, or until
 UnLock() unlocks it, whichever comes first.  When $Application
 is locked, this gaurantees that data being read and written to it 
 will not suddenly change on you between the reads and the writes.
-<pre>
-</pre>This and the $Session object both lock automatically upon
+<font face="courier new"><pre>
+</pre></font>This and the $Session object both lock automatically upon
 every read and every write to ensure data integrity.  This 
 lock is useful for concurrent access control purposes.
-<pre>
-</pre>Be careful to not be too liberal with this, as you can quickly 
+<font face="courier new"><pre>
+</pre></font>Be careful to not be too liberal with this, as you can quickly 
 create application bottlenecks with its improper use.</font>
 	
 	<p>
@@ -646,8 +637,8 @@ in the application.  This method is not implemented as part of the ASP
 object model, but is implemented here because it is useful.  In particular,
 when accessing databases with license requirements, one can monitor usage
 effectively through accessing this value.
-<pre>
-</pre>This is a new feature as of v.06, and if run on a site with previous 
+<font face="courier new"><pre>
+</pre></font>This is a new feature as of v.06, and if run on a site with previous 
 versions of Apache::ASP, the count may take a while to synch up.  To ensure
 a correct count, you must delete all the current state files associated
 with an application, usually in the $Global/.state directory.</font>
@@ -673,9 +664,9 @@ Allows use of ActiveX objects on Win32.  This routine returns
 a reference to an Win32::OLE object upon success, and nothing upon
 failure.  It is through this mechanism that a developer can 
 utilize ADO.  The equivalent syntax in VBScript is 
-<pre>
+<font face="courier new"><pre>
  Set object = Server.CreateObject(program_id)
-</pre>For further information, try 'perldoc Win32::OLE' from your
+</pre></font>For further information, try 'perldoc Win32::OLE' from your
 favorite command line.</font>
 	
 	<p>
@@ -692,11 +683,11 @@ escaped with this method.                                 &quot;</font>
 Given the url $url, absolute, or relative to the current executing script,
 this method returns the equivalent filename that the server would 
 translate the request to, regardless or whether the request would be valid.
-<pre>
-</pre>Only a $url that is relative to the host is valid.  Urls like &quot;.&quot; and 
+<font face="courier new"><pre>
+</pre></font>Only a $url that is relative to the host is valid.  Urls like &quot;.&quot; and 
 &quot;/&quot; are fine arguments to MapPath, but &quot;http://localhost&quot; would not be.
-<pre>
-</pre>To see this method call in action, check out the sample ./site/eg/server.htm
+<font face="courier new"><pre>
+</pre></font>To see this method call in action, check out the sample ./site/eg/server.htm
 script.</font>
 	
 	<p>
@@ -706,7 +697,7 @@ Returns the URL-escaped version of the string $string. +'s are substituted in
 for spaces and special characters are escaped to the ascii equivalents.
 Strings encoded in this manner are safe to put in url's... they are especially
 useful for encoding data used in a query string as in:
-<pre>
+<font face="courier new"><pre>
  $data = $Server-&gt;URLEncode(&quot;test data&quot;);
  $url = &quot;http://localhost?data=$data&quot;;
 
@@ -716,25 +707,25 @@ useful for encoding data used in a query string as in:
 	<p>
 	<a name=%24Server-%3ERegisterCleanup%28%24sub_reference%29%20></a>
 	<font face=verdana><font size=-1 color=#555555><b>$Server->RegisterCleanup($sub_reference) </b></font><p>
-<pre> non-portable extension
-</pre>Sets a subroutine reference to be executed after the script ends,
+<font face="courier new"><pre> non-portable extension
+</pre></font>Sets a subroutine reference to be executed after the script ends,
 whether normally or abnormally, the latter occuring 
 possibly by the user hitting the STOP button, or the web server
 being killed.  This subroutine must be a code reference 
 created like:
-<pre>
+<font face="courier new"><pre>
  $Server-&gt;RegisterCleanup(sub { $main::Session-&gt;{served}++; });
    or
  sub served { $main::Session-&gt;{served}++; }
  $Server-&gt;RegisterCleanup(\&amp;served);
-</pre>The reference to the subroutine passed in will be executed.
+</pre></font>The reference to the subroutine passed in will be executed.
 Though the subroutine will be executed in anonymous context, 
 instead of the script, all objects will still be defined 
 in main::*, that you would reference normally in your script.  
 Output written to $main::Response will have no affect at 
 this stage, as the request to the www client has already completed.
-<pre>
-</pre>Check out the ./site/eg/register_cleanup.asp script for an example
+<font face="courier new"><pre>
+</pre></font>Check out the ./site/eg/register_cleanup.asp script for an example
 of this routine in action.</font>
 	
 

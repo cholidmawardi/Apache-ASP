@@ -2,17 +2,8 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: CONFIG</title>
+<title>Apache :: ASP :: CONFIG [ Active Server Pages for Apache with mod_perl ]</title>
 
-	<meta name="keywords" content="apache,asp,perl,mod_perl,active server pages,web application,session management,
-scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible">
-
-	<meta name="description" content="This perl module provides an Active Server Pages port to the 
-Apache HTTP Server with perl as the host scripting language. 
-Active Server Pages is a web application platform that originated 
-with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
-it allows a developer to create dynamic web applications with session 
-management and perl code embedded in static html files.">
 
 
 </head>
@@ -104,25 +95,25 @@ management and perl code embedded in static html files.">
 <font face=verdana><font size=+1 color=#555555><b>CONFIG</b></font><p>
 Use with Apache.  Copy the ./site/eg directory from the ASP installation 
 to your Apache document tree and try it out!  You have to put
-<pre>
+<font face="courier new"><pre>
   AllowOverride All
-</pre>in your &lt;Directory&gt; config section to let the .htaccess file in the 
+</pre></font>in your &lt;Directory&gt; config section to let the .htaccess file in the 
 ./site/eg installation directory do its work.
-<pre>
-</pre>If you want a STARTER config file, just look at the .htaccess
+<font face="courier new"><pre>
+</pre></font>If you want a STARTER config file, just look at the .htaccess
 file in the ./site/eg directory.
-<pre>
-</pre>Here is a Location directive that you might put in a *.conf Apache 
+<font face="courier new"><pre>
+</pre></font>Here is a Location directive that you might put in a *.conf Apache 
 configuration file.  Set the optional ones if you want, 
 the defaults are fine.  The settings are documented below.
-<pre>
+<font face="courier new"><pre>
  # Generic apache directives to make asp start ticking.
  &lt;Location /asp/&gt;
   SetHandler perl-script
   PerlHandler Apache::ASP
   PerlSetVar Global /tmp
  &lt;/Location&gt;
-</pre>You can use the same config in .htaccess files without the 
+</pre></font>You can use the same config in .htaccess files without the 
 Location tag.  I use the &lt;Files ~ (\.asp)&gt; tag in the .htaccess
 file of the directory that I want to run my asp application.
 This allows me to mix other file types in my application,
@@ -132,7 +123,7 @@ and see them in action on the example scripts.</font>
 
 	<hr size=1>
 	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
-	<a href=#Global><font color=#3355cc>Global</font></a><br><a href=#CookiePath><font color=#3355cc>CookiePath</font></a><br><a href=#GlobalPackage><font color=#3355cc>GlobalPackage</font></a><br><a href=#UniquePackages><font color=#3355cc>UniquePackages</font></a><br><a href=#AllowSessionState><font color=#3355cc>AllowSessionState</font></a><br><a href=#SessionTimeout><font color=#3355cc>SessionTimeout</font></a><br><a href=#SecureSession><font color=#3355cc>SecureSession</font></a><br><a href=#ParanoidSession><font color=#3355cc>ParanoidSession</font></a><br><a href=#Debug><font color=#3355cc>Debug</font></a><br><a href=#BufferingOn><font color=#3355cc>BufferingOn</font></a><br><a href=#StatINC><font color=#3355cc>StatINC</font></a><br><a href=#StatINCMatch><font color=#3355cc>StatINCMatch</font></a><br><a href=#SessionSerialize><font color=#3355cc>SessionSerialize</font></a><br><a href=#SoftRedirect><font color=#3355cc>SoftRedirect</font></a><br><a href=#NoState><font color=#3355cc>NoState</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#StateDir><font color=#3355cc>StateDir</font></a><br><a href=#StateManager><font color=#3355cc>StateManager</font></a><br><a href=#StateDB><font color=#3355cc>StateDB</font></a><br><a href=#StateCache><font color=#3355cc>StateCache</font></a><br><a href=#AllowApplicationState><font color=#3355cc>AllowApplicationState</font></a><br><a href=#Filter><font color=#3355cc>Filter</font></a><br><a href=#PodComments><font color=#3355cc>PodComments</font></a><br><a href=#DynamicIncludes><font color=#3355cc>DynamicIncludes</font></a><br><a href=#CgiHeaders><font color=#3355cc>CgiHeaders</font></a><br><a href=#Clean><font color=#3355cc>Clean</font></a><br><a href=#MailHost><font color=#3355cc>MailHost</font></a><br><a href=#MailErrorsTo><font color=#3355cc>MailErrorsTo</font></a><br><a href=#MailAlertTo><font color=#3355cc>MailAlertTo</font></a><br><a href=#MailAlertPeriod><font color=#3355cc>MailAlertPeriod</font></a><br>	
+	<a href=#Global><font color=#3355cc>Global</font></a><br><a href=#CookiePath><font color=#3355cc>CookiePath</font></a><br><a href=#GlobalPackage><font color=#3355cc>GlobalPackage</font></a><br><a href=#UniquePackages><font color=#3355cc>UniquePackages</font></a><br><a href=#AllowSessionState><font color=#3355cc>AllowSessionState</font></a><br><a href=#SessionTimeout><font color=#3355cc>SessionTimeout</font></a><br><a href=#SecureSession><font color=#3355cc>SecureSession</font></a><br><a href=#ParanoidSession><font color=#3355cc>ParanoidSession</font></a><br><a href=#Debug><font color=#3355cc>Debug</font></a><br><a href=#BufferingOn><font color=#3355cc>BufferingOn</font></a><br><a href=#StatINC><font color=#3355cc>StatINC</font></a><br><a href=#StatINCMatch><font color=#3355cc>StatINCMatch</font></a><br><a href=#SessionSerialize><font color=#3355cc>SessionSerialize</font></a><br><a href=#SoftRedirect><font color=#3355cc>SoftRedirect</font></a><br><a href=#NoState><font color=#3355cc>NoState</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#StateDir><font color=#3355cc>StateDir</font></a><br><a href=#StateManager><font color=#3355cc>StateManager</font></a><br><a href=#StateDB><font color=#3355cc>StateDB</font></a><br><a href=#StateCache><font color=#3355cc>StateCache</font></a><br><a href=#AllowApplicationState><font color=#3355cc>AllowApplicationState</font></a><br><a href=#Filter><font color=#3355cc>Filter</font></a><br><a href=#PodComments><font color=#3355cc>PodComments</font></a><br><a href=#DynamicIncludes><font color=#3355cc>DynamicIncludes</font></a><br><a href=#IncludesDir><font color=#3355cc>IncludesDir</font></a><br><a href=#CgiHeaders><font color=#3355cc>CgiHeaders</font></a><br><a href=#Clean><font color=#3355cc>Clean</font></a><br><a href=#MailHost><font color=#3355cc>MailHost</font></a><br><a href=#MailErrorsTo><font color=#3355cc>MailErrorsTo</font></a><br><a href=#MailAlertTo><font color=#3355cc>MailAlertTo</font></a><br><a href=#MailAlertPeriod><font color=#3355cc>MailAlertPeriod</font></a><br>	
 	</font>
 	</td>
 	</tr>
@@ -146,22 +137,22 @@ and see them in action on the example scripts.</font>
 Global is the nerve center of an ASP application, in which
 the global.asa may reside, which defines the web application's 
 event handlers.  
-<pre>
-</pre>This directory is pushed onto @INC, you will be able 
+<font face="courier new"><pre>
+</pre></font>This directory is pushed onto @INC, you will be able 
 to &quot;use&quot; and &quot;require&quot; files in this directory, so perl modules 
 developed for this application may be dropped into this directory, 
 for easy use.
-<pre>
-</pre>Unless StateDir is configured, this directory must be some 
+<font face="courier new"><pre>
+</pre></font>Unless StateDir is configured, this directory must be some 
 writeable directory by the web server.  $Session and $Application 
 object state files will be stored in this directory.  If StateDir
 is configured, then ignore this paragraph, as it overrides the 
 Global directory for this purpose.
-<pre>
-</pre>Includes, specified with &lt;!--#include file=somefile.inc--&gt; 
+<font face="courier new"><pre>
+</pre></font>Includes, specified with &lt;!--#include file=somefile.inc--&gt; 
 or $Response-&gt;Include() syntax, may also be in this directory, 
 please see section on includes for more information.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar Global /tmp</pre></font>
 	
 	<p>
@@ -172,7 +163,7 @@ If your asp application falls under the server url &quot;/asp&quot;,
 then you would set this variable to /asp.  This then allows
 you to run different applications on the same server, with
 different user sessions for each application.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar CookiePath /</pre></font>
 	
 	<p>
@@ -184,7 +175,7 @@ obsure name that is uniquely generated from the file path of
 the Global directory, and global.asa file.  The use of explicitly
 naming the GlobalPackage is to allow scripts access to globals
 and subs defined in a perl module that is included with commands like:
-<pre>
+<font face="courier new"><pre>
   in perl script: use Some::Package;
   in apache conf: PerlModule Some::Package
 
@@ -195,18 +186,18 @@ and subs defined in a perl module that is included with commands like:
 	<font face=verdana><font size=+0 color=#555555><b>UniquePackages</b></font><p>
 default 0.  Set to 1 to emulate pre-v.10 ASP script compilation 
 behavior, which compiles each script into its own perl package.
-<pre>
-</pre>Before v.10, ASP scripts were compiled into their own perl package
+<font face="courier new"><pre>
+</pre></font>Before v.10, ASP scripts were compiled into their own perl package
 namespace.  This allowed ASP scripts in the same ASP application
 to defined subroutines of the same name without a problem.  
-<pre>
-</pre>As of v.10, ASP scripts in a web application are compiled into the 
+<font face="courier new"><pre>
+</pre></font>As of v.10, ASP scripts in a web application are compiled into the 
 *same* perl package by default, so these scripts, their includes, and the 
 global.asa events all share common globals &amp; subroutines defined by each other.
 The problem for some developers was that they would at times define a 
 subroutine of the same name in 2+ scripts, and one subroutine definition would
 redefine the other one because of the namespace collision.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar UniquePackages 0</pre></font>
 	
 	<p>
@@ -215,7 +206,7 @@ redefine the other one because of the namespace collision.
 Set to 0 for no session tracking, 1 by default
 If Session tracking is turned off, performance improves,
 but the $Session object is inaccessible.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar AllowSessionState 1</pre></font>
 	
 	<p>
@@ -224,7 +215,7 @@ but the $Session object is inaccessible.
 Default 20 minutes, when a user's session has been inactive for this
 period of time, the Session_OnEnd event is run, if defined, for 
 that session, and the contents of that session are destroyed.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar SessionTimeout 20</pre></font>
 	
 	<p>
@@ -232,7 +223,7 @@ that session, and the contents of that session are destroyed.
 	<font face=verdana><font size=+0 color=#555555><b>SecureSession</b></font><p>
 default 0.  Sets the secure tag for the session cookie, so that the cookie
 will only be transimitted by the browser under https transmissions.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar SecureSession 1</pre></font>
 	
 	<p>
@@ -242,12 +233,12 @@ default 0.  When true, stores the user-agent header of the browser
 that creates the session and validates this against the session cookie presented.
 If this check fails, the session is killed, with the rationale that 
 there is a hacking attempt underway.
-<pre>
-</pre>This config option was implemented to be a smooth upgrade, as
+<font face="courier new"><pre>
+</pre></font>This config option was implemented to be a smooth upgrade, as
 you can turn it off and on, without disrupting current sessions.  
 Sessions must be created with this turned on for the security to take effect.
-<pre>
-</pre>This config option is to help prevent a brute force cookie search from 
+<font face="courier new"><pre>
+</pre></font>This config option is to help prevent a brute force cookie search from 
 being successful. The number of possible cookies is huge, 2^128, thus making such
 a hacking attempt VERY unlikely.  However, on the off chance that such
 an attack is successful, the hacker must also present identical
@@ -255,14 +246,14 @@ browser headers to authenticate the session, or the session will be
 destroyed.  Thus the User-Agent acts as a backup to the real session id.
 The IP address of the browser cannot be used, since because of proxies,
 IP addresses may change between requests during a session.
-<pre>
-</pre>There are a few browsers that will not present a User-Agent header.
+<font face="courier new"><pre>
+</pre></font>There are a few browsers that will not present a User-Agent header.
 These browsers are considered to be browsers of type &quot;Unknown&quot;, and 
 this method works the same way for them.
-<pre>
-</pre>Most people agree that this level of security is unnecessary, thus
+<font face="courier new"><pre>
+</pre></font>Most people agree that this level of security is unnecessary, thus
 it is titled paranoid :)
-<pre>
+<font face="courier new"><pre>
   PerlSetVar ParanoidSession 0</pre></font>
 	
 	<p>
@@ -271,7 +262,7 @@ it is titled paranoid :)
 1 for server log debugging, 2 for extra client html output
 Use 1 for production debugging, use 2 for development.
 Turn off if you are not debugging.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar Debug 2</pre></font>
 	
 	<p>
@@ -281,14 +272,14 @@ default 1, if true, buffers output through the response object.
 $Response object will only send results to client browser if
 a $Response-&gt;Flush() is called, or if the asp script ends.  Lots of 
 output will need to be flushed incrementally.
-<pre>
-</pre>If false, 0, the output is immediately written to the client,
+<font face="courier new"><pre>
+</pre></font>If false, 0, the output is immediately written to the client,
 <a href=cgi.html>CGI</a> style.  There will be a performance hit server side if output
 is flushed automatically to the client, but is probably small.
-<pre>
-</pre>I would leave this on, since error handling is poor, if your asp 
+<font face="courier new"><pre>
+</pre></font>I would leave this on, since error handling is poor, if your asp 
 script errors after sending only some of the output.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar BufferingOn 1</pre></font>
 	
 	<p>
@@ -297,14 +288,14 @@ script errors after sending only some of the output.
 default 0, if true, reloads perl libraries that have changed
 on disk automatically for ASP scripts.  If false, the www server
 must be restarted for library changes to take effect.
-<pre>
-</pre>A known bug is that any functions that are exported, e.g. confess 
+<font face="courier new"><pre>
+</pre></font>A known bug is that any functions that are exported, e.g. confess 
 Carp qw(confess), will not be refreshed by StatINC.  To refresh
 these, you must restart the www server.  
-<pre>
-</pre>This setting should be used in development only because it is so slow.
+<font face="courier new"><pre>
+</pre></font>This setting should be used in development only because it is so slow.
 For a production version of StatINC, see StatINCMatch.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar StatINC 1</pre></font>
 	
 	<p>
@@ -316,13 +307,13 @@ StatINC has a very high performance penalty in production, so if
 you can narrow the modules that are checked for reloading each
 script execution to a handful, you will only suffer a mild performance 
 penalty.
-<pre>
-</pre>The StatINCMatch setting should be a regular expression like: Struct|LWP
+<font face="courier new"><pre>
+</pre></font>The StatINCMatch setting should be a regular expression like: Struct|LWP
 which would match on reloading Class/Struct.pm, and all the LWP/.*
 libraries.
-<pre>
-</pre>If you define StatINCMatch, you do not need to define StatINC.
-<pre>
+<font face="courier new"><pre>
+</pre></font>If you define StatINCMatch, you do not need to define StatINC.
+<font face="courier new"><pre>
   PerlSetVar StatINCMatch .*</pre></font>
 	
 	<p>
@@ -331,13 +322,13 @@ libraries.
 default 0, if true, locks $Session for duration of script, which
 serializes requests to the $Session object.  Only one script at
 a time may run, per user $Session, with sessions allowed.
-<pre>
-</pre>Serialized requests to the session object is the Microsoft ASP way, 
+<font face="courier new"><pre>
+</pre></font>Serialized requests to the session object is the Microsoft ASP way, 
 but is dangerous in a production environment, where there is risk
 of long-running or run-away processes.  If these things happen,
 a session may be locked for an indefinate period of time.  A user
 STOP button should safely quit the session however.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar SessionSerialize 0</pre></font>
 	
 	<p>
@@ -348,7 +339,7 @@ script.  Normally, when a Redirect() is called, the script
 is ended automatically.  SoftRedirect 1, is a standard
 way of doing redirects, allowing for html output after the 
 redirect is specified.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar SoftRedirect 0</pre></font>
 	
 	<p>
@@ -358,7 +349,7 @@ default 0, if true, neither the $Application nor $Session objects will
 be created.  Use this for a performance increase.  Please note that 
 this setting takes precedence over the AllowSessionState and
 AllowApplicationState settings.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar NoState 0</pre></font>
 	
 	<p>
@@ -369,14 +360,14 @@ this directory.  Where the state files go is the most important
 determinant in what makes a unique ASP application.  Different
 configs pointing to the same StateDir are part of the same
 ASP application.
-<pre>
-</pre>The default has not changed since implementing this config directive.
+<font face="courier new"><pre>
+</pre></font>The default has not changed since implementing this config directive.
 The reason for this config option is to allow OS's with caching
 file systems like Solaris to specify a state directory separatly
 from the Global directory, which contains more permanent files.
 This way one may point StateDir to /tmp/myaspapp, and make one's ASP
 application scream with speed.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar StateDir ./.state</pre></font>
 	
 	<p>
@@ -388,10 +379,10 @@ the slower your system, but the more precise Session_OnEnd's will be
 run from global.asa, which occur when a timed out session is cleaned up,
 and the better able to withstand Session guessing hacking attempts.
 The lower the number, the faster a normal system will run.  
-<pre>
-</pre>The defaults of 20 minutes for SessionTimeout and 10 times for 
+<font face="courier new"><pre>
+</pre></font>The defaults of 20 minutes for SessionTimeout and 10 times for 
 StateManager, has dead Sessions being cleaned up every 2 minutes.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar StateManager 10</pre></font>
 	
 	<p>
@@ -401,20 +392,20 @@ default SDBM_File, this is the internal database used for state
 objects like $Application and $Session.  Because an %sdbm_file hash has
 has a limit on the size of a record / key value pair, usually 1024 bytes,
 you may want to use another tied database like DB_File.  
-<pre>
-</pre>With lightweight $Session and $Application use, you can get 
+<font face="courier new"><pre>
+</pre></font>With lightweight $Session and $Application use, you can get 
 away with SDBM_File, but if you load it up with complex data like
-<pre>  $Session{key} = { # very large complex object }
-</pre>you might max out the 1024 limit.
-<pre>
-</pre>Currently StateDB can only be: SDBM_File, DB_File
+<font face="courier new"><pre>  $Session{key} = { # very large complex object }
+</pre></font>you might max out the 1024 limit.
+<font face="courier new"><pre>
+</pre></font>Currently StateDB can only be: SDBM_File, DB_File
 Please let me know if you would like to add any more to this list.
-<pre>
-</pre>If you switch to a new StateDB, you will want to delete the 
+<font face="courier new"><pre>
+</pre></font>If you switch to a new StateDB, you will want to delete the 
 old StateDir, as there will likely be incompatibilities between
 the different database formats, including the way garbage collection
 is handled.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar StateDB SDBM_File</pre></font>
 	
 	<p>
@@ -426,13 +417,13 @@ and held open between requests, for up to a 10% performance
 gain.  Per ASP application this is will keep up to 2 extra
 file handles open per httpd process, one for the internal
 database, and one for $Application.
-<pre>
-</pre>The only problem with this caching is that you can only
+<font face="courier new"><pre>
+</pre></font>The only problem with this caching is that you can only
 delete the StateDir if you have first shutdown the web server,
 as the lock files will not be recreated between requests.
 Not that you should be deleting your StateDir anyway, but
 if you are, there is more to worry about. 
-<pre>
+<font face="courier new"><pre>
   PerlSetVar StateCache 0</pre></font>
 	
 	<p>
@@ -443,7 +434,7 @@ to 0, for a performance increase of around 2-3%.  Allowing use of
 $Application is less expensive than $Session, as there is more
 work for the StateManager associated with $Session garbage collection
 so this parameter should be only used for extreme tuning.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar AllowApplicationState 1</pre></font>
 	
 	<p>
@@ -454,15 +445,15 @@ full server side includes (SSI), implemented through Apache::SSI.
 <a href=ssi.html>SSI</a> is implemented through this mechanism by using Apache::Filter.  
 A sample configuration for full <a href=ssi.html>SSI</a> with filtering is in the 
 ./site/eg/.htaccess file, with a relevant example script ./site/eg/ssi_filter.ssi.
-<pre>
-</pre>You may only use this option with modperl v1.16 or greater installed
+<font face="courier new"><pre>
+</pre></font>You may only use this option with modperl v1.16 or greater installed
 and PERL_STACKED_HANDLERS enabled.  Filtering may be used in 
 conjunction with other handlers that are also &quot;filter aware&quot;.
-<pre>
-</pre>With filtering through Apache::SSI, you should expect at least
+<font face="courier new"><pre>
+</pre></font>With filtering through Apache::SSI, you should expect at least
 a 20% performance decrease, increasing as your files get bigger, 
 increasing the work that <a href=ssi.html>SSI</a> must do.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar Filter Off</pre></font>
 	
 	<p>
@@ -473,14 +464,14 @@ and documentation are parsed out of scripts at compile time.
 This make for great documentation and a nice debugging tool,
 and it lets you comment out perl code and html in blocks.  
 Specifically text like this:
-<pre>
+<font face="courier new"><pre>
  =pod
  text or perl code here
  =cut
-</pre>will get ripped out of the script before compiling.  The =pod and
+</pre></font>will get ripped out of the script before compiling.  The =pod and
 =cut perl directives must be at the beginning of the line, and must
 be followed by the end of the line.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar PodComments 1</pre></font>
 	
 	<p>
@@ -493,8 +484,21 @@ separate subroutine and called when the script is run.
 The advantage of having this turned on is that the code compiled
 from the include can be shared between scripts, which keeps the 
 script sizes smaller in memory, and keeps compile times down.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar DynamicIncludes 0</pre></font>
+	
+	<p>
+	<a name=IncludesDir></a>
+	<font face=verdana><font size=+0 color=#555555><b>IncludesDir</b></font><p>
+no defaults.  If set, this directory will also be used to look
+for includes when compiling scripts.  By default the directory 
+the script is in, and the Global directory are checked for includes.  
+<font face="courier new"><pre>
+</pre></font>This extension was added so that includes could be easily shared
+between ASP applications, whereas placing includes in the Global
+directory only allows sharing between scripts in an application.
+<font face="courier new"><pre>
+  PerlSetVar IncludesDir .</pre></font>
 	
 	<p>
 	<a name=CgiHeaders></a>
@@ -502,17 +506,17 @@ script sizes smaller in memory, and keeps compile times down.
 default 0.  When true, script output that looks like HTTP / <a href=cgi.html>CGI</a>
 headers, will be added to to the HTTP headers of the request.
 So you could add:
-<pre>  Set-Cookie: test=message
+<font face="courier new"><pre>  Set-Cookie: test=message
 
   &lt;html&gt;...
-</pre>to the top of your script, and all the headers preceding a newline
+</pre></font>to the top of your script, and all the headers preceding a newline
 will be added as if with a call to $Response-&gt;AddHeader().  This
 functionality is here for compatibility with raw cgi scripts,
 and those used to this kind of coding.
-<pre>
-</pre>When set to 0, CgiHeaders style headers will not be parsed from the 
+<font face="courier new"><pre>
+</pre></font>When set to 0, CgiHeaders style headers will not be parsed from the 
 script response.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar CgiHeaders 0</pre></font>
 	
 	<p>
@@ -523,11 +527,11 @@ text/html output should be compressed.  A setting of 1 strips mostly
 white space saving usually 10% in output size, at a performance cost
 of less than 5%.  A setting of 9 goes much further saving anywhere
 25% to 50% typically, but with a performance hit of 50%.
-<pre>
-</pre>This config option is implemented via HTML::Clean.  Per script
+<font face="courier new"><pre>
+</pre></font>This config option is implemented via HTML::Clean.  Per script
 configuration of this setting is available via the $Response-&gt;{Clean}
 property, which may also be set between 0 and 9.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar Clean 0</pre></font>
 	
 	<p>
@@ -537,11 +541,11 @@ The mail host is the smtp server that the below Mail* config directives
 will use when sending their emails.  By default Net::SMTP uses
 smtp mail hosts configured in Net::Config, which is set up at
 install time, but this setting can be used to override this config.
-<pre>
-</pre>The mail hosts specified in the Net::Config file will be used as
+<font face="courier new"><pre>
+</pre></font>The mail hosts specified in the Net::Config file will be used as
 backup smtp servers to the MailHost specified here, should this
 primary server not be working.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar MailHost smtp.yourdomain.com</pre></font>
 	
 	<p>
@@ -553,15 +557,15 @@ be emailed to the email address set for this config.  This allows
 an administrator to have a rapid response to user generated server
 errors resulting from bugs in production ASP scripts.  Other errors, such 
 as 404 not found will be handled by Apache directly.
-<pre>
-</pre>An easy way to see this config in action is to have an ASP script which calls
+<font face="courier new"><pre>
+</pre></font>An easy way to see this config in action is to have an ASP script which calls
 a die(), which generates an internal ASP 500 server error.
-<pre>
-</pre>The Debug config of value 2 and this setting are mutually exclusive,
+<font face="courier new"><pre>
+</pre></font>The Debug config of value 2 and this setting are mutually exclusive,
 as Debug 2 is a development setting where errors are displayed in the browser,
 and MailErrorsTo is a production setting so that errors are silently logged
 and sent via email to the web admin.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar MailErrorsTo <b>youremail@yourdomain.com</b></pre></font>
 	
 	<p>
@@ -572,10 +576,10 @@ and the message will be short enough to fit on a text based pager.  This
 config setting would be used to give an administrator a heads up that a www
 server error occured, as opposed to MailErrorsTo would be used for debugging
 that server error.
-<pre>
-</pre>This config does not work when Debug 2 is set, as it is a setting for
+<font face="courier new"><pre>
+</pre></font>This config does not work when Debug 2 is set, as it is a setting for
 use in production only, where Debug 2 is for development use.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar MailAlertTo <b>youremail@yourdomain.com</b></pre></font>
 	
 	<p>
@@ -586,7 +590,7 @@ which there may be only one alert email generated by MailAlertTo.
 The purpose of MailAlertTo is to give the admin a heads up that there
 is an error at the www server.  MailErrorsTo is for to aid in speedy 
 debugging of the incident.
-<pre>
+<font face="courier new"><pre>
   PerlSetVar MailAlertPeriod 20</pre></font>
 	
 

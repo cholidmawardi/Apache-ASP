@@ -2,17 +2,8 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: FAQ</title>
+<title>Apache :: ASP :: FAQ [ Active Server Pages for Apache with mod_perl ]</title>
 
-	<meta name="keywords" content="apache,asp,perl,mod_perl,active server pages,web application,session management,
-scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible">
-
-	<meta name="description" content="This perl module provides an Active Server Pages port to the 
-Apache HTTP Server with perl as the host scripting language. 
-Active Server Pages is a web application platform that originated 
-with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
-it allows a developer to create dynamic web applications with session 
-management and perl code embedded in static html files.">
 
 
 </head>
@@ -130,14 +121,14 @@ configuration directive.</font>
 You do not have <a href=http://perl.apache.org>mod_perl</a> correctly installed for Apache.  The PerlHandler
 directive in Apache *.conf files is an extension enabled by <a href=http://perl.apache.org>mod_perl</a>
 and will not work if <a href=http://perl.apache.org>mod_perl</a> is not correctly installed.
-<pre>
-</pre>Common user errors are not doing a 'make install' for mod_perl, which 
+<font face="courier new"><pre>
+</pre></font>Common user errors are not doing a 'make install' for mod_perl, which 
 installs the perl side of mod_perl, and not starting the right httpd
 after building it.  The latter often occurs when you have an old apache
 server without mod_perl, and you have built a new one without copying
 over to its proper location.
-<pre>
-</pre>To get mod_perl, go to <a href=http://perl.apache.org>http://perl.apache.org</a></font>
+<font face="courier new"><pre>
+</pre></font>To get mod_perl, go to <a href=http://perl.apache.org>http://perl.apache.org</a></font>
 	
 	<p>
 	<a name=How%20are%20file%20uploads%20handled%3F></a>
@@ -156,8 +147,8 @@ are working with bulky file uploads.</font>
 Database connectivity is handled through perl's DBI &amp; DBD interfaces.
 Please see <a href=http://www.symbolstone.org/technology/perl/DBI/>http://www.symbolstone.org/technology/perl/DBI/</a> for more information.
 In the UNIX world, it seems most databases have cross platform support in perl.
-<pre>
-</pre>DBD::ODBC is often your ticket on Win32.  On UNIX, commercial vendors
+<font face="courier new"><pre>
+</pre></font>DBD::ODBC is often your ticket on Win32.  On UNIX, commercial vendors
 like OpenLink Software (<a href=http://www.openlinksw.com/>http://www.openlinksw.com/</a>) provide the nuts and 
 bolts for ODBC.</font>
 	
@@ -201,13 +192,13 @@ or to the directory specified as Global in the config you are using.
 Default for Global is the directory the script is in (e.g. '.'), but should
 be set to some directory not under the www server document root,
 for security reasons, on a production site.
-<pre>
-</pre>Usually a 
-<pre>
+<font face="courier new"><pre>
+</pre></font>Usually a 
+<font face="courier new"><pre>
  chmod -R -0777 eg
-</pre>will take care of the write access issue for initial testing purposes.
-<pre>
-</pre>Failing write access being the problem, try upgrading your version
+</pre></font>will take care of the write access issue for initial testing purposes.
+<font face="courier new"><pre>
+</pre></font>Failing write access being the problem, try upgrading your version
 of Data::Dumper and MLDBM, which are the modules used to write the 
 state files.</font>
 	
@@ -216,13 +207,13 @@ state files.</font>
 	<font face=verdana><font size=+0 color=#555555><b>How do I access the ASP Objects in general?</b></font><p>
 All the ASP objects can be referenced through the main package with
 the following notation:
-<pre>
+<font face="courier new"><pre>
  $main::Response-&gt;Write(&quot;html output&quot;);
-</pre>This notation can be used from anywhere in perl, including routines
+</pre></font>This notation can be used from anywhere in perl, including routines
 registered with $Server-&gt;RegisterCleanup().  
-<pre>
-</pre>You use the normal notation in your scripts, includes, and global.asa:
-<pre>
+<font face="courier new"><pre>
+</pre></font>You use the normal notation in your scripts, includes, and global.asa:
+<font face="courier new"><pre>
  $Response-&gt;Write(&quot;html output&quot;);</pre></font>
 	
 	<p>

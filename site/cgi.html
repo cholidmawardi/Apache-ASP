@@ -2,17 +2,8 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: CGI</title>
+<title>Apache :: ASP :: CGI [ Active Server Pages for Apache with mod_perl ]</title>
 
-	<meta name="keywords" content="apache,asp,perl,mod_perl,active server pages,web application,session management,
-scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible">
-
-	<meta name="description" content="This perl module provides an Active Server Pages port to the 
-Apache HTTP Server with perl as the host scripting language. 
-Active Server Pages is a web application platform that originated 
-with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
-it allows a developer to create dynamic web applications with session 
-management and perl code embedded in static html files.">
 
 
 </head>
@@ -107,15 +98,15 @@ ASP came along.  <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CG
 the building of these applications, and Apache::ASP has been made to 
 be compatible with function calls in CGI.pm.  Please see cgi.htm in the 
 ./site/eg directory for a sample ASP script written almost entirely in CGI.
-<pre>
-</pre>As of version 0.09, use of <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> for both input and output is seemless
+<font face="courier new"><pre>
+</pre></font>As of version 0.09, use of <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> for both input and output is seemless
 when working under Apache::ASP.  Thus if you would like to port existing
 cgi scripts over to Apache::ASP, all you need to do is wrap &lt;% %&gt; around
 the script to get going.  This functionality has been implemented so that
 developers may have the best of both worlds when building their 
 web applications.
-<pre>
-</pre>Following are some special notes with respect to compatibility with CGI.
+<font face="courier new"><pre>
+</pre></font>Following are some special notes with respect to compatibility with CGI.
 Use of <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> in any of these ways was made possible through a great
 amount of work, and is not gauranteed to be portable with other perl ASP
 implementations, as other ASP implementations will likely be more limited.</font>
@@ -134,10 +125,10 @@ implementations, as other ASP implementations will likely be more limited.</font
 	<a name=Query%20Object%20Initialization></a>
 	<font face=verdana><font size=+0 color=#555555><b>Query Object Initialization</b></font><p>
 You may create a <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> $query object like so:
-<pre>
+<font face="courier new"><pre>
 	use CGI;
 	my $query = new CGI;
-</pre>As of Apache::ASP version 0.09, form input may be read in 
+</pre></font>As of Apache::ASP version 0.09, form input may be read in 
 by <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> upon initialization.  Before, Apache::ASP would 
 consume the form input when reading into $Request-&gt;Form(), 
 but now form input is cached, and may be used by <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> input
@@ -150,17 +141,17 @@ Not only can you use the <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs
 to put out headers, but with the CgiHeaders config option
 set to true, you can also print &quot;Header: value\n&quot;, and add 
 similar lines to the top of your script, like:
-<pre>
+<font face="courier new"><pre>
  Some-Header: Value
  Some-Other: OtherValue
 
  &lt;html&gt;&lt;body&gt; Script body starts here.
-</pre>Once there are no longer any cgi sytle headers, or the 
+</pre></font>Once there are no longer any cgi sytle headers, or the 
 there is a newline, the body of the script begins. So
 if you just had an asp script like:
-<pre>
+<font face="courier new"><pre>
     print join(&quot;:&quot;, %{$Request-&gt;QueryString});
-</pre>You would likely end up with no output, as that line is
+</pre></font>You would likely end up with no output, as that line is
 interpreted as a header because of the semicolon.  When doing
 basic debugging, as long as you start the page with &lt;html&gt;
 you will avoid this problem.</font>
@@ -172,7 +163,7 @@ CGI is notorious for its print() statements, and the functions in <a href=http:/
 usually return strings to print().  You can do this under Apache::ASP,
 since print just aliases to $Response-&gt;Write().  Note that $| has no
 affect.
-<pre>
+<font face="courier new"><pre>
 	print $query-&gt;header();
 	print $query-&gt;start_form();</pre></font>
 	
@@ -185,14 +176,14 @@ data may be recovered from the file upload by using $Request-&gt;Form().
 Data from a file upload gets written to a filehandle, that may in
 turn be read from.  The original file name that was uploaded is the 
 name of the file handle.
-<pre>
+<font face="courier new"><pre>
 	my $filehandle = $Request-&gt;Form('file_upload_field_name');
 	print $filehandle; # will get you the file name
 	my $data;
 	while(read($filehandle, $data, 1024)) {
 		# data from the uploaded file read into $data
 	};
-</pre>Please see the docs on <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> (try perldoc CGI) for more information
+</pre></font>Please see the docs on <a href=http://stein.cshl.org/WWW/software/CGI/cgi_docs.html>CGI.pm</a> (try perldoc CGI) for more information
 on this topic, and ./site/eg/file_upload.asp for an example of its use.</font>
 	
 

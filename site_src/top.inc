@@ -21,16 +21,23 @@ my %meta = (
 
 $data || die("can't get data for $section");
 my $module = "Apache :: ASP";
-my $title = "$module :: ".uc(lc $data->{name});# ." - Active Server Pages for Apache with mod_perl";
+my $title = "$module :: ".uc(lc $data->{name})." [ Active Server Pages for Apache with mod_perl ]";
 
 %>
 
 <html>
 <head>
 <title><%=$title%></title>
-<% for (keys %meta) { %>
-	<meta name="<%=$_%>" content="<%=$Server->HTMLEncode($meta{$_})%>">
-<% } %>
+
+<% 
+if($0 =~ /index.html$/) {
+	for (keys %meta) { 
+		%>
+		<meta name="<%=$_%>" content="<%=$Server->HTMLEncode($meta{$_})%>">
+		<% 
+	} 
+}
+%>
 
 </head>
 <body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>

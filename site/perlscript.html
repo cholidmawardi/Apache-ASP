@@ -2,17 +2,8 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: PERLSCRIPT</title>
+<title>Apache :: ASP :: PERLSCRIPT [ Active Server Pages for Apache with mod_perl ]</title>
 
-	<meta name="keywords" content="apache,asp,perl,mod_perl,active server pages,web application,session management,
-scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible">
-
-	<meta name="description" content="This perl module provides an Active Server Pages port to the 
-Apache HTTP Server with perl as the host scripting language. 
-Active Server Pages is a web application platform that originated 
-with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
-it allows a developer to create dynamic web applications with session 
-management and perl code embedded in static html files.">
 
 
 </head>
@@ -106,9 +97,9 @@ Much work has been done to bring compatibility with ASP applications
 written in <a href=http://www.activestate.com/ActivePerl/>PerlScript</a> under IIS.  Most of that work revolved around
 bringing a Win32::OLE Collection interface to many of the objects
 in Apache::ASP, which are natively written as perl hashes.
-<pre>
-</pre>The following objects in Apache::ASP respond as Collections:
-<pre>
+<font face="courier new"><pre>
+</pre></font>The following objects in Apache::ASP respond as Collections:
+<font face="courier new"><pre>
         $Application
 	$Session
 	$Request-&gt;Form
@@ -116,10 +107,10 @@ in Apache::ASP, which are natively written as perl hashes.
 	$Request-&gt;Cookies
 	$Response-&gt;Cookies
 	$Response-&gt;Cookies('Any Cookie')
-</pre>And as such may be used with the following syntax, as compared
+</pre></font>And as such may be used with the following syntax, as compared
 with the Apache::ASP native calls.  Please note the native Apache::ASP
 interface is compatible with the deprecated <a href=http://www.activestate.com/ActivePerl/>PerlScript</a> interface.
-<pre>
+<font face="courier new"><pre>
 	C = <a href=http://www.activestate.com/ActivePerl/>PerlScript</a> Compatibility	N = Native Apache::ASP
 
         ## Collection-&gt;Contents($name)
@@ -144,8 +135,8 @@ interface is compatible with the deprecated <a href=http://www.activestate.com/A
 	[C] print $Request-&gt;Cookies(Testing) . &quot;&lt;br&gt;\n&quot;;
 	[N] $Response-&gt;{Cookies}{Testing} = {Value =&gt; Extra, Path =&gt; '/'};
 	[N] print $Request-&gt;{Cookies}{Testing} . &quot;&lt;br&gt;\n&quot;;
-</pre>Several incompatibilities exist between <a href=http://www.activestate.com/ActivePerl/>PerlScript</a> and Apache::ASP:
-<pre>
+</pre></font>Several incompatibilities exist between <a href=http://www.activestate.com/ActivePerl/>PerlScript</a> and Apache::ASP:
+<font face="courier new"><pre>
  &gt; Collection-&gt;{Count} property has not been implemented.
  &gt; VBScript dates may not be used for Expires property of cookies.
  &gt; Win32::OLE::in may not be used.  Use keys() to iterate over Collections.

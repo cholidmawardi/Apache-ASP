@@ -121,13 +121,13 @@ sub pod2html {
 	if(/^\s+[^\s]/ || /^\s*$/) {
 	    if(! $pre) {
 		#			$_ = "<pre>$_";
-		$pre_tag = "<pre>";
+		$pre_tag = "<font face=\"courier new\"><pre>";
 		$pre = 1;
 	    }
 	} else {
 	    if($pre) {
 		#			$_ = "</pre>$_";	
-		$pre_tag = "</pre>";
+		$pre_tag = "</pre></font>";
 		$pre = 0;
 	    }
 	}

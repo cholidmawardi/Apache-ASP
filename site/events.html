@@ -2,17 +2,8 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: EVENTS</title>
+<title>Apache :: ASP :: EVENTS [ Active Server Pages for Apache with mod_perl ]</title>
 
-	<meta name="keywords" content="apache,asp,perl,mod_perl,active server pages,web application,session management,
-scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible">
-
-	<meta name="description" content="This perl module provides an Active Server Pages port to the 
-Apache HTTP Server with perl as the host scripting language. 
-Active Server Pages is a web application platform that originated 
-with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
-it allows a developer to create dynamic web applications with session 
-management and perl code embedded in static html files.">
 
 
 </head>
@@ -108,7 +99,7 @@ event-triggered actions to be taken, which are defined in
 a global.asa file.  The global.asa file resides in the 
 Global directory, defined as a config option , and may
 define the following actions:
-<pre>
+<font face="courier new"><pre>
 	Action			Event
 	------			------
         Script_OnStart *	Beginning of Script execution
@@ -120,18 +111,18 @@ define the following actions:
 
   * These are API extensions that are not portable, but were
     added because they are incredibly useful
-</pre>These actions must be defined in the $Global/global.asa file
+</pre></font>These actions must be defined in the $Global/global.asa file
 as subroutines, for example:
-<pre>
+<font face="courier new"><pre>
   sub Session_OnStart {
       $Application-&gt;{$Session-&gt;SessionID()} = started;
   }
-</pre>Sessions are easy to understand.  When visiting a page in a
+</pre></font>Sessions are easy to understand.  When visiting a page in a
 web application, each user has one unique $Session.  This 
 session expires, after which the user will have a new
 $Session upon revisiting.
-<pre>
-</pre>A web application starts when the user visits a page in that
+<font face="courier new"><pre>
+</pre></font>A web application starts when the user visits a page in that
 application, and has a new $Session created.  Right before
 the first $Session is created, the $Application is created.
 When the last user $Session expires, that $Application 
@@ -156,12 +147,12 @@ like to run the same code for every script, which you would
 otherwise have to add by hand, or add with a file include,
 but with these events, just add your code to the global.asa,
 and it will be run.  
-<pre>
-</pre>There is one caveat.  Code in Script_OnEnd is not gauranteed 
+<font face="courier new"><pre>
+</pre></font>There is one caveat.  Code in Script_OnEnd is not gauranteed 
 to be run when the user hits a STOP button, since the program
 execution ends immediately at this event.  To always run critical
 code, use the API extension:
-<pre>
+<font face="courier new"><pre>
 	$Server-&gt;RegisterCleanup()</pre></font>
 	
 	<p>
@@ -185,8 +176,8 @@ given ASP application.</font>
 Triggered by the beginning of a user's session, Session_OnStart
 get's run before the user's executing script, and if the same
 session recently timed out, after the session's triggered Session_OnEnd.
-<pre>
-</pre>The Session_OnStart is particularly useful for caching database data,
+<font face="courier new"><pre>
+</pre></font>The Session_OnStart is particularly useful for caching database data,
 and avoids having the caching handled by clumsy code inserted into
 each script being executed.</font>
 	
@@ -195,21 +186,21 @@ each script being executed.</font>
 	<font face=verdana><font size=+0 color=#555555><b>Session_OnEnd</b></font><p>
 Triggered by a user session ending, Session_OnEnd can be useful
 for cleaning up and analyzing user data accumulated during a session.
-<pre>
-</pre>Sessions end when the session timeout expires, and the StateManager
+<font face="courier new"><pre>
+</pre></font>Sessions end when the session timeout expires, and the StateManager
 performs session cleanup.  The timing of the Session_OnEnd does not
 occur immediately after the session times out, but when the first 
 script runs after the session expires, and the StateManager allows
 for that session to be cleaned up.  
-<pre>
-</pre>So on a busy site with default SessionTimeout (20 minutes) and 
+<font face="courier new"><pre>
+</pre></font>So on a busy site with default SessionTimeout (20 minutes) and 
 StateManager (10 times) settings, the Session_OnEnd for a particular 
 session should be run near 22 minutes past the last activity that Session saw.
 A site infrequently visited will only have the Session_OnEnd run
 when a subsequent visit occurs, and theoretically the last session
 of an application ever run will never have its Session_OnEnd run.
-<pre>
-</pre>Thus I would not put anything mission-critical in the Session_OnEnd,
+<font face="courier new"><pre>
+</pre></font>Thus I would not put anything mission-critical in the Session_OnEnd,
 just stuff that would be nice to run whenever it gets run.</font>
 	
 

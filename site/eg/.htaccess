@@ -13,8 +13,8 @@ PerlSetVar StatINCMatch zzz
 	PerlSetVar Global  .		
 	PerlSetVar Debug  2
 	PerlSetVar CookiePath  /	
-	PerlSetVar SessionTimeout  .5
-	PerlSetVar StateCache 1
+	PerlSetVar SessionTimeout  1
+#	PerlSetVar StateCache 1
 </Files>
 
 # .htm files for the ASP parsing, but not the $Session object

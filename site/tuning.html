@@ -2,17 +2,8 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: TUNING</title>
+<title>Apache :: ASP :: TUNING [ Active Server Pages for Apache with mod_perl ]</title>
 
-	<meta name="keywords" content="apache,asp,perl,mod_perl,active server pages,web application,session management,
-scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible">
-
-	<meta name="description" content="This perl module provides an Active Server Pages port to the 
-Apache HTTP Server with perl as the host scripting language. 
-Active Server Pages is a web application platform that originated 
-with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
-it allows a developer to create dynamic web applications with session 
-management and perl code embedded in static html files.">
 
 
 </head>
@@ -106,13 +97,13 @@ A little tuning can go a long way, and can make the difference between
 a web site that gets by, and a site that screams with speed.  With
 Apache::ASP, you can easily take a poorly tuned site running at
 5 hits/second to 25+ hits/second just with the right configuration.
-<pre>
-</pre>Documented below are some simple things you can do to make the 
+<font face="courier new"><pre>
+</pre></font>Documented below are some simple things you can do to make the 
 most of your site.
-<pre>
-</pre>For more tips &amp; tricks on tuning Apache and mod_perl, please see the tuning
+<font face="courier new"><pre>
+</pre></font>For more tips &amp; tricks on tuning Apache and mod_perl, please see the tuning
 documents at:
-<pre>
+<font face="courier new"><pre>
 	Vivek Khera's modperl performance tuning
 	<a href=http://perl.apache.org/tuning/>http://perl.apache.org/tuning/</a>
 
@@ -135,8 +126,8 @@ documents at:
 Use NoState 1 setting if you don't need the $Application or $Session objects.
 State objects such as these tie to files on disk and will incur a performace
 penalty.
-<pre>
-</pre>If you need the state objects $Application and $Session, and if 
+<font face="courier new"><pre>
+</pre></font>If you need the state objects $Application and $Session, and if 
 running an OS that caches files in memory, set your &quot;StateDir&quot; 
 directory to a cached file system.  On WinNT, all files 
 may be cached, and you have no control of this.  On Solaris, /tmp is cached
@@ -165,14 +156,14 @@ savings could be significant.  On my PII300, it takes a couple seconds
 to compile 28 scripts upon server startup, with an average of 50K RAM
 per compiled script, and this savings is passed on to the child httpd 
 servers.
-<pre>
-</pre>Apache::ASP-&gt;Loader() can be called to precompile scripts and
+<font face="courier new"><pre>
+</pre></font>Apache::ASP-&gt;Loader() can be called to precompile scripts and
 even entire ASP applications at server startup.  Note 
 also that in modperl, you can precompile modules with the 
 PerlModule config directive, which is highly recommended.
-<pre>
+<font face="courier new"><pre>
  Apache::ASP-&gt;Loader($path, $pattern, %config)
-</pre>This routine takes a file or directory as its first arg.  If
+</pre></font>This routine takes a file or directory as its first arg.  If
 a file, that file will be compiled.  If a directory, that directory
 will be recursed, and all files in it whose file name matches $pattern
 will be compiled.  $pattern defaults to .*, which says that all scripts
@@ -181,9 +172,9 @@ config options that you want set that affect compilation.  These options
 include Global &amp; DynamicIncludes.  If your scripts are later
 run with different config options, your scripts may have to 
 be recompiled.
-<pre>
-</pre>Here is an example of use in a *.conf file:
-<pre>
+<font face="courier new"><pre>
+</pre></font>Here is an example of use in a *.conf file:
+<font face="courier new"><pre>
  &lt;Perl&gt;
 	Apache::ASP-&gt;Loader(
 		'c:/proj/site', &quot;(asp|htm)\$&quot;,
@@ -192,15 +183,15 @@ be recompiled.
 		GlobalPackage =&gt; SomePackageName
 		);
  &lt;/Perl&gt;
-</pre>This config section tells the server to compile all scripts
+</pre></font>This config section tells the server to compile all scripts
 in c:/proj/site that end in asp or htm, and print debugging
 output so you can see it work.  It also sets the Global directory
 to be /proj/perllib, which needs to be the same as your real config
 since scripts are cached uniquely by their Global directory.  You will 
 probably want to use this on a production server, unless you cannot 
 afford the extra startup time.
-<pre>
-</pre>To see precompiling in action, set Debug to 1 for the Loader() and
+<font face="courier new"><pre>
+</pre></font>To see precompiling in action, set Debug to 1 for the Loader() and
 for your application in general and watch your error_log for 
 messages indicating scripts being cached.</font>
 	
@@ -211,8 +202,8 @@ Don't use .htaccess files or the StatINC setting in a production system
 as there are many more files touched per request using these features.  I've
 seen performance slow down by half because of using these.  For eliminating
 the .htaccess file, move settings into *.conf Apache files.
-<pre>
-</pre>Instead of StatINC, try using the StatINCMatch config, which 
+<font face="courier new"><pre>
+</pre></font>Instead of StatINC, try using the StatINCMatch config, which 
 will check a small subset of perl libraries for changes.  This
 config is fine for a production environment, and if used well
 might only incur a 10-20% performance penalty.</font>

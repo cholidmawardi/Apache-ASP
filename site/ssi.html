@@ -2,17 +2,8 @@
 
 <html>
 <head>
-<title>Apache :: ASP :: SSI</title>
+<title>Apache :: ASP :: SSI [ Active Server Pages for Apache with mod_perl ]</title>
 
-	<meta name="keywords" content="apache,asp,perl,mod_perl,active server pages,web application,session management,
-scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible">
-
-	<meta name="description" content="This perl module provides an Active Server Pages port to the 
-Apache HTTP Server with perl as the host scripting language. 
-Active Server Pages is a web application platform that originated 
-with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
-it allows a developer to create dynamic web applications with session 
-management and perl code embedded in static html files.">
 
 
 </head>
@@ -106,56 +97,56 @@ SSI is great!  One of the main features of <a href=ssi.html>SSI</a> is to includ
 other files in the script being requested.  In Apache::ASP, this
 is implemented in a couple ways, the most crucial of which
 is implemented in the file include.  Formatted as
-<pre>
+<font face="courier new"><pre>
  &lt;!--#include file=filename.inc--&gt;
-</pre>,the .inc being merely a convention, text from the included 
+</pre></font>,the .inc being merely a convention, text from the included 
 file will be inserted directly into the script being executed
 and the script will be compiled as a whole.  Whenever the 
 script or any of its includes change, the script will be 
 recompiled.
-<pre>
-</pre>Includes go a great length to promote good decomposition
+<font face="courier new"><pre>
+</pre></font>Includes go a great length to promote good decomposition
 and code sharing in ASP scripts, but they are still 
 fairly static.  As of version .09, includes may have dynamic
 runtime execution, as subroutines compiled into the global.asa
 namespace.  The first way to invoke includes dynamically is
-<pre>
+<font face="courier new"><pre>
  &lt;!--#include file=filename.inc args=@args--&gt;
-</pre>If @args is specified, Apache::ASP knows to execute the 
+</pre></font>If @args is specified, Apache::ASP knows to execute the 
 include at runtime instead of inlining it directly into 
 the compiled code of the script.  It does this by
 compiling the script at runtime as a subroutine, and 
 caching it for future invocations.  Then the compiled
 subroutine is executed and has @args passed into its
 as arguments.
-<pre>
-</pre>This is still might be too static for some, as @args
+<font face="courier new"><pre>
+</pre></font>This is still might be too static for some, as @args
 is still hardcoded into the ASP script, so finally,
 one may execute an include at runtime by utilizing
 this API extension
-<pre>
+<font face="courier new"><pre>
    $Response-&gt;Include(&quot;filename.inc&quot;, @args);
-</pre>which is a direct transalation of the dynamic include above.
-<pre>
-</pre>Although inline includes should be a little faster,
+</pre></font>which is a direct transalation of the dynamic include above.
+<font face="courier new"><pre>
+</pre></font>Although inline includes should be a little faster,
 runtime dynamic includes represent great potential
 savings in httpd memory, as includes are shared
 between scripts keeping the size of each script
 to a minimum.  This can often be significant saving
 if much of the formatting occurs in an included 
 header of a www page.
-<pre>
-</pre>By default, all includes will be inlined unless
+<font face="courier new"><pre>
+</pre></font>By default, all includes will be inlined unless
 called with an args parameter.  However, if you
 want all your includes to be compiled as subs and 
 dynamically executed at runtime, turn the DynamicIncludes
 config option on as documented above.
-<pre>
-</pre>That is not all!  <a href=ssi.html>SSI</a> is full featured.  One of the 
+<font face="courier new"><pre>
+</pre></font>That is not all!  <a href=ssi.html>SSI</a> is full featured.  One of the 
 things missing above is the 
-<pre>
+<font face="courier new"><pre>
  &lt;!--#include virtual=filename.cgi--&gt;
-</pre>tag.  This and many other <a href=ssi.html>SSI</a> code extensions are available
+</pre></font>tag.  This and many other <a href=ssi.html>SSI</a> code extensions are available
 by filtering Apache::ASP output through Apache::SSI via
 the Apache::Filter and the Filter config options.  For
 more information on how to wire Apache::ASP and Apache::SSI

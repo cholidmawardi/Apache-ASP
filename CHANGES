@@ -1,6 +1,69 @@
-$MODULE=Apache::ASP; $VERSION = .15; $DATE="08/24/99";
+$MODULE=Apache::ASP; $VERSION = .16; $DATE="TBA";
 
 + = improvement; - = bug fix
+
+- $Response->{Buffer} and PerlSetVar BufferingOn
+  configs now work when set to 0, to unbuffer output,
+  and send it out to the web client as the script generates it.
+
+  Buffering is enabled by default, as it is faster, and
+  allows a script to error cleanly in the middle of execution.  
+
++ more bullet proof loading of Apache::Symbol, changed the 
+  way Apache::ASP loads modules in general.  It used to 
+  check for the module to load every time, if it hadn't loaded
+  successfully before, but now it just tries once per httpd,
+  so the web server will have to be restarted to see new installed
+  modules.  This is just for modules that Apache::ASP relies on.
+
+  Old modules that are changed or updated with an installation
+  are still reloaded with the StatINC settings if so configured. 
+
++ ASP web site wraps <font face="courier new"> around <pre>
+  tags now to override the other font used for the text
+  areas.  The spacing was all weird in Netscape before
+  for <pre> sections.
+
+- Fixed Content-Length calculation when using the Clean
+  option, so that the length is calculated after the HTML
+  is clean, not before.  This would cause a browser to 
+  hang sometimes.
+
++ Added IncludesDir config option that if set will also be
+  used to check for includes, so that includes may easily be
+  shared between applications.  By default only Global and 
+  the directory the script is in are checked for includes.
+
+  Also added IncludesDir as a possible configuration option
+  for Apache::ASP->Loader()
+
+- Re-enabled the Application_OnStart & OnEnd events, after
+  breaking them when implementing the AllowApplicationState
+  config setting.
+
++ Better pre-fork cacheing ... StatINC & StatINCMatch are now 
+  args for Apache::ASP->Loader(), so StatINC symbols loading
+  may be done pre-fork and shared between httpds.  This lowers
+  the child httpd init cost of StatINC.  Documented.
+
++ Made Apache::ASP Basic Authorization friendly so authentication
+  can be handled by ASP scripts.  If AuthName and AuthType Apache
+  config directives are set, and a $Response->{Status} is set to 
+  401, a user will be prompted for username/password authentication
+  and the entered data will show up in ServerVariables as:
+    $env = $Request->ServerVariables
+    $env->{REMOTE_USER} = $env->{AUTH_USER} = username
+    $env->{AUTH_PASSWD} = password
+    $env->{AUTH_NAME}   = your realm
+    $env->{AUTH_TYPE}   = 'Basic'
+
+  This is the same place to find auth data as if Apache had some 
+  authentication handler deal with the auth phase separately.
+
+- MailErrorsTo should report the right file now that generates
+  the error.
+
+$MODULE=Apache::ASP; $VERSION = .15; $DATE="08/24/99";
 
 --State databases like $Session, $Application are 
   now tied/untied to every lock/unlock triggered by read/write 

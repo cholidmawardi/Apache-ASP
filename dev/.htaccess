@@ -2,6 +2,9 @@
 # Please see the readme, for what exactly the config variables do.
 
 # .asp files for Session state enabled
+AuthName TestRealm
+AuthType Basic
+#ErrorDocument 401 "Bad Auth
 <Files ~ (\.asp)>
 	SetHandler perl-script
 	PerlHandler Apache::ASP

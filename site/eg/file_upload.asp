@@ -22,8 +22,16 @@ my $filehandle;
 %>
 
 <% if($filehandle = $Request->{Form}{uploaded_file}) { %>
-hidden text: <%=$Request->Form('file_upload') %><br>
-uploaded file name: <%=$filehandle%>
+<b>Hidden Text:</b> <%=$Request->Form('file_upload') %><br>
+<b>Uploaded File Name:</b> <%=$filehandle%>
+<p>
+<b><u>Uploaded File Mime Info</u></b><br>
+<% 
+for(keys %{$Request->{FileUpload}{uploaded_file}}) { 
+	print "<b>$_:</b> $Request->{FileUpload}{uploaded_file}{$_}<br>";
+} 
+%>
+
 <pre>
 UPLOADED DATA
 =============

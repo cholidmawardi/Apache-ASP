@@ -4,13 +4,13 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 0.15;
+$VERSION = 0.16;
 
 use MLDBM;
 use SDBM_File;
 use Data::Dumper;
 use File::Basename;
-use Fcntl qw( O_RDWR O_CREAT );
+use Fcntl qw(:flock O_RDWR O_CREAT);
 use MD5;
 use HTTP::Date;
 use Carp qw(confess cluck);
@@ -52,7 +52,7 @@ $Apache::ASP::SessionTimeout = 1200;
 $Apache::ASP::StateManager   = 10;
 $Apache::ASP::StartTime      = time();
 $Apache::ASP::StatINCReady   = 0;
-$Apache::ASP::StatINCInit    = 1;
+$Apache::ASP::StatINCInit    = 0;
 
 %Apache::ASP::LoadModuleErrors = 
   (
@@ -78,7 +78,7 @@ $Apache::ASP::StatINCInit    = 1;
    
    StatINC => "You need this module for StatINC, please download it from CPAN",
    
-   UndefRoutine => undef,
+   UndefRoutine => '',
    
   );
 
@@ -106,6 +106,7 @@ sub handler {
 
     # ASP object creation, a lot goes on in there!    
     local $| = 1;
+#    local $SIG{__DIE__} = sub { &Log({'r'=>$r}, &Carp::longmess(@_)) };
     my($self) = new($r);
 
     $self->Debug('ASP object created', $self) if $self->{debug};    
@@ -156,6 +157,14 @@ sub handler {
 	}
     }
 
+    # XX return code of 302 hangs server on WinNT
+    # STATUS hook back to Apache
+    if($status != 500 and $self->{Response}{Status} == 401) {
+	# if still default then set to what has been set by the 
+	# developer
+	$status = $self->{Response}{Status};
+    }
+
     # X: we DESTROY in register_cleanup, but if we are filtering, and we 
     # handle a virtual request to an asp app, we need to free up the 
     # the locked resources now, or the session requests will collide
@@ -169,9 +178,12 @@ sub handler {
     # 
     # Also need to destroy if we return a 500, as we could be serving an
     # error doc next, before the cleanup phase
+
     if($self->{filter} || ($status == 500)) {
 	$self->DESTROY();
     }
+
+    $self->Debug("about to handler return");
 
     $status;
 }
@@ -222,18 +234,18 @@ sub Loader {
     $r->dir_config(NoState, 1);
     $r->dir_config(Debug, $args{Debug});
     $r->dir_config(DynamicIncludes, $args{DynamicIncludes});
+    $r->dir_config(IncludesDir, $args{IncludesDir});
     $r->dir_config(Global, $args{Global});
     $r->dir_config(GlobalPackage, $args{GlobalPackage});
+    $r->dir_config(StatINC, $args{StatINC});
+    $r->dir_config(StatINCMatch, $args{StatINCMatch});
     
-
     eval {
 	$asp = Apache::ASP::new($r);    
 	return if ! $asp->IsChanged();
 
 	my $script = $asp->Parse();
-#	$asp->StatINC();
 	$asp->Compile($script);
-#	$asp->StatINC();
 	if($asp->{errors}) {
 	    warn("$asp->{errors} errors compiling $file while loading");
 	    return 0;
@@ -320,6 +332,9 @@ sub new {
        
        # name spaces which will have ASP objects initialized into
        init_packages => undef,
+
+       # additional path searched for includes when compiling scripts
+       includes_dir => $r->dir_config(IncludesDir),
 
        mail_alert_to     => $r->dir_config(MailAlertTo),
        mail_alert_period => $r->dir_config(MailAlertPeriod) || 20,
@@ -578,7 +593,7 @@ sub InitObjects {
 	my $session = $self->{Session} = &Apache::ASP::Session::new($self);    	
 	if($session->Started()) {
 	    # we only want one process purging at a time
-	    if($self->{asp}{allow_application_state}) {
+	    if($self->{allow_application_state}) {
 		$internal->LOCK();
 		if(($internal->{LastSessionTimeout} || 0) < time()) {
 		    $internal->{'LastSessionTimeout'} = $self->{session_timeout} + time;
@@ -713,7 +728,11 @@ sub Parse {
 	# we look for the include file in both the current directory and the 
 	# global directory
 	my $included = 0;
-	for $include ($file, "$self->{global}/$file") {
+	my @include_files = ($file, "$self->{global}/$file");
+	if($self->{includes_dir}) {
+	    push(@include_files, "$self->{includes_dir}/$file");
+	}
+	for $include (@include_files) {
 	    unless(-e $include) {
 		next;
 	    }
@@ -913,6 +932,7 @@ sub CompileInclude {
     # use strict seems to print to STDERR directly w/o throwing an error,
     # if it just triggered a die(), we wouldn't have a problem
 #    local $SIG{__WARN__} = \&die;
+#    $self->Debug($self->{GlobalASA});
     my $eval = join(" ","package $self->{GlobalASA}{'package'};",
 		    "sub $id { if (shift) { $perl } 1; }",
 #		    "sub $id {\n$perl\n} ",
@@ -950,13 +970,12 @@ sub UndefRoutine {
 
     if(defined(\&{$subid})) {
 	my $code = \&{$subid};
-	eval "use Apache::Symbol";
-	if($@) {
+	if($self->LoadModules('UndefRoutine', 'Apache::Symbol')) {
+	    $self->Debug("active undefing sub $subid code $code before compiling");
+	    &Apache::Symbol::undef($code);
+	} else {
 	    $self->Debug("undefing sub $subid code $code before compiling");
 	    undef($code);
-	} else {
-	    $self->Debug("undefing sub $subid active code $code before compiling");
-	    &Apache::Symbol::undef($code);
 	}
     }
 }
@@ -1458,7 +1477,6 @@ sub Escape {
 sub StatINC {
     my $self = shift;
     my $stats = 0;
-#    $self->Debug("doing stat inc");
 
     # include necessary libs, without nice error message...
     # we only do this once if successful, to speed up code a bit,
@@ -1482,11 +1500,12 @@ sub StatINC {
     # this only happens on the first request of a new process
     unless($StatINCInit) {
 	$StatINCInit = 1;
+	$self->Debug("statinc init");
 	$self->StatRegisterAll();	
     }
 
     while(my($key,$file) = each %INC) {
-	if(defined $Apache::ASP::Stat{$file} && $self->{stat_inc_match}) {
+	if($self->{stat_inc_match} && defined $Apache::ASP::Stat{$file}) {
 	    # we skip only if we have already registered this file
 	    # we need to register the codes so we don't undef imported symbols
 	    next unless ($key =~ /$self->{stat_inc_match}/);
@@ -1497,11 +1516,14 @@ sub StatINC {
 
 	# its ok if this block is CPU intensive, since it should only happen
 	# when modules get changed, and that should be infrequent on a production site
-	if($mtime > $Apache::ASP::Stat{$file}) {
+	if(! defined $Apache::ASP::Stat{$file}) {
+	    $self->Debug("loading symbols first time", { $key => $file});
+	    $self->StatRegister($key, $file, $mtime);	    
+	} elsif($mtime > $Apache::ASP::Stat{$file}) {
 	    $self->Debug("reloading", {$key => $file});
 	    $stats++; # count files we have reloaded
 	    $self->StatRegisterAll();
-
+	    
 	    # we need to explicitly re-register a namespace that 
 	    # we are about to undef, in case any imports happened there
 	    # since last we checked, so we don't delete duplicate symbols
@@ -1514,7 +1536,10 @@ sub StatINC {
 	    my $is_global_package = $class eq $self->{GlobalASA}{'package'} ? 1 : 0;
 	    for $function ($sym->functions()) { 
 		my $code = \&{$function};
-		next if $Apache::ASP::Codes{$code}{count} > 1;
+		if($Apache::ASP::Codes{$code}{count} > 1) {
+		    $self->{debug} && $self->Debug("skipping undef of multiply defined $function: $code");
+		    next;
+		}
 
 		if($is_global_package) {
 		    # skip undef if id is an include or script 
@@ -1528,7 +1553,7 @@ sub StatINC {
 		    }
 		}
 
-#		$self->Debug("undef code $function: $code");
+		$self->{debug} && $self->Debug("undef code $function: $code");
 		&Apache::Symbol::undef($code);
 		delete $Apache::ASP::Codes{$code};
 	    }
@@ -1561,7 +1586,6 @@ sub StatINC {
 	    # we want to register INC now in case any new libs were
 	    # added when this module was reloaded
 	    $self->StatRegisterAll();
-#	    $self->StatRegisterAll();
 	}
     }
 
@@ -1587,7 +1611,7 @@ sub StatRegister {
 	return;
     }
 
-    $self->Debug("stat register of $key $file $class");
+    $self->{debug} && $self->Debug("stat register of $key $file $class");
     if($class eq 'CGI') {
 	# must compensate for its autoloading behavior, and 
 	# precompile all the routines, so we can register them
@@ -1707,7 +1731,7 @@ sub MailErrors {
 				  Subject => "Apache::ASP Errors for $ENV{SCRIPT_NAME}",
 				  Body => join(" <br>\n",
 					       "Global: $self->{global}",
-					       "  File: $0",
+					       "  File: $self->{filename}",
 					       "",
 					       $self->PrettyErrorHelper(),
 					      ),
@@ -1784,21 +1808,30 @@ sub LoadModules {
     my $errors = 0;
     
     for(@modules) {
-	next if $LoadedModules{$_};
+	if(defined $LoadedModules{$_}) {
+	    if($LoadedModules{$_} == 0) {
+		$self->Debug("already failed to load $_");
+		$errors++;
+	    } 
+	    next;
+	}
+
 	eval "use $_";
 	if($@) { 
-	    if(defined $LoadModuleErrors{$category}) {
-		$self->Error("cannot load $module for $category: $@, $LoadModuleErrors{$category}");
+	    if($LoadModuleErrors{$category}) {
+		$self->Error("cannot load $_ for $category: $@, $LoadModuleErrors{$category}");
 	    } else {
-		$self->Log("cannot load $module for $category: $@");
+		$self->Log("cannot load $_ for $category: $@");
 	    }
 	    $errors++;
+	    $LoadedModules{$_} = 0;
 	} else {
+	    $self->Debug("loaded module $_");
 	    $LoadedModules{$_} = 1;
 	}
     }
     
-    $errors ? 0 : 1;
+    ! $errors;
 }
 
 1;
@@ -1808,7 +1841,6 @@ sub LoadModules {
 # if there is not one, the code is left blank, and empty routines
 # are filled in
 package Apache::ASP::GlobalASA;
-use File::stat;
 
 # these define the default routines that get parsed out of the 
 # GLOBAL.ASA file
@@ -1829,7 +1861,7 @@ sub new {
     my $filename = "$asp->{global}/global.asa";
     my $exists = (-e $filename);
     my $id = $asp->FileId($filename);
-    my $package = $asp->{global_package} || ("Apache::ASP::Compiles".'::'.$id);
+    my $package = $asp->{global_package} ? $asp->{global_package} : "Apache::ASP::Compiles".'::'.$id;
 
     my $self = bless { 
 	asp => $asp,
@@ -1908,7 +1940,7 @@ sub new {
 sub IsCompiled {
     my($self, $routine) = @_;
     my $compiled = $Apache::ASP::Compiled{$self->{id}}->{'routines'};
-    $self->{asp}->Debug("compiled", $compiled);
+    $self->{asp}{debug} && $self->{asp}->Debug("compiled", $compiled);
     $compiled->{$routine};
 }
 
@@ -1975,25 +2007,25 @@ sub ApplicationOnStart {
     my($self) = @_;
     $self->{asp}->Debug("Application_OnStart");
     %{$self->{asp}{Application}} = (); # clear application now
-    $self->Execute("Application_OnStart");
+    $self->Execute('Application_OnStart');
 }
 
 sub ApplicationOnEnd {
     my($self) = @_;
     $self->{asp}->Debug("Application_OnEnd");
-    $self->Execute("Application_OnEnd");
+    $self->Execute('Application_OnEnd');
 }
 
 sub ScriptOnStart {
     my $self = shift;
-    $self->{asp}->Debug("Script_OnStart");
-    $self->Execute("Script_OnStart");
+    $self->{asp}{debug} && $self->{asp}->Debug("Script_OnStart");
+    $self->Execute('Script_OnStart');
 }
 
 sub ScriptOnEnd {
     my $self = shift;
-    $self->{asp}->Debug("Script_OnEnd");
-    $self->Execute("Script_OnEnd");
+    $self->{asp}{debug} && $self->{asp}->Debug("Script_OnEnd");
+    $self->Execute('Script_OnEnd');
 }
 
 1;
@@ -2011,10 +2043,11 @@ package Apache::ASP::Request;
      );
 
 sub new {
-    my $r = $_[0]->{r};
+    my $asp = shift;
+    my $r = $asp->{r};
 
     my $self = bless { 
-	asp => $_[0],
+	asp => $asp,
 	content => undef,
 	Cookies => undef,
 	Form => undef,
@@ -2025,14 +2058,15 @@ sub new {
     
     # set up the environment, including authentication info
     my %env = %ENV; # this method gets PerlSetEnv settings
-    my $c = $r->connection;
-    if(defined($c->user)) {
+    if(defined $r->get_basic_auth_pw) {
+	my $c = $r->connection;
 	#X: this needs to be extended to support Digest authentication
 	$env{AUTH_TYPE} = $c->auth_type;
 	$env{AUTH_USER} = $c->user;
+	$env{AUTH_NAME} = $r->auth_name;
 	$env{REMOTE_USER} = $c->user;
-	$env{AUTH_PASSWD} = $r->get_basic_auth_pw();
-    }
+	$env{AUTH_PASSWD} = $r->get_basic_auth_pw;
+    } 
     $self->{'ServerVariables'} = \%env;
 
     # assign no matter what so Form is always defined
@@ -2044,12 +2078,14 @@ sub new {
 		$self->{asp}->Error("can't use file upload without CGI.pm: $@");
 	    } else {		
 		my %form;
+		my %upload;
 		my $q = new CGI;
 		for(my @names = $q->param) {
-#		    $self->{asp}->Debug("reading file upload param $_");
 		    $form{$_} = $q->param($_);
+		    $upload{$_} = $q->uploadInfo($form{$_}) if (ref($form{$_}) eq 'Fh');
 		}
 		$form = \%form;
+		$self->{FileUpload} = bless \%upload, 'Apache::ASP::Collection' 
 	    }
 	} else {
 	    $self->{content} = $r->content();
@@ -2229,6 +2265,7 @@ sub new {
        ContentType => 'text/html',
        IsClientConnected => 1,
        PICS => undef,
+       Status => 200,
        header_buffer => '', 
        header_done => 0,
        Buffer => $asp->{buffering_on},
@@ -2317,32 +2354,15 @@ sub EndSoft {
     my $self = shift;
     return if $self->{Ended};
 
-    # only at the end do we really know the length, don't pretend to know unless
-    # we really do, that's why this is here and not in write
-    if(! $self->{header_done}) {
-#    if(! $self->{header_done} && ! $self->{asp}{filter}) {
-	$self->AddHeader('Content-Length', length($self->{buffer}));
-    }
-
     # force headers out, though body could still be empty
     # every doc will therefore return at least a header
     $self->Write(); 
-    $self->Flush();
     $self->{Ended} = 1;
+    $self->Flush();
 }
 
 sub Flush {
     my($self) = @_;
-
-    # if this is the first writing from the page, flush a newline, to 
-    # get the headers out properly
-    if(! $self->{header_done}) {
-	$self->{header_done} = 1;
-	unless($self->{asp}->{no_headers}) {
-	    $self->SendHeaders();
-	}
-    }
-    return unless $self->{'buffer'};
 
     if($self->{Clean} and $self->{ContentType} eq 'text/html') {
 	# by checking defined, we just check once
@@ -2368,6 +2388,22 @@ sub Flush {
 	}
     }
     
+    # HEADERS AFTER CLEAN, so content-length would be calculated correctly
+    # if this is the first writing from the page, flush a newline, to 
+    # get the headers out properly
+    if(! $self->{header_done}) {
+	if($self->{Ended}) {
+	    my $length = length($self->{buffer});
+	    $self->AddHeader('Content-Length', $length);
+	}
+
+	$self->{header_done} = 1;
+	unless($self->{asp}->{no_headers}) {
+	    $self->SendHeaders();
+	}
+    }
+    return unless $self->{buffer};
+
     if($self->{asp}{filter}) {
 	print STDOUT $self->{buffer};
     } else {
@@ -2407,12 +2443,26 @@ sub Redirect {
 sub SendHeaders {
     my($self) = @_;
     my $r = $self->{r};
+    my $asp = $self->{asp};
 
-    $self->{asp}->Debug("building cgi headers");
+    $asp->{debug} && $asp->Debug("building cgi headers");
     if(defined $self->{Status}) {
 	$r->status($self->{Status});
-	$self->{asp}->Debug("custom status $self->{Status}");
-    }
+	if($self->{Status} == 401) {
+	    $asp->{debug} && $asp->Debug("status 401, note basic auth failure realm ".$r->auth_name);
+#	    $self->AddHeader('Status', 401);
+#	    $self->AddHeader('WWW-Authenticate', 'Basic realm="'.($r->auth_name).'"');
+
+	    # we can't send out headers, and let Apache use the 401 error doc
+	    # But this is fine, once authorization is OK, then the headers
+	    # will go out correctly, so things like sessions will work fine.
+	    $r->note_basic_auth_failure;
+	    return;
+	} else {
+	    $asp->{debug} && $self->{asp}->Debug("status $self->{Status}");
+	}
+    } 
+
     if(defined $self->{Charset}) {
 	$r->content_type($self->{ContentType}.'; charset='.$self->{Charset});
     } else {
@@ -2615,7 +2665,7 @@ sub Write {
     $self->{buffer} .= join($,, @send);
 
     # do we flush now?  not if we are buffering
-    if(! $self->{Buffer} && ! $self->{buffer}) {
+    if(! $self->{Buffer} && $self->{buffer}) {
 	# we test for whether anything is in the buffer since
 	# this way we can keep reading headers before flushing
 	# them out
@@ -4257,6 +4307,18 @@ script sizes smaller in memory, and keeps compile times down.
 
   PerlSetVar DynamicIncludes 0
 
+=item IncludesDir
+
+no defaults.  If set, this directory will also be used to look
+for includes when compiling scripts.  By default the directory 
+the script is in, and the Global directory are checked for includes.  
+
+This extension was added so that includes could be easily shared
+between ASP applications, whereas placing includes in the Global
+directory only allows sharing between scripts in an application.
+
+  PerlSetVar IncludesDir .
+
 =item CgiHeaders
 
 default 0.  When true, script output that looks like HTTP / CGI
@@ -5489,20 +5551,26 @@ This routine takes a file or directory as its first arg.  If
 a file, that file will be compiled.  If a directory, that directory
 will be recursed, and all files in it whose file name matches $pattern
 will be compiled.  $pattern defaults to .*, which says that all scripts
-in a directory will be compiled by default.  The %config args, are the 
-config options that you want set that affect compilation.  These options 
-include Global & DynamicIncludes.  If your scripts are later
-run with different config options, your scripts may have to 
-be recompiled.
+in a directory will be compiled by default.  
+
+The %config args, are the config options that you want set that affect 
+compilation.  These options include Debug, Global, GlobalPackage, 
+DynamicIncludes, StatINC, and StatINCMatch.  If your scripts are later 
+run with different config options, your scripts may have to be recompiled.
 
 Here is an example of use in a *.conf file:
 
  <Perl> 
 	Apache::ASP->Loader(
 		'c:/proj/site', "(asp|htm)\$", 
-		Debug => 1,
 		Global => '/proj/perllib',
-		GlobalPackage => SomePackageName
+		Debug => 1, # see output when starting apache
+
+		# OPTIONAL configs if you use them in your apache configuration
+		# these settings affect how the scripts are compiled and loaded
+		GlobalPackage => SomePackageName,
+		DynamicIncludes => 1,	
+		StatINC => 1,		
 		); 
  </Perl>
 
@@ -5551,8 +5619,9 @@ Win32::OLE(3)
 
 =head1 KEYWORDS
 
-apache,asp,perl,mod_perl,active server pages,web application,session management,
-scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible
+Apache,ASP,perl,apache,mod_perl,asp,Active Server Pages,perl,asp,web application,ASP,
+session management,Active Server,scripting,dynamic html,asp,perlscript,Unix,Linux,Solaris,Win32,WinNT,
+cgi compatible,asp,response,ASP,request,session,application,server,Active Server Pages
 
 =head1 NOTES
 
@@ -5617,34 +5686,37 @@ sure to add it to the list.
 	http://www.chamas.com
 
 	HCST
-	http://www.hcst.net/
+	http://www.hcst.net
 
 	International Telecommunication Union
-	http://www.itu.int/
+	http://www.itu.int
 
 	Internetowa Gielda Samochodowa		
 	http://www.gielda.szczecin.pl
 
 	Multiple Listing Service of Greater Cincinnati
-	http://www.cincymls.com/
+	http://www.cincymls.com
 
 	NODEWORKS - web site link monitoring				
 	http://www.nodeworks.com
 
 	OnTheWeb Services
-	http://www.ontheweb.nu/
+	http://www.ontheweb.nu
 
 	Polish Ports Handbook			
 	http://www.link.fnet.pl
 
+	Provillage
+	http://www.provillage.com
+
 	Prices for Antiques
-	http://www.p4a.com/
+	http://www.p4a.com
 
 	Sex Shop Online				
 	http://www.sex.shop.pl
 	
 	Spotlight
-	http://www.spotlight.com.au/
+	http://www.spotlight.com.au
 
 
 =head1 COPYRIGHT
