@@ -1,17 +1,51 @@
 <% 
 	use DemoASP; 
 	$demo = &DemoASP::new($Request);
+	$form = $Request->Form();
+
+	# process form here
+	if($form->{increment}) {
+		$Session->{Count}++;
+	} elsif($form->{timeout}) {
+		$Session->Timeout(.25);
+	} elsif($form->{abandon}) {
+		$Session->Abandon();
+	}
 %>
 <html>
 <head><title><%=$demo->{title}%></title></head>
 <body bgcolor=<%=$demo->{bgcolor}%>>
 
-<% $Session->{count}++;%>
-We just incremented the $Session->{count} variable by one.
-Here is the value of the $Session->{count} variable... <%=$Session->{count}%>
+<center>
+<table border=1>
+<tr><td colspan=2 align=center><b>Session Object Demonstration</b></td></tr>
+<form action=<%=$demo->{file}%> method=POST>
+<tr>
+	<td colspan=2 align=center>
+	<input type=submit name=increment value="Increment Count">
+	<input type=submit name=timeout   value="Timeout 15 Seconds">
+	<input type=submit name=abandon   value="Abandon">
+	<td>
+</tr>
+</form>
+<tr>
+	<td>Value of $Session->{Count} </td>
+	<td><%=$Session->{Count}%> </td>
+</tr>
+<tr>
+	<td>Session Timeout (in minutes) </td>
+	<td><%=$Session->Timeout()%> </td>
+</tr>
+<tr>
+	<td>SessionID Value </td>
+	<td><%=$Session->SessionID()%> </td>
+</tr>
+</table>
+</center>
 <p>
 <a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
 view this file's source
 </a>
 </body>
 </html>
+

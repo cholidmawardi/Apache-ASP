@@ -11,7 +11,8 @@ sub new {
     my($self) = bless {
 	bgcolor => white,
 	env => $env,
-	title => $title
+	title => $title,
+	file => $env->{SCRIPT_NAME}
 	};
 
     $self;

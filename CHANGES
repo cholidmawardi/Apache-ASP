@@ -1,3 +1,13 @@
+$VERSION = .02;
+
++ = improvement; - = bug fix
+
++ Fleshed out $Response object, almost full implementation.
+- Documentation fixed for pod2man support.  README now more man-like.
+- Stripped \r\n dos characters from installation files
+- 755 mode set for session state directory when created
+- Loads Win32/OLE properly, won't break with UNIX
+
 $VERSION = .01;
 
 Syntax Support
@@ -28,3 +38,10 @@ Security
 Timeouts any attempt to use a session id that doesn't already 
 exist.  Should stop hackers, since there is no wire speed guessing
 cookies.
+
+
+
+
+
+
+

@@ -1,42 +1,24 @@
-## Note this file was used for Apache 1.3.0
+# Note this file was used for Apache 1.3.0
+# Please see the readme, for what exactly the config variables do.
 
-## .asp files for Session state enabled
+# .asp files for Session state enabled
 <Files ~ (\.asp)>
-	## these directives are the glue that make it all happen
 	SetHandler perl-script
 	PerlHandler Apache::ASP
-	PerlSendHeader On
-
-	## program your application with debugging on
-	PerlSetVar Debug 2
-
-	## some directory path here for the state files
-	## Ideally this should not be in a browsable directory
-	PerlSetVar Global .  
-
-	## set the cookie path to the path on the server 
-	## browsers send the cookie for, should match
-	## whatever would be in the <Location> directive
-	PerlSetVar CookiePath /
-
-	## number of minutes before session timeout, set
-	## low for demonstration purposes
-	PerlSetVar SessionTimeout .5 
-
-	## have the files act like they are cgi
-	Options ExecCGI 
+	PerlSetVar Global  .		
+	PerlSetVar Debug  2		
+	PerlSetVar CookiePath  /	
+	PerlSetVar SessionTimeout  .5	
+	PerlSetVar AllowSessionState  1
 </Files>
 
-## .htm files for the ASP parsing, but not the object model
-## NoSession turns Session state off
+# .htm files for the ASP parsing, but not the $Session object
+# AllowSessionState 0 turns Session state off
 <Files ~ (\.htm)>
 	SetHandler perl-script
 	PerlHandler Apache::ASP
-	PerlSendHeader On
-	PerlSetVar Debug 2
-
-	## some directory path here for the state files
-	PerlSetVar Global .		
-	PerlSetVar NoSession 1
-	Options ExecCGI 
+	PerlSetVar Debug  2		
+	PerlSetVar Global  .		
+	PerlSetVar AllowSessionState  0
+	PerlSetVar BufferingOn 0
 </Files>

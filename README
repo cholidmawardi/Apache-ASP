@@ -1,10 +1,10 @@
-COPYRIGHT
-    Copyright (c) 1998 Chamas Enterprises Inc. All rights reserved.
-    This program is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
-
 NAME
     Apache::ASP - Active Server Pages for Apache (all platforms)
+
+SYNOPSIS
+	SetHandler perl-script
+	PerlHandler Apache::ASP
+	PerlSetVar Global /tmp # must be some writeable directory
 
 DESCRIPTION
     This module provides a Active Server Pages port to Apache.
@@ -19,7 +19,19 @@ DESCRIPTION
     under Apache::ASP and run it without change under PerlScript or
     PScript for IIS.
 
-CONFIG
+  INSTALLATION
+
+    Apache::ASP installs easily using the make or nmake commands as
+    shown below. Otherwise, just copy ASP.pm to $PERLLIB/site/Apache
+
+	> perl Makefile.PL
+	> make 
+	> make install
+
+	* use nmake for win32
+
+  CONFIG
+
     Use with Apache. Copy the /eg directory from the ASP
     installation to your Apache document tree and try it out! You
     have to put
@@ -29,23 +41,94 @@ CONFIG
     in your <Directory> config section to let the .htaccess file in
     the /eg installation directory do its work.
 
-    Here is a sample config in a *.conf Apache configuration file
-    that works, if you want to skip the /eg installation:
+    If you want a STARTER config file, just look at the .htaccess
+    file in the /eg directory.
+
+    Here is a Location directive that you would put in a *.conf
+    Apache configuration file. It describes the ASP variables that
+    you can set. Don't set the optional ones if you don't want, the
+    defaults are fine...
+
+###########################################################
+## INSERT INTO Apache *.conf file, probably access.conf
+###########################################################
 
 <Location /asp/>    
-    ## mandatory
-    SetHandler perl-script
-    PerlHandler Apache::ASP
-    PerlSendHeader On
-    Options ExecCGI 
 
-    ## optional flags
-    PerlSetVar Debug 0
-    PerlSetVar Global c:/tmp
-    PerlSetVar CookiePath /
-    PerlSetVar NoSession 0
-    PerlSetVar SessionTimeout 20
+###########################################################
+## mandatory 
+###########################################################
+
+# Generic apache directives to make asp start ticking.
+SetHandler perl-script
+PerlHandler Apache::ASP
+
+# Global
+# ------
+# Must be some writeable directory.  Session and Application
+# state files will be stored in this directory, and 
+# as this directory is pushed onto @INC, you will be 
+# able to "use" and "require" files in this directory.
+#
+PerlSetVar Global /tmp  
+	
+###########################################################
+## optional flags 
+###########################################################
+
+# CookiePath
+# ----------
+# Url root that client responds to by sending the session cookie.
+# If your asp application falls under the server url "/ASP", 
+# then you would set this variable to /ASP.  This then allows
+# you to run different applications on the same server, with
+# different user sessions for each application.
+#
+PerlSetVar CookiePath /   
+
+# AllowSessionState
+# -----------------
+# Set to 0 for no session tracking, 1 by default
+# If Session tracking is turned off, performance improves,
+# but the $Session object is inaccessible.
+#
+PerlSetVar AllowSessionState 1    
+
+# SessionTimeout
+# --------------
+# Session timeout in minutes (defaults to 20)
+#
+PerlSetVar SessionTimeout 20 
+
+# Debug
+# -----
+# 1 for server log debugging, 2 for extra client html output
+# Use 1 for production debugging, use 2 for development.
+# Turn off if you are not debugging.
+#
+PerlSetVar Debug 2	
+
+# BufferingOn
+# -----------
+# default 1, if true, buffers output through the response object.
+# $Response object will only send results to client browser if
+# a $Response->Flush() is called, or if the asp script ends.  Lots of 
+# output will need to be flushed incrementally.
+# 
+# If false, 0, the output is immediately written to the client,
+# CGI style.
+#
+# I would only turn this off if you have a really robust site,
+# since error handling is poor, if your asp script errors
+# after sending only some text.
+#
+PerlSetVar BufferingOn 1
+
 </Location>
+
+###########################################################
+## END INSERT
+###########################################################
 
     You can use the same config in .htaccess files without the
     Location tag. I use the <Files ~ (\.asp)> tag in the .htaccess
@@ -78,29 +161,236 @@ ASP Syntax
     loop above iterates over the html without any special syntax.
 
 The Object Model
-    The beauty of the ASP Object Model is that it takes the brunt of
-    the burden of CGI and Session Management off the developer, and
-    puts them in objects accessible from any ASP page. For the perl
+    The beauty of the ASP Object Model is that it takes the burden
+    of CGI and Session Management off the developer, and puts them
+    in objects accessible from any ASP page. For the perl
     programmer, treat these objects as globals accesible from
     anywhere in your ASP application.
 
-    Currently the Apache::ASP object model supports the following
-    objects:
+    Currently the Apache::ASP object model supports the following:
 
 	Object		--	Function
 	------			--------
+	$Session	--	session state
 	$Response	--	output
 	$Request	--	input
 	$Application	--	application state
-	$Session	--	session state
+	$Server		--	! not yet implemented !
 
     These objects, and their methods are further defined in the
     following sections.
 
-MORE
-    I'll put more info on objects here soon.
+  $Session Object
 
-QUESTIONS
+    The $Session object keeps track of user + web client state, in a
+    persistent manner, making it relatively easy to develop web
+    applications. The $Session state is stored accross HTTP
+    connections, in SDBM_Files in the Global directory, and will
+    persist across server restarts.
+
+    The user's session is referenced by a 32-byte md5-hashed cookie,
+    and can be considered secure from session_id guessing, or
+    session hijacking. When a hacker fails to guess a session, the
+    system times out for a second, and with 2**128 (3.4e38) keys to
+    guess, a hacker won't be guessing an id any time soon. Compare
+    the 32-byte key with Miscrosoft ASP implementation which is only
+    16 bytes.
+
+    If an incoming cookie matches a timed out or non-existent
+    session, a new session is created with the incoming id. If the
+    id matches a currently active session, the session is tied to it
+    and returned. This is also similar to Microsoft's ASP
+    implementation.
+
+    The $Session ref is a hash ref, and can be used as such to store
+    data as in:
+
+	$Session->{count}++;	# increment count by one
+	%{$Session} = ();	# clear $Session data
+
+    The $Session object state is implemented through MLDBM &
+    SDBM_File, and a user should be aware of MLDBM's limitations.
+    Basically, you can read complex structures, but not write them,
+    directly:
+
+	$data = $Session->{complex}{data};      # Read ok.
+	$Session->{complex}{data} = $data;      # Write NOT ok.
+	$Session->{complex} = {data => $data};  # Write ok, all at once.
+
+    Please see MLDBM for more information on this topic. $Session
+    can also be used for the following methods and properties:
+
+    $Session->SessionID()
+    SessionID property, returns the id number for the current
+    session, which is exchanged between the client and the server as
+    a cookie.
+
+    $Session->Timeout($minutes)
+    Timeout property, if minutes is defined, sets this session's
+    default timeout, else returns the current session timeout. If a
+    user session is inactive for the full timeout, the user's
+    session is destroyed by the system. No one can access the
+    session after it times out, and the system garbage collects it
+    eventually.
+
+    $Session->Abandon()
+    The abandon method times out the session immediately. All
+    Session data is cleared in the process, just as when any session
+    times out.
+
+  $Response Object
+
+    This object manages the output from the ASP Application and the
+    client's web browser. It does store state information like the
+    $Session object but does have a wide array of methods to call.
+
+    $Response->Buffer($boolean)
+    When set to true, output to client is buffered. Defaults to
+    false.
+
+    $Response->ContentType($content_type)
+    Sets the MIME content type of the current response.
+
+    $Response->Cookies($name, $key, $value);
+    Not implemented.
+
+    $Response->Expires($time)
+    Not implemented.
+
+    $Response->ExpiresAbsolute($date)
+    Not implemented.
+
+    $Response->Status($status)
+    Sets the status code returned by the server. Can be used to set
+    messages like 500, internal server error
+
+    $Response->AddHeader($name, $value)
+    Adds a custom header to a web page. Headers are sent only before
+    any text from the main page is sent, so if you want to set a
+    header after some text on a page, you must turn BufferingOn.
+
+    $Response->AppendToLog($message)
+    Adds $message to the server log.
+
+    $Response->BinaryWrite($data)
+    Not implemented.
+
+    $Response->Clear()
+    Erases buffered ASP output.
+
+    $Response->End()
+    Sends result to client, and immediately exits script.
+    Automatically called at end of script, if not already called.
+
+    $Response->Flush()
+    Sends buffered output to client and clears buffer.
+
+    $Response->Redirect($url)
+    Sends the client a command to go to a different url $url. Script
+    immediately ends.
+
+    $Response->Write($data)
+    Write output to the HTML page. <%=$data%> syntax is shorthand
+    for a $Response->Write($data). All final output to the client
+    must at some point go through this method.
+
+  $Request Object
+
+    The request object manages the input from the client brower,
+    like posts, query strings, cookies, etc. Normal return results
+    are values if an index is specified, or a collection / perl hash
+    ref if no index is specified. WARNING, the latter property is
+    not supported in Activeware's PerlScript, so if you use the
+    hashes returned by such a technique, it will not be portable.
+
+	# A normal use of this feature would be to iterate through the 
+	# form variables in the form hash...
+
+	$form = $Request->Form();
+	for(keys %{$form}) {
+		$Response->Write("$_: $form->{$_}<br>\n");
+	}
+
+	# Please see the eg/server_variables.htm asp file for this 
+	# method in action.
+
+    $Request->ClientCertificate()
+    Not implemented.
+
+    $Request->Cookies($index)
+    Not implemented.
+
+    $Request->Form($name)
+    Returns the value of the input of name $name used in a form with
+    POST method. If $name is not specified, returns a ref to a hash
+    of all the form data.
+
+    $Request->QueryString($name)
+    Returns the value of the input of name $name used in a form with
+    GET method, or passed by appending a query string to the end of
+    a url as in http://someurl.com/?data=value. If $name is not
+    specified, returns a ref to a hash of all the query string data.
+
+    $Request->ServerVariables($name)
+    Returns the value of the server variable / environment variable
+    with name $name. If $name is not specified, returns a ref to a
+    hash of all the server / environment variables data. The
+    following would be a common use of this method:
+
+	$env = $Request->ServerVariables();
+	# %{$env} here would be equivalent to the cgi %ENV in perl.
+
+  $Application Object
+
+    Like the $Session object, you may use the $Application object to
+    store data across the entire life of the application. Every page
+    in the ASP application always has access to this object. So if
+    you wanted to keep track of how many visitors there where to the
+    application during its lifetime, you might have a line like
+    this:
+
+	$Application->{num_users}++
+
+    The Lock and Unlock methods are used to prevent simultaneous
+    access to the $Application object.
+
+    $Application->Lock()
+    Not implemented.
+
+    $Application->UnLock()
+    Not implemented.
+
+  $Server Object
+
+    Not implemented.
+
+EXAMPLES
+    Use with Apache. Copy the /eg directory from the ASP
+    installation to your Apache document tree and try it out! You
+    have to put
+
+    AllowOverride All
+
+    in your <Directory> config section to let the .htaccess file in
+    the /eg installation directory do its work.
+
+SEE ALSO
+    perl(1), mod_perl(3), Apache(3)
+
+NOTES
+    Many thanks to those who helped me make this module a reality.
+    Whoever said you couldn't do ASP on UNIX? Kudos go out to:
+
+	:) Doug MacEachern, for moral support and of course mod_perl
+	:) Ryan Whelan, for boldly testing on Unix in its ASP's early infancy
+	:) Lupe Christoph, for his immaculate and stubborn testing skills
+
+AUTHOR
     Please send any questions or comments to Joshua Chamas at
     chamas@alumni.stanford.org
+
+COPYRIGHT
+    Copyright (c) 1998 Joshua Chamas. All rights reserved. This
+    program is free software; you can redistribute it and/or modify
+    it under the same terms as Perl itself.
 

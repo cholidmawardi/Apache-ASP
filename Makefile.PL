@@ -18,14 +18,17 @@ for(@mods) {
     eval 'require ' . $_ ;
     if($@) {
 	$errors++;
-	print " ... you need the module: $_\n";
+	print " !!! you need the module: $_\n";
     } else {
 	print " ... found $_ !\n";
     }
 }
 
 if($errors) {
-    print "Exiting now because of errors!\n\n";
+    print "\n";
+    print "If you need a module, please download and install it from CPAN.\n";
+    print "Exiting now because of errors!\n";
+    print "\n";
     exit;
 } else {
     print "Looks good!\n";
