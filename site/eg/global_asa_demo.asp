@@ -37,7 +37,8 @@ for(keys %{$Application}) {
 
 	my $session_id = $_;
 	$session_id =~ s/^Session//io;
-	my $session_data = { %{ $Application->GetSession($session_id) } };
+	my $session = $Application->GetSession($session_id);
+	my $session_data = $session ? { %$session } : undef;
 
 	my $session_time = ($Application->{$_} eq '?') ?
 		"in session" : "$Application->{$_} seconds";
@@ -47,7 +48,7 @@ for(keys %{$Application}) {
 		<td><%=substr($session_id, 0, 16)."..."%></td>
 		<td><%=$session_time%></td>
 	</tr>	
-	<tr><td colspan=2><pre><%=Data::Dumper->Dump([$session_data])%></pre></td></tr>
+	<tr><td colspan=2><pre><%=$session_data ? Data::Dumper->Dump([$session_data]) : '' %></pre></td></tr>
 
 	<tr><td colspan=2><hr size=1></td></tr>
 	<%

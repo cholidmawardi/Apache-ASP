@@ -25,7 +25,7 @@
 <center>
 <table border=1>
 <tr><td colspan=2 align=center><b>Session Object Demonstration</b></td></tr>
-<form action=<%=$Server->URL($demo->{file})%> method=POST>
+<form action="" method=POST>
 <tr>
 	<td colspan=2 align=center>
 	<input type=submit name=increment value="Increment Count">

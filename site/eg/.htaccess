@@ -14,16 +14,18 @@ PerlSetVar SessionQueryParse 0
 PerlSetVar SessionQuery 1
 PerlSetVar Debug -2
 PerlSetVar StateCache 0
+PerlSetVar SessionCount 1
 
 # .asp files for Session state enabled
 <Files ~ (\.asp)>
 	SetHandler perl-script
 	PerlHandler Apache::ASP
 	PerlSetVar CookiePath  /	
-	PerlSetVar SessionTimeout  .5
+	PerlSetVar SessionTimeout  .25
 #	PerlSetVar StateSerializer Storable
 #	PerlSetVar StateDB DB_File
 #	PerlSetVar StatScripts 0
+	PerlSetVar XMLSubsMatch my:\w+
 </Files>
 
 # .htm files for the ASP parsing, but not the $Session object
@@ -35,6 +37,14 @@ PerlSetVar StateCache 0
 	PerlSetVar BufferingOn 1
 	PerlSetVar NoCache 1
 	PerlSetVar DebugBufferLength 250
+</Files>
+
+<Files ~ (\.xml)>
+	SetHandler perl-script
+	PerlHandler Apache::ASP
+	PerlSetVar NoState 1 
+	PerlSetVar XSLT template.xsl
+	PerlSetVar XSLTCacheSize 10
 </Files>
 
 <Files ~ (\.inc|\.htaccess)>

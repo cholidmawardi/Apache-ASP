@@ -8,6 +8,7 @@ __END__
 <% 
 	$t->{t} += 3; 
 	$t->done;
+	$Response->Write("");
 %>
 
 ok

@@ -3,6 +3,7 @@
 <!--#include file=header.inc-->
 
 <% 
+die;
 $Response->{Clean} = 0;
 use File::Basename;
 

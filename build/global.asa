@@ -7,10 +7,11 @@ $DEBUG = 0;
 	  'install' => 'INSTALL',
 	  'changes' => 'CHANGES',
 	  'config' => 'CONFIG',
-	  'cookies' => 'COOKIES',
+	  'sessions' => 'SESSIONS',
 	  'syntax' => 'SYNTAX',
 	  'events' => 'EVENTS',
 	  'objects' => 'OBJECTS',
+	  'resources' => 'RESOURCES',
 	  'ssi' => 'SSI',
 	  'cgi' => 'CGI',
 	  'perlscript' => 'PERLSCRIPT',
@@ -20,6 +21,7 @@ $DEBUG = 0;
 	  'support' => 'SUPPORT',
 	  'sites' => 'SITES USING',
 	  'todo' => 'TODO',
+	  'xml' => 'XML/XSLT',
 	 );
 
 %ALIASES = (
@@ -29,12 +31,13 @@ $DEBUG = 0;
 
 # auto link these key words, includes %FILES inverted
 %LINKS = (
-	  'Apache HTTP Server' => 'http://www.apache.org',
+	  'Apache Web Server' => 'http://www.apache.org',
 	  'mod_perl' => 'http://perl.apache.org',
 	  'CGI.pm' => 'http://stein.cshl.org/WWW/software/CGI/cgi_docs.html',
 	  'PerlScript' => 'http://www.activestate.com/ActivePerl/',
-	  'IIS' => 'http://www.microsoft.com/iis/',
-	  'MySQL support' => 'http://www.mysql.com/Manual_chapter/manual_Licensing_and_Support.html#Cost'
+	  'NT/IIS' => 'http://www.microsoft.com/iis/',
+	  'XML::XSLT' => 'http://xmlxslt.sourceforge.net/',
+	  'LRN' => 'http://www.lrn.com',
 	 );
 
 # purify files and add as links
@@ -51,8 +54,8 @@ my @levels;
 unshift(@levels, $ASP);
 
 my $level = 0;
-$data =~ s/\n=(over|back)\s*?\n/\n/sg;
-while($data =~ s/\n=(head\d|item) ([^\n]*)\n(.*?)(\n\=|$)/$4/is) {
+$data =~ s/\n=(over|back|begin|end)[^\n]*\n/\n/sg;
+while($data =~ s/^.*?\n=(head\d|item) ([^\n]*)\n(.*?)(\n\=|$)/$4/is) {
     my($type, $name, $body) = ($1,$2,$3);
     $body =~ s/\s+$//s;
 
@@ -66,6 +69,7 @@ while($data =~ s/\n=(head\d|item) ([^\n]*)\n(.*?)(\n\=|$)/$4/is) {
 		stack => [],
 		level => ($level + 1),
 	       };
+
 
     if($type =~ /^head(\d)/) {
 	my $current = $1;		
@@ -142,8 +146,9 @@ sub pod2html {
 	}
 	if($pre) {
 	    $_ =~ s/\s*$//;
-	}
-	$_ = $Server->HTMLEncode($_);
+	    $_ = $Server->HTMLEncode($_);	    
+	} 
+
 	$_ = $pre_tag . $_;
 	push(@newlines, $_);
     }
@@ -159,8 +164,9 @@ sub pod2html {
     $body =~ s|(\./site/)(eg/[\w\.]+[^\.\s])|<a href=$2>$1$2</a>|sg;
 
     $body =~ s|\n\n</pre>|\n</pre>|isg;
+#    my $match_links = join('|', keys %LINKS);
     for(keys %LINKS) {
-	$body =~ s|(\b)($_)(\b)|$1<a href=$LINKS{$_}>$2</a>$3|sg;
+	$body =~ s/(\b)($_)(\b)/"$1<a href=$LINKS{$_}><font size=-1 face=verdana><b>$_<\/b><\/font><\/a>$3"/se;
     }
 
     '<font face=verdana>'.$title.$body.'</font>';

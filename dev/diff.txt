@@ -1,0 +1,588 @@
+*** /perl/lib/site/XML/XSLT.pm	Tue Feb 29 07:58:03 2000
+--- /home/Administrator/desktop/XML-XSLT-0.19/old/XSLT.pm	Mon Feb 28 22:36:32 2000
+***************
+*** 35,81 ****
+    $_xsl_dir = "";
+  }
+  
+! use vars qw($ELEMENT_NODE $TEXT_NODE $DOCUMENT_TYPE_NODE $COMMENT_NODE 
+! 	    $ATTRIBUTE_NODE $DOCUMENT_NODE
+! 	   );
+! $ELEMENT_NODE = ELEMENT_NODE;
+! $TEXT_NODE = TEXT_NODE;
+! $DOCUMENT_TYPE_NODE = DOCUMENT_TYPE_NODE;
+! $COMMENT_NODE = COMMENT_NODE;
+! $ATTRIBUTE_NODE = ATTRIBUTE_NODE;
+! $DOCUMENT_NODE = DOCUMENT_NODE;
+  
+  sub new {
+    my ($class) = @_;
+  
+!   return bless 
+!     {
+!      stylesheet => undef,
+!      templates => undef,
+!      xml_dom => undef,
+!      xsl_dom => undef,
+!     }, $class;  
+! }
+! 
+! sub DESTROY {
+!     my $parser = shift;
+! 
+!     return if $parser->{destroyed};
+!     $parser->{destroyed} = 1;
+!     
+!     if(defined $XSLT::result) {
+! 	$XSLT::result->dispose();
+! 	$XSLT::result = undef;
+!     }
+!     
+!     for('xml', 'xsl') {
+! 	if(! $parser->{$_.'_dom'} && eval "\$XSLT::$_") {
+! 	    eval qq(
+! 		    \$XSLT::$_->dispose();
+! 		    undef \$XSLT::$_;	    
+! 		   );
+! 	} 
+!     }
+  }
+  
+  sub openproject {
+--- 35,46 ----
+    $_xsl_dir = "";
+  }
+  
+! 
+  
+  sub new {
+    my ($class) = @_;
+  
+!   return bless {}, $class;  
+  }
+  
+  sub openproject {
+***************
+*** 119,128 ****
+        }
+      }
+    } elsif ($xmlflag =~ /^D/i) {
+!       my $ref = ref $xml;
+!       if ($ref =~ /Document$/i) {
+  	  $XSLT::xml = $xml;
+- 	  $parser->{xml_dom} = 1;
+        } else {
+  	  die ("Error: You have to pass a Document node to open_project when passing a DOM tree$/");
+        }
+--- 84,91 ----
+        }
+      }
+    } elsif ($xmlflag =~ /^D/i) {
+!     if (ref $xml =~ /Document$/i) {
+        $XSLT::xml = $xml;
+      } else {
+        die ("Error: You have to pass a Document node to open_project when passing a DOM tree$/");
+      }
+***************
+*** 168,179 ****
+      }
+    } elsif ($xslflag =~ /^D/i) {
+      $_xsl_dir = ".";
+!     my $ref = ref $xsl;
+!     if ($ref =~ /Document$/i) {
+        $XSLT::xsl = $xsl;
+-       $parser->{xsl_dom} = 1;
+      } else {
+!       die ("Error: You have to pass a Document node to open_project when passing a DOM tree, was $ref $/");
+      }
+    } else {
+      $_xsl_dir = ".";
+--- 131,140 ----
+      }
+    } elsif ($xslflag =~ /^D/i) {
+      $_xsl_dir = ".";
+!     if (ref $xml =~ /Document$/i) {
+        $XSLT::xsl = $xsl;
+      } else {
+!       die ("Error: You have to pass a Document node to open_project when passing a DOM tree$/");
+      }
+    } else {
+      $_xsl_dir = ".";
+***************
+*** 197,208 ****
+  
+    $parser->__expand_xsl_includes__($XSLT::xsl);
+    $parser->__add_default_templates__($XSLT::xsl);
+- 
+-   $parser->{stylesheet} = $XSLT::xsl->getElementsByTagName('xsl:stylesheet',0)->item(0)
+-     || die("no xsl:stylesheet for parser");
+-   $parser->{templates} = [ reverse $parser->{stylesheet}->getElementsByTagName('xsl:template',0) ];
+- 
+-   $parser;
+  }
+  
+    sub __my_tag_compression__ {
+--- 158,163 ----
+***************
+*** 278,285 ****
+    # $node->print ($f);
+  }
+  
+- sub result { $XSLT::result; }
+- 
+  ######################################################################
+  
+    sub __add_default_templates__ {
+--- 233,238 ----
+***************
+*** 385,405 ****
+    
+    my $template = "";
+    
+!   if ($attribute_name =~ /match|name/) {
+      print " "x$_indent,"searching template for \"$current_xml_selection_path\":$/" if $XSLT::debug;
+  
+! #    my $stylesheet = $XSLT::xsl->getElementsByTagName('xsl:stylesheet',0)->item(0);
+  
+      my $count = 0;
+! 
+!     ## PERFORMANCE GAIN
+!     ## the reverse + the last took performance from 7.8 to 10.9 docs per
+!     ## second on my XSL sample -- JC
+!     ##
+!     for my $child (@{$parser->{templates}}) {
+! #    foreach my $child (reverse $stylesheet->getElementsByTagName('xsl:template',0)) {
+! #    foreach my $child ($stylesheet->getElementsByTagName('*',0)) {
+! #      if ($child->getTagName =~ /^xsl:template$/i) {
+          $count++;
+  
+          my $template_attr_value = $child->getAttribute ($attribute_name);
+--- 338,352 ----
+    
+    my $template = "";
+    
+!   if ($attribute_name =~ "match" || $attribute_name =~ "name") {
+! 
+      print " "x$_indent,"searching template for \"$current_xml_selection_path\":$/" if $XSLT::debug;
+  
+!     my $stylesheet = $XSLT::xsl->getElementsByTagName('xsl:stylesheet',0)->item(0);
+  
+      my $count = 0;
+!     foreach my $child ($stylesheet->getElementsByTagName('*',0)) {
+!       if ($child->getTagName =~ /^xsl:template$/i) {
+          $count++;
+  
+          my $template_attr_value = $child->getAttribute ($attribute_name);
+***************
+*** 407,416 ****
+          if (&__template_matches__ ($template_attr_value, $current_xml_selection_path)) {
+            print " "x$_indent,"  found #$count \"$template_attr_value\"$/" if $XSLT::debug;
+            $template = $child;
+- 	  last;  
+          } else {
+            print " "x$_indent,"  #$count \"$template_attr_value\" does not match$/" if $XSLT::debug;
+          }
+      }
+  
+      if (! $template) {
+--- 354,364 ----
+          if (&__template_matches__ ($template_attr_value, $current_xml_selection_path)) {
+            print " "x$_indent,"  found #$count \"$template_attr_value\"$/" if $XSLT::debug;
+            $template = $child;
+          } else {
+            print " "x$_indent,"  #$count \"$template_attr_value\" does not match$/" if $XSLT::debug;
+          }
++ 
++       }
+      }
+  
+      if (! $template) {
+***************
+*** 452,520 ****
+    }
+  
+  sub _evaluate_template {
+!     my($parser, $template, $current_xml_node, 
+!        $current_xml_selection_path, $current_result_node) = @_;
+! 
+! #  my $parser = shift;
+! #  my $template = shift;
+! #  my $current_xml_node = shift;
+! #  my $current_xml_selection_path = shift;
+! #  my $current_result_node = shift;
+  
+!   if($XSLT::debug) {
+!       print " "x$_indent,"evaluating template content with \"$current_xml_selection_path\": $/";
+        $_indent += $_indent_incr;;
+-   }
+  
+    foreach my $child ($template->getChildNodes) {
+-       my $node_type = $child->getNodeType;
+-       if($XSLT::debug) {
+  	  my $ref = ref $child;
+! 	  print " "x$_indent,"$ref$/";
+  	  $_indent += $_indent_incr;
+-       }
+  
+!       if ($node_type == $ELEMENT_NODE) {
+          $parser->_evaluate_element ($child,
+                                      $current_xml_node,
+                                      $current_xml_selection_path,
+                                      $current_result_node);
+!       } elsif ($node_type == $TEXT_NODE) {
+          $parser->_add_node($child, $current_result_node);
+!       } elsif ($node_type == $DOCUMENT_TYPE_NODE) {
+            # skip #
+!       } elsif ($node_type == $COMMENT_NODE) {
+            # skip #
+        } else {
+          my $name = $template->getTagName;
+- 	my $ref = ref $child;
+          print " "x$_indent,"Cannot evaluate node $name of type $ref !$/" if $XSLT::debug;
+          warn ("evaluate-template: Dunno what to do with node of type $ref !!! ($name; $current_xml_selection_path)$/") if $XSLT::warnings;
+        }
+      
+!       $XSLT::debug and $_indent -= $_indent_incr;
+    }
+  
+!   $XSLT::debug and $_indent -= $_indent_incr;
+  }
+  
+  sub _add_node {
+!     my($parser, $node, $parent, $deep, $owner) = @_;
+  
+!     if($XSLT::debug) {
+! 	print " "x$_indent,"adding node (deep)..$/" if $deep;
+! 	print " "x$_indent,"adding node (non-deep)..$/" if !$deep;
+!     }
+  
+      $node = $node->cloneNode($deep);
+!     $node->setOwnerDocument($owner || $XSLT::xml);
+      $parent->appendChild($node);
+  }
+  
+  sub _apply_templates {
+!     my($parser, $xsl_node, $current_xml_node, 
+!        $current_xml_selection_path, $current_result_node) = @_;
+!     $current_xml_selection_path ||= '';
+      
+      my $match = $xsl_node->getAttribute ('select');
+      my $children;
+--- 400,463 ----
+    }
+  
+  sub _evaluate_template {
+!   my $parser = shift;
+!   my $template = shift;
+!   my $current_xml_node = shift;
+!   my $current_xml_selection_path = shift;
+!   my $current_result_node = shift;
+  
+!   print " "x$_indent,"evaluating template content with \"$current_xml_selection_path\": $/" if $XSLT::debug;
+    $_indent += $_indent_incr;;
+  
+    foreach my $child ($template->getChildNodes) {
+      my $ref = ref $child;
+!     print " "x$_indent,"$ref$/" if $XSLT::debug;
+      $_indent += $_indent_incr;
+  
+!       if ($child->getNodeType == ELEMENT_NODE) {
+          $parser->_evaluate_element ($child,
+                                      $current_xml_node,
+                                      $current_xml_selection_path,
+                                      $current_result_node);
+!       } elsif ($child->getNodeType == TEXT_NODE) {
+          $parser->_add_node($child, $current_result_node);
+!       } elsif ($child->getNodeType == DOCUMENT_TYPE_NODE) {
+            # skip #
+!       } elsif ($child->getNodeType == COMMENT_NODE) {
+            # skip #
+        } else {
+          my $name = $template->getTagName;
+          print " "x$_indent,"Cannot evaluate node $name of type $ref !$/" if $XSLT::debug;
+          warn ("evaluate-template: Dunno what to do with node of type $ref !!! ($name; $current_xml_selection_path)$/") if $XSLT::warnings;
+        }
+      
+!     $_indent -= $_indent_incr;
+    }
+  
+!   $_indent -= $_indent_incr;
+  }
+  
+  sub _add_node {
+!   my $parser = shift;
+!   my $node = shift;
+!   my $parent = shift;
+!   my $deep = (shift || "");
+!   my $owner = (shift || $XSLT::xml);
+  
+!   print " "x$_indent,"adding node (deep)..$/" if $XSLT::debug && $deep;
+!   print " "x$_indent,"adding node (non-deep)..$/" if $XSLT::debug && !$deep;
+  
+    $node = $node->cloneNode($deep);
+!   $node->setOwnerDocument($owner);
+    $parent->appendChild($node);
+  }
+  
+  sub _apply_templates {
+!   my $parser = shift;
+!   my $xsl_node = shift;
+!   my $current_xml_node = shift;
+!   my $current_xml_selection_path = (shift || "");
+!   my $current_result_node = shift;
+  
+    my $match = $xsl_node->getAttribute ('select');
+    my $children;
+***************
+*** 532,553 ****
+      
+      $_indent += $_indent_incr;
+      
+!     for my $child (@$children) {
+! 	my $node_type = $child->getNodeType;
+! 	if($XSLT::debug) {
+  	    my $ref = ref $child;
+! 	    print " "x$_indent,"$ref$/";
+  	    $_indent += $_indent_incr;
+- 	}
+  	
+! 	if ($node_type == $DOCUMENT_NODE) {
+  	    $child = $child->getFirstChild;
+- 	    $node_type = $child->getNodeType;
+  	}
+  	my $child_xml_selection_path = $child->getNodeName;
+  	$child_xml_selection_path = "$current_xml_selection_path/$child_xml_selection_path";
+  	
+! 	if ($node_type == $ELEMENT_NODE) {
+  	    my $template = $parser->_find_template ("match", $child_xml_selection_path);
+  	    
+  	    if ($template) {
+--- 475,493 ----
+  
+    $_indent += $_indent_incr;
+  
+!   for (my $i = 0; $i < @$children;$i++) {
+!     my $child = $$children[$i];
+      my $ref = ref $child;
+!     print " "x$_indent,"$ref$/" if $XSLT::debug;
+      $_indent += $_indent_incr;
+  
+!       if ($child->getNodeType == DOCUMENT_NODE) {
+          $child = $child->getFirstChild;
+        }
+        my $child_xml_selection_path = $child->getNodeName;
+        $child_xml_selection_path = "$current_xml_selection_path/$child_xml_selection_path";
+  
+!       if ($child->getNodeType == ELEMENT_NODE) {
+            my $template = $parser->_find_template ("match", $child_xml_selection_path);
+  
+            if ($template) {
+***************
+*** 557,593 ****
+  					     $child_xml_selection_path,
+  					     $current_result_node);
+  	    }
+! 	} elsif ($node_type == $TEXT_NODE) {
+  	    $parser->_add_node($child, $current_result_node);
+! 	} elsif ($node_type == $DOCUMENT_TYPE_NODE) {
+  	    # skip #
+! 	} elsif ($node_type == $COMMENT_NODE) {
+  	    # skip #
+  	} else {
+- 	    my $ref = ref $child;
+  	    print " "x$_indent,"Cannot apply templates on nodes of type $ref$/" if $XSLT::debug;
+  	    warn ("apply-templates: Dunno what to do with nodes of type $ref !!! ($child_xml_selection_path)$/") if $XSLT::warnings;
+  	}
+  	
+! 	$XSLT::debug and $_indent -= $_indent_incr;
+      }
+  }
+  
+  sub _evaluate_element {
+!     my($parser, $xsl_node, $current_xml_node, 
+!        $current_xml_selection_path, $current_result_node) = @_;
+! 
+! #  my $parser = shift;
+! #  my $xsl_node = shift;
+! #  my $current_xml_node = shift;
+! #  my $current_xml_selection_path = shift;
+! #  my $current_result_node = shift;
+  
+    my $xsl_tag = $xsl_node->getTagName;
+!   if($XSLT::debug) {
+!       print " "x$_indent,"evaluating element $xsl_tag from \"$current_xml_selection_path\": $/";
+        $_indent += $_indent_incr;
+-   }
+  
+    if ($xsl_tag =~ /^xsl:/i) {
+        if ($xsl_tag =~ /^xsl:apply-templates$/i) {
+--- 497,527 ----
+                                             $child_xml_selection_path,
+                                             $current_result_node);
+            }
+!       } elsif ($child->getNodeType == TEXT_NODE) {
+            $parser->_add_node($child, $current_result_node);
+!       } elsif ($child->getNodeType == DOCUMENT_TYPE_NODE) {
+            # skip #
+!       } elsif ($child->getNodeType == COMMENT_NODE) {
+            # skip #
+        } else {
+            print " "x$_indent,"Cannot apply templates on nodes of type $ref$/" if $XSLT::debug;
+            warn ("apply-templates: Dunno what to do with nodes of type $ref !!! ($child_xml_selection_path)$/") if $XSLT::warnings;
+        }
+  
+!     $_indent -= $_indent_incr;
+    }
+  }
+  
+  sub _evaluate_element {
+!   my $parser = shift;
+!   my $xsl_node = shift;
+!   my $current_xml_node = shift;
+!   my $current_xml_selection_path = shift;
+!   my $current_result_node = shift;
+  
+    my $xsl_tag = $xsl_node->getTagName;
+!   print " "x$_indent,"evaluating element $xsl_tag from \"$current_xml_selection_path\": $/" if $XSLT::debug;
+    $_indent += $_indent_incr;
+  
+    if ($xsl_tag =~ /^xsl:/i) {
+        if ($xsl_tag =~ /^xsl:apply-templates$/i) {
+***************
+*** 658,666 ****
+                                                $current_result_node);
+    }
+  
+!     
+!   $XSLT::debug and $_indent -= $_indent_incr;
+! 
+  }
+  
+    sub _add_and_recurse {
+--- 592,598 ----
+                                                $current_result_node);
+    }
+  
+!   $_indent -= $_indent_incr;
+  }
+  
+    sub _add_and_recurse {
+***************
+*** 734,743 ****
+      my $node = shift;
+      my $fragment = shift;
+      
+!     my $node_type = $node->getNodeType;
+!     if ($node_type == $TEXT_NODE) {
+  	$parser->_add_node ($node, $fragment);
+!     } elsif ($node_type == $ELEMENT_NODE) {
+        print " "x$_indent,"stripping child nodes:$/" if $XSLT::debug;
+        $_indent += $_indent_incr;
+        foreach my $child ($node->getChildNodes) {
+--- 666,674 ----
+      my $node = shift;
+      my $fragment = shift;
+      
+!     if ($node->getNodeType == TEXT_NODE) {
+        $parser->_add_node ($node, $fragment);
+!     } elsif ($node->getNodeType == ELEMENT_NODE) {
+        print " "x$_indent,"stripping child nodes:$/" if $XSLT::debug;
+        $_indent += $_indent_incr;
+        foreach my $child ($node->getChildNodes) {
+***************
+*** 748,755 ****
+    }
+  
+  sub _move_node {
+!     my($parser, $node, $parent) = @_;
+      print " "x$_indent,"moving node..$/" if $XSLT::debug;
+      $parent->appendChild($node);
+  }
+  
+--- 679,690 ----
+    }
+  
+  sub _move_node {
+!   my $parser = shift;
+!   my $node = shift;
+!   my $parent = shift;
+! 
+    print " "x$_indent,"moving node..$/" if $XSLT::debug;
++ 
+    $parent->appendChild($node);
+  }
+  
+***************
+*** 842,851 ****
+    }
+  
+      sub __try_a_step__ {
+! 	my($parser, $path, $node, $multi) = @_;
+! 	$path ||= '';
+  
+! 	$path && study($path);
+        if ($path =~ /^\/([\w\.\:\-]+)\[(\d+?)\]/) {
+  
+          # /elem[n] #
+--- 777,788 ----
+    }
+  
+      sub __try_a_step__ {
+!       my $parser = shift;
+!       my $path = (shift || "");
+!       my $node = shift;
+!       my $multi = shift;
+  
+!       study ($path);
+        if ($path =~ /^\/([\w\.\:\-]+)\[(\d+?)\]/) {
+  
+          # /elem[n] #
+***************
+*** 1264,1286 ****
+        print " "x$_indent,"$ref$/" if $XSLT::debug;
+        $_indent += $_indent_incr;
+  
+!         if ($child->getNodeType == $DOCUMENT_NODE) {
+            $child = $child->getFirstChild;
+          }
+          
+          my $child_xml_selection_path = $child->getNodeName;
+          $child_xml_selection_path = "$current_xml_selection_path/$child_xml_selection_path";
+  
+!         if ($child->getNodeType == $ELEMENT_NODE) {
+            $parser->_evaluate_template ($xsl_node,
+  		 	               $child,
+                                         $child_xml_selection_path,
+                                         $current_result_node);
+!         } elsif ($child->getNodeType == $TEXT_NODE) {
+              $parser->_add_node($child, $current_result_node);
+!         } elsif ($child->getNodeType == $DOCUMENT_TYPE_NODE) {
+              # skip #
+!         } elsif ($child->getNodeType == $COMMENT_NODE) {
+              # skip #
+          } else {
+              print " "x$_indent,"Cannot do a for-each on nodes of type $ref$/" if $XSLT::debug;
+--- 1201,1223 ----
+        print " "x$_indent,"$ref$/" if $XSLT::debug;
+        $_indent += $_indent_incr;
+  
+!         if ($child->getNodeType == DOCUMENT_NODE) {
+            $child = $child->getFirstChild;
+          }
+          
+          my $child_xml_selection_path = $child->getNodeName;
+          $child_xml_selection_path = "$current_xml_selection_path/$child_xml_selection_path";
+  
+!         if ($child->getNodeType == ELEMENT_NODE) {
+            $parser->_evaluate_template ($xsl_node,
+  		 	               $child,
+                                         $child_xml_selection_path,
+                                         $current_result_node);
+!         } elsif ($child->getNodeType == TEXT_NODE) {
+              $parser->_add_node($child, $current_result_node);
+!         } elsif ($child->getNodeType == DOCUMENT_TYPE_NODE) {
+              # skip #
+!         } elsif ($child->getNodeType == COMMENT_NODE) {
+              # skip #
+          } else {
+              print " "x$_indent,"Cannot do a for-each on nodes of type $ref$/" if $XSLT::debug;

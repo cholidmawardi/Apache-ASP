@@ -1,4 +1,8 @@
 use DemoASP;
+use File::Basename qw(basename);
+use vars qw($FontFace);
+
+$GlobalFont = 'face=verdana,helvetica';
 
 sub Session_OnStart {
 	$Session->{Count} = 10;
@@ -27,6 +31,13 @@ sub Script_OnStart {
 }
 sub Script_OnEnd {
     $Session->{Ended}++;
+}
+
+sub Script_OnFlush {
+    if($Response->{ContentType} eq 'text/html') {
+	my $data = $Response->{BinaryRef};
+	$$data =~ s/(\<(body|td).*?\>)/$1\<font $GlobalFont\>/isg;
+    }
 }
 
 # you can share globals between scripts as of v.10, as all scripts, including 
@@ -101,5 +112,13 @@ sub Script_OnEnd {
        'table.inc' => 'Another include used to demo dynamic_includes.htm',
 
        'test.gif' => 'Source gif for the binary_write.htm example',
+
+       'transfer.htm' => '$Server->Transfer() use in action, for speedy redirect type behavior.',
+       
+       'xml_subs.asp' => 
+       'XMLSubsMatch XML Extensions demonstrated, which all custom tags '.
+       'to be created by the developer.',
+
+       'xslt.xml' => 'XSLT transformation of XML script, powered by XML::XSLT and Tie::Cache',
 );
 

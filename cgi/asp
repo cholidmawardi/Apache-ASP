@@ -83,7 +83,7 @@ while(@ARGV) {
 
     $r->dir_config('NoState', 0) if $opt_s;
     if($opt_d) {
-	$r->dir_config('Debug', 2);
+	$r->dir_config('Debug', -2);
 	$r->dir_config('CommandLine', 1);
     }
     if($opt_b) {

@@ -15,7 +15,7 @@ inserted into their query strings.
 <p>
 So turn off the cookies and see what happens!  You 
 should notice that all local URLs, including
-the link to <a href=<%=basename($0)%>>itself</a>,
+the link to <a href=<%= $demo->{file} %>>itself</a>,
 now have the session id carried by the query strings.
 <p>
 <table>

@@ -7,30 +7,30 @@ SYNOPSIS
       PerlSetVar Global /tmp/asp
 
 DESCRIPTION
-    This perl module provides an Active Server Pages port to the Apache HTTP
+    This perl module provides an Active Server Pages port to the Apache Web
     Server with perl as the host scripting language. Active Server Pages is
-    a web application platform that originated with the Microsoft IIS
-    server. Under Apache for both Win32 and Unix, it allows a developer to
-    create dynamic web applications with session management and perl code
-    embedded in static html files.
+    a web application platform that originated with the Microsoft NT/IIS
+    server. Under Apache for Unix and Win32 platforms it allows a developer
+    to create dynamic web applications with session management and embedded
+    perl code.
 
-    This is a portable solution, similar to ActiveState PerlScript and MKS
-    PScript implementation of perl for IIS ASP. Work has been done and will
-    continue to make ports to and from these other implementations as smooth
-    as possible.
-
-    This module works under the Apache HTTP Server with the mod_perl module
+    This module works under the Apache Web Server with the mod_perl module
     enabled. See http://www.apache.org and http://perl.apache.org for
     further information.
 
-    For Apache::ASP downloading and installation, please read the INSTALL
-    section.
+    This is a portable solution, similar to ActiveState's PerlScript for
+    NT/IIS ASP. Work has been done and will continue to make ports to and
+    from this implementation as smooth as possible.
 
-    For database access, ActiveX, and scripting language issues, please read
-    the FAQ section.
+    For Apache::ASP downloading and installation, please read the INSTALL
+    section. For installation troubleshooting check the FAQ and the SUPPORT
+    sections.
+
+    For database access, ActiveX, scripting languages, and other
+    miscellaneous issues please read the FAQ section.
 
 WEBSITE
-    The Apache::ASP website is at http://www.nodeworks.com/asp/ which you
+    The Apache::ASP web site is at http://www.nodeworks.com/asp/ which you
     can also find in the ./site directory of the source distribution.
 
 INSTALL
@@ -53,7 +53,7 @@ INSTALL
 
       * use nmake for win32
 
-    Please note that you must first have the Apache HTTP Server & mod_perl
+    Please note that you must first have the Apache Web Server & mod_perl
     installed before using this module in a web server environment. The
     offline mode for building static html may be used with just perl.
 
@@ -72,7 +72,7 @@ INSTALL
 
   Quick Start
 
-    Once you have successfully built the Apache HTTP Server with mod_perl,
+    Once you have successfully built the Apache Web Server with mod_perl,
     copy the ./site/eg/ directory from the Apache::ASP installation to your
     Apache document tree and try it out! You must put "AllowOverride All" in
     your httpd.conf <Directory> config section to let the .htaccess file in
@@ -197,6 +197,12 @@ CONFIG
 
       PerlSetVar AllowSessionState 1    
 
+    Note that if you want to dissallow session creation for certain non web
+    browser user agents, like search engine spiders, you can use an init
+    handler like:
+
+      PerlInitHandler "sub { $_[0]->dir_config('AllowSessionState', 0) }"
+
     AllowApplicationState
     Default 1. If you want to leave $Application undefined, then set this to
     0, for a performance increase of around 2-3%. Allowing use of
@@ -213,11 +219,11 @@ CONFIG
     same StateDir are part of the same ASP application.
 
     The default has not changed since implementing this config directive.
-    The reason for this config option is to allow OS's with caching file
-    systems like Solaris to specify a state directory separately from the
-    Global directory, which contains more permanent files. This way one may
-    point StateDir to /tmp/myaspapp, and make one's ASP application scream
-    with speed.
+    The reason for this config option is to allow operating systems with
+    caching file systems like Solaris to specify a state directory
+    separately from the Global directory, which contains more permanent
+    files. This way one may point StateDir to /tmp/myaspapp, and make one's
+    ASP application scream with speed.
 
       PerlSetVar StateDir ./.state
 
@@ -367,7 +373,7 @@ CONFIG
     cost should be amortized across most users that will not need this URL
     parsing. This is a lazy programmer's dream. For something more
     efficient, look at the SessionQuery setting. For more information about
-    this solution, please read the COOKIES section.
+    this solution, please read the SESSIONS section.
 
       PerlSetVar SessionQueryParse 0
 
@@ -401,7 +407,7 @@ CONFIG
     default 0, set to a regexp pattern that will match URLs for $Server-
     >URL() to add a session id to. SessionQuery normally allows $Server-
     >URL() to add session ids just to local URLs, so if you use absolute URL
-    references like http://localhost/ for your website, then just like with
+    references like http://localhost/ for your web site, then just like with
     SessionQueryParseMatch, you might set this pattern to ^http://localhost
 
     If this is set, then you don't need to set SessionQuery, as it will be
@@ -464,6 +470,57 @@ CONFIG
     followed by the end of the line.
 
       PerlSetVar PodComments 1
+
+  XML / XSLT
+
+    XMLSubsMatch
+    default not defined, set to some regexp pattern that will match all XML
+    and HTML tags that you want to have perl subroutines handle. The is
+    Apache::ASP's custom tag technology, and can be used to create powerful
+    extensions to your XML and HTML rendering.
+
+    Please see XML/XSLT section for instructions on its use.
+
+      PerlSetVar XMLSubsMatch ^my:
+
+    XSLT
+    default not defined, if set to a file, ASP scripts will be regarded as
+    XML output and transformed with the given XSL file with XML::XSLT. This
+    XSL file will also be executed as an ASP script first, and its output
+    will be the XSL data used for the transformation. This XSL file will be
+    executed as a dynamic include, so may be located in the current
+    directory, Global, or IncludesDir.
+
+    Please see the XML/XSLT section for an explanation of its use.
+
+      PerlSetVar XSLT template.xsl
+
+    XSLTMatch
+    default .*, if XSLT is set by default all ASP scripts will be XSL
+    transformed by the specified XSL template. This regexp setting will tell
+    XSLT which file names to match with doing XSL transformations, so that
+    regular HTML ASP scripts and XML ASP scripts can be configured with the
+    same configuration block. Please see ./site/eg/.htaccess for an example
+    of its use.
+
+      PerlSetVar XSLTMatch \.xml$
+
+    XSLTCacheSize
+    default 0, if set greater than 0, will cache that many XML and XSL
+    parsed objects and their transformations' output. XML::XSLT
+    transformations are computationally expensive, requiring first XML DOM
+    objects be created from the XML & XSL outputs, and then the final XSLT
+    rendering is non-trivial too, so every effort is made to cache various
+    steps in the process for enormous speed benefits if the same XML / XSL
+    combination is being hit on the same web server process.
+
+    Efforts will be made in the future to provide a mechanism for pre-
+    caching these computations at server startup prefork so that they may be
+    shared with the child Apache httpds.
+
+    This setting requires that Tie::Cache be first installed.
+
+      PerlSetVar XSLTCacheSize 100
 
   Miscellaneous
 
@@ -555,11 +612,13 @@ CONFIG
 
     You may only use this option with modperl v1.16 or greater installed and
     PERL_STACKED_HANDLERS enabled. Filtering may be used in conjunction with
-    other handlers that are also "filter aware".
+    other handlers that are also "filter aware". If in doubt, try building
+    your mod_perl with
 
-    With filtering through Apache::SSI, you should expect at least a 20%
-    performance decrease, increasing as your files get bigger, increasing
-    the work that SSI must do.
+      perl Makefile.PL EVERYTHING=1
+
+    With filtering through Apache::SSI, you should expect near a a 20%
+    performance decrease.
 
       PerlSetVar Filter Off
 
@@ -589,7 +648,29 @@ CONFIG
 
       PerlSetVar Clean 0
 
+    CompressGzip
+    default 0, if true will gzip compress HTML output on the fly if
+    Compress::Zlib is installed, and the client browser supports it.
+    Depending on the HTML being compressed, the client may see a 50% to 90%
+    reduction in HTML output. I have seen 40K of HTML squeezed down to just
+    under 6K. This will come at a 5%-20% hit to CPU usage per request
+    compressed.
+
+    Note there are some cases when a browser says it will accept gzip
+    encoding, but then not render it correctly. This behavior has been seen
+    with IE5 when set to use a proxy but not using a proxy, and the URL does
+    not end with a .html or .htm. No work around has yet been found for this
+    case so use at your own risk.
+
+      PerlSetVar CompressGzip 1
+
   Mail Administration
+
+    Apache::ASP has some powerful administrative email extensions that let
+    you sleep at night, knowing full well that if an error occurs at the web
+    site, you will know about it immediately. With these features already
+    enabled, it was also easy to provide the $Server->Mail(\%mail) API
+    extension which you can read up about in the OBJECTS section.
 
     MailHost
     The mail host is the smtp server that the below Mail* config directives
@@ -601,7 +682,14 @@ CONFIG
     smtp servers to the MailHost specified here, should this primary server
     not be working.
 
-      PerlSetVar MailHost smtp.yourdomain.com
+      PerlSetVar MailHost smtp.yourdomain.com.foobar
+
+    MailFrom
+    Default NONE, set this to specify the default mail address placed in the
+    From: mail header for the $Server->Mail() API extension, as well as
+    MailErrorsTo and MailAlertTo.
+
+      PerlSetVar MailFrom youremail@yourdomain.com.foobar
 
     MailErrorsTo
     No default, if set, ASP server errors, error code 500, that result while
@@ -700,6 +788,7 @@ EVENTS
             ------                  ------
             Script_OnStart *        Beginning of Script execution
             Script_OnEnd *          End of Script execution
+            Script_OnFlush *        Before $Response being flushed to client.
             Application_OnStart     Beginning of Application
             Application_OnEnd       End of Application
             Session_OnStart         Beginning of user Session.
@@ -739,18 +828,6 @@ EVENTS
 
             $Server->RegisterCleanup()
 
-  Application_OnStart
-
-    This event marks the beginning of an ASP application, and is run just
-    before the Session_OnStart of the first Session of an application. This
-    event is useful to load up $Application with data that will be used in
-    all user sessions.
-
-  Application_OnEnd
-
-    The end of the application is marked by this event, which is run after
-    the last user session has timed out for a given ASP application.
-
   Session_OnStart
 
     Triggered by the beginning of a user's session, Session_OnStart gets run
@@ -782,6 +859,33 @@ EVENTS
 
     Thus I would not put anything mission-critical in the Session_OnEnd,
     just stuff that would be nice to run whenever it gets run.
+
+  Script_OnFlush
+
+    API extension. This event will be called prior to flushing the $Response
+    buffer to the web client. At this time, the $Response->{BinaryRef}
+    buffer reference may be used to modify the buffered output at runtime to
+    apply global changes to scripts output without having to modify all the
+    scripts.
+
+     sub Script_OnFlush {
+       my $ref = $Response->{BinaryRef};
+       $$ref =~ s/\s+/ /sg; # to strip extra white space
+     }
+
+    Check out the ./site/eg/global.asa for an example of its use.
+
+  Application_OnStart
+
+    This event marks the beginning of an ASP application, and is run just
+    before the Session_OnStart of the first Session of an application. This
+    event is useful to load up $Application with data that will be used in
+    all user sessions.
+
+  Application_OnEnd
+
+    The end of the application is marked by this event, which is run after
+    the last user session has timed out for a given ASP application.
 
 OBJECTS
     The beauty of the ASP Object Model is that it takes the burden of CGI
@@ -897,6 +1001,21 @@ OBJECTS
     This object manages the output from the ASP Application and the client
     web browser. It does not store state information like the $Session
     object but does have a wide array of methods to call.
+
+    $Response->{BinaryRef}
+        API extension. This is a perl reference to the buffered output of
+        the $Response object, and can be used in the Script_OnFlush
+        global.asa event to modify the buffered output at runtime to apply
+        global changes to scripts output without having to modify all the
+        scripts. These changes take place before content is flushed to the
+        client web browser.
+
+         sub Script_OnFlush {
+           my $ref = $Response->{BinaryRef};
+           $$ref =~ s/\s+/ /sg; # to strip extra white space
+         }
+
+        Check out the ./site/eg/global.asa for an example of its use.
 
     $Response->{Buffer}
         Default 1, when TRUE sends output from script to client only at the
@@ -1208,7 +1327,7 @@ OBJECTS
         API extension. The FileUpload interface to file upload data is
         stabilized. The internal representation of the file uploads is a
         hash of hashes, one hash per file upload found in the $Request-
-        >Form() colletion. This collection of collections may be queried
+        >Form() collection. This collection of collections may be queried
         through the normal interface like so:
 
           $Request->FileUpload('upload_file', 'ContentType');
@@ -1332,6 +1451,13 @@ OBJECTS
         Not implemented. May never be. Please see the Apache Timeout
         configuration option, normally in httpd.conf.
 
+    $Server->Config($setting)
+        API extension. Allows a developer to read the CONFIG settings, like
+        Global, GlobalPackage, StateDir, etc. Currently implemented as a
+        wrapper around
+
+          Apache->dir_config($setting)
+
     $Server->CreateObject($program_id)
         Allows use of ActiveX objects on Win32. This routine returns a
         reference to an Win32::OLE object upon success, and nothing upon
@@ -1342,6 +1468,18 @@ OBJECTS
 
         For further information, try 'perldoc Win32::OLE' from your favorite
         command line.
+
+    $Server->Execute($file, @args)
+        New method from ASP 3.0, this does the same thing as
+
+          $Response->Include($file, @args)
+
+        and internally is just a wrapper for such. Seems like we had this
+        important functionality before the IIS/ASP camp!
+
+    $Server->GetLastError()
+        Not implemented, will likely not ever be because this is dependent
+        on how IIS handles errors and is not relevant in Apache.
 
     $Server->HTMLEncode($string)
         Returns an HTML escapes version of $string. &, ", >, <, are each
@@ -1361,6 +1499,52 @@ OBJECTS
 
         To see this method call in action, check out the sample
         ./site/eg/server.htm script.
+
+    $Server->Mail(\%mail, %smtp_args);
+        With the Net::SMTP and Net::Config modules installed, which are part
+        of the perl libnet package, you may use this API extension to send
+        email. The \%mail hash reference that you pass in must have values
+        for at least the To, From, and Subject headers, and the Body of the
+        mail message.
+
+        You could send an email like so:
+
+         $Server->Mail({
+                        To => 'somebody@yourdomain.com.foobar',
+                        From => 'youremail@yourdomain.com.foobar',
+                        Subject => 'Subject of Email',
+                        Body => 
+                         'Body of message. '.
+                         'You might have a lot to say here!',
+                        Organization => 'Your Organization',
+                       });
+
+        Any extra fields specified for the email will be interpreted as
+        headers for the email, so to send an HTML email, you could set
+        'Content-Type' => 'text/html' in the above example.
+
+        If you have MailFrom configured, this will be the default for the
+        From header in your email. For more configuration options like the
+        MailHost setting, check out the CONFIG section.
+
+        The return value of this method call will be boolean for success of
+        the mail being sent.
+
+        If you would like to specially configure the Net::SMTP object used
+        internally, you may set %smtp_args and they will be passed on when
+        that object is initialized. "perldoc Net::SMTP" for more into on
+        this topic.
+
+    $Server->Transfer($file)
+        New method from ASP 3.0. Transfers control to another script. The
+        Response buffer will not be cleared automatically, so if you want
+        this to serve as a faster $Response->Redirect(), you will need to
+        call $Response->Clear() before calling this method.
+
+        This new script will take over current execution and the current
+        script will not continue to be executed afterwards. It differs from
+        Execute() because the original script will not pick up where it left
+        off.
 
     $Server->URLEncode($string)
         Returns the URL-escaped version of the string $string. +'s are
@@ -1409,8 +1593,7 @@ OBJECTS
         URL will also have the session id inserted into the query string,
         making this a critical part of that method of implementing
         cookieless sessions. For more information on that topic please read
-        on the the setting in the CONFIG section, and the COOKIES section
-        too.
+        on the setting in the CONFIG section, and the SESSIONS section too.
 
 SSI
     SSI is great! One of the main features of SSI is to include other files
@@ -1482,6 +1665,215 @@ EXAMPLES
      chmod -R 0777 eg
 
     will do the trick :)
+
+SESSIONS
+    Cookies are used by default for user $Session support ( see OBJECTS ).
+    In order to track a web user and associate server side data with that
+    client, the web server sets, and the web client returns a 32 byte
+    session id identifier cookie. This implementation is very secure and may
+    be used in secure HTTPS transactions, and made stronger with
+    SecureSession and ParanoidSession settings (see CONFIG ).
+
+    However good cookies are for this kind of persistent state management
+    between HTTP requests, they have long been under fire for security risks
+    associated with JavaScript security exploits and privacy abuse by large
+    data tracking companies.
+
+    Because of these reasons, web users will sometimes turn off their
+    cookies, rendering normal ASP session implementations powerless,
+    resulting in a new $Session generated every request. This is not good
+    for ASP style sessions.
+
+  Cookieless Sessions
+
+     *** See WARNING Below ***
+
+    So we now have more ways to track sessions with the SessionQuery* CONFIG
+    settings, that allow a web developer to embed the session id in URL
+    query strings when use of cookies is denied. The implementations work
+    such that if a user has cookies turned on, then cookies will be used,
+    but for those users with cookies turned off, the session ids will be
+    parsed into document URLs.
+
+    The first and easiest method that a web developer may use to implement
+    cookieless sessions are with SessionQueryParse* directives which enable
+    Apache::ASP to the parse the session id into document URLs on the fly.
+    Because this is resource inefficient, there is also the SessionQuery*
+    directives that may be used with the $Server->URL($url,\%params) method
+    to generate custom URLs with the session id in its query string.
+
+    To see an example of these cookieless sessions in action, check out the
+    ./site/eg/cookieless_session.asp example.
+
+     *** WARNING ***
+
+    If you do use these methods, then be VERY CAREFUL of linking offsite
+    from a page that was accessed with a session id in a query string. This
+    is because this session id will show up in the HTTP_REFERER logs of the
+    linked to site, and a malicious hacker could use this information to
+    compromise the security of your site's $Sessions, even if these are run
+    under a secure web server.
+
+    In order to shake a session id off an HTTP_REFERER for a link taking a
+    user offsite, you must point that link to a redirect page that will
+    redirect a user, like so:
+
+     <% 
+        # "cross site scripting bug" prevention
+        my $sanitized_url = 
+            $Server->HTMLEncode($Response->QueryString('OffSiteUrl'));
+     %>
+     <html>
+     <head>
+     <meta http-equiv=refresh content='0;URL=<%=$sanitized_url%>'>
+     </head>
+     <body> 
+            Redirecting you offsite to 
+            <a href=<%=$sanitized_url%> >here</a>...
+     </body>
+     </html>
+
+    Because the web browser visits a real page before being redirected with
+    the <meta> tag, the HTTP_REFERER will be set to this page. Just be sure
+    to not link to this page with a session id in its query string.
+
+    Unfortunately a simple $Response->Redirect() will not work here, because
+    the web browser will keep the HTTP_REFERER of the original web page if
+    only a normal redirect is used.
+
+XML/XSLT
+  Custom Tags with XMLSubsMatch
+
+    Before XML, there was the need to make HTML markup smarter. Apache::ASP
+    v.19 gives you the ability to have a perl subroutine handle the
+    execution of any predefined tag, taking the tag descriptors, and the
+    text contained between, as arguments of the subroutine. This custom tag
+    technology can be used to extend a web developer's abilities to add
+    dynamic pieces without having to visibly use <% %> style code entries.
+
+    So, lets say that you have table that you want to insert for an employee
+    with contact info and the like, you could set up a tag like:
+
+     <my:employee name="Jane" last="Doe" phone="555-2222">
+       Jane Doe has been here since 1998.
+     </my:employee>
+
+    To render it with a custom tag, you would tell the Apache::ASP parser to
+    render the tag with a subroutine:
+
+      PerlSetVar XMLSubsMatch my:employee
+
+    Any colons, ':', in the XML custom tag will turn into '::', a perl
+    package separator, so the my:employee tag would translate to the
+    my::employee subroutine, or the employee subroutine in the my package.
+
+    Then you would create the my::employee subroutine in the my perl package
+    or whereever like so
+
+      sub my::employee {
+        my($attributes, $body) = @_;
+        $Response->Include('employee.inc', $attributes, $body);
+      }
+
+      <!-- # employee.inc file somewhere else -->
+      <% my($attributes, $body) = @_; %>
+      <table>
+      <% for('name', 'last', 'phone') { %>
+        <tr>
+          <td><b><%=ucfirst $_ %></b>:</td>
+          <td><%= $attributes->{$_} %></td>
+        </tr>
+      <% } %>
+      <tr><td colspan=2><%= $body %></td></tr>
+      </table>
+      <!-- # end employee.inc file -->
+
+    The $Response->Include() would then delegate the rendering of the
+    employee to the employee.inc ASP script include.
+
+    Though XML purists would not like this custom tag technology to be
+    related to XML, the reality is that a careful site engineer could render
+    full XML documents with this technology, applying all the correct styles
+    that one might otherwise do with XSLT.
+
+    Custom tags defined in this way can be used as XML tags are defined with
+    both a body and without as it
+
+      <my:employee>...</my:employee>
+
+    and just
+
+      <my:employee/>
+
+    These tags are very powerful in that they can also enclose normal ASP
+    logic, like:
+
+      <my:employee>
+        <!-- normal ASP logic -->
+        <% my $birthday = &HTTP::Date::time2str(time - 25 * 86400 * 365); %>
+
+        <!-- ASP inserts -->
+        This employee has been online for <%= int(rand()*600)+1 %>
+        seconds, and was born near <%= $birthday %>.
+      </my:employee>   
+
+    For an example of this custom XML tagging in action, please check out
+    the ./site/eg/xml_subs.asp script. Note the one limitation that
+    currently exists is that tags of the same name may not be used in each
+    other, but otherwise customs tags may be used in other custom tags.
+
+  XSLT Tranformations
+
+    XML is good stuff, but what can you use it for? The principle is that by
+    having data and style separated in XML and XSL files, you can reformat
+    your data more easily in the future, and you can render your data in
+    multiple formats, just as easily as for your web site, so you might
+    render your site to a PDA, or a cell phone just as easily as to a
+    browser, and all you have to do is set up the right XSL stylesheets to
+    do the transformation (XSLT).
+
+    In the first release of XML/XSLT support, Apache::ASP v.19, ASP scripts
+    may be the source of XML data that the XSL file transforms. This
+    transformation is handled by XML::XSLT, a perl module, and you can see
+    an example of it in action at the ./site/eg/xslt.xml XML script. To
+    specify a XSL stylesheet, use the setting:
+
+      PerlSetVar XSLT template.xsl
+
+    where template.xsl could be any file. By default this will XSLT
+    transform all ASP scripts so configured, but you can separate xml
+    scripts from the rest with the setting:
+
+      PerlSetVar XSLTMatch xml$
+
+    where all files with the ending xml would undergo a XSLT transformation.
+    XSLT tranformations are slow however, so to cache XSLT transformations
+    from XML scripts with consistent output, turn on caching:
+
+      PerlSetVar XSLTCacheSize 100
+
+    which would allow for the output of 100 transformations to be cached. If
+    the XML data is consistently different as it might be if it were
+    database driven, then the caching will have little effect, but for
+    mostly static pages like real XML docs, this will be a huge win.
+
+    Note that XSLT depends on the installation of XML::XSLT, which in turn
+    depends on XML::DOM, and XML::Parser. The caching feature depends on
+    Tie::Cache being installed.
+
+  Reference OSS Implementations
+
+    For their huge ground breaking XML efforts, these other XML OSS projects
+    need mention:
+
+      Cocoon - XML-based web publishing, in Java 
+      http://xml.apache.org/cocoon/
+
+      AxKit - XML web publishing with Apache & mod_perl
+      http://www.axkit.org/
+
+      XML::XSLT - Core engine that Apache::ASP uses for XSLT
+      http://xmlxslt.sourceforge.net/
 
 CGI
     CGI has been the standard way of deploying web applications long before
@@ -1638,81 +2030,6 @@ PERLSCRIPT
      > Win32::OLE::in may not be used.  Use keys() to iterate over.
      > The ->{Item} property does not work, use the ->Item() method.
 
-COOKIES
-    Cookies are used by default for user $Session support ( see OBJECTS ).
-    In order to track a web user and associate server side data with that
-    client, the web server sets, and the web client returns a 32 byte
-    session id identifier cookie. This implementation is very secure and may
-    be used in secure HTTPS transactions, and made stronger with
-    SecureSession and ParanoidSession settings (see CONFIG ).
-
-    However good cookies are for this kind of persistent state management
-    between HTTP requests, they have long been under fire for security risks
-    associated with JavaScript security exploits and privacy abuse by large
-    data tracking companies.
-
-    Because of these reasons, web users will sometimes turn off their
-    cookies, rendering normal ASP session implementations powerless,
-    resulting in a new $Session generated every request. This is not good
-    for ASP style sessions.
-
-  Cookieless Sessions
-
-     *** See WARNING Below ***
-
-    So we now have more ways to track sessions with the SessionQuery* CONFIG
-    settings, that allow a web developer to embed the session id in URL
-    query strings when use of cookies is denied. The implementations work
-    such that if a user has cookies turned on, then cookies will be used,
-    but for those users with cookies turned off, the session ids will be
-    parsed into document URLs.
-
-    The first and easiest method that a web developer may use to implement
-    cookieless sessions are with SessionQueryParse* directives which enable
-    Apache::ASP to the parse the session id into document URLs on the fly.
-    Because this is resource inefficient, there is also the SessionQuery*
-    directives that may be used with the $Server->URL($url,\%params) method
-    to generate custom URLs with the session id in its query string.
-
-    To see an example of these cookieless sessions in action, check out the
-    ./site/eg/cookieless_session.asp example.
-
-     *** WARNING ***
-
-    If you do use these methods, then be VERY CAREFUL of linking offsite
-    from a page that was accessed with a session id in a query string. This
-    is because this session id will show up in the HTTP_REFERER logs of the
-    linked to site, and a malicious hacker could use this information to
-    compromise the security of your site's $Sessions, even if these are run
-    under a secure web server.
-
-    In order to shake a session id off an HTTP_REFERER for a link taking a
-    user offsite, you must point that link to a redirect page that will
-    redirect a user, like so:
-
-     <% 
-        # "cross site scripting bug" prevention
-        my $sanitized_url = 
-            $Server->HTMLEncode($Response->QueryString('OffSiteUrl'));
-     %>
-     <html>
-     <head>
-     <meta http-equiv=refresh content='0;URL=<%=$sanitized_url%>'>
-     </head>
-     <body> 
-            Redirecting you offsite to 
-            <a href=<%=$sanitized_url%> >here</a>...
-     </body>
-     </html>
-
-    Because the web browser visits a real page before being redirected with
-    the <meta> tag, the HTTP_REFERER will be set to this page. Just be sure
-    to not link to this page with a session id in its query string.
-
-    Unfortunately a simple $Response->Redirect() will not work here, because
-    the web browser will keep the HTTP_REFERER of the original web page if
-    only a normal redirect is used.
-
 FAQ
     The following are some frequently asked questions about Apache::ASP.
 
@@ -1765,6 +2082,17 @@ FAQ
     level of indirection on the left side of an assignment like:
 
       $Session->{complex}{object} = $data;
+
+    How can I keep search engine spiders from killing the session manager?
+    If you want to dissallow session creation for certain non web browser
+    user agents, like search engine spiders, you can use an init handler
+    like:
+
+      PerlInitHandler "sub { $_[0]->dir_config('NoState', 1) }"
+
+    This will configure your environment before Apache::ASP executes and
+    sees the configuration settings. You can use the mod_perl API in this
+    way to configure Apache::ASP at runtime.
 
     Insecure dependency in eval while running with - T switch ?
     If you are running your mod_perl with "PerlTaintCheck On", which is
@@ -1925,11 +2253,11 @@ TUNING
 
      Apache::ASP->Loader($path, $pattern, %config)
 
-    This routine takes a file or directory as its first arg. If a file, that
-    file will be compiled. If a directory, that directory will be recursed,
-    and all files in it whose file name matches $pattern will be compiled.
-    $pattern defaults to .*, which says that all scripts in a directory will
-    be compiled by default.
+    This routine takes a file or directory as its first argument. If a file,
+    that file will be compiled. If a directory, that directory will be
+    recursed, and all files in it whose file name matches $pattern will be
+    compiled. $pattern defaults to .*, which says that all scripts in a
+    directory will be compiled by default.
 
     The %config args, are the config options that you want set that affect
     compilation. These options include Debug, Global, GlobalPackage,
@@ -1995,11 +2323,11 @@ SEE ALSO
     Win32::OLE(3)
 
 KEYWORDS
-    Apache,ASP,perl,apache,mod_perl,asp,Active Server Pages,perl,asp,web
-    application,ASP, session management,Active Server,scripting,dynamic
-    html,asp,perlscript,Unix,Linux,Solaris,Win32,WinNT, cgi
-    compatible,asp,response,ASP,request,session,application,server,Active
-    Server Pages
+    Apache, ASP, perl, apache, mod_perl, asp, Active Server Pages, perl,
+    asp, web application, ASP, session management, Active Server, scripting,
+    dynamic html, asp, perlscript, Unix, Linux, Solaris, Win32, WinNT, cgi
+    compatible, asp, response, ASP, request, session, application, server,
+    Active Server Pages
 
 NOTES
     Many thanks to those who helped me make this module a reality. ASP +
@@ -2024,6 +2352,8 @@ NOTES
      :) Bill McKinnon, who understands the finer points of running a web site.
      :) Russell Weiss, for being every so "strict" about his code.
      :) Paul Linder, who is Mr. Clean... not just the code, its faster too !
+        Boy was that just the beginning.  Work with him later facilitated better
+        session management and XMLSubsMatch custom tag technology.
      :) Tony Merc Mobily, inspiring tweaks to compile scripts 10 times faster
      :) Russell Weiss again, for finding the internal session garbage collection 
         behaving badly with DB_File sensitive i/o flushing requirements.
@@ -2034,6 +2364,9 @@ NOTES
      :) Matt Sergeant, again, for ever the excellent XML critique.
      :) Stas Bekman, for his beloved guide, and keeping us all worldly.
      :) Gerald Richter, for his Embperl, collaboration and competition!
+     :) Geert Josten, for his wonderful work on XML::XSLT
+     :) Craig Samuel, at LRN, for his faith in open source for his LCEC.
+     :) Vee McMillen, for his tried and true patience.
 
 SUPPORT
   MAILING LIST ARCHIVE
@@ -2042,7 +2375,6 @@ SUPPORT
 
      http://forum.swarthmore.edu/epigone/modperl
      http://www.geocrawler.com/lists/3/web/182/0/
-     http://www.bitmechanic.com/mail-archives/modperl/
      http://www.egroups.com/group/modperl/
 
     and allow searching for previously asked Apache::ASP and mod_perl
@@ -2065,8 +2397,7 @@ SUPPORT
 
     If you are interested in any of the above commercial support offerings,
     please email asp@chamas.com and we will pursue an official support
-    channel if there is enough interest. Please note that this would likely
-    be modeled on the MySQL support features and pricing.
+    channel if there is enough interest.
 
 SITES USING
     What follows is a list of public sites that are using Apache::ASP. If
@@ -2074,8 +2405,14 @@ SITES USING
     of the software by being listed, please send your URL to me at
     joshua@chamas.com and I'll be sure to add it to the list.
 
+            Anime Wallpapers dot com
+            http://www.animewallpapers.com/
+
             Chamas Enterprises Inc.         
             http://www.chamas.com
+
+            Direct.it
+            http://www.direct.it/
 
             HCST
             http://www.hcst.net
@@ -2083,14 +2420,23 @@ SITES USING
             International Telecommunication Union
             http://www.itu.int
 
+            Integra
+            http://www.integra.ru/
+
             Internetowa Gielda Samochodowa          
             http://www.gielda.szczecin.pl
+
+            Money FM
+            http://www.moneyfm.gr
+
+            Motorsport.com
+            http://www.motorsport.com
 
             Multiple Listing Service of Greater Cincinnati
             http://www.cincymls.com
 
             NodeWorks - web link monitoring                         
-            http://www.nodeworks.com
+            http://nodeworks.com
 
             OnTheWeb Services
             http://www.ontheweb.nu
@@ -2104,6 +2450,9 @@ SITES USING
             redhat.com | support
             http://www.redhat.com/apps/support/
 
+            Samara.RU
+            http://portal.samara.ru/
+
             Sex Shop Online                         
             http://www.sex.shop.pl
             
@@ -2113,8 +2462,33 @@ SITES USING
             USCD Electrical & Computer Engineering
             http://ece-local.ucsd.edu
 
-            Wild Technologies Limited
-            http://wild.com.hk
+RESOURCES
+    Here are some important resources listed related to the use of
+    Apache::ASP for publishing web applications:
+
+            mod_perl Apache web module
+            http://perl.apache.org
+
+            mod_perl Guide
+            http://perl.apache.org/guide/
+
+            mod_perl book
+            http://www.modperl.com
+            
+            Perl Programming Language
+            http://www.perl.com
+
+            Apache Web Server
+            http://www.apache.org
+     
+            PerlMonth Online Magazine
+            http://www.perlmonth.com
+
+            Apache & mod_perl Reference Cards
+            http://www.refcards.com/
+
+            Perl DBI Database Access
+            http://www.symbolstone.org/technology/perl/DBI/         
 
 TODO
     There is no specific time frame in which these things will be
@@ -2123,14 +2497,9 @@ TODO
 
   WILL BE DONE
 
-     + Better debugging, line numbers for dynamic includes.  
-       Maybe also some lightweight syntax error checking.
-     + MailErrorsPower, sends duplicate errors every 1,10,100... occurances
-     + MailErrorsPowerPeriod, resets the duplicate errors counter.
-     + XML extensions allowing full rendering of XML documents, and 
-       custom tag extensions for a site.
-     + Database storage of $Session & $Application, so web clusters may be used
-       to serve up Apache::ASP content, maybe via Apache::Session.
+     + Database storage of $Session & $Application, so web clusters 
+       may scale better than the current NFS StateDir implementation
+       allows, maybe via Apache::Session.
      + Dumping state of Apache::ASP during an error, and being
        able to go through it with the perl debugger.
      + Investigating possibility of hooking $Session timeout into 
@@ -2146,23 +2515,208 @@ TODO
      + Close integration with HTML::Embperl
      + BerkeleyDB2 integration for state management, maybe getting
        shared memory to work.
+     + MailErrorsPower, sends duplicate errors every 1,10,100... occurences
+     + MailErrorsPowerPeriod, resets the duplicate errors counter.
 
 CHANGES
      + = improvement; - = bug fix
 
-    $VERSION = .18; $DATE="02/03/00";
+    $VERSION = 1.91; $DATE="07/02/00";
+     +Documented XMLSubsMatch & XSLT* configuration
+      settings in CONFIG section.
+
+     +XSLT XSL template is now first executed as an 
+      ASP script just like the XML scripts.  This is 
+      just one step away now from implementing XSP logic.
+
+     +$Server->Execute and $Server->Transfer API extensions
+      implemented.  Execute is the same as $Request->Include()
+      and $Server->Transfer is like an apache internal redirect
+      but keeps the current ASP objects for the next script.
+
+      Added examples, transfer.htm, and modified dynamic_includes.htm.
+
+     +Better compile time error debugging with Debug 2 or -2.
+      Will hilite/link the buggy line for global.asa errors, 
+      include errors, and XML/XSLT errors just like with 
+      ASP scripts before.
+
+     +Nice source hiliting when viewing source for the example
+      scripts.
+
+     +Runtime string writing optimization for static HTML going
+      through $Response.
+
+     +New version numbering just like everyone else.  Starting at 1.91
+      since I seem to be off by a factor of 10, last release would have
+      been 1.9.
+
+    $VERSION = 0.19; $DATE="NOT RELEASED";
+     +XMLSubsMatch and XSLT* settings documented in 
+      the XML/XSLT section of the site/README.
+
+     -XMLSubsMatch will strip parens in a pattern match
+      so it does not interfere with internal matching use.
+
+     +XSLT integration allowing XML to be rendered by XSLT
+      on the fly.  XSLT specifies XSL file to transform XML.
+      XSLTMatch is a regexp that matches XML file names, like \.xml$,
+      which will be transformed by XSLT setting, default .*
+      
+      XSLTCacheSize when specified uses Tie::Cache to cached XML DOMs 
+      internally and cache XSLT transformations output per XML/XSL 
+      combination.  XML DOM objects can take a lot of RAM, so use
+      this setting judiciously like setting to 100.  Definitely 
+      experiment with this value.
+
+     +More client info in the error mail feature, including
+      client IP, form data, query string, and HTTP_* client headers
+
+     +With Time::HiRes loaded, and Debug set to non 0, 
+      will add a <!-- Apache::ASP served request in xx.xx seconds -->
+      to text/html output, similar to Cocoon, per user request  
+      Will also add this to the system debug error log output
+      when Debug is < 0
+
+     -bug fix on object initialization optimization earlier
+      in this release, that was introduced for faster event
+      handler execution.
+
+     +Apache::ASP::Parse() takes a file name, scalar, or
+      scalar ref for arguments of data to parse for greater
+      integration ability with other applications.
+
+     +PodComments optimization, small speed increase at
+      compilation time.
+
+     +String optimization on internal rendering that avoids 
+      unnecessary copying of static html, by using refs.  Should 
+      make a small difference on sites with large amounts of 
+      static html.
+
+     +CompressGzip setting which, when Compress::Zlib is installed,
+      will compress text/html automatically going out to the web
+      browser if the client supports gzip encoding.
+
+     ++Script_OnFlush event handler, and auxiliary work optimizing
+      asp events in general.  $Response->{BinaryRef} created which
+      is a reference to outgoing output, which can be used 
+      to modify the data at runtime before it goes out to the client. 
+
+     +Some code optimizations that boost speed from 22 to 24 
+      hits per second when using Sessions without $Application,
+      on a simple hello world benchmark on a WinNT PII300.
+
+     ++Better SessionManagement, more aware of server farms that 
+      don't have reliable NFS locking.  The key here is to have only
+      one process on one server in charge of session garbage collection
+      at any one time, and try to create this situation with a snazzy
+      CleanupMaster routine.  This is done by having a process register
+      itself in the internal database with a server key created at
+      apache start time.  If this key gets stale, another process can 
+      become the master, and this period will not exceed the period
+      SessionTimeout / StateManager.
+
+      ** Work on session manager sponsored by LRN, http://www.lrn.com.  **
+      ** This work was used to deploy a server farm in production with  **
+      ** NFS mounted StateDir. Thanks to Craig Samuel for his belief in **
+      ** open source. :)                                                **
+
+      Future work for server farm capabilities might include breaking
+      up the internal database into one of 256 internal databases 
+      hashed by the first 2 chars of the session id.  Also on the plate
+      is Apache::Session like abilities with locking and/or data storage
+      occuring in a SQL database.  The first dbs to be done will include
+      MySQL & Oracle.
+
+     +Better session security which will create a new session id for an 
+      incoming session id that does not match one already seen.  This will
+      help for those with Search engines that have bookmarked
+      pages with the session ids in the query strings.  This breaks away
+      from standard ASP session id implementation which will automatically
+      use the session id presented by the browser, now a new session id will
+      be returned if the presented one is invalid or expired.
+
+     -$Application->GetSession will only return a session if
+      one already existed.  It would create one before by default.
+
+     +Script_OnFlush global.asa event handler, and $Response->{BinaryRef}
+      member which is a scalar reference to the content about to be flushed.
+      See ./site/eg/global.asa for example usage, used in this case to
+      insert font tags on the fly into the output.
+
+     +Highlighting and linking of line error when Debug is set to 2 or -2.
+
+     --removed fork() call from flock() backup routine? How did 
+       that get in there?  Oh right, testing on Win32. :(
+       Very painful lesson this one, sorry to whom it may concern.
+
+     +$Application->SessionCount support turned off by default
+      must enable with SessionCount config option.  This feature
+      puts an unnecessary load on busy sites, so not default 
+      behavior now.  
+
+     ++XMLSubsMatch setting that allows the developer to 
+      create custom tags XML style that execute perl subroutines.
+      See ./site/eg/xml_subs.asp
+
+     +MailFrom config option that defaults the From: field for 
+      mails sent via the Mail* configs and $Server->Mail()
+
+     +$Server->Mail(\%mail, %smtp_args) API extension
+
+     +MailErrorsTo & MailAlertTo now can take comma
+      separated email addresses for multiple recipients.
+
+     -tracking of subroutines defined in scripts and includes so 
+      StatINC won't undefine them when reloading the GlobalPackage, 
+      and so an warning will be logged when another script redefines 
+      the same subroutine name, which has been the bane of at least
+      a few developers.
+
+     -Loader() will now recompile dynamic includes that 
+      have changed, even if main including script has not.
+      This is useful if you are using Loader() in a 
+      PerlRestartHandler, for reloading scripts when
+      gracefully restarting apache.
+
+     -Apache::ASP used to always set the status to 200 by 
+      default explicitly with $r->status().  This would be 
+      a problem if a script was being used to as a 404 
+      ErrorDocument, because it would always return a 200 error
+      code, which is just wrong.  $Response->{Status} is now 
+      undefined by default and will only be used if set by 
+      the developer.  
+
+      Note that by default a script will still return a 200 status, 
+      but $Response->{Status} may be used to override this behavior.
+
+     +$Server->Config($setting) API extension that allows developer
+      to access config settings like Global, StateDir, etc., and is a 
+      wrapper around Apache->dir_config($setting)
+
+     +Loader() will log the number of scripts
+      recompiled and the number of scripts checked, instead
+      of just the number of scripts recompiled, which is
+      misleading as it reports 0 for child httpds after
+      a parent fork that used Loader() upon startup.        
+
+     -Apache::ASP->Loader() would have a bad error if it didn't load 
+      any scripts when given a directory, prints "loaded 0 scripts" now
+
+    $VERSION = 0.18; $DATE="02/03/00";
      +Documented SessionQuery* & $Server->URL() and 
       cleaned up formatting some, as well as redoing
       some of the sections ordering for better readability.
       Document the cookieless session functionality more
-      in a new COOKIES section.  Also documented new 
+      in a new SESSIONS section.  Also documented new 
       FileUpload configs and $Request->FileUpload collection.
       Documented StatScripts.
 
      +StatScripts setting which if set to 0 will not reload
       includes, global.asa, or scripts when changed.
 
-     +FileUpload filehandles cleanup at garbage collection
+     +FileUpload file handles cleanup at garbage collection
       time so developer does not have to worry about lazy coding
       and undeffing filehandles used in code.  Also set 
       uploaded filehandles to binmode automatically on Win32 
@@ -2210,7 +2764,7 @@ CHANGES
 
       With SessionQueryParse on, it will just parse non-absolute
       URLs, but with SessionQueryParseMatch set to some server
-      url regexp, like http://www.mysite.com, will also parse
+      url regexp, like ^http://localhost , will also parse
       in the session id for URLs that match that.
 
       When testing, the performance hit from this parsing
@@ -2227,7 +2781,7 @@ CHANGES
 
       Your mileage may vary and you will have to test the difference
       yourself.  Get yourself a valid URL with a session-id in
-      it, and run it through ab, or socrates, with SessionQuery
+      it, and run it through ab, or Socrates, with SessionQuery
       turned on, and then with SessionQueryParse set to see 
       the difference.  SessionQuery just enables of session id
       setting from the query string but will not auto parse urls.
@@ -2238,7 +2792,7 @@ CHANGES
 
      +UseStrict setting compiles all scripts including
       global.asa with "use strict" turned on for catching
-      more coding errors.  With this setting enableb,
+      more coding errors.  With this setting enabled,
       use strict errors die during compilation forcing
       Apache::ASP to try to recompile the script until
       successful.
@@ -2271,19 +2825,19 @@ CHANGES
       22 from 21 hits / sec on dev NT box.
 
      +Cut more fat for faster startup, now on my dev box 
-      I get 44 hits per sec Apache::ASP vs 48 Embperl 
-      vs 52 CGI via Apache::Registry for the HelloWorld Scripts.
+      I get 44 hits per sec Apache::ASP vs. 48 Embperl 
+      vs. 52 CGI via Apache::Registry for the HelloWorld Scripts.
 
      -Improved linking for the online site documentation, 
       where a few links before were bad.
 
-    $VERSION = .17; $DATE="11/15/99";
+    $VERSION = 0.17; $DATE="11/15/99";
      ++20%+ faster startup script execution, as measured by the 
       HelloWorld bench.  I cut a lot of the fat out of 
       the code, and is now at least 20% faster on startup 
       both with and without state.
 
-      On my dev (NT,apache 1.3.6+mod_perl) machine, I now get:
+      On my dev (NT, apache 1.3.6+mod_perl) machine, I now get:
 
             42 hits per sec on Apache::ASP HelloWorld bench
             46 hits per sec on Embperl (1.2b10) and
@@ -2325,7 +2879,7 @@ CHANGES
      -IncludesDir config now works with DynamicIncludes.
 
      +DebugBufferLength feature added, giving control to 
-      how much buffered output get's shown when debugging errors.
+      how much buffered output gets shown when debugging errors.
 
      ++Tuning of $Response->Write(), which processes all
       static html internally, to be almost 50% faster for
@@ -2335,7 +2889,7 @@ CHANGES
       This can show significant speed improvements for tight
       loops that render ASP output.
 
-     +Auto linking of ./site/eg/.* text to example scripts
+     +Auto linking of ./site/eg/ text to example scripts
       at web site.
 
      +$Application->GetSession($session_id) API extension, useful
@@ -2348,7 +2902,7 @@ CHANGES
       undef when value for 'name' is undefined.  Put extra
       logic in there to make sure this happens. 
 
-    $VERSION = .16; $DATE="09/22/99";
+    $VERSION = 0.16; $DATE="09/22/99";
      -$Response->{Buffer} and PerlSetVar BufferingOn
       configs now work when set to 0, to unbuffer output,
       and send it out to the web client as the script generates it.
@@ -2388,7 +2942,7 @@ CHANGES
       breaking them when implementing the AllowApplicationState
       config setting.
 
-     +Better pre-fork cacheing ... StatINC & StatINCMatch are now 
+     +Better pre-fork caching ... StatINC & StatINCMatch are now 
       args for Apache::ASP->Loader(), so StatINC symbols loading
       may be done pre-fork and shared between httpds.  This lowers
       the child httpd init cost of StatINC.  Documented.
@@ -2410,7 +2964,7 @@ CHANGES
      -MailErrorsTo should report the right file now that generates
       the error.
 
-    $VERSION = .15; $DATE="08/24/99";
+    $VERSION = 0.15; $DATE="08/24/99";
      --State databases like $Session, $Application are 
       now tied/untied to every lock/unlock triggered by read/write 
       access.  This was necessary for correctness issues, so that 
@@ -2459,7 +3013,7 @@ CHANGES
       To see the number of lock/unlocks or ties/unties to each database
       during a script execution, look at the last lines of debug output
       to your error log when Debug is set to 1.  This can help you
-      perfomance tweak access to these databases.
+      performance tweak access to these databases.
 
      +Updated documentation with new config settings and
       API extensions.
@@ -2489,13 +3043,13 @@ CHANGES
 
      -Added in much more locking in session manager 
       and session garbage collector to help avoid collisions
-      between the two.  There were definate windows that the
+      between the two.  There were definite windows that the
       two would collide in, during which bad things could 
       happen on a high volume site.
 
      -Fixed some warnings in DESTROY and ParseParams()
 
-    $VERSION = .14; $DATE="07/29/99";
+    $VERSION = 0.14; $DATE="07/29/99";
      -CGI & StatINC or StatINCMatch would have bad results
       at times, with StatINC deleting dynamically compiled
       CGI subroutines, that were imported into other scripts
@@ -2523,7 +3077,7 @@ CHANGES
       can be recompiled with the same errors, and work w/o any use strict
       error messaging.  
 
-    $VERSION = .12; $DATE="07/01/99";
+    $VERSION = 0.12; $DATE="07/01/99";
      -Compiles are now 10 +times faster for scripts with lots of big
       embedded perl blocks <% #perl %>
 
@@ -2570,7 +3124,7 @@ CHANGES
      +"use strict" friendly handling of compiling dynamic includes
       with errors
 
-    $VERSION = .11; $DATE="06/24/99";
+    $VERSION = 0.11; $DATE="06/24/99";
      +Lots of documentation updates
 
      +The MailHost config option is the smtp server used for 
@@ -2604,7 +3158,7 @@ CHANGES
       so that scripts and dynamic includes don't have to be recompiled.  
       The global.asa will still have to be though.  Since we started
       compiling all routines into a package that can be named with
-      GlobalPackage, we've been undef'ing compiled scripts and includes
+      GlobalPackage, we've been undeffing compiled scripts and includes
       when the real GlobalPackage changed on disk, as we do a full sweep
       through the namespace.  Now, we skip those subs that we know to 
       be includes or scripts. 
@@ -2624,7 +3178,7 @@ CHANGES
      +Reoptimized pod comment parsing.  I slowed it down to sync
       lines numbers in the last version, but found another corner I could cut.
 
-    $VERSION = .10; $DATE="05/24/99";
+    $VERSION = 0.10; $DATE="05/24/99";
      += improvement; - = bug fix
 
      +Added index.html file to ./eg to help people wade through
@@ -2633,7 +3187,7 @@ CHANGES
      +Clean config option, or setting $Response->{Clean} to 1 - 9,
       uses HTML::Clean to compress text/html output of ASP scripts.
       I like the Clean 1 setting which is lightweight, stripping 
-      whitespace for about 10% compression, at a cost of less than
+      white space for about 10% compression, at a cost of less than
       a 5% performance penalty.
 
      +Using pod style commenting no longer confuses the line
@@ -2687,9 +3241,9 @@ CHANGES
 
         asp -b -o out *.asp
 
-      Without an output dir, script output is written to STDOUT
+      Without an output directory, script output is written to STDOUT
 
-    $VERSION = .09; $DATE="04/22/99";
+    $VERSION = 0.09; $DATE="04/22/99";
      +Updated Makefile.PL optional modules output for CGI & DB_File
 
      +Improved docs on $Response->Cookies() and $Request->Cookies()
@@ -2806,7 +3360,7 @@ CHANGES
 
      +README FAQ for PerlHandler errors
 
-    $VERSION = .08; $DATE="02/06/99";
+    $VERSION = 0.08; $DATE="02/06/99";
      ++SSI with Apache::Filter & Apache::SSI, see config options & ./eg files
       Currently filtering only works in the direction Apache::ASP -> Apache::SSI,
       will not work the other way around, as SSI must come last in a set of filters
@@ -2829,22 +3383,22 @@ CHANGES
 
      -Fixed up some config doc errors.
 
-    $VERSION = .07; $DATE="01/20/99";
+    $VERSION = 0.07; $DATE="01/20/99";
      -removed SIG{__WARN__} handler, it was a bad idea.
 
      -fixes file locking on QNX, work around poor flock porting
 
      +removed message about Win32::OLE on UNIX platforms from Makefile.PL
 
-     -Better lock garbage collection.  Works with StatINC seemlessly.
+     -Better lock garbage collection.  Works with StatINC seamlessly.
 
      -Multiple select forms now work in array context with $Response->Form()
             @values = $Response->Form('multi');
 
      -Better CGI.pm compatibility with $r->header_out('Content-type'),
-      improved garabage collection under modperl, esp. w/ file uploads
+      improved garbage collection under modperl, esp. w/ file uploads
 
-    $VERSION = .06; $DATE="12/21/98";
+    $VERSION = 0.06; $DATE="12/21/98";
      +Application_OnStart & Application_OnEnd event handlers support.
 
      -Compatible with CGI.pm 2.46 headers() 
@@ -2862,7 +3416,8 @@ CHANGES
 
      +StateDir configuration directive implemented.
       StateDir allows the session state directory to be specified separately 
-      from the Global directory, useful for OS's with caching filesystems.
+      from the Global directory, useful for operating systems with caching file 
+      systems.
 
      +StateManager config directive.  StateManager specifies how frequently
       Sessions are cleaned up, with 10 (default) meaning that old Sessions
@@ -2891,7 +3446,7 @@ CHANGES
       programs like FrontPage can upload pages to UNIX servers
       without perl choking on the extra \r characters.
 
-    $VERSION = .05; $DATE="10/19/98";
+    $VERSION = 0.05; $DATE="10/19/98";
      +Added PERFORMANCE doc, which includes benchmarks  +hints.
 
      +Better installation warnings and errors for other modules required. 
@@ -2916,7 +3471,7 @@ CHANGES
       into script.  Future chaining with Apache::SSI will allow static 
       html includes, and other SSI directives
 
-    $VERSION = .04; $DATE="10/14/98";
+    $VERSION = 0.04; $DATE="10/14/98";
      +Example script eg/cgi.htm demonstrating CGI.pm use for output.
 
      +Optimized ASP parsing, faster and more legible executing code
@@ -2962,7 +3517,7 @@ CHANGES
 
      +POD / README cleanup, formatting and HTML friendly.
 
-    $VERSION = .03; $DATE="09/14/98";
+    $VERSION = 0.03; $DATE="09/14/98";
      +Installation 'make test' now works
 
      +ActiveX objects on Win32 implemented with $Server->CreateObject() 
@@ -2991,7 +3546,7 @@ CHANGES
      +ASP Objects ($Response, etc.) are set in main package
       Thus notation like $main::Response->Write() can be used anywhere.
 
-    $VERSION = .02; $DATE="07/12/98";
+    $VERSION = 0.02; $DATE="07/12/98";
      ++Session Manager, won't break under denial of service attack
 
      +Fleshed out $Response, $Session objects, almost full implementation.
@@ -3008,10 +3563,10 @@ CHANGES
 
      -Loads Win32/OLE properly, won't break with UNIX
 
-    $VERSION = .01; $DATE="06/26/98";
+    $VERSION = 0.01; $DATE="06/26/98";
      Syntax Support
      --------------
-     Intial realease, could be considered alpha software.
+     Initial release, could be considered alpha software.
      Allows developers to embed perl in html ASP style.
 
      <!-- sample here -->

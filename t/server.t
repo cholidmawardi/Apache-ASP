@@ -12,6 +12,11 @@ if($encode eq 'test%20data') {
 } else {
 	$t->not_ok('URLEncode not working');
 }
+
+$Server->Config('Global', '.');
+$t->eok(sub { $Server->Config('Global') eq '.' }, 
+	'Global must be defined as . for test'
+	);
 %>
 
 <% $t->done; %>

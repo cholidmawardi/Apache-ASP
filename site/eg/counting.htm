@@ -1,10 +1,15 @@
 #!/usr/local/bin/perl5 asp
 
 <!--#include file=header.inc-->
-        For loop decrementing font size: <p>
-        <% for(reverse(1..6)) { %>
-                <!-- iterated html text -->
-                <font size="<%=$_%>" > Size = <%=$_%> </font> <br>
-        <% } %>
+<% if($Request->QueryString('transfer')) { %>
+  <font color=red>We just transferred from transfer.htm !!</font>
+  <p>
+<% } %>
+
+ For loop decrementing font size: <p>
+ <% for(reverse(1..6)) { %> 
+   <!-- iterated html text -->
+   <font size="<%=$_%>" > Size = <%=$_%> </font> <br>
+ <% } %>
 <!--#include file=footer.inc-->
 

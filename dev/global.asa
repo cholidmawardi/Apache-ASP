@@ -30,10 +30,6 @@ sub Script_OnEnd {
     $Session->{Ended}++;
 }
 
-sub XML_myfont {
-    $_ = "<font size=+2 color=red>$_</font>";
-}
-
 # you can share globals between scripts as of v.10, as all scripts, including 
 # the global.asa are compiled into the same module
 %EG = (
@@ -101,4 +97,5 @@ sub XML_myfont {
 
        'test.gif' => 'Source gif for the binary_write.htm example',
 );
+
 

@@ -5,7 +5,7 @@
 my(@col1, @col2);
 my @keys = sort keys %EG;
 @keys || die("\%EG is not defined, make sure you copied ./eg/global.asa correctly");
-my $half = int(@keys/2);
+my $half = int(@keys/2) + 1;
 
 for(my $i =0; $i <= $#keys; $i++) {
 	if($i < $half) {
@@ -14,7 +14,7 @@ for(my $i =0; $i <= $#keys; $i++) {
 		push(@col2, $keys[$i]);
 	}
 } 
-$Response->Debug(\@col1, \@col2);
+$Response->Debug('col1', \@col1, 'col2', \@col2);
 $title = 'Example ASP Scripts';
 %>
 
@@ -43,7 +43,7 @@ $title = 'Example ASP Scripts';
 			<font size=-0>
 				<tt><b>
 				<a href=<%=$_->[0]%>><%=$_->[0]%></a>
-				<% if($_->[0] =~ /\.(htm|asp|ssi)$/) { %>
+				<% if($_->[0] =~ /\.(htm|asp|ssi|xml)$/) { %>
 					&nbsp
 					<i>
 					(<a href=source.asp?file=<%=$_->[0]%>>source</a>)

@@ -5,22 +5,41 @@
 AuthName TestRealm
 AuthType Basic
 #ErrorDocument 401 "Bad Auth
+PerlSetVar DynamicIncludes 1
+
+<Files ~ (\.xml)>
+	SetHandler perl-script
+	PerlHandler Apache::ASP
+	PerlSetVar Debug  0
+	PerlSetVar NoState 1 
+	PerlSetVar XSLT template.xsl
+	PerlSetVar XSLTCacheSize 10
+</Files>
+
+
 <Files ~ (\.asp)>
 	SetHandler perl-script
 	PerlHandler Apache::ASP
 	PerlSetVar Global  .		
-	PerlSetVar Debug  -2
+	PerlSetVar Debug  -1
+#	PerlSetVar Debug  -2
 	PerlSetVar CookiePath  /	
 	PerlSetVar SessionTimeout .5
 	PerlSetVar StateDir  ./.state
 #	PerlSetVar UniquePackages 1
 #	PerlSetVar SessionQuery 1
 #	PerlSetVar SessionQueryMatch asp$
-	PerlSetVar SessionQueryParse 1
+#	PerlSetVar SessionQueryParse 1
 #	PerlSetVar SessionQueryParseMatch on
 #	PerlSetVar UseStrict 1
 	PerlSetVar FileUploads 0
-	PerlSetVar XMLSubsMatch myfont
+	PerlSetVar StatINC 1
+#	PerlSetVar StatINCMatch 0
+	PerlSetVar XMLSubsMatch my:\w+
+	PerlSetVar GlobalPackage DemoASP
+	PerlSetVar MailErrorsTo joshua@chamas.com,admin@chamas.com
+	PerlSetVar MailAlertTo joshua@chamas.com,admin@chamas.com
+	PerlSetVar MailHost proxy.nodeworks.com	
 </Files>
 
 # .htm files for the ASP parsing, but not the $Session object
@@ -28,14 +47,12 @@ AuthType Basic
 <Files ~ (\.htm|\.inc)>
 	SetHandler perl-script
 	PerlHandler Apache::ASP
-	PerlSetVar Debug  1
+	PerlSetVar Debug  -2
 	PerlSetVar Global  .		
 	PerlSetVar NoState 1 
 	PerlSetVar BufferingOn 1
 #	PerlSetVar DynamicIncludes 1
 #	PerlSetVar CgiHeaders 1
-	PerlSetVar MailErrorsTo joshua@chamas.com
-#	PerlSetVar MailDebug 1
 </Files>
 
 # .ssi for full ssi support, with Apache::Filter
@@ -58,4 +75,3 @@ AuthType Basic
 	PerlSetVar Global auth
 	PerlSetVar SessionTimeout 1
 </Files>
-

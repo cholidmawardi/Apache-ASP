@@ -1,10 +1,10 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/bin/perl
 
 # For documentation for this module, please see the end of this file
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 0.18;
+$VERSION = 1.91;
 
 use MLDBM;
 use SDBM_File;
@@ -16,21 +16,16 @@ use Carp qw(confess cluck);
 
 use strict;
 no strict qw(refs);
-use vars qw($LOADED $VERSION %includes $StatINCReady $StatINCInit 
+use vars qw($LOADED $COUNT $VERSION %includes $StatINCReady $StatINCInit 
 	    %NetConfig %LoadedModules %LoadModuleErrors 
 	    %Compiled $OLESupport %StatINC %Codes %Includes 
 	    %CompiledIncludes $SessionCookieName $SessionIDLength
 	    $DefaultStateDB $DefaultStateSerializer
-	    $MD5 @Objects 
+	    $MD5 @Objects $Register %ScriptSubs %XSLT
+	    $ServerID
 	   );
-#use integer;
 
-# use Storable;
-# problem with Storable with MLDBM, when referencing empty undefined
-# value, hangs, and module reloads.
-# $MLDBM::Serializer = "Storable"; # faster than using Data::Dumper
-# set in state area, localized effectively
-#$MLDBM::Serializer = "Data::Dumper";
+#use integer; # don't use screws up important numeric logic
 
 $MD5 = new MD5();
 @Objects = ('Application', 'Session', 'Response', 'Server', 'Request');
@@ -38,6 +33,10 @@ $SessionCookieName = 'session-id';
 $SessionIDLength = 32;
 $DefaultStateDB = 'SDBM_File';
 $DefaultStateSerializer = 'Data::Dumper';
+
+# ServerID creates a unique identifier for the server
+$MD5->add($$.rand().time().(-M('..')||'').(-M('/')||''));
+$ServerID = substr($MD5->hexdigest, 0, 16);
 
 # X: not thread safe for now since $r changes between handler and register_cleanup
 # hash of Apache $r request keys to Apache::ASP values
@@ -65,6 +64,13 @@ $Apache::ASP::StartTime      = time();
    'OLE-active objects not supported for this platform, '.
    'try installing Win32::OLE',
    
+    Gzip =>
+   'Compress::Zlib is needed to make gzip content-encoding work, '.
+   'If you want to use this feature, get yourself the latest '.
+   'Compress::Zlib from CPAN. ',
+   
+   HiRes => undef,
+
    MailAlert => undef,
    
 #   OrderCollections => 'Ordered collections require the Tie::IxHash '.
@@ -84,8 +90,12 @@ $Apache::ASP::StartTime      = time();
 
    StatINC => "You need this module for StatINC, please download it from CPAN",
    
+   'Cache' => "You need this module for xml output caching",
+
    UndefRoutine => '',
    
+   XSLT => 'Cannot load XML::XSLT.  Try installing the module.',
+
   );
 
 
@@ -111,42 +121,58 @@ ERROR
 	return 500;
     }
 
+    # run time tracking
+    my $start_time;
+    if($r->dir_config('Debug')) {
+	# request time tracking
+	eval "use Time::HiRes";
+	unless($@) {
+	    $start_time = &Time::HiRes::time();	    
+	}
+    }
+
     # better error checking ?
     my $filename = $r->filename();
     return(404) if (! -e $filename or -d $filename);
 
+    # alias $0 to filename, bind to glob for bug workaround
+    local *0 = \$filename;
+
     # ASP object creation, a lot goes on in there!    
     my $self = new($r);
-    $self->{dbg} && $self->Debug('ASP object created', $self);
+    $start_time and $self->{start_time} = $start_time;
+    $self->Debug("start time ".($start_time || ''));
+    
+    $self->{stat_inc} && &StatINC($self);
 
-    # there could be errors in IsChanged() is we are using StatINC
-    if(&IsChanged($self)) {
+    # there could be runtime errors in StatINC
+    if(! $self->{errs} &IsChanged($self)) {
 	my $script = &Parse($self);
 	! $self->{errs} && &Compile($self, $script);
-
-	# stat inc after a fresh compile since we might have 
-	# some new symbols to register
-	$self->{stat_inc} && &StatINC($self);
     }
     
     my $response = $self->{Response};
     if(! $self->{errs}) {
 	#X: compensate for bug on Win32 that has this always set
 	# screws with Apache::DBI 
-	$Apache::ServerStarting = 0;
+	$Apache::ServerStarting and $Apache::ServerStarting = 0;
 	my $global_asa = $self->{GlobalASA};
-	my $global_asa_exists = $global_asa->{'exists'};
-	$global_asa_exists && $global_asa->ScriptOnStart();
+	$global_asa->{'exists'} && $global_asa->ScriptOnStart();
 	unless($response->{Ended}) {
 	    # execute only if an event handler hasn't already ended 
 	    # things... this allows fine grain control of a response
 	    # and executing scripts
 	    &Execute($self);
+	  APACHE_ASP_EXECUTE_END:
 	}
-	$global_asa_exists && $global_asa->ScriptOnEnd();
-	! $self->{errs} && ($response->{Ended}++ || &Apache::ASP::Response::Flush($response));
+	$global_asa->{'exists'} && $global_asa->ScriptOnEnd();
+	! $self->{errs} && $response->EndSoft();
     }
     
+    # moved print of object to the end, so we'll pick up all the 
+    # runtime config directives set while the code is running
+    $self->{dbg} && $self->Debug('ASP Done Processing', { 'asp' => $self });
+
     # error processing
     if($self->{errs}) {
 	if($self->{dbg} >= 2) {
@@ -170,7 +196,7 @@ ERROR
 
     # XX return code of 302 hangs server on WinNT
     # STATUS hook back to Apache
-    if($status != 500 and $response->{Status} != 302) {
+    if($status != 500 and defined $response->{Status} and $response->{Status} != 302) {
 	# if still default then set to what has been set by the 
 	# developer
 	$status = $response->{Status};
@@ -194,8 +220,6 @@ ERROR
 	$self->DESTROY();
     }
 
-#    $self->{dbg} && $self->Debug("about to handler return");
-
     $status;
 }
 
@@ -206,12 +230,11 @@ sub Warn {
 
 sub Loader {
     shift if(ref $_[0] or $_[0] eq 'Apache::ASP');
-    local $^W = 0;
-    local $SIG{__WARN__} = \&Warn;
 
+    local $SIG{__WARN__} = \&Warn;
     my($file, $match, %args) = @_;
     unless(-e $file) {
-	Warn("$file does not exist for loading");
+	warn("$file does not exist for loading");
 	return;
     }
     $match ||= '.*'; # compile all by default
@@ -222,24 +245,43 @@ sub Loader {
 	opendir(DIR, $file) || die("can't open $file for reading: $!");
 	my @files = readdir(DIR);
 	unless(@files) {
-	    warn("can't read dir $file: $!");
+	    Apache::ASP::Loader->log_error("[asp] $$ [WARN] can't read files in $file");
 	    return;
 	}
 
-	my $top = ! defined $LOADED;
+	my $top;
+	if(! defined $LOADED) {
+	    $top = 1;
+	}
 	defined $LOADED or (local $LOADED = 0);
-
+	defined $COUNT or (local $COUNT = 0);
+	
 	for(@files) {
 	    chomp;
 	    next if /^\.\.?$/;
 	    &Loader("$file/$_", $match, %args);
 	}
-	$top && $Apache::ASP::Register->Log("loaded $LOADED scripts");
+	if($top) {
+	    Apache::ASP::Loader->log_error("[asp] $$ (re)compiled $LOADED scripts of $COUNT loaded");
+	}
 	return;
     } 
 
     # now the real work
-    return unless ($file =~ /$match/);
+    unless($file =~ /$match/) {
+	if($args{Debug} < 0) {
+	    Apache::ASP::Loader->log_error("skipping compile of $file no match $match");
+	}
+	return;
+    }
+
+    unless($file =~ /$match/) {
+       if($args{Debug} < 0) {
+           warn("skipping compile of $file no match $match");
+       }
+       return;
+    }
+
 
     my $r = Apache::ASP::Loader::new($file);
     $r->dir_config('NoState', 1);
@@ -250,18 +292,34 @@ sub Loader {
     $r->dir_config('GlobalPackage', $args{GlobalPackage});
     $r->dir_config('StatINC', $args{StatINC});
     $r->dir_config('StatINCMatch', $args{StatINCMatch});
+    $r->dir_config('UseStrict', $args{UseStrict});
     
     eval {
+	$COUNT++;
 	my $asp = Apache::ASP::new($r);    
-	return if ! $asp->IsChanged();
+
+	my $compiled_includes = $Compiled{$asp->{subid}}->{compiled_includes};
+	for(keys %$compiled_includes) {
+	    $asp->CompileInclude($_);
+	}
+	if(! $asp->IsChanged()) {
+	    $asp->DESTROY;
+	    return;
+	}
 
 	my $script = $asp->Parse();
 	$asp->Compile($script);
 	if($asp->{errs}) {
 	    warn("$asp->{errs} errors compiling $file while loading");
+	    $asp->DESTROY;
 	    return 0;
 	} else {
+	    $asp->DESTROY;
 	    $LOADED++;
+	    if($args{Execute}) {
+		local *Apache::ASP::Response::Flush = sub {};
+		$asp->Execute;
+	    }
 	}
     };
     $@ && warn($@);
@@ -272,6 +330,7 @@ sub Loader {
 sub new {
     my $r = shift;
 
+    local $SIG{__DIE__} = \&Carp::confess;
     # like cgi, operate in the scripts directory
     my $filename = $r->filename();
     $filename =~ m|^(.*?[/\\]?)([^/\\]+)$|;
@@ -348,7 +407,9 @@ sub new {
 #       init_packages => undef,
 
        # additional path searched for includes when compiling scripts
-       includes_dir => $r->dir_config('IncludesDir'),
+#       includes_dir => $r->dir_config('IncludesDir'),
+       includes_dir => [ '.', $global, split(/;/, $r->dir_config('IncludesDir') || '') ],
+
 
 # move to error
 #       mail_alert_to     => $r->dir_config('MailAlertTo'),
@@ -375,8 +436,9 @@ sub new {
 # moved to session config
 #       paranoid_session => $r->dir_config('ParanoidSession') || 0,
        
+       # moved to parse_config
 	# default 1, should we parse out pod style commenting ?
-	pod_comments   => defined($r->dir_config('PodComments')) ? $r->dir_config('PodComments') : 1, 
+#	pod_comments   => defined($r->dir_config('PodComments')) ? $r->dir_config('PodComments') : 1, 
 
 	r              => $r, # apache request object 
 # moved to session config
@@ -385,6 +447,7 @@ sub new {
 #	script_timeout => $r->dir_config('ScriptTimeout') || 90,
 # moved session to session config
 #	secure_session => $r->dir_config('SecureSession'),
+#       session_count   => $r->dir_config('SessionCount'),
 #       session_id      => undef, # set only when we know session id
 #	session_timeout => undef,
 #	session_serialize => $r->dir_config('SessionSerialize'),
@@ -406,6 +469,10 @@ sub new {
 #       'ua' => $ENV{HTTP_USER_AGENT} || "UNKNOWN UA",
        unique_packages => $r->dir_config('UniquePackages'),
        use_strict      => $r->dir_config('UseStrict'),
+
+# moved to parse_config
+#       xml_subs_match  => $r->dir_config('XMLSubsMatch'),
+       xslt => $r->dir_config('XSLT'),
 
 	# special objects for ASP app
 # set only when necessary
@@ -429,10 +496,10 @@ sub new {
 	$self->Debug('RUN ASP (v'. $VERSION .") for $self->{filename}");
 
 	# capture use strict errors if debug is 2
-	if($self->{dbg}) {
-	    $self->{sig_warn} = $SIG{__WARN__};
-	    $SIG{__WARN__} = sub { $self->Out(@_) };
-	}
+#	if($self->{dbg}) {
+#	    $self->{sig_warn} = $SIG{__WARN__};
+#	    $SIG{__WARN__} = sub { $self->Out(@_) };
+#	}
     } else {
 	*Debug = *Null;
     }
@@ -449,12 +516,12 @@ sub new {
 
     if($self->{no_cache}) {
 	# this way subsequent recompiles overwrite each other
-	$self->{id} = "NoCache";
+	$self->{id} = 'NoCache';
     } else {
 	# was call to FileId, removed decomp for speed
 	my $id = $self->{filename}.'x'.($self->{compile_includes} ? 'DYN' : 'INL');
 	$id =~ s/\W/_/g;
-	$self->{'id'} = $id;
+	$self->{id} = $id;
     }
 
     # filtering support
@@ -478,7 +545,15 @@ sub new {
 	      }
 	  }
     }
-
+    
+    # gzip content encoding option by ime@iae.nl 28/4/2000
+    my $compressgzip_config = $r->dir_config('CompressGzip') || $Apache::ASP::CompressGzip;
+    if($compressgzip_config && $compressgzip_config !~ /off/io) {	
+	if($self->LoadModule('Gzip','Compress::Zlib')) {
+	    $self->{compressgzip} = 1;
+	}
+    }    
+     
     # must have global directory into which we put the global.asa
     # and possibly state files, optimize out the case of . or ..
     if($self->{global} !~ /^(\.|\.\.)$/) {
@@ -489,7 +564,7 @@ sub new {
     # register cleanup before the state files get set in InitObjects
     # this way DESTROY gets called every time this script is done
     # we must cache $self for lookups later
-    $Apache::ASP::Register = $self;
+    $Register = $self;
     $r->register_cleanup(\&Apache::ASP::RegisterCleanup);
 
     #### WAS INIT OBJECTS, REMOVED DECOMP FOR SPEED
@@ -498,6 +573,7 @@ sub new {
     # always create these
     # global_asa assigns itself to parent object automatically
     my $global_asa = &Apache::ASP::GlobalASA::new($self);
+    $self->{subid} = $global_asa->{'package'}.'::'.$self->{id};
     $self->{Response}  = &Apache::ASP::Response::new($self);
     $self->{Request}   = &Apache::ASP::Request::new($self);
     # Server::new() is just one line, so execute directly
@@ -508,15 +584,13 @@ sub new {
     # must be here, and not end of new before things like Application_OnStart
     # get run
     if($self->{unique_packages}) {
-	$self->{id} .= "::handler";	
+	$self->{id} .= "::handler" unless($self->{no_cache});
 	my $package = $global_asa->{'package'}.'::'.$self->{id};
 	$package =~ s/::[^:]+$//;
 	$self->{'package'} = $package;
-	$self->{init_packages} = [$global_asa->{'package'}, $self->{'package'}];	
 	$self->{init_packages} = ['main', $global_asa->{'package'}, $self->{'package'}];	
     } else {
 	$self->{'package'} = $global_asa->{'package'};
-	$self->{init_packages} = [$global_asa->{'package'}];	
 	$self->{init_packages} = ['main', $global_asa->{'package'}];	
     }
 
@@ -563,14 +637,11 @@ sub new {
     tie(%Internal, 'Apache::ASP::State', $self, 'internal', 'server', O_RDWR|O_CREAT)
       || $self->Error("can't tie to internal state");
     my $internal = $self->{Internal} = bless \%Internal, 'Apache::ASP::State';
-#    $internal->LOCK();
-#    $self->Debug($internal);
-#    $internal->UNLOCK();
 
     # APPLICATION create application object
     $self->{app_state} = (defined $r->dir_config('AllowApplicationState') ? 
 			   $r->dir_config('AllowApplicationState') : 1);
-    if($self->{app_state}) {
+    if($self->{app_state}) {	
 	($self->{Application} = &Apache::ASP::Application::new($self)) 
 	  || $self->Error("can't get application state");
 	if($self->{dbg}) {
@@ -588,6 +659,7 @@ sub new {
 	$self->{cookie_path}       = $r->dir_config('CookiePath') || '/';
 	$self->{paranoid_session}  = $r->dir_config('ParanoidSession') || 0;
 	$self->{remote_ip}         = $r->connection()->remote_ip();
+	$self->{session_count}     = $r->dir_config('SessionCount');
 	
 	# cookieless session support, cascading values
 	$self->{session_url_parse_match} = $r->dir_config('SessionQueryParseMatch');
@@ -609,22 +681,38 @@ sub new {
 	# Session state is dependent on internal state
 	my $session = $self->{Session} = &Apache::ASP::Session::new($self)
 	  || $self->Die("can't create session");
+	my $last_session_timeout;
 	if($session->Started()) {
 	    # we only want one process purging at a time
 	    if($self->{app_state}) {
 		$internal->LOCK();
-		if(($internal->{LastSessionTimeout} || 0) < time()) {
+		if(($last_session_timeout = $internal->{LastSessionTimeout} || 0) < time()) {
 		    $internal->{'LastSessionTimeout'} = $self->{session_timeout} + time;
 		    $internal->UNLOCK();
-		    $self->CleanupGroups('PURGE');		
-		    $global_asa->ApplicationOnEnd();
-		    $global_asa->ApplicationOnStart();
+		    if($self->CleanupGroups('PURGE')) {
+			$last_session_timeout && $global_asa->ApplicationOnEnd();
+			$global_asa->ApplicationOnStart();
+		    }
 		} 
 		$internal->UNLOCK();
 	    }
 	    $global_asa->SessionOnStart();
 	}
-	$internal->{'LastSessionTimeout'} = $self->{session_timeout} + time;
+
+	if($self->{app_state}) {
+	    # The last session timeout should only be updated every group_refresh period
+	    # another optimization, rand() so not all at once either
+	    $internal->LOCK();
+	    $last_session_timeout ||= $internal->{'LastSessionTimeout'};
+	    if($last_session_timeout < $self->{session_timeout} + time + 
+	       (rand() * $self->{group_refresh} / 2)) 
+	      {
+		  $self->{dbg} && $self->Debug("updating LastSessionTimeout from $last_session_timeout");
+		  $internal->{'LastSessionTimeout'} = 
+		    $self->{session_timeout} + time() + $self->{group_refresh};
+	      }
+	    $internal->UNLOCK();
+	}
     } else {
 	$self->{dbg} && $self->Debug("no sessions allowed config");
     }
@@ -634,17 +722,17 @@ sub new {
 
 # registered in new() so that is called every end of connection
 sub RegisterCleanup {
-    $Apache::ASP::Register && DESTROY($Apache::ASP::Register);
+    $Register && DESTROY($Register);
 }
     
 # called upon every end of connection by RegisterCleanup
 sub DESTROY {
     my $self = shift;
 
-    return unless (defined($Apache::ASP::Register) and $self eq $Apache::ASP::Register);
-    $Apache::ASP::Register = undef;
-    $self->{dbg} && $self->Debug("destroying", {asp=>$self});
-
+    return unless (defined($Register) and $self eq $Register);
+    $Register = undef;
+    $self->{dbg} && $self->Debug("destroying", $self);
+    
     # do before undef'ing the object references in main
     if(@Apache::ASP::Cleanup) {
 	for(@Apache::ASP::Cleanup) {
@@ -659,9 +747,9 @@ sub DESTROY {
     select(STDOUT); 
     untie *STDIN if tied *STDIN;
 
-    if($self->{dbg}) {
-	$SIG{__WARN__} = $self->{sig_warn} || \&warn;
-    }
+#    if($self->{dbg}) {
+#	$SIG{__WARN__} = $self->{sig_warn} || \&warn;
+#    }
 
     # undef objects in main set up in execute, do after cleanup,
     # so cleanup routine can still access objects
@@ -679,7 +767,7 @@ sub DESTROY {
     # some Sessions actually get ended, and Session_OnEnd gets called
     if($self->{Session}) {
 	$self->CleanupGroups();
-	$self->CleanupGroup();  
+#	$self->CleanupGroup();  
     }
 
     # free file handles here.  mod_perl tends to be pretty clingy
@@ -694,15 +782,11 @@ sub DESTROY {
 	next unless $tied;
 	untie %{$self->{$_}};
 	$tied->DESTROY(); # call explicit DESTROY
-#	delete $self->{$_};
     }
 
     #    $self->{'dbg'} && $self->Debug("END ASP DESTROY");
     $self->{Request} && $self->{Request}->DESTROY();
     %$self = ();
-#    while(my($k) = each(%$self)) {
-#	$self->{$k} = undef;
-#    }
 
     1;
 }
@@ -731,22 +815,25 @@ sub FileId {
 sub IsChanged {
     my $self = shift;
 
+## WHY ??? With proper reloading, the script and lib should
+## be independent.  And this is not consistent, all other scripts
+## should also be reloaded after StatINC if one does.
+
     # do the StatINC if we are config'd for it
     # we return true if stat inc tells us that some
     # libraries had been changed, since a script is
     # new if the library is new under it.
-    if($self->{stat_inc}) { 
-	return(1) if $self->StatINC(); 
-    }
+#    if($self->{stat_inc}) { 
+#	return(1) if $self->StatINC(); 
+#    }
 
     # support for includes, changes to included files
     # cause script to recompile
     if($self->{stat_scripts} and 
        my $includes = $Apache::ASP::Includes{$self->{id}}) 
       { 
-	  my($k,$v);
-	  for $k (keys %$includes) {
-	      $v = $includes->{$k};
+	  for my $k (keys %$includes) {
+	      my $v = $includes->{$k};
 	      if((stat($k))[9] > $v) {
 		  return 1;
 	      }
@@ -758,8 +845,7 @@ sub IsChanged {
 	return 1;
     }
 
-    my $subid = $self->{GlobalASA}{'package'}.'::'.$self->{id};
-    my $last_update = $Apache::ASP::Compiled{$subid}->{mtime} || 0;
+    my $last_update = $Apache::ASP::Compiled{$self->{subid}}->{mtime} || 0;
     if(! $self->{stat_scripts} && $last_update) {
 	$self->{dbg} && $self->Debug("no stat: script already compiled");
 	return 0;
@@ -780,14 +866,22 @@ sub IsChanged {
 # which is useful for doing includes separately for compiling
 sub Parse {
     my($self, $file) = @_;
-    my($script, $text, $perl, $data);
+    my $data;
     my $id = $self->{'id'};
 
     # get script data, from varied data sources
-    my($filehandle);
+    my $filehandle;
     if($file) {
-	$self->{dbg} && $self->Debug("parsing $file");
-	$data = $self->ReadFile($file);	
+	# file can be a filename, scalar ref, or scalar
+	if(length($file) < 1024 and -e $file) {
+	    # filename has length < 1024, should be fine across OS's
+	    $self->{dbg} && $self->Debug("parsing $file");
+	    $data = $self->ReadFile($file);	
+	} elsif(ref $file and $file =~ /SCALAR/) {
+	    $data = $$file;
+	} else {
+	    $data = $file;
+	}
     } else {
 	if($filehandle = $self->{filehandle}) {
 	    local $/ = undef;
@@ -796,16 +890,37 @@ sub Parse {
 	    $self->{dbg} && $self->Debug("parsing $self->{'basename'}");
 	    $file = $self->{'basename'};
 	    $data = $self->ReadFile($self->{'basename'});
+
+	    # reset compiled includes for scripts
+	    $Compiled{$self->{subid}}->{compiled_includes} = {};
 	}
     }
+    my $script_compiled_includes = $Compiled{$self->{subid}}->{compiled_includes};
 
     if($self->{r}->dir_config('CgiDoSelf')) {
 	$data =~ s/^(.*?)__END__//gso;
     }
 
+    # moved parsing config here since not needed for normal
+    # eval execution of scripts after compilation
+    unless($self->{parse_config}) {
+	my $r = $self->{r};
+	$self->{parse_config} = 1;
+	$self->{pod_comments} = defined($r->dir_config('PodComments')) ? 
+	  $r->dir_config('PodComments') : 1;
+	$self->{xml_subs_match} = $r->dir_config('XMLSubsMatch');
+    }    
+
     # do both before and after, so =pods can span includes with =pods
     if($self->{pod_comments}) {
 	&PodComments($self, \$data);
+    }
+
+    # if compiling includes, then do now before includes conversion
+    # each include will also have its Script_OnParse run on it.
+    if($self->{compile_includes} && $self->{GlobalASA}{'exists'}) {	
+	$self->{Server}{ScriptRef} = \$data;
+	$self->{GlobalASA}->Execute('Script_OnParse');		
     }
 
     # do includes as early as possible !! so included text gets done too
@@ -826,60 +941,70 @@ sub Parse {
 	    $args =~ s/^\s+args\s*\=\s*\"?//sgo;
 	}
 	
-	# we look for the include file in both the current directory and the 
-	# global directory
-	my $included = 0;
-	my @include_files = ($file, "$self->{global}/$file");
-	if($self->{includes_dir}) {
-	    push(@include_files, "$self->{includes_dir}/$file");
-	}
-	my $include;
-	for $include (@include_files) {
-	    unless(-e $include) {
-		next;
-	    }
 
-	    # trap the includes here, at 100 levels like perl debugger
-	    if(defined($args) || $self->{compile_includes}) {
-		# because the script is literally different whether there 
-		# are includes or not, whether we are compiling includes
-		# need to be part of the script identifier, so the global
-		# caching does not return a script with different preferences.
-		$self->{dbg} && $self->Debug("runtime exec of dynamic include $file args (".
-					     ($args || '').')');
-		$data .= "<% \$Response->Include('$include', $args); %>";
-
-		# compile include now, so Loading() works for dynamic includes too
-		unless($self->CompileInclude($include)) {
-		    $self->Error("compiling include $include failed when compiling script");
-		}
-	    } else {
-		$self->Debug("inlining include $include");
-		# DEFAULT, not compile includes, or inline includes,
-		# the included text is inlined directly into the script
-		if($includes{$include}++ > 100) {
-		    $self->Error("Recursive include detected for $include 100 levels deep! ".
-				 "Your includes are including each other.  If you ".
-				 "are getting this error with a legitimate use of includes ".
-				 "please mail support about this error "
-				 );
-		    return;
-		}
-		
-		# put the included text into what we are parsing, allows for
-		# includes having includes
-		$id || $self->Error("need id for includes");
-		$Apache::ASP::Includes{$id}->{$include} = (stat($include))[9];
-		my $text = $self->ReadFile($include);
-		$text =~ s/^\#\![^\n]+\n\n?//s; #X cgi compat ?
-		$munge = $text . $munge; 
-	    }
-	    $included = 1;
-	    last;
+	# global directory, as well as includes dirs
+	my $include = $self->SearchDirs($file);
+	unless(defined $include) { 
+	    $self->Error("include file with name $file does not exist");
+	    return;
 	}
-	$included || $self->Error("include file with name $file does not exist");
+	if($self->{dbg}) {
+	    if($include ne $file) {
+		$self->Debug("found $file at $include");
+	    }
+	}
+
+	# trap the includes here, at 100 levels like perl debugger
+	if(defined($args) || $self->{compile_includes}) {
+	    # because the script is literally different whether there 
+	    # are includes or not, whether we are compiling includes
+	    # need to be part of the script identifier, so the global
+	    # caching does not return a script with different preferences.
+	    $self->{dbg} && $self->Debug("runtime exec of dynamic include $file args (".
+					 ($args || '').')');
+	    $data .= "<% \$Response->Include('$include', $args); %>";
+	    
+	    # compile include now, so Loading() works for dynamic includes too
+	    unless($self->CompileInclude($include)) {
+		$self->Error("compiling include $include failed when compiling script");
+	    }		   
+	    $script_compiled_includes->{$include}++;		
+	} else {
+	    $self->Debug("inlining include $include");
+	    # DEFAULT, not compile includes, or inline includes,
+	    # the included text is inlined directly into the script
+	    if($includes{$include}++ > 100) {
+		$self->Error("Recursive include detected for $include 100 levels deep! ".
+			     "Your includes are including each other.  If you ".
+			     "are getting this error with a legitimate use of includes ".
+			     "please mail support about this error "
+			    );
+		return;
+	    }
+	    
+	    # put the included text into what we are parsing, allows for
+	    # includes having includes
+	    $id || $self->Error("need id for includes");
+	    $Apache::ASP::Includes{$id}->{$include} = (stat($include))[9];
+	    my $text = $self->ReadFile($include);
+	    $text =~ s/^\#\![^\n]+(\n\n?)/$1/s; #X cgi compat ?
+	      $munge = $text . $munge; 
+	}
     }
     $data .= $munge; # append what's left   
+
+    # call Script_OnParse after instead if we inline includes at all
+    # so we have the full script for people
+    if(! $self->{compile_includes}) {	
+	# do pod comments again if we have any included files
+	if(%includes && $self->{pod_comments}) {
+	    &PodComments($self, \$data);
+	}
+	if($self->{GlobalASA}{'exists'}) {	
+	    $self->{Server}{ScriptRef} = \$data;
+	    $self->{GlobalASA}->Execute('Script_OnParse');		
+	}
+    }
 
 #    $self->Debug("parsing includes done $self->{'basename'}");
 
@@ -887,25 +1012,77 @@ sub Parse {
     # since we want to rip out the carriage returns from them too
     my $CRLF = "\015\012";
     $data =~ s/$CRLF/\n/sgo;
-    $data =~ s/^\#\![^\n]+\n\n?//s; #X cgi compat ?
+    $data =~ s/^\#\![^\n]+(\n\n?)/$1/s; #X cgi compat ?
 
-    if($self->{pod_comments}) {
-	&PodComments($self, \$data);
-    }
-
+    # JUST ONCE
     # there should only be one of these, <%@ LANGUAGE="PerlScript" %>, rip it out
     # we keep white space and substitue text in so the perlscript sync's up with lines
     # only take out the first one 
-    $data =~ s/^(^\s*)\<\%(\s*)\@([^\n]*?)\%\>/$1\<\%$2 \"LANGUAGE=PerlScript\"; \%\>/so; 
+    $data =~ s/^(^\s*)\<\%(\s*)\@([^\n]*?)\%\>/$1\<\%$2 ; \%\>/so; 
     $data =~ s/\s+$//so; # strip trailing white space
-    $data .= "<%;;;%>"; # always end with some perl code for parsing.
-    my(@out, $perl_block, $last_perl_block);
-    while($data =~ s/^(.*?)\<\%(.*?)\%\>//so) {
-	($text, $perl) = ($1,$2);
-#	$self->Debug("parsing inversion loop begin $self->{'basename'}");
 
-#	$perl =~ s/^\s+$//gso;
-#	$text =~ s/^\s$//gso;
+    my $script = &ParseHelper($self, \$data);
+
+    my $strict = $self->{use_strict} ? "use strict" : "no strict";
+    $$script = join(";;", 
+		   $strict,
+		   "use vars qw(\$".join(" \$",@Apache::ASP::Objects).')',
+		   $$script
+		   );
+
+    $script;
+}
+
+sub ParseHelper {
+    my($self, $data) = @_;
+    my($script, $text, $perl);
+
+    if($self->{xml_subs_match}) {
+	unless($self->{asp}{xslt}) {
+	    $$data =~ s|\s*\<\?xml\s+version\s*\=[^\>]+\?\>||is;
+	}
+	$self->{xml_subs_match} =~ s/[\(\)]//sg;
+	$$data =~ s|\<\s*($self->{xml_subs_match})([^\>]*)/\>
+	  | {
+	     my($func, $args) = ($1, $2);
+	     $func =~ s/\:/\:\:/g;
+	     $args =~ s/([^\s]+\s*)\=(\s*)([\s\'\"]?)([^\3]*)(\3)/$1\=\>$2$3$4$5/sg;
+	     "<% $func({ $args }, ''); %>"
+	    } |sgex;	    
+	$$data =~ s|
+	  \<\s*($self->{xml_subs_match})([^\>]*)\>(.*?)\<\/\1\s*\>
+	    | {
+	       my($func, $args, $text) = ($1, $2, $3, $4);
+	       
+	       $func =~ s/\:/\:\:/g;
+	       $args =~ s/( [^\s]+\s*)\=/,$1\=\>/sg;
+	       $args =~ s/^,//s;
+	       
+	       if($text =~ /\<\%.*\%\>/) {
+		   # parse again, and control output buffer for this level
+		   my $sub_script = &ParseHelper($self, \$text);
+		   $text = (
+			    ' &{sub{ my $out = ""; '.
+			    'local $Response->{out} =  local $Response->{BinaryRef} = \$out; '.
+			    'local *Apache::ASP::Response::Flush = *Apache::ASP::Response::Null; '.
+			    $$sub_script .
+			    ' ; ${$Response->{out}}; }} '
+			   );
+	       } else {
+		   # raw text
+		   $text =~ s/\\/\\\\/gso;
+		   $text =~ s/\'/\\\'/gso;	
+		   $text = "'$text'";
+	       }
+	       
+	       "<% $func({ $args }, $text); %>"
+	      } |sgex;
+    }
+
+    my(@out, $perl_block, $last_perl_block);
+    $$data .= "<%;;;%>"; # always end with some perl code for parsing.
+    while($$data =~ s/^(.*?)\<\%(.*?)\%\>//so) {
+	($text, $perl) = ($1,$2);
 	$perl_block = ($perl =~ /^\s*\=(.*)$/so) ? 0 : 1;
 	my $perl_scalar = $1;
 
@@ -913,19 +1090,11 @@ sub Parse {
 	# influencing the generated html formatting, in particular
 	# dealing with perl blocks and new lines
 	if($text) {
+	    # don't touch the white space, to preserve line numbers
 	    $text =~ s/\\/\\\\/gso;
 	    $text =~ s/\'/\\\'/gso;
 
-	    # remove the tail white space from the text before
-	    # a perl block, as long as there is a newline there
-#	    if($perl_block) {
-#		$text =~ s/\n\s*?$/\n/so;
-#	    }
-
-	    # remove the head white space from the text after a perl block
-	    # as long as there is a newline there
 	    if($last_perl_block) {
-#		$text =~ s/^\s*?\n/\n/so;
 		$last_perl_block = 0;
 	    }
 
@@ -933,24 +1102,16 @@ sub Parse {
 	}
 
 	if($perl) {
-	    # X:
-	    # take out, since this might get someone in trouble
-	    # should work on the objects for porting compatibility
-	    # like a Collections class.
-	    #
-	    # PerlScript compatibility
-#	    if($perl =~ s/(\$.*?\(.*?\))\-\>\{item\}/$1/isgo) {
-#		$self->Debug('parsing out ->{item} for PerlScript compatibility');
-#	    }
-	    
 	    if(! $perl_block) {
 		# we have a scalar assignment here
 		push(@out, '('.$perl_scalar.')');
 	    } else {
 		$last_perl_block = 1;
 		if(@out) {
-#		    $script .= '&Apache::ASP::Response::Write($Response,'.join(".", @out).');',
-		    $script .= '$Response->Write('.join(".", @out).');',
+		    # we pass by reference here with the idea that we are not
+		    # copying the HTML twice this way.  This might be large
+		    # saving on a typical site with rich HTML headers & footers
+		    $script .= '$main::Response->WriteRef(\('.join('.', @out).'));'; 
 		    @out = ();
 		}			 
 
@@ -962,32 +1123,14 @@ sub Parse {
 		if($perl =~ /\#[^\n]*?$/so) {
 		    $perl .= "\n";
 		}
-#		$self->Debug("parsing inversion after # newline compat $self->{'basename'}");
 
 		# skip if the perl code is just a placeholder		
 		unless($perl eq ';;;') {
-		    $script .= join
-			(" ;; ",
-#			 '',
-#			 '## CODE BEGIN ##',
-			 $perl,
-#			 '## END ##',
-#			 ''
-			 );
+		    $script .= $perl . '; ';
 		}
 	    }
 	}
     }
-
-#    $self->Debug("parsing inversion done $self->{'basename'}");
-
-    my $strict = $self->{use_strict} ? "use strict" : "no strict";
-    $script = join(";;", 
-		   $strict,
-#		   "use diagnostics",
-		   "use vars qw(\$".join(" \$",@Apache::ASP::Objects).')',
-		   $script
-		   );
 
     \$script;
 }
@@ -998,35 +1141,44 @@ sub PodComments {
     # we do a little extra work to sync pod comment lines up, we do this
     # by wiping out the pod comments, and replacing them with the equivalent
     # number of newlines
-    my $match = '\n(\=pod\n.*?\n\=cut)\n';
-    while($$data =~ /$match/so) {
-	my $pod = $1;
-	$pod =~ s/[^\n]+//sg;
-	$$data =~ s/$match/\n$pod\n/so;	    
-    }
+    $$data =~ s,(^|\n)(\=pod\n.*?\n\=cut\n),
+      {
+       my $pod = $1.$2;
+       $pod =~ s/[^\n]+//sg;
+       $pod;
+      }
+    ,sgex;
     
     $data;
+}
+
+sub SearchDirs {
+    my($self, $file) = @_;
+ 
+    if(defined $file) {
+	# test & return if absolute if absolute
+	if($file =~ m,^/|^[a-z]\:,i) {
+	    return (-e $file) ? $file : undef;
+	}
+	
+	for my $dir (@{$self->{includes_dir}}) {
+	    my $path = "$dir/$file";
+	    return $path if -e $path;
+        }
+    }
+    
+    undef;
 }
 
 sub CompileInclude {
     my($self, $include) = @_;
 
-    my $exists = 0;
-    my @include_files = ($include, "$self->{global}/$include");
-    if($self->{includes_dir}) {
-	push(@include_files, "$self->{includes_dir}/$include");
-    }
-    for(@include_files) {
-	if(-e $_) {
-	    $include = $_;
-	    $exists = 1;
-	    last;
-	}
-    }
-    die("no file $include") unless $exists;
+    my $file = $self->SearchDirs($include);
+    die("no file $include") unless defined $file;
+    $include = $file;
 
     my $id = $self->FileId($self->AbsPath($include, $self->{global}));    
-    my $subid = $self->{GlobalASA}{'package'}."::$id";
+    my $subid = $self->{GlobalASA}{'package'}."::$id".'_x_INC';
 
     my $compiled = $Apache::ASP::CompiledIncludes{$subid};
     if($compiled && ! $self->{stat_scripts}) {
@@ -1053,37 +1205,30 @@ sub CompileInclude {
     # if it just triggered a die(), we wouldn't have a problem
     my $eval = join(" ",
 		    "package $self->{GlobalASA}{'package'};",
-		    "sub $id { if (shift) { $$perl } 1; }",
+		    "sub $id { $$perl }",
 		    "1;"
 		   );
 
     my $name = "$self->{GlobalASA}{'package'}::$id";    
     $eval =~ /^(.*)$/s; # untaint
       
-      if($self->{use_strict}) { 
-	  local $SIG{__WARN__} = sub { die("maybe use strict error: ", @_) };
-	  eval $1;
-      } else {
-	  eval $1;
-      }
+    if($self->{use_strict}) { 
+	local $SIG{__WARN__} = sub { die("maybe use strict error: ", @_) };
+	eval $1;
+    } else {
+	eval $1;
+    }
 
-    my $create_err = $@;
-    eval { &$name() }; # null execute of routine
-    my $test_err = $@; # see if routine was created successfully
-    
-    if($create_err || $test_err) {
-	# since this routine should only run when the script is executing in 
-	# eval context already
-	$create_err ||= "Probably use strict error, please see error log for more info";
-	$self->Error("error compiling include $include: $create_err");
-	$self->{compile_error} .= "\n$create_err\n";
-	$self->{compile_eval} = $perl;
+    my $create_err = $@;    
+    if($@) {	
+	$self->CompileError($perl, "error compiling include $file: $@");
 
 	# we don't want to cache the compiled routine, so jump out here
 	# this will make ASP keep trying to recompile it
 	return;
     }
 
+    $self->RegisterSubs($id, $eval);
     $Apache::ASP::CompiledIncludes{$subid} = 
       { 
        mtime => $mtime, 
@@ -1140,9 +1285,13 @@ sub AbsPath {
 }       
     
 sub Compile {
-    my($self, $script, $id) = @_;
-    $id ||= $self->{id};
-    my $subid = $self->{GlobalASA}{'package'}.'::'.$id;
+    my($self, $script, $subid) = @_;
+    $subid ||= $self->{subid};
+
+    unless($script) {
+	my $null = '';
+	$script = \$null;	
+    }
     
     $self->UndefRoutine($subid);
     $self->{dbg} && $self->Debug("compiling into package $self->{'package'} subid $subid");    
@@ -1150,10 +1299,8 @@ sub Compile {
     my $eval = 
       join(" ;; ", 
 	   "package $self->{'package'};",
-#	   "no strict;use diagnostics;",
-#	   "use vars qw(\$".join(" \$",@Apache::ASP::Objects).');',
 	   "sub $subid { ",
-	   ' return(1) unless $_[0]; ', #@_ = ();',
+	   ' @_ = ();',
 	   $$script,
 	   '}',
 	  );
@@ -1167,71 +1314,89 @@ sub Compile {
 	eval $1;
     }
     
-    # dummy execute, to catch use strict error, where there is
-    # no die, just STDERR to error log
-    unless($@) {
-	eval { &$subid(0) };
-	if($@) {
-	    $@ = "Probably use strict error, please see error log for more info: $@";
-	}
-    }
 
     if($@) {
-	$self->Error($@);
-	$self->{compile_error} .= "\n$@\n";
-	$self->{compile_eval} = $eval;
+	$self->CompileError($eval, $@);
+	$self->UndefRoutine($subid);
     } 
 
-    # more errors could happen with use strict, so test for them here
-    if($self->{compile_error}) {
-	# make sure there isn't a trace of this compile left after an error
-	$self->UndefRoutine($subid);
-    } else {
+    if(! $self->{compile_error}) {
 	$Apache::ASP::Compiled{$subid}->{mtime}  = $self->{mtime};
+	if($self->{'package'} eq $self->{GlobalASA}{'package'}) {
+	    $self->RegisterSubs($self->{subid}, $eval);
+	}
     }
     $Apache::ASP::Compiled{$subid}->{output} = $eval;	
     
-    (! $self->{errs});
+    ! $self->{errs};
+}
+
+sub RegisterSubs {
+    my($self, $id, $script) = @_;
+    
+    my $global_package = $self->{GlobalASA}{'package'};
+    while($script =~ s/(^|\n)sub\s+([^\s\{]+)\s*\{//s) {
+	my $sub = $2;
+	if($sub =~ /\:\:/) {
+	    # absolute sub, don't touch it
+	} else {
+	    # else defined in global package
+	    $sub = $global_package.'::'.$sub;
+	}
+	$self->Debug("registering sub $sub at $id");
+	if($ScriptSubs{$sub}) {
+	    if($ScriptSubs{$sub} ne $id) {
+		$self->Log("[WARN] redefinition of subroutine $sub at $id, ".
+			   "originally defined at $ScriptSubs{$sub}");
+		$ScriptSubs{$sub} = $id;
+	    }
+	} else {
+	    $ScriptSubs{$sub} = $id;
+	}
+    }
 }
 
 sub Execute {
     my $self = shift;    
-    my $id = $_[0] || $self->{id};
+    my $id = shift || $self->{id};
     my $subid = $self->{GlobalASA}{'package'}.'::'.$id;
     $self->{dbg} && $self->Debug("executing $id");
     
-    # alias $0 to filename
-    my $filename = $self->{filename};
-    local *0 = \$filename;
-    
-    # init objects
+    # init objects, skip if already done for this asp object,
+    # which will speed execution of GlobalASA subs
     my($object, $import_package);
     for $object (@Apache::ASP::Objects) {
+	next if (defined $self->{packages_init}{$object} and 
+		 ($self->{packages_init}{$object} || '') eq ($self->{$object} || ''));
+	$self->{packages_init}{$object} = $self->{$object} || '';
 	for $import_package (@{$self->{init_packages}}) {
 	    my $init_var = $import_package.'::'.$object;	    
 	    $$init_var = $self->{$object};	    
 	}
     }
-
-    # set printing to Response object
-    tie *RESPONSE, 'Apache::ASP::Response', $self->{Response};
-    select(RESPONSE);
-#    local $| = 1; # flush immediately
     
+    # set printing to Response object
+    unless($self->{response_tied}) {
+	$self->Debug("tieing response package for STDOUT");
+	$self->{response_tied} = 1;
+	tie *RESPONSE, 'Apache::ASP::Response', $self->{Response};
+	select(RESPONSE);
+    }
+	
     # don't do RequestOnStart & OnEnd here as they end up calling Execute()
     # again, and we fall into a recursive black hole.
     # run the script now, then check for errors
-    #    $self->{GlobalASA}->RequestOnStart();
     
 #    $self->{r}->soft_timeout(1);
-    eval  { &$subid(1) };
+    eval { &$subid() };
     if($@ && $@ !~ /Apache\:\:exit/) { 
 	$self->Error($@); 
     }
-
+    
+    # NOT NECESSARY, if filtering, we call destroy now
     # filtering makes us keep this here instead of DESTROY
     # also in DESTROY in case scripts gets killed by STOP
-    select(STDOUT); 
+    #    select(STDOUT); 
 
     ! $@;
 }
@@ -1363,6 +1528,54 @@ sub CleanupGroup {
     $deleted;
 }
 
+sub CleanupMaster {
+    my $self = shift;
+    my $internal = $self->{Internal};
+    
+    $internal->LOCK;
+    my $master = $internal->{CleanupMaster} || 
+      {
+       ServerID => '',
+       PID => 0,
+       Checked => 0,       
+      };
+
+    my $is_master = $master->{ServerID} eq $ServerID 
+      and $master->{PID} eq $$ ? 1 : 0;
+    my $stale_time = $is_master ? $self->{group_refresh} / 4 : $self->{group_refresh} / 2;
+    $stale_time += $stale_time * rand() / 2 + $master->{Checked};
+    
+    if($stale_time < time()) {
+	$internal->{CleanupMaster} =
+	  {
+	   ServerID => $ServerID,
+	   PID => $$,
+	   Checked => time()
+	  };
+	$internal->UNLOCK;
+	$self->{dbg} && $self->Debug("$stale_time time is stale, is_master $is_master", $master);
+	
+	# we are only worried about multiprocess NFS here
+	sleep(1) unless ($^O =~ /Win/); 
+
+	my $master = $internal->{CleanupMaster};
+	my $is_master = $master->{ServerID} eq $ServerID 
+	  and $master->{PID} eq $$ ? 1 : 0;
+	$self->{dbg} && $self->Debug("is master after update $$");
+	$is_master;
+    } elsif($is_master) {
+	$master->{Checked} = time();
+	$internal->{CleanupMaster} = $master;
+	$internal->UNLOCK;
+	$self->{dbg} && $self->Debug("$stale_time time is fresh, is_master $is_master", $master);
+	1; # is master
+    } else {
+	$internal->UNLOCK;
+	$self->{dbg} && $self->Debug("$stale_time time is fresh, is_master $is_master", $master);
+	0; # not master
+    }
+}
+
 sub CleanupGroups {
     my($self, $force) = @_;
     return unless $self->{Session};
@@ -1379,15 +1592,17 @@ sub CleanupGroups {
     # break it up in this way so that locking on $Internal
     # does not become another bottleneck for scripts
     if(($Apache::ASP::CleanupGroups{$state_dir} || 0) < time()) {
-	$Apache::ASP::CleanupGroups{$state_dir} = time() + $self->{group_refresh};
+	$Apache::ASP::CleanupGroups{$state_dir} = time() + $self->{group_refresh}/4;
 	$self->Debug("testing internal time for cleanup groups");
 	my $internal = $self->{Internal};
-	$internal->LOCK();
-	if($force || ($internal->{CleanupGroups} < time())) {
-	    $internal->{CleanupGroups} = time() + $self->{group_refresh};
-	    $cleanup = 1;
+	if($self->CleanupMaster) {
+	    $internal->LOCK();
+	    if($force || ($internal->{CleanupGroups} < time())) {
+		$internal->{CleanupGroups} = time() + $self->{group_refresh};
+		$cleanup = 1;
+	    }
+	    $internal->UNLOCK;
 	}
-	$internal->UNLOCK;
     }
     return unless $cleanup;
 
@@ -1397,15 +1612,17 @@ sub CleanupGroups {
 	$sum_deleted = $self->CleanupGroup($_, $force);
     }
     $self->Debug("cleanup groups", { deleted => $sum_deleted }) if $self->{dbg};
-
-    $sum_deleted;
+    
+    # boolean true at least for master
+    $sum_deleted || 1; 
 }
 
 sub PrettyError {
     my($self) = @_;
     my $response = $self->{Response};
 
-    $response->Write($self->PrettyErrorHelper());
+    my $out = $response->{out};
+    $$out = $self->PrettyErrorHelper();
     $response->Flush();
 	
     1;
@@ -1417,19 +1634,29 @@ sub PrettyErrorHelper {
     my $response_buffer = $self->{Response}{out};
     $self->{Response}->Clear();
     my $errors_out = '';
+    my @eval_error_lines;
     if($self->{errors_output}[0]) {
-	$errors_out = $self->Escape(join("\n> ", '', @{$self->{errors_output}}));
+	$errors_out = join("\n<li> ", '', map { $self->Escape($_) } @{$self->{errors_output}});
 	# link in the line number to the compiled program
-	$errors_out =~
-	  s/(at \(eval \d+\)) line (\d+)/$1 \<a href\=\#$2>line $2\<\/a\>/sg;	
+	if($errors_out =~
+	   s/(at.*?) line (\d+)/$1 \<a href\=\#$2>line $2\<\/a\>/) 
+	  {
+	      push(@eval_error_lines, $2);	      
+	  }
     }
     my $out = <<OUT;
-<pre>
+<tt>
 <b><u>Errors Output</u></b>
+<ol>
 $errors_out
+</ol>
 
 <b><u>Debug Output</u></b>
-@{[$self->Escape(join("\n> ", '', @{$self->{debugs_output}}))]}
+<ol>
+@{[join("\n<li> ", '', map { $self->Escape($_) } @{$self->{debugs_output}}) ]}
+</ol>
+</tt>
+<pre>
 
 OUT
     ;
@@ -1444,21 +1671,31 @@ OUT
 	$script = $self->{compile_eval};
     }
     
-    if($response_buffer) {
+    if($$response_buffer) {
 	my $length = $self->{r}->dir_config('DebugBufferLength') || 100;
 	$out .= "<b><u>Last $length Bytes of Buffered Output</u></b>\n\n";
-	$out .= $self->Escape(substr($response_buffer, -1 * $length));
+	$out .= $self->Escape(substr($$response_buffer, -1 * $length));
 	$out .= "\n\n";
     }
 
-    $out .= "<b><u>ASP to Perl Program</u></b>\n\n";
     my $lineno = 1;
-    $script ||= $Apache::ASP::Compiled{$self->{GlobalASA}{'package'}.'::'.$self->{id}}->{output};
+    my $error_desc;
+    if($script) {
+	$error_desc = "Compiled Data with Error";
+    } else {
+	$error_desc = "ASP to Perl Script";
+	$script = $Apache::ASP::Compiled{$self->{GlobalASA}{'package'}.'::'.$self->{id}}->{output};		 }    
+    $out .= "<b><u>$error_desc</u></b><a name=1>&nbsp;</a>\n\n";
+
     for(split(/\n/, $script)) {
+	my $lineprint = sprintf('%3d', $lineno);
+	grep($lineno == $_, @eval_error_lines) && 
+	  ($lineprint = "<b><font color=red>$lineprint</font></b>");
 	unless($self->{'r'}->dir_config('CommandLine')) {
 	    $_ = $self->Escape($_);
 	}
-	$out .= "<a name=$lineno>".sprintf('%3d',$lineno++) . "</a>: $_\n";
+	$out .= "<a name=".($lineno+1).">".$lineprint. "</a>: $_\n";
+	$lineno++;
     }
 
     $out .= <<OUT;
@@ -1473,7 +1710,7 @@ through this problem, please try researching the it at the
 specifically the <a href=http://www.nodeworks.com/asp/faq.html>FAQ section</a>.
 Failing that, check out your 
 <a href=http://www.nodeworks.com/asp/support.html>support options</a>, and 
-if necessary include this debug output with any query.
+if necessary include this debug output with any query. 
 
 OUT
   ;
@@ -1487,6 +1724,17 @@ sub Log {
     $msg =~ s/[\r\n]+/ \<\-\-\> /sg;
     $self->{r}->log_error("[asp] [$$] $msg");
 }    
+
+sub CompileError {
+    my($self, $eval) = (shift, shift);
+    $self->{compile_error} = $_[0] || 1;
+    if(ref $eval) {
+	$self->{compile_eval} = $$eval;
+    } else {
+	$self->{compile_eval} = $eval;
+    }
+    $self->Error(@_);
+}
 
 sub Error {
     my($self, $msg) = @_;
@@ -1517,7 +1765,8 @@ sub Out {
     
     my($self, @args) = @_;
     my(@data, $arg);
-    while($arg = shift(@args)) {
+    while(@args) {
+	$arg = shift @args;
 	my($ref, $data);
 	if($ref = ref($arg)) {
 	    if($arg =~ /HASH/) {
@@ -1620,15 +1869,19 @@ sub SessionId {
     $id;
 }
 
-sub Secret {
-    my $self = shift;
-
+sub Digest {
+    my($self, $dataref) = @_;    
     my $md5 = $Apache::ASP::MD5;
     $md5->reset;
-    $md5->add($self . $self->{remote_ip} . rand() . time() . 
-	      $md5 . $self->{global} . $self->{'r'} . $self->{'filename'}. rand());
-    
-    $md5->hexdigest();	
+    $md5->add($$dataref);
+    $md5->hexdigest();	    
+}
+
+sub Secret {
+    my $self = shift;
+    my $data = $self . $self->{remote_ip} . rand() . time() . 
+      $Apache::ASP::MD5 . $self->{global} . $self->{'r'} . $self->{'filename'}. rand();
+    $self->Digest(\$data);
 }
     
 sub Escape {
@@ -1640,6 +1893,60 @@ sub Escape {
     $html =~s/</&lt;/g;
 
     $html;
+}
+
+sub ParseXML {
+    my($self, $dataref, $type) = @_;
+    my $asp = $self;
+    
+    my $xml_dom;
+    if($asp->{xslt_cache_size}) {
+	my $cache;
+	unless($cache = tied %Apache::ASP::XSLTCache) {
+	    $asp->LoadModule('Cache', 'Tie::Cache');
+	    $cache = tie %Apache::ASP::XSLTCache, 'Tie::Cache', $asp->{xslt_cache_size};
+	}
+	$cache->{max_count} = $asp->{xslt_cache_size};
+	
+	my $checksum = $asp->Digest($dataref);
+	my $cache_key = $checksum.'_'.length($$dataref);
+	$xml_dom = $Apache::ASP::XSLTCache{$cache_key};
+	
+	unless($xml_dom) {
+	    if($cache->{count} >= $asp->{xslt_cache_size}) {
+		# fetch from cache first to dispose, then delete
+		my @keys = keys %Apache::ASP::XSLTCache;
+		my $old_dom = $Apache::ASP::XSLTCache{$keys[0]};
+		$old_dom->dispose;
+		delete $Apache::ASP::XSLTCache{$keys[0]};			  
+	    }
+	    
+	    eval {
+		my $dom_parser = XML::DOM::Parser->new();
+		$xml_dom = $dom_parser->parse($$dataref);
+		$Apache::ASP::XSLTCache{$cache_key} = $xml_dom;
+	    };
+	    if($@) {
+		$@ =~ s/^\s*//s;
+		$asp->CompileError($$dataref, "Parse XML processing error: $@");
+		return;
+	    }       	
+	} 
+	
+	$asp->{dbg} && $asp->Debug("parsexml $xml_dom, cache $cache, cache_key $cache_key");
+    } else {
+	eval {
+	    my $dom_parser = XML::DOM::Parser->new();
+	    $xml_dom = $dom_parser->parse($$dataref);
+	};
+	if($@) {
+	    $@ =~ s/^\s*//s;
+	    $asp->CompileError($$dataref, "Parse XML processing error: $@");
+	    return;
+	}       	
+    }
+
+    $xml_dom;
 }
 
 # Apache::StatINC didn't quite work right, so writing own
@@ -1726,6 +2033,11 @@ sub StatINC {
 #			$self->Debug("$function is compiled script");
 			next;
 		    }
+		    if($Apache::ASP::ScriptSubs{$function}) {
+			$self->Debug("$function is a script sub");
+			next;
+		    }
+
 		}
 
 		$self->{dbg} && $self->Debug("undef code $function: $code");
@@ -1853,9 +2165,12 @@ sub SendMail {
 	    unshift(@{$NetConfig{smtp_hosts}}, $self->{mail_host});
 	}
     }
+    $mail->{From} ||= $self->{r}->dir_config('MailFrom');
     
-    die("not enough args to send mail")
-	unless ($mail->{To} && $mail->{Body} && $mail->{Subject} && $mail->{From});
+    for('To', 'Body', 'Subject', 'From') {
+	$mail->{$_} ||
+	  die("need $_ argument to send mail");
+    }
     
     # debugging set in mail args, or general debugging
     if($mail->{Debug} || $self->{dbg}) {
@@ -1865,10 +2180,17 @@ sub SendMail {
 
     # connect to server
     $smtp = Net::SMTP->new(%args);
-    $smtp || return(0);
-
-    @to = (ref $mail->{To}) ? @{$mail->{To}} : ($mail->{To}); 
-
+    unless($smtp) {
+	$self->Debug("can't connect to SMTP server with args ", \%args);
+	return 0;
+    } else {
+	$self->Debug("connected to SMTP server with args ", \%args);
+    }
+    
+    @to = (ref $mail->{To}) ? @{$mail->{To}} : (split(/\s*,\s*/, $mail->{To})); 
+    $self->Debug("sending mail to: ".join(',', @to));
+    ($mail->{From}) = split(/\s*,\s*/,$mail->{From}); # just the first one
+    
     $smtp->mail($mail->{From});
     $smtp->to(@to);
 
@@ -1880,7 +2202,8 @@ sub SendMail {
     for('Subject', 'From', 'Reply-To', 'Organization', 'To', keys %$mail) {
 	next unless $mail->{$_};
 	next if $done{lc($_)}++;	
-	my $add = ref($mail->{$_}) ? join(", ", @{$mail->{$_}}) : $mail->{$_};
+	my $add = ref($mail->{$_}) ? join(",", @{$mail->{$_}}) : $mail->{$_};
+	$add =~ s/^[\n]*(.*?)[\n]*$/$1/;
 	$data .= "$_: $add\n";
     }
     $data .= "\n" . $body;
@@ -1888,6 +2211,7 @@ sub SendMail {
     $smtp->data($data) || ($rv = 0);
     $smtp->quit();
 
+    $rv && $self->Debug("mail sent successfully");
     $rv;
 }
 
@@ -1901,20 +2225,45 @@ sub MailErrors {
       ( 
        sub { 
 	   for(1..3) {
+	       my $form = $self->{Request}{Form};
+	       my $query = $self->{Request}{QueryString};
+	       my $vars = $self->{Request}{ServerVariables};
+	       my $server = $self->{Server};
+	       my $http_out = join("<br>\n  ", 
+				   map { "$_= ".$server->HTMLEncode(substr($vars->{$_}, 0, 100)) } 
+				   sort grep(/^HTTP_/, keys %$vars)
+				  );
+	       my $query_out = join("<br>\n  ", 
+				    map { "$_= ".$server->HTMLEncode(substr($query->{$_}, 0, 100)) } 
+				    sort keys %$query
+				   );
+	       my $form_out = join("<br>\n  ", 
+				   map { "$_= ".$server->HTMLEncode(substr($form->{$_}, 0, 100)) } 
+				   sort keys %$form 
+				   );				   
+	       my $body = <<BODY;	       			       
+<table>
+<tr><td><b> Global: </b><td> $self->{global}
+<tr><td><b>   File: </b><td> $self->{filename}
+<tr><td><b>     IP: </b><td> $vars->{REMOTE_ADDR}
+<tr><td><b> HTTP_*: </b><td> $http_out
+<tr><td><b>  Query: </b><td> $query_out
+<tr><td><b>   Form: </b><td> $form_out
+</table>
+BODY
+  ;
+	       $body =~ s/\<td\>/\<td valign=top\>\<font size=-1\>/isg;
+	       $body .= "\n".$self->PrettyErrorHelper(),
+
 	       my $success = 
-		 $self->SendMail({
-				  To => $self->{mail_errors_to},
-				  From => $self->{mail_errors_to},
-				  Subject => "Apache::ASP Errors for $ENV{SCRIPT_NAME}",
-				  Body => join(" <br>\n",
-					       "Global: $self->{global}",
-					       "  File: $self->{filename}",
-					       "",
-					       $self->PrettyErrorHelper(),
-					      ),
-				  'Content-Type' => 'text/html',
-				 });
-	       
+		 $self->SendMail
+		   ({
+		     To => $self->{mail_errors_to},
+		     From => $self->{r}->dir_config('MailFrom') || $self->{mail_errors_to},
+		     Subject => "Apache::ASP Errors for $ENV{SCRIPT_NAME}",
+		     Body => $body,
+		     'Content-Type' => 'text/html',
+		    });	       
 	       if($success) {
 		   last;
 	       } else {
@@ -1952,7 +2301,7 @@ sub MailAlert {
 		   "alerts can be sent only every $self->{mail_alert_period} minutes");
     }
 
-    my $host;
+    my $host = '';
     if($self->LoadModules('MailAlert', 'Net::Domain')) {
 	$host = Net::Domain::hostname();	
     }
@@ -1968,10 +2317,9 @@ sub MailAlert {
 	       my $success = 
 		 $self->SendMail({
 				  To => $self->{mail_alert_to},
-				  From => $self->{mail_alert_to},
+				  From => $self->{r}->dir_config('MailFrom') || $self->{mail_alert_to},
 				  Subject => join('-', 'ASP-ALERT', $host), 
-				  Body => "$self->{global}::$ENV{SCRIPT_NAME}",				 
-#				  Debug => 1,
+				  Body => "$self->{global}-$ENV{SCRIPT_NAME}",				 
 				 });
 	       
 	       if($success) {
@@ -1991,19 +2339,21 @@ sub LoadModules {
     for(@modules) {
 	if(defined $LoadedModules{$_}) {
 	    if($LoadedModules{$_} == 0) {
-		$self->Debug("already failed to load $_");
+		if($LoadModuleErrors{$category}) {
+		    $self->Error("cannot load $_ for $category: $LoadModuleErrors{$category}; $@");
+		} else {
+		    $self->Debug("already failed to load $_");
+		}
 		$load_errors++;
 	    } 
 	    next;
 	}
 
-#	$_ =~ s/^//; # untaint
-#	eval "use $_";
 	$_ =~ /^(.*)$/; # untaint
 	eval "use $1";
 	if($@) { 
 	    if($LoadModuleErrors{$category}) {
-		$self->Error("cannot load $_ for $category: $@, $LoadModuleErrors{$category}");
+		$self->Error("cannot load $_ for $category: $LoadModuleErrors{$category}; $@");
 	    } else {
 		$self->Log("cannot load $_ for $category: $@");
 	    }
@@ -2054,6 +2404,8 @@ use vars qw(%stash *stash @ISA);
      "Session_OnEnd",
      "Script_OnStart",
      "Script_OnEnd",
+     "Script_OnParse",
+     "Script_OnFlush"
      );
 
 sub new {
@@ -2080,13 +2432,15 @@ sub new {
     if($compiled && ! $asp->{stat_scripts}) {
 	$asp->{dbg} && $asp->Debug("no stat: GlobalASA already compiled");
 	$self->{'exists'} = $compiled->{'exists'};
+	$self->{'compiled'} = $compiled; # for event lookups
 	return $self;
     }
 
     unless($compiled) {
 	$compiled = $Apache::ASP::Compiled{$id} = { mtime => 0, 'exists' => 0 };
     }
-
+    $self->{compiled} = $compiled;
+    
     my $exists = $self->{'exists'} = -e $filename;
     my $changed = 0;
     if(! $exists && ! $compiled->{'exists'}) {
@@ -2120,12 +2474,10 @@ sub new {
 		 '1;',
 		 );
 
-    $asp->Debug("compiling global.asa $self->{'package'}");
-#    $code =~ s/^//; # untaint
-#    eval $code;
-    # only way to catch strict errors here
+    $asp->Debug("compiling global.asa $self->{'package'} $id", $self);
     $code =~ /^(.*)$/s; # untaint
 
+    # only way to catch strict errors here
     if($asp->{use_strict}) { 
 	local $SIG{__WARN__} = sub { die("maybe use strict error: ", @_) };
 	eval $1;
@@ -2135,11 +2487,14 @@ sub new {
 
     # if we have success compiling, then update the compile time
     if(! $@) {
-	$compiled->{mtime} = time();
-
+	# if file mod times are bad, we need to use them anyway
+	# for relative comparison, time() was used here before, but
+	# doesn't work
+	$compiled->{mtime} = $self->{mtime} || (stat($filename))[9];
+	
 	# remember whether the file really exists
 	$compiled->{'exists'} = $exists;
-
+	
 	# we cache whether the code was compiled so we can do quick
 	# lookups before executing it
 	my $routines = {};
@@ -2151,8 +2506,9 @@ sub new {
 	}
 	$compiled->{'routines'} = $routines;
 	$asp->Debug('global.asa routines', $routines);
+	$self->{'compiled'} = $compiled;
     } else {
-	$self->{asp}->Error("errors compiling global.asa: $@");
+	$asp->CompileError($code, "errors compiling global.asa: $@");
     }
 
     $self;
@@ -2160,18 +2516,14 @@ sub new {
 
 sub IsCompiled {
     my($self, $routine) = @_;
-    my $compiled = $Apache::ASP::Compiled{$self->{id}}->{'routines'};
-#    $self->{asp}{dbg} && $self->{asp}->Debug("compiled", $compiled);
-    $compiled->{$routine};
+    $self->{'compiled'}{routines}{$routine};
 }
 
 sub Execute {
     my($self, $routine) = @_;
-    my $asp = $self->{asp};
-    if($self->IsCompiled($routine)) {
-#	$asp->Debug("really execute $routine");
-	$asp->Execute($routine);
-    } 
+    if($self->{'compiled'}{routines}{$routine}) {
+	$self->{'asp'}->Execute($routine);
+    }
 }
 
 sub SessionOnStart {
@@ -2179,15 +2531,17 @@ sub SessionOnStart {
     my $asp = $self->{asp};
     my $zero_sessions = 0;
 
-    $asp->{Internal}->LOCK();
-    my $session_count = $asp->{Internal}{SessionCount} || 0;
-    if($session_count <= 0) {
-	$asp->{Internal}{SessionCount} = 1;	
-	$zero_sessions = 1;
-    } else {
-	$asp->{Internal}{SessionCount} = $session_count + 1;
+    if($asp->{session_count}) {
+	$asp->{Internal}->LOCK();
+	my $session_count = $asp->{Internal}{SessionCount} || 0;
+	if($session_count <= 0) {
+	    $asp->{Internal}{SessionCount} = 1;	
+	    $zero_sessions = 1;
+	} else {
+	    $asp->{Internal}{SessionCount} = $session_count + 1;
+	}
+	$asp->{Internal}->UNLOCK();
     }
-    $asp->{Internal}->UNLOCK();
 
     #X: would like to run application startup code here after
     # zero sessions is true, but doesn't seem to account for 
@@ -2203,11 +2557,19 @@ sub SessionOnStart {
 sub SessionOnEnd {
     my($self, $id) = @_;
     my $asp = $self->{asp};
-
     my $internal = $asp->{Internal};
-    $internal->LOCK();
-    $internal->{SessionCount}--;
-    $internal->UNLOCK();
+
+    # session count tracking
+    if($asp->{session_count}) {
+	$internal->LOCK();
+	if((my $count = $internal->{SessionCount}) > 0) {
+	    $internal->{SessionCount} = $count - 1;
+	} else {
+	    $internal->{SessionCount} = 0;
+	}	    
+	$internal->UNLOCK();
+    }
+
     my $old_session = $asp->{Session};
     my $dead_session;
     if($id) {
@@ -2220,7 +2582,7 @@ sub SessionOnEnd {
     $asp->Debug("Session_OnEnd", {session => $dead_session->SessionID()});
     $self->Execute('Session_OnEnd');
     $asp->{Session} = $old_session;
-
+    
     if($id) {
 	untie %{$dead_session};
     } 
@@ -2231,7 +2593,7 @@ sub SessionOnEnd {
 sub ApplicationOnStart {
     my $self = shift;
     $self->{asp}->Debug("Application_OnStart");
-    %{$self->{asp}{Application}} = (); # clear application now
+    %{$self->{asp}{Application}} = (); 
     $self->Execute('Application_OnStart');
 }
 
@@ -2240,14 +2602,18 @@ sub ApplicationOnEnd {
     my $asp = $self->{asp};
     $asp->Debug("Application_OnEnd");
     $self->Execute('Application_OnEnd');
-    delete $asp->{Internal}{'application'};
-    
-    local $^W = 0;
-    my $tied = tied %{$asp->{Application}};
-    untie %{$asp->{Application}};
-    $tied->DESTROY(); # call explicit DESTROY
-    $asp->{Application} = &Apache::ASP::Application::new($self->{asp})
-      || $self->Error("can't get application state");
+    %{$self->{asp}{Application}} = (); 
+
+    # PROBLEM, since we are not resetting ASP objects
+    # every execute now, useless code anyway
+
+    #    delete $asp->{Internal}{'application'};    
+    #    local $^W = 0;
+    #    my $tied = tied %{$asp->{Application}};
+    #    untie %{$asp->{Application}};
+    #    $tied->DESTROY(); # call explicit DESTROY
+    #    $asp->{Application} = &Apache::ASP::Application::new($self->{asp})
+    #      || $self->Error("can't get application state");
 }
 
 sub ScriptOnStart {
@@ -2260,6 +2626,12 @@ sub ScriptOnEnd {
     my $self = shift;
     $self->{asp}{dbg} && $self->{asp}->Debug("Script_OnEnd");
     $self->Execute('Script_OnEnd');
+}
+
+sub ScriptOnFlush {
+    my $self = shift;
+    $self->{asp}{dbg} && $self->{asp}->Debug("Script_OnFlush");
+    $self->Execute('Script_OnFlush');
 }
 
 1;
@@ -2332,6 +2704,8 @@ sub new {
 			$upload{$_}{BrowserFile} = $fh;
 			$upload{$_}{FileHandle} = $fh;
 			$upload{$_}{ContentType} = $upload{$_}{'Content-Type'};
+			# tie the file upload reference to a collection... %upload
+			# may be many file uploads note.
 			$upload{$_} = bless $upload{$_}, 'Apache::ASP::Collection';
 		    }
 		}
@@ -2533,25 +2907,29 @@ sub new {
     my $asp = shift;
 
     my $r = $asp->{'r'};
+    my $out = '';
+
     return bless 
       {
        asp => $asp,
-       out => '',
+       out => \$out,
        # internal extension allowing various scripts like Session_OnStart
        # to end the same response
-#       Ended => 0, 
+       #       Ended => 0, 
        CacheControl => 'private',
        CH => $r->dir_config('CgiHeaders') || 0, 
-#       Charset => undef,
+       #       Charset => undef,
        Clean => $r->dir_config('Clean') || 0,
        Cookies => bless({}, 'Apache::ASP::Collection'),
        ContentType => 'text/html',
        IsClientConnected => 1,
-#       PICS => undef,
-       Status => 200,
-#       header_buffer => '', 
-#       header_done => 0,
-       Buffer => (defined $r->dir_config('BufferingOn')) ? $r->dir_config('BufferingOn') : 1, 
+       #       PICS => undef,
+       #       Status => 200,
+       #       header_buffer => '', 
+       #       header_done => 0,
+       Buffer => defined $r->dir_config('BufferingOn') ? $r->dir_config('BufferingOn') : 1,
+       BinaryRef => \$out,
+       CompressGzip => ($asp->{compressgzip} and $ENV{HTTP_ACCEPT_ENCODING} =~ /gzip/io) ? 1 : 0,
        r => $r,
       };
 }
@@ -2599,7 +2977,7 @@ sub BinaryWrite {
     &Write;    
 }
 
-sub Clear { $_[0]->{out} = ''; }
+sub Clear { my $out = shift->{out}; $$out = ''; }
 
 sub Cookies {
     my($self, $name, $key, $value) = @_;
@@ -2638,17 +3016,25 @@ sub End {
 
 sub EndSoft {
     my $self = shift;
-    return if $self->{Ended};
+    return if $self->{Ended}++;
 
-    # force headers out, though body could still be empty
-    # every doc will therefore return at least a header
-#    $self->Write(); 
-    $self->{Ended} = 1;
-    &Flush($self);
+    $self->Flush();
 }
 
 sub Flush {
     my $self = shift;
+    my $asp = $self->{asp};
+    my $out = $self->{out};
+
+    # Script_OnFlush event handler
+    $asp->{GlobalASA}{'exists'} &&
+      $asp->{GlobalASA}->ScriptOnFlush();
+    
+    # XSLT Processing
+    if($asp->{xslt} && ! $asp->{errs}) {
+	$self->FlushXSLT;
+	return if $asp->{errs};
+    }
 
     if($self->{Clean} and $self->{ContentType} eq 'text/html') {
 	# by checking defined, we just check once
@@ -2665,7 +3051,7 @@ sub Flush {
 
 	# if we can't clean, we simply ignore	
 	if($Apache::ASP::CleanSupport) {
-	    my $h = HTML::Clean->new(\$self->{'out'}, $self->{Clean});
+	    my $h = HTML::Clean->new($out, $self->{Clean});
 	    if($h) {
 		$h->strip();
 	    } else {
@@ -2675,7 +3061,6 @@ sub Flush {
     }
 
     ## Session query auto parsing for cookieless sessions
-    my $asp = $self->{asp};
     if(
        $asp->{Session} 
        and ! $asp->{session_cookie} 
@@ -2685,34 +3070,127 @@ sub Flush {
       {
 	  $self->SessionQueryParse();
       }
-    
+
+    # log total request time just once at the end
+    # and append to html like Cocoon, per user request
+    if($asp->{start_time} && $self->{Ended}) {
+	if($self->{ContentType} eq 'text/html') {
+	    my $total_time = sprintf('%7.2f', (&Time::HiRes::time() - $self->{asp}{start_time})*1000);
+	    $asp->{dbg} && $asp->Debug("page served in $total_time milliseconds");
+	    $$out .= "\n<!-- Apache::ASP v".$Apache::ASP::VERSION.
+	      " served page in $total_time milliseconds -->";
+	}
+    }
+
     # HEADERS AFTER CLEAN, so content-length would be calculated correctly
     # if this is the first writing from the page, flush a newline, to 
     # get the headers out properly
     if(! $self->{header_done}) {
-	if($self->{Ended} and $self->{Status} == 200) {
-	    $self->{r}->header_out('Content-Length', length($self->{out}));
+	# if no headers and the script has ended, we know that the 
+	# the script has not been flushed yet, which would at least
+	# occur with buffering on
+	if($self->{Ended}) {
+            # gzip the buffer if CompressGzip && browser accepts it &&
+            # the script is flushed once
+            if($self->{CompressGzip} && $asp->LoadModule('Gzip','Compress::Zlib')) {
+		$self->{r}->header_out('Content-Encoding','gzip');
+		$$out = Compress::Zlib::memGzip($out);
+	    }
+	    
+	    $self->{r}->header_out('Content-Length', length($$out));
 	}
-
+	
 	$self->{header_done} = 1;
 	&SendHeaders($self);
     }
-    return unless $self->{out};
+    return unless $$out;
 
     if($asp->{filter}) {
-	print STDOUT $self->{out};
+	print STDOUT $$out;
     } else {
 	#        unless($self->{r}->connection->aborted) {
 	# OK to print random ouput for 200's & 300's
-	if($self->{Status} >= 200 and $self->{Status} < 400) {
-	    $self->{r}->print($self->{out});		
+	if(! defined $self->{Status} or ($self->{Status} >= 200 and $self->{Status} < 400)) {
+	    $self->{r}->print($$out);		
 	}
 	#	}
     }
-
+    
     # supposedly this is more efficient than undeffing, since
     # the string does not let go of its allocated memory buffer
-    $self->{out} = ''; 
+    $$out = ''; 
+    
+    1;
+}
+
+sub FlushXSLT {
+    my $self = shift;
+    my $asp = $self->{asp};
+    my $out = $self->{BinaryRef};
+    $asp->{xslt_cache_size} = $asp->{r}->dir_config('XSLTCacheSize');
+    
+    $asp->{xslt_match} = $asp->{r}->dir_config('XSLTMatch') || '^.';
+    return unless ($asp->{filename} =~ /$asp->{xslt_match}/);
+
+    # loading XSLT
+    $asp->{dbg} && $asp->Debug("xslt processing with $asp->{xslt}");
+    eval { require XML::XSLT; };
+    if($@) {
+	$asp->Error("failed to load XML::XSLT: $@");		
+	return;
+    }
+	
+    ## XSLT FETCH & CACHE
+    my $xslt_dataref = $self->TrapInclude($asp->{xslt});
+    $asp->Debug(length($$xslt_dataref), $xslt_dataref);
+    return if($asp->{errs});
+
+    my $xsl_dom = $asp->ParseXML($xslt_dataref);
+    if($asp->{errs}) {
+	$asp->Error("XSLT processing error for $asp->{xslt}: $@");
+	return;
+    }
+	
+    ## XSLT XML RENDER
+    eval {
+	my $xml_dom = $asp->ParseXML($out) || return;
+	
+	if($asp->{xslt_cache_size}) {		
+	    # caching output
+	    unless(tied %Apache::ASP::XSLTCacheOutput) {
+		$asp->LoadModule('Cache', 'Tie::Cache');
+		tie %Apache::ASP::XSLTCacheOutput, 'Tie::Cache', $asp->{xslt_cache_size};
+	    }
+	    my $cache_output = tied %Apache::ASP::XSLTCacheOutput;
+	    $cache_output->{max_count} = $asp->{xslt_cache_size};
+	    
+	    my $cache_output_key = $xsl_dom.'_'.$xml_dom;
+	    my $output_ref = $Apache::ASP::XSLTCacheOutput{$cache_output_key};
+	    unless($output_ref) {
+		my $xslt = XML::XSLT->new($xsl_dom, 'DOM');
+		$xslt->transform_document($xml_dom, 'DOM');
+		my $result = $xslt->result_tree;
+		my $output = $result->toString;
+		$result->dispose;
+		$Apache::ASP::XSLTCacheOutput{$cache_output_key} = 
+		  $output_ref = \$output;			
+	    }
+	    $$out = $$output_ref;
+	} else {
+	    my $xslt = XML::XSLT->new($xsl_dom, 'DOM');
+	    $xslt->transform_document($xml_dom, 'DOM');
+	    my $result = $xslt->result_tree;
+	    $$out = $result->toString;
+	    $result->dispose;
+	    $xml_dom->dispose;
+	    $xsl_dom->dispose;
+	}
+    };
+    if($@) {
+	$@ =~ s/^\s*//s;
+	$asp->Error("XSLT/XML processing error: $@");
+	return;
+    }
 
     1;
 }
@@ -2753,12 +3231,12 @@ sub SendHeaders {
     my $status = $self->{Status};
 
     $dbg && $asp->Debug('building headers');
-    $r->status($status);
+    $r->status($status) if defined($status);
 
     # for command line script
     return if $r->dir_config('NoHeaders');
 
-    if($status == 401) {
+    if(defined $status and $status == 401) {
 	$dbg && $asp->Debug("status 401, note basic auth failure realm ".$r->auth_name);
 
 	# we can't send out headers, and let Apache use the 401 error doc
@@ -2767,7 +3245,7 @@ sub SendHeaders {
 	$r->note_basic_auth_failure;
 	return;
     } else {
-	$dbg && $self->{asp}->Debug("status $self->{Status}");
+	$dbg && defined $status && $self->{asp}->Debug("status $status");
     }
 
     if(defined $self->{Charset}) {
@@ -2810,7 +3288,7 @@ sub SendHeaders {
 	# we order the test this way in case Ken comes on
 	# board with setting header_out, in which case the test 
 	# will fail early       
-	if(! $asp->{filter} && $status >= 200 && $status < 400) {
+	if(! $asp->{filter} && (! defined $status or $status >= 200 && $status < 400)) {
 	    $dbg && $asp->Debug("sending cgi headers");
 	    if(defined $self->{header_buffer}) {
 		# we have taken in cgi headers
@@ -2920,27 +3398,44 @@ sub AddCookieHeaders {
     }
 }
 
+# with the WriteRef vs. Write abstration, direct calls 
+# to write might slow a little, but more common static 
+# html calls to WriteRef will be saved the HTML copy
 sub Write {
     my $self = shift;
+    
+    my $dataref;
+    if(@_ > 1) {
+	$, ||= ''; # non-standard use, so init here
+	my $data = join($,, @_);
+	$dataref = \$data;
+    } else {
+#	$_[0] ||= '';
+	$dataref = defined($_[0]) ? \$_[0] : \'';
+    }
 
-#    my($self, @send) = @_;
-#    return unless defined($send[0]);
+    &WriteRef($self, $dataref);
+}
+
+*WR = *WriteRef;
+sub WriteRef {
+    my($self, $dataref) = @_;
 
     # allows us to end a response, but still execute code in event
     # handlers which might have output like Script_OnStart / Script_OnEnd
-    #    return if $self->{Ended}; 
-    return if (! defined $_[0] or $self->{Ended});
+    return if $self->{Ended};
+    my $content_out = $self->{out};
 
     # work on the headers while the header hasn't been done
     # and while we don't have anything in the buffer yet
     #
     # also added a test for the content type being text/html or
     # 
-    if($self->{CH} && ! $self->{header_done} && ! $self->{out} 
+    if($self->{CH} && ! $self->{header_done} && ! $$content_out 
        && ($self->{ContentType} eq 'text/html')) 
     {
 	# -1 to catch the null at the end maybe
-	my @headers = split(/\n/, $_[0], -1); 
+	my @headers = split(/\n/, $$dataref, -1); 
 
 	# first do status line
 	my $status = $headers[0];
@@ -2968,25 +3463,18 @@ sub Write {
 	# what to send @_ and continue
 	if($self->{header_buffer}) {
 	    if(defined $headers[0]) {
-		$_[0] = join("\n", @headers);
+		$$dataref = join("\n", @headers);
 	    } else {
 		shift @_;
 	    }
 	}
     }
 
-    # add @_ to buffer
-    if(@_ > 1) {
-	$, ||= ''; # non-standard use, so init here
-	$self->{out} .= join($,, @_);
-    } else {
-	# tried to optimize for the one arg case and avoid passing the 
-	# the content to another routine
-	$self->{out} .= $_[0];
-    }
-
+    # add dataref to buffer
+    $$content_out .= $$dataref;
+    
     # do we flush now?  not if we are buffering
-    if(! $self->{Buffer} && $self->{out}) {
+    if(! $self->{Buffer}) {
 	# we test for whether anything is in the buffer since
 	# this way we can keep reading headers before flushing
 	# them out
@@ -3006,6 +3494,20 @@ sub PRINTF {
     $self->Write($output);
 }
 
+
+sub Null {};
+sub TrapInclude {
+    my($self, $file) = @_;
+    
+    my $out = "";
+    local $self->{out} = local $self->{BinaryRef} = \$out;
+    local $self->{Ended} = 0;
+    local *Apache::ASP::Response::Flush = *Null;
+    $self->Include($file);
+
+    \$out;
+}
+
 sub Include {    
     my $self = shift;
     my $file = shift;
@@ -3016,11 +3518,11 @@ sub Include {
 	$asp->Error("error including $file, not compiled");
 	return;
     }
-
+    
     my $eval = $_CODE->{code};
-    $asp->{dbg} && $asp->Debug("executing $eval");
+    $asp->{dbg} && $asp->Debug("executing $eval");    
 
-    my $rc = eval { &$eval(1, @_) };
+    my $rc = eval { &$eval(@_) };
     if($@) {
 	my $code = $_CODE;
 	die "error executing code for include $code->{file}: $@; compiled to $code->{perl}";
@@ -3041,7 +3543,7 @@ sub SessionQueryParse {
     # putting img up at the front doesn't seem to make a different in the speed
     my $tags_grep = join('|', sort keys %LinkTags); 
     my $new_content = ''; # we are going to rebuild this content
-    my $content_ref = \$self->{'out'};
+    my $content_ref = $self->{out};
     my $asp = $self->{asp};    
     $asp->Debug("parsing session id into url query strings");
 
@@ -3086,12 +3588,12 @@ sub SessionQueryParse {
 	# GET URL from tag attribs finally
 	my $rel_url = $attribs{$LinkTags{$tag}};
 #	$asp->Debug($rel_url, $element, \%attribs);
-	if($rel_url) {
+	if(defined $rel_url) {
 	    my $new_url = &SessionQueryParseURL($self, $rel_url);
 	    # escape all special characters so they are not interpreted
 	    if($new_url ne $rel_url) {
 		$rel_url =~ s/([\W])/\\$1/sg;
-		$element =~ s|$rel_url|$new_url|isg;
+		$element =~ s|($LinkTags{$tag}\s*\=\s*[\"\']?)$rel_url|$1$new_url|isg;
 #		$asp->Debug("parsed new element $element");
 	    }
 	}
@@ -3180,6 +3682,16 @@ sub CreateObject {
     Win32::OLE->new($name);
 }
 
+sub Execute {
+    my($self, $file) = (shift, shift);
+    $self->{asp}{Response}->Include($file, @_);
+}
+
+sub Transfer {
+    shift->Execute(shift);
+    goto APACHE_ASP_EXECUTE_END;
+}
+
 # shamelessly ripped off from CGI.pm, by Lincoln D. Stein.
 sub URLEncode {
     my $toencode = $_[1];
@@ -3210,9 +3722,9 @@ sub MapPath {
     $subr ? $subr->filename : undef;
 }
 
-sub SendMail {
-    my($self, @args) = @_;
-    $self->{asp}->SendMail(@args);
+*SendMail = *Mail;
+sub Mail {
+    shift->{asp}->SendMail(@_);
 }
 
 sub URL {
@@ -3249,6 +3761,16 @@ sub URL {
     $url;
 }
 
+sub Config {
+    my($self, $key, $value) = @_;
+    
+    if(defined $value) {
+	$self->{asp}{r}->dir_config($key, $value);
+    } else {
+	$self->{asp}{r}->dir_config($key);
+    }
+}
+
 1;
 
 # Application Object
@@ -3281,24 +3803,34 @@ sub Lock { shift->LOCK };
 sub UnLock { shift->UNLOCK };
 
 sub SessionCount {
-    tied(%{$_[0]})->{asp}{Internal}{SessionCount};
+    my $asp = tied(%{$_[0]})->{asp};
+    if($asp->{session_count}) {
+	$asp->{Internal}{SessionCount};
+    } else {
+	undef;
+    }
 }
 
 sub GetSession {
     my($self, $id) = @_;
     my $asp = tied(%$self)->{'asp'};
     unless(defined $id and $id) {
-	$asp->Error("need id to get session");
+	$asp->Warn("session id not defined");
 	return;
     }
     unless(length($id) == 32) {
-	$asp->Error("session id must be of length 32");
+	$asp->Warn("session id must be of length 32");
+	return;
     }
 
     if($asp->{Session} and $asp->{Session}->SessionID() eq $id) {
 	return $asp->{Session};
     } else {
-	Apache::ASP::Session::new($asp, $id);
+	my $new_session = Apache::ASP::Session::new($asp, $id, O_RDWR, 'NOERR');
+	if($new_session) {
+	    $asp->{r}->register_cleanup(sub { $new_session->DESTROY });
+	}
+	$new_session;
     }
 }
 
@@ -3314,22 +3846,26 @@ use vars qw(@ISA);
 # allow to pass in id so we can cleanup other sessions with 
 # the session manager
 sub new {
-    my($asp, $id) = @_;
+    my($asp, $id, $perms, $no_error) = @_;
     my($state, %self, $started);
 
     # if we are passing in the id, then we are doing a 
     # quick session lookup and can bypass the normal checks
     # this is useful for the session manager and such
     if($id) {
-	$state = Apache::ASP::State::new($asp, $id);
-	$state->Set() || $asp->Error("session state get failed");
-	tie %self, 'Apache::ASP::Session', 
-	{
-	    state=>$state, 
-	    asp=>$asp, 
-	    id=>$id,
-	};
-	return bless \%self;
+	$state = Apache::ASP::State::new($asp, $id, undef, $perms, $no_error);
+	#	$state->Set() || $asp->Error("session state get failed");
+	if($state) {
+	    tie %self, 'Apache::ASP::Session', 
+	    {
+	     state=>$state, 
+	     asp=>$asp, 
+	     id=>$id,
+	    };
+	    return bless \%self;
+	} else {
+	    return;
+	}
     }
 
     # lock down so no conflict with garbage collection
@@ -3402,23 +3938,11 @@ sub new {
 	    }
 	} else {
 	    # never seen before, maybe session garbage collected already
-
-	    # slow (if hackers) down so provable security
-	    # if we had wire speed authentication, we'd
-	    # have a real security issue, otherwise, the md5
-	    # hash session key is 2^128 in size, so would 
-	    # take arguably too long for someone to try all the 
-	    # sessions before they get garbage collected
-	    $asp->RefreshSessionId($id, {});
-	    $internal->UNLOCK();
-
-	    sleep(1); # definately sleep after unlock so the whole system isn't slowed down
-	    $state = Apache::ASP::State::new($asp, $id);
-	    $state->Init() || $asp->Error("session state init failed");
+	    # or coming in from querystringed search engine
 
 	    # wish we could do more 
 	    # but proxying + nat prevents us from securing via ip address
-	    $started = 1;
+	    goto NEW_SESSION_ID;
 	}
     } else {
 	# give user new session id, we must lock this portion to avoid
@@ -3655,7 +4179,7 @@ $DefaultGroupIdLength = 2;
 # is not a real State object
 #
 sub new {
-    my($asp, $id, $group, $permissions) = @_;
+    my($asp, $id, $group, $permissions, $no_error) = @_;
 
     if($id) {
 	$id =~ /^(.*)$/; # untaint
@@ -3665,7 +4189,7 @@ sub new {
 	return;
     }
 
-    # default group is first character of id, simple hashing
+    # default group is first 2 characters of id, simple hashing
     if($group) {
 	$group =~ /^(.*)$/; # untaint
 	$group = $1;
@@ -3697,22 +4221,26 @@ sub new {
 	    $state_db = $idata->{state_db} || $asp->{state_db} || $Apache::ASP::DefaultStateDB;
 	    $state_serializer = $idata->{state_serializer} || 
 	      $asp->{state_serializer} || $Apache::ASP::DefaultStateSerializer;
-	
+	    
 	    # INIT StateDB && StateSerializer if hitting for the first time
 	    # only if real id like a session id or application
 	    if(length($id) > $DefaultGroupIdLength) {
 		my $diff = 0;
-		if(($idata->{state_db} || '') ne $state_db) {
+		if(($idata->{state_db} || $Apache::ASP::DefaultStateDB) ne $state_db) {
 		    $idata->{state_db} = $state_db;
 		    $diff = 1;
 		}
-		if(($idata->{state_serializer} || '') ne $state_serializer) {
+		if(($idata->{state_serializer} || $Apache::ASP::DefaultStateSerializer) ne $state_serializer) {
 		    $idata->{state_serializer} = $state_serializer;
 		    $diff = 1;
 		}
-		if($diff) {
-		    $asp->Debug("setting internal data for state $id", $idata);
-		    $internal->{$id} = $idata;
+
+		# do not set if we are just getting the state
+		if(! $permissions || $permissions ne O_RDWR) {		    
+		    if($diff) {
+			$asp->Debug("setting internal data for state $id", $idata);
+			$internal->{$id} = $idata;
+		    }
 		}
 	    }
 	} else {
@@ -3730,7 +4258,6 @@ sub new {
 	    $state->{asp} = $asp;
 	    $state->{state_db} = $state_db;
 	    $state->{state_serializer} = $state_serializer;
-# 	    $state->UserUnLock(); redundant
 	    return $state;
 	}
     }
@@ -3766,30 +4293,33 @@ sub new {
 	    || $self->{asp}->Error("can't create state dir $state_dir");
     }
 
-    # create group directory
-    unless(-d $group_dir) {
-	if(mkdir($group_dir, 0750)) {
-	    $self->{asp}->Debug("creating group dir $group_dir");
-	} else {
-	    $self->{asp}->Error("can't create group dir $group_dir");	    
-	}
-    }    
-
+    if(! $permissions || $permissions ne O_RDWR) {		    
+	# create group directory
+	unless(-d $group_dir) {
+	    if(mkdir($group_dir, 0750)) {
+		$self->{asp}->Debug("creating group dir $group_dir");
+	    } else {
+		$self->{asp}->Error("can't create group dir $group_dir");	    
+	    }
+	}    	
+    }
+	
     # open lock file now, and once for performance
     # we skip this for $group_id eq $id since then this is 
     # just a place holder empty state object used 
     # for information purposes only
-    $self->OpenLock() unless ($group eq $id);
-
     if($permissions) {
-	if($self->Do($permissions)) {
+	if($self->Do($permissions, $no_error)) {
 	    if($group eq 'server' and $asp->{state_cache}) {
 		$CACHE{$file} = $self;
 	    }
+	    $self->OpenLock unless ($group eq $id);
+	} else {
+	    return undef;
 	}    
+    } else {
+	$self->OpenLock unless ($group eq $id);
     }
-
-#    $self->{asp}->Debug("new state object", $self);
 
     $self;
 }
@@ -3799,7 +4329,7 @@ sub Get {
 }
 
 sub Set {
-    shift->Do(O_RDWR|O_CREAT);
+    shift->Do(O_RDWR|O_CREAT, @_);
 }
 
 sub Init {
@@ -3835,6 +4365,7 @@ sub Do {
     local $MLDBM::Serializer = $self->{state_serializer};
     # clear current tied relationship first, if any
     $self->{dbm} = undef; 
+    local $SIG{__WARN__} = sub {};
     $self->{dbm} = &MLDBM::TIEHASH('MLDBM', $self->{file}, $permissions, 0640);
 #    ($MLDBM::UseDB, $MLDBM::Serializer) = @temp;    
 
@@ -4137,8 +4668,7 @@ sub UnLock {
 		my $err = $!;
 		eval { $UNLOCK ||=&Fcntl::F_UNLCK; };
 		if($UNLOCK) {
-		    unless(fork()) {
-			#		unless(flock($file, $UNLOCK)) {
+		    unless(flock($file, $UNLOCK)) {
 			$self->{asp}->Error("Can't unlock $file even with backup flock: $err, $!");
 		    }		
 		} else {
@@ -4369,15 +4899,15 @@ sub Item {
     my($self, $key, $value) = @_;
 
     if(defined $value) {
-	if(ref $self->{$key}) {
-		# multi leveled collection go two levels down
-		$self->{$key}{$value};
+	if(ref($self->{$key}) and $self->{$key} =~ /HASH/) {
+	    # multi leveled collection go two levels down
+	    $self->{$key}{$value};
 	} else {
-		$self->{$key} = $value;	
+	    $self->{$key} = $value;	
 	}
     } elsif(defined $key) {
 	my $value = $self->{$key};	
-	defined($value) || return;
+	defined($value) || return $value;
 	if(wantarray) {
 	    (ref($value) =~ /ARRAY/o) ? @{$value} : $value;
 	} else {
@@ -4431,6 +4961,7 @@ sub new {
 	remote_ip => '127.0.0.1',
 	user => undef,
 	method => 'GET',
+	NoState => 1,
     };
 }
 
@@ -4466,7 +4997,8 @@ sub connection { shift; }
 
 1;
 
-__END__
+
+=pod
 
 =head1 NAME
 
@@ -4481,30 +5013,48 @@ __END__
 =head1 DESCRIPTION
 
 This perl module provides an Active Server Pages port to the 
-Apache HTTP Server with perl as the host scripting language. 
+Apache Web Server with perl as the host scripting language. 
 Active Server Pages is a web application platform that originated 
-with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
-it allows a developer to create dynamic web applications with session 
-management and perl code embedded in static html files.
+with the Microsoft NT/IIS server.  Under Apache for Unix and Win32
+platforms it allows a developer to create dynamic web applications 
+with session management and embedded perl code.
 
-This is a portable solution, similar to ActiveState PerlScript
-and MKS PScript implementation of perl for IIS ASP.  Work has
-been done and will continue to make ports to and from these
-other implementations as smooth as possible.
+=begin html
 
-This module works under the Apache HTTP Server
+<b>Apache::ASP's features include:</b>
+
+<ul>
+<li> Natural and Powerful Scripting SYNTAX
+<li> Rich OBJECTS Developer API
+<li> Web Application EVENTS Model
+<li> Modular SSI Decomposition, Code Sharing
+<li> User SESSIONS, NFS Web Cluster Friendly
+<li> XML/XSLT Rendering & Custom Tag Technology
+<li> CGI Compatibility
+<li> PERLSCRIPT Compatibility
+<li> Great Open Source SUPPORT
+</ul>
+
+=end html
+
+This module works under the Apache Web Server
 with the mod_perl module enabled. See http://www.apache.org and
 http://perl.apache.org for further information.
 
-For Apache::ASP downloading and installation, please read the INSTALL
-section.
+This is a portable solution, similar to ActiveState's PerlScript
+for NT/IIS ASP.  Work has been done and will continue to make ports 
+to and from this implementation as smooth as possible.
 
-For database access, ActiveX, and scripting language issues, please read 
-the FAQ section.
+For Apache::ASP downloading and installation, please read 
+the INSTALL section.  For installation troubleshooting
+check the FAQ and the SUPPORT sections.
+
+For database access, ActiveX, scripting languages, and other
+miscellaneous issues please read the FAQ section.
 
 =head1 WEBSITE
 
-The Apache::ASP website is at http://www.nodeworks.com/asp/
+The Apache::ASP web site is at http://www.nodeworks.com/asp/
 which you can also find in the ./site directory of 
 the source distribution.
 
@@ -4530,7 +5080,7 @@ copy ASP.pm to $PERLLIB/site/Apache
 
   * use nmake for win32
 
-Please note that you must first have the Apache HTTP Server
+Please note that you must first have the Apache Web Server
 & mod_perl installed before using this module in a web server
 environment.  The offline mode for building static html may
 be used with just perl.
@@ -4552,7 +5102,7 @@ resulting in "no request object" error messages.
 
 =head2 Quick Start
 
-Once you have successfully built the Apache HTTP Server with mod_perl,
+Once you have successfully built the Apache Web Server with mod_perl,
 copy the ./site/eg/ directory from the Apache::ASP installation 
 to your Apache document tree and try it out!  You must put "AllowOverride All"
 in your httpd.conf <Directory> config section to let the .htaccess file in the 
@@ -4687,6 +5237,12 @@ but the $Session object is inaccessible.
 
   PerlSetVar AllowSessionState 1    
 
+Note that if you want to dissallow session creation
+for certain non web browser user agents, like search engine
+spiders, you can use an init handler like:
+
+  PerlInitHandler "sub { $_[0]->dir_config('AllowSessionState', 0) }"
+
 =item AllowApplicationState
 
 Default 1.  If you want to leave $Application undefined, then set this
@@ -4706,7 +5262,7 @@ configs pointing to the same StateDir are part of the same
 ASP application.
 
 The default has not changed since implementing this config directive.
-The reason for this config option is to allow OS's with caching
+The reason for this config option is to allow operating systems with caching
 file systems like Solaris to specify a state directory separately
 from the Global directory, which contains more permanent files.
 This way one may point StateDir to /tmp/myaspapp, and make one's ASP
@@ -4875,7 +5431,7 @@ expensive, this cost should be amortized across most users
 that will not need this URL parsing.  This is a lazy programmer's
 dream.  For something more efficient, look at the SessionQuery
 setting.  For more information about this solution, please 
-read the COOKIES section.
+read the SESSIONS section.
 
   PerlSetVar SessionQueryParse 0
 
@@ -4915,7 +5471,7 @@ default 0, set to a regexp pattern that will match
 URLs for $Server->URL() to add a session id to.  SessionQuery
 normally allows $Server->URL() to add session ids just to 
 local URLs, so if you use absolute URL references like 
-http://localhost/ for your website, then just like 
+http://localhost/ for your web site, then just like 
 with SessionQueryParseMatch, you might set this pattern
 to ^http://localhost
 
@@ -4989,6 +5545,67 @@ perl directives must be at the beginning of the line, and must
 be followed by the end of the line.
 
   PerlSetVar PodComments 1
+
+=head2 XML / XSLT
+
+=item XMLSubsMatch
+
+default not defined, set to some regexp pattern
+that will match all XML and HTML tags that you want
+to have perl subroutines handle.  The is Apache::ASP's
+custom tag technology, and can be used to create
+powerful extensions to your XML and HTML rendering.
+
+Please see XML/XSLT section for instructions on its use.
+
+  PerlSetVar XMLSubsMatch ^my:
+
+=item XSLT
+
+default not defined, if set to a file, ASP scripts will
+be regarded as XML output and transformed with the given
+XSL file with XML::XSLT.  This XSL file will also be
+executed as an ASP script first, and its output will be
+the XSL data used for the transformation.  This XSL file
+will be executed as a dynamic include, so may be located
+in the current directory, Global, or IncludesDir.
+
+Please see the XML/XSLT section for an explanation of its
+use.
+
+  PerlSetVar XSLT template.xsl
+
+=item XSLTMatch
+
+default .*, if XSLT is set by default all ASP scripts 
+will be XSL transformed by the specified XSL template.
+This regexp setting will tell XSLT which file names to 
+match with doing XSL transformations, so that regular
+HTML ASP scripts and XML ASP scripts can be configured
+with the same configuration block.  Please see
+./site/eg/.htaccess for an example of its use.
+
+  PerlSetVar XSLTMatch \.xml$
+
+=item XSLTCacheSize
+
+default 0, if set greater than 0, will cache that many 
+XML and XSL parsed objects and their transformations'
+output.  XML::XSLT transformations are computationally
+expensive, requiring first XML DOM objects be created
+from the XML & XSL outputs, and then the final XSLT
+rendering is non-trivial too, so every effort is made
+to cache various steps in the process for enormous 
+speed benefits if the same XML / XSL combination is 
+being hit on the same web server process.
+
+Efforts will be made in the future to provide a mechanism
+for pre-caching these computations at server startup prefork 
+so that they may be shared with the child Apache httpds.
+
+This setting requires that Tie::Cache be first installed.
+
+  PerlSetVar XSLTCacheSize 100
 
 =head2 Miscellaneous
 
@@ -5092,10 +5709,12 @@ A sample configuration for full SSI with filtering is in the
 You may only use this option with modperl v1.16 or greater installed
 and PERL_STACKED_HANDLERS enabled.  Filtering may be used in 
 conjunction with other handlers that are also "filter aware".
+If in doubt, try building your mod_perl with 
 
-With filtering through Apache::SSI, you should expect at least
-a 20% performance decrease, increasing as your files get bigger, 
-increasing the work that SSI must do.
+  perl Makefile.PL EVERYTHING=1
+
+With filtering through Apache::SSI, you should expect near a
+a 20% performance decrease.
 
   PerlSetVar Filter Off
 
@@ -5131,7 +5750,33 @@ property, which may also be set between 0 and 9.
 
   PerlSetVar Clean 0
 
+=item CompressGzip
+
+default 0, if true will gzip compress HTML output on the
+fly if Compress::Zlib is installed, and the client browser
+supports it.  Depending on the HTML being compressed, 
+the client may see a 50% to 90% reduction in HTML output.
+I have seen 40K of HTML squeezed down to just under 6K.
+This will come at a 5%-20% hit to CPU usage per request
+compressed.
+
+Note there are some cases when a browser says it will accept
+gzip encoding, but then not render it correctly.  This
+behavior has been seen with IE5 when set to use a proxy but 
+not using a proxy, and the URL does not end with a .html or .htm.
+No work around has yet been found for this case so use at your 
+own risk.
+
+  PerlSetVar CompressGzip 1
+
 =head2 Mail Administration
+
+Apache::ASP has some powerful administrative email
+extensions that let you sleep at night, knowing full well
+that if an error occurs at the web site, you will know
+about it immediately.  With these features already enabled,
+it was also easy to provide the $Server->Mail(\%mail) API 
+extension which you can read up about in the OBJECTS section.
 
 =item MailHost
 
@@ -5144,7 +5789,15 @@ The mail hosts specified in the Net::Config file will be used as
 backup smtp servers to the MailHost specified here, should this
 primary server not be working.
 
-  PerlSetVar MailHost smtp.yourdomain.com
+  PerlSetVar MailHost smtp.yourdomain.com.foobar
+
+=item MailFrom
+
+Default NONE, set this to specify the default mail address placed 
+in the From: mail header for the $Server->Mail() API extension, 
+as well as MailErrorsTo and MailAlertTo.
+
+  PerlSetVar MailFrom youremail@yourdomain.com.foobar
 
 =item MailErrorsTo
 
@@ -5255,6 +5908,7 @@ define the following actions:
 	------			------
         Script_OnStart *	Beginning of Script execution
         Script_OnEnd *		End of Script execution
+        Script_OnFlush *	Before $Response being flushed to client.
 	Application_OnStart	Beginning of Application
 	Application_OnEnd	End of Application
 	Session_OnStart		Beginning of user Session.
@@ -5297,19 +5951,6 @@ code, use the API extension:
 
 	$Server->RegisterCleanup()
 
-=head2 Application_OnStart
-
-This event marks the beginning of an ASP application, and 
-is run just before the Session_OnStart of the first Session
-of an application.  This event is useful to load up
-$Application with data that will be used in all user sessions.
-
-=head2 Application_OnEnd
-
-The end of the application is marked by this event, which
-is run after the last user session has timed out for a 
-given ASP application.  
-
 =head2 Session_OnStart
 
 Triggered by the beginning of a user's session, Session_OnStart
@@ -5340,6 +5981,34 @@ of an application ever run will never have its Session_OnEnd run.
 
 Thus I would not put anything mission-critical in the Session_OnEnd,
 just stuff that would be nice to run whenever it gets run.
+
+=head2 Script_OnFlush
+
+API extension. This event will be called prior to flushing
+the $Response buffer to the web client.  At this time,
+the $Response->{BinaryRef} buffer reference may be used to modify 
+the buffered output at runtime to apply global changes to scripts 
+output without having to modify all the scripts.
+
+ sub Script_OnFlush {
+   my $ref = $Response->{BinaryRef};
+   $$ref =~ s/\s+/ /sg; # to strip extra white space
+ }
+
+Check out the ./site/eg/global.asa for an example of its use.
+
+=head2 Application_OnStart
+
+This event marks the beginning of an ASP application, and 
+is run just before the Session_OnStart of the first Session
+of an application.  This event is useful to load up
+$Application with data that will be used in all user sessions.
+
+=head2 Application_OnEnd
+
+The end of the application is marked by this event, which
+is run after the last user session has timed out for a 
+given ASP application.  
 
 =head1 OBJECTS
 
@@ -5471,6 +6140,22 @@ client web browser.  It does not store state information like the
 $Session object but does have a wide array of methods to call.
 
 =over
+
+=item $Response->{BinaryRef}
+
+API extension. This is a perl reference to the buffered output of 
+the $Response object, and can be used in the Script_OnFlush
+global.asa event to modify the buffered output at runtime
+to apply global changes to scripts output without having to 
+modify all the scripts.  These changes take place before 
+content is flushed to the client web browser.
+
+ sub Script_OnFlush {
+   my $ref = $Response->{BinaryRef};
+   $$ref =~ s/\s+/ /sg; # to strip extra white space
+ }
+
+Check out the ./site/eg/global.asa for an example of its use.
 
 =item $Response->{Buffer}
 
@@ -5819,7 +6504,7 @@ For more information on cookies in ASP, please read $Response->Cookies()
 API extension.  The FileUpload interface to file upload data is
 stabilized.  The internal representation of the file uploads
 is a hash of hashes, one hash per file upload found in 
-the $Request->Form() colletion.  This collection of collections
+the $Request->Form() collection.  This collection of collections
 may be queried through the normal interface like so:
 
   $Request->FileUpload('upload_file', 'ContentType');
@@ -5960,6 +6645,14 @@ ActiveX components, like the ADO component.
 Not implemented. May never be.  Please see the 
 Apache Timeout configuration option, normally in httpd.conf.  
 
+=item $Server->Config($setting)
+
+API extension.  Allows a developer to read the CONFIG
+settings, like Global, GlobalPackage, StateDir, etc.
+Currently implemented as a wrapper around 
+
+  Apache->dir_config($setting)
+
 =item $Server->CreateObject($program_id)
 
 Allows use of ActiveX objects on Win32.  This routine returns
@@ -5971,6 +6664,20 @@ utilize ADO.  The equivalent syntax in VBScript is
 
 For further information, try 'perldoc Win32::OLE' from your
 favorite command line.
+
+=item $Server->Execute($file, @args)
+
+New method from ASP 3.0, this does the same thing as
+
+  $Response->Include($file, @args)
+
+and internally is just a wrapper for such.  Seems like we
+had this important functionality before the IIS/ASP camp!
+
+=item $Server->GetLastError()
+
+Not implemented, will likely not ever be because this is dependent
+on how IIS handles errors and is not relevant in Apache.
 
 =item $Server->HTMLEncode($string)
 
@@ -5990,6 +6697,53 @@ Only a $url that is relative to the host is valid.  Urls like "." and
 
 To see this method call in action, check out the sample ./site/eg/server.htm
 script.
+
+=item $Server->Mail(\%mail, %smtp_args);
+
+With the Net::SMTP and Net::Config modules installed, which are part of the 
+perl libnet package, you may use this API extension to send email.  The 
+\%mail hash reference that you pass in must have values for at least
+the To, From, and Subject headers, and the Body of the mail message.
+
+You could send an email like so:
+
+ $Server->Mail({
+		To => 'somebody@yourdomain.com.foobar',
+		From => 'youremail@yourdomain.com.foobar',
+		Subject => 'Subject of Email',
+		Body => 
+		 'Body of message. '.
+		 'You might have a lot to say here!',
+		Organization => 'Your Organization',
+	       });
+
+Any extra fields specified for the email will be interpreted
+as headers for the email, so to send an HTML email, you 
+could set 'Content-Type' => 'text/html' in the above example.
+
+If you have MailFrom configured, this will be the default
+for the From header in your email.  For more configuration
+options like the MailHost setting, check out the CONFIG section.
+
+The return value of this method call will be boolean for
+success of the mail being sent.
+
+If you would like to specially configure the Net::SMTP 
+object used internally, you may set %smtp_args and they
+will be passed on when that object is initialized.
+"perldoc Net::SMTP" for more into on this topic.
+
+=item $Server->Transfer($file)
+
+New method from ASP 3.0.  Transfers control to another script.  
+The Response buffer will not be cleared automatically, so if you 
+want this to serve as a faster $Response->Redirect(), you will need to 
+call $Response->Clear() before calling this method.  
+
+This new script will take over current execution and 
+the current script will not continue to be executed
+afterwards.  It differs from Execute() because the 
+original script will not pick up where it left off.
 
 =item $Server->URLEncode($string)
 
@@ -6042,8 +6796,8 @@ Used in conjunction with the SessionQuery* settings, the returned
 URL will also have the session id inserted into the query string, 
 making this a critical part of that method of implementing 
 cookieless sessions.  For more information on that topic 
-please read on the the setting
-in the CONFIG section, and the COOKIES section too.
+please read on the setting
+in the CONFIG section, and the SESSIONS section too.
 
 =back
 
@@ -6127,6 +6881,233 @@ that directory.  Usually a
  chmod -R 0777 eg
 
 will do the trick :)
+
+=head1 SESSIONS
+
+Cookies are used by default for user $Session support ( see OBJECTS ).  
+In order to track a web user and associate server side data 
+with that client, the web server sets, and the web client returns 
+a 32 byte session id identifier cookie.  This implementation 
+is very secure and  may be used in secure HTTPS transactions, 
+and made stronger with SecureSession and ParanoidSession 
+settings (see CONFIG ).
+
+However good cookies are for this kind of persistent
+state management between HTTP requests, they have long 
+been under fire for security risks associated with
+JavaScript security exploits and privacy abuse by 
+large data tracking companies. 
+
+Because of these reasons, web users will sometimes turn off
+their cookies, rendering normal ASP session implementations
+powerless, resulting in a new $Session generated every request.
+This is not good for ASP style sessions.
+
+=head2 Cookieless Sessions
+
+ *** See WARNING Below ***
+
+So we now have more ways to track sessions with the 
+SessionQuery* CONFIG settings, that allow a web developer 
+to embed the session id in URL query strings when use 
+of cookies is denied.  The implementations work such that
+if a user has cookies turned on, then cookies will be 
+used, but for those users with cookies turned off,
+the session ids will be parsed into document URLs.
+
+The first and easiest method that a web developer may use 
+to implement cookieless sessions are with SessionQueryParse*
+directives which enable Apache::ASP to the parse the session id
+into document URLs on the fly.  Because this is resource
+inefficient, there is also the SessionQuery* directives
+that may be used with the $Server->URL($url,\%params) method to 
+generate custom URLs with the session id in its query string.
+
+To see an example of these cookieless sessions in action, 
+check out the ./site/eg/cookieless_session.asp example.
+
+ *** WARNING ***
+
+If you do use these methods, then be VERY CAREFUL
+of linking offsite from a page that was accessed with a 
+session id in a query string.  This is because this session
+id will show up in the HTTP_REFERER logs of the linked to 
+site, and a malicious hacker could use this information to
+compromise the security of your site's $Sessions, even if 
+these are run under a secure web server.  
+
+In order to shake a session id off an HTTP_REFERER for a link 
+taking a user offsite, you must point that link to a redirect 
+page that will redirect a user, like so:
+
+ <% 
+    # "cross site scripting bug" prevention
+    my $sanitized_url = 
+	$Server->HTMLEncode($Response->QueryString('OffSiteUrl'));
+ %>
+ <html>
+ <head>
+ <meta http-equiv=refresh content='0;URL=<%=$sanitized_url%>'>
+ </head>
+ <body>	
+	Redirecting you offsite to 
+	<a href=<%=$sanitized_url%> >here</a>...
+ </body>
+ </html>
+
+Because the web browser visits a real page before being redirected
+with the <meta> tag, the HTTP_REFERER will be set to this page.
+Just be sure to not link to this page with a session id in its
+query string.  
+
+Unfortunately a simple $Response->Redirect() will not work here,
+because the web browser will keep the HTTP_REFERER of the 
+original web page if only a normal redirect is used.
+
+=head1 XML/XSLT
+
+=head2 Custom Tags with XMLSubsMatch
+
+Before XML, there was the need to make HTML markup smarter.
+Apache::ASP v.19 gives you the ability to have a perl
+subroutine handle the execution of any predefined tag,
+taking the tag descriptors, and the text contained between,
+as arguments of the subroutine.  This custom tag
+technology can be used to extend a web developer's abilities
+to add dynamic pieces without having to visibly use 
+<% %> style code entries.
+
+So, lets say that you have table that 
+you want to insert for an employee with contact 
+info and the like, you could set up a tag like:
+
+ <my:employee name="Jane" last="Doe" phone="555-2222">
+   Jane Doe has been here since 1998.
+ </my:employee>
+
+To render it with a custom tag, you would tell 
+the Apache::ASP parser to render the tag with a 
+subroutine:
+
+  PerlSetVar XMLSubsMatch my:employee
+
+Any colons, ':', in the XML custom tag will turn
+into '::', a perl package separator, so the my:employee
+tag would translate to the my::employee subroutine, or the 
+employee subroutine in the my package.
+
+Then you would create the my::employee subroutine in the my 
+perl package or whereever like so
+
+  sub my::employee {
+    my($attributes, $body) = @_;
+    $Response->Include('employee.inc', $attributes, $body);
+  }
+
+  <!-- # employee.inc file somewhere else -->
+  <% my($attributes, $body) = @_; %>
+  <table>
+  <% for('name', 'last', 'phone') { %>
+    <tr>
+      <td><b><%=ucfirst $_ %></b>:</td>
+      <td><%= $attributes->{$_} %></td>
+    </tr>
+  <% } %>
+  <tr><td colspan=2><%= $body %></td></tr>
+  </table>
+  <!-- # end employee.inc file -->
+
+The $Response->Include() would then delegate the rendering
+of the employee to the employee.inc ASP script include.
+
+Though XML purists would not like this custom tag technology
+to be related to XML, the reality is that a careful
+site engineer could render full XML documents with this
+technology, applying all the correct styles that one might
+otherwise do with XSLT. 
+
+Custom tags defined in this way can be used as XML tags
+are defined with both a body and without as it
+
+  <my:employee>...</my:employee>
+
+and just
+
+  <my:employee/>
+
+These tags are very powerful in that they can also
+enclose normal ASP logic, like:
+
+  <my:employee>
+    <!-- normal ASP logic -->
+    <% my $birthday = &HTTP::Date::time2str(time - 25 * 86400 * 365); %>
+
+    <!-- ASP inserts -->
+    This employee has been online for <%= int(rand()*600)+1 %>
+    seconds, and was born near <%= $birthday %>.
+  </my:employee>   
+
+For an example of this custom XML tagging in action, please check 
+out the ./site/eg/xml_subs.asp script.  Note the one limitation
+that currently exists is that tags of the same name may not 
+be used in each other, but otherwise customs tags may
+be used in other custom tags.
+
+=head2 XSLT Tranformations
+
+XML is good stuff, but what can you use it for? The principle is
+that by having data and style separated in XML and XSL files, you
+can reformat your data more easily in the future, and you 
+can render your data in multiple formats, just as easily 
+as for your web site, so you might render your site to
+a PDA, or a cell phone just as easily as to a browser, and all
+you have to do is set up the right XSL stylesheets to do the
+transformation (XSLT).
+
+In the first release of XML/XSLT support, Apache::ASP v.19,
+ASP scripts may be the source of XML data that the XSL
+file transforms.  This transformation is handled by XML::XSLT,
+a perl module, and you can see an example of it in action at
+the ./site/eg/xslt.xml XML script.  To specify a XSL stylesheet, 
+use the setting:
+
+  PerlSetVar XSLT template.xsl
+
+where template.xsl could be any file.  By default this will
+XSLT transform all ASP scripts so configured, but you can separate xml
+scripts from the rest with the setting:
+
+  PerlSetVar XSLTMatch xml$
+
+where all files with the ending xml would undergo a XSLT transformation.
+XSLT tranformations are slow however, so to cache XSLT transformations 
+from XML scripts with consistent output, turn on caching:
+
+  PerlSetVar XSLTCacheSize 100
+
+which would allow for the output of 100 transformations to 
+be cached.  If the XML data is consistently different as
+it might be if it were database driven, then the caching
+will have little effect, but for mostly static pages like
+real XML docs, this will be a huge win.
+
+Note that XSLT depends on the installation of XML::XSLT,
+which in turn depends on XML::DOM, and XML::Parser.  The caching
+feature depends on Tie::Cache being installed.
+
+=head2 Reference OSS Implementations
+
+For their huge ground breaking XML efforts, these other XML OSS
+projects need mention:
+
+  Cocoon - XML-based web publishing, in Java 
+  http://xml.apache.org/cocoon/
+
+  AxKit - XML web publishing with Apache & mod_perl
+  http://www.axkit.org/
+
+  XML::XSLT - Core engine that Apache::ASP uses for XSLT
+  http://xmlxslt.sourceforge.net/
 
 =head1 CGI
 
@@ -6292,88 +7273,6 @@ Several incompatibilities exist between PerlScript and Apache::ASP:
  > Win32::OLE::in may not be used.  Use keys() to iterate over.
  > The ->{Item} property does not work, use the ->Item() method.
 
-=head1 COOKIES
-
-Cookies are used by default for user $Session support ( see OBJECTS ).  
-In order to track a web user and associate server side data 
-with that client, the web server sets, and the web client returns 
-a 32 byte session id identifier cookie.  This implementation 
-is very secure and  may be used in secure HTTPS transactions, 
-and made stronger with SecureSession and ParanoidSession 
-settings (see CONFIG ).
-
-However good cookies are for this kind of persistent
-state management between HTTP requests, they have long 
-been under fire for security risks associated with
-JavaScript security exploits and privacy abuse by 
-large data tracking companies. 
-
-Because of these reasons, web users will sometimes turn off
-their cookies, rendering normal ASP session implementations
-powerless, resulting in a new $Session generated every request.
-This is not good for ASP style sessions.
-
-=head2 Cookieless Sessions
-
- *** See WARNING Below ***
-
-So we now have more ways to track sessions with the 
-SessionQuery* CONFIG settings, that allow a web developer 
-to embed the session id in URL query strings when use 
-of cookies is denied.  The implementations work such that
-if a user has cookies turned on, then cookies will be 
-used, but for those users with cookies turned off,
-the session ids will be parsed into document URLs.
-
-The first and easiest method that a web developer may use 
-to implement cookieless sessions are with SessionQueryParse*
-directives which enable Apache::ASP to the parse the session id
-into document URLs on the fly.  Because this is resource
-inefficient, there is also the SessionQuery* directives
-that may be used with the $Server->URL($url,\%params) method to 
-generate custom URLs with the session id in its query string.
-
-To see an example of these cookieless sessions in action, 
-check out the ./site/eg/cookieless_session.asp example.
-
- *** WARNING ***
-
-If you do use these methods, then be VERY CAREFUL
-of linking offsite from a page that was accessed with a 
-session id in a query string.  This is because this session
-id will show up in the HTTP_REFERER logs of the linked to 
-site, and a malicious hacker could use this information to
-compromise the security of your site's $Sessions, even if 
-these are run under a secure web server.  
-
-In order to shake a session id off an HTTP_REFERER for a link 
-taking a user offsite, you must point that link to a redirect 
-page that will redirect a user, like so:
-
- <% 
-    # "cross site scripting bug" prevention
-    my $sanitized_url = 
-	$Server->HTMLEncode($Response->QueryString('OffSiteUrl'));
- %>
- <html>
- <head>
- <meta http-equiv=refresh content='0;URL=<%=$sanitized_url%>'>
- </head>
- <body>	
-	Redirecting you offsite to 
-	<a href=<%=$sanitized_url%> >here</a>...
- </body>
- </html>
-
-Because the web browser visits a real page before being redirected
-with the <meta> tag, the HTTP_REFERER will be set to this page.
-Just be sure to not link to this page with a session id in its
-query string.  
-
-Unfortunately a simple $Response->Redirect() will not work here,
-because the web browser will keep the HTTP_REFERER of the 
-original web page if only a normal redirect is used.
-
 =head1 FAQ
 
 The following are some frequently asked questions
@@ -6434,6 +7333,18 @@ more than one level of indirection on the left side of
 an assignment like:
 
   $Session->{complex}{object} = $data;
+
+=item How can I keep search engine spiders from killing the session manager?
+
+If you want to dissallow session creation for certain non web 
+browser user agents, like search engine spiders, you can use an 
+init handler like:
+
+  PerlInitHandler "sub { $_[0]->dir_config('NoState', 1) }"
+
+This will configure your environment before Apache::ASP executes
+and sees the configuration settings.  You can use the mod_perl
+API in this way to configure Apache::ASP at runtime.
 
 =item Insecure dependency in eval while running with - T switch ?
 
@@ -6611,7 +7522,7 @@ PerlModule config directive, which is highly recommended.
 
  Apache::ASP->Loader($path, $pattern, %config)
 
-This routine takes a file or directory as its first arg.  If
+This routine takes a file or directory as its first argument.  If
 a file, that file will be compiled.  If a directory, that directory
 will be recursed, and all files in it whose file name matches $pattern
 will be compiled.  $pattern defaults to .*, which says that all scripts
@@ -6683,9 +7594,10 @@ Win32::OLE(3)
 
 =head1 KEYWORDS
 
-Apache,ASP,perl,apache,mod_perl,asp,Active Server Pages,perl,asp,web application,ASP,
-session management,Active Server,scripting,dynamic html,asp,perlscript,Unix,Linux,Solaris,Win32,WinNT,
-cgi compatible,asp,response,ASP,request,session,application,server,Active Server Pages
+Apache, ASP, perl, apache, mod_perl, asp, Active Server Pages, perl, asp, web application, ASP,
+session management, Active Server, scripting, dynamic html, asp, perlscript, Unix, Linux, Solaris,
+Win32, WinNT, cgi compatible, asp, response, ASP, request, session, application, server,
+Active Server Pages
 
 =head1 NOTES
 
@@ -6711,6 +7623,8 @@ ASP + Apache, web development could not be better!  Kudos go out to:
  :) Bill McKinnon, who understands the finer points of running a web site.
  :) Russell Weiss, for being every so "strict" about his code.
  :) Paul Linder, who is Mr. Clean... not just the code, its faster too !
+    Boy was that just the beginning.  Work with him later facilitated better
+    session management and XMLSubsMatch custom tag technology.
  :) Tony Merc Mobily, inspiring tweaks to compile scripts 10 times faster
  :) Russell Weiss again, for finding the internal session garbage collection 
     behaving badly with DB_File sensitive i/o flushing requirements.
@@ -6721,6 +7635,9 @@ ASP + Apache, web development could not be better!  Kudos go out to:
  :) Matt Sergeant, again, for ever the excellent XML critique.
  :) Stas Bekman, for his beloved guide, and keeping us all worldly.
  :) Gerald Richter, for his Embperl, collaboration and competition!
+ :) Geert Josten, for his wonderful work on XML::XSLT
+ :) Craig Samuel, at LRN, for his faith in open source for his LCEC.
+ :) Vee McMillen, for his tried and true patience.
 
 =head1 SUPPORT
 
@@ -6730,7 +7647,6 @@ The mod_perl mailing list archives are located at:
 
  http://forum.swarthmore.edu/epigone/modperl
  http://www.geocrawler.com/lists/3/web/182/0/
- http://www.bitmechanic.com/mail-archives/modperl/
  http://www.egroups.com/group/modperl/
 
 and allow searching for previously asked Apache::ASP
@@ -6756,8 +7672,7 @@ guaranteed email support.
 If you are interested in any of the above commercial 
 support offerings, please email asp@chamas.com and
 we will pursue an official support channel if there is 
-enough interest.  Please note that this would likely be 
-modeled on the MySQL support features and pricing.
+enough interest.  
 
 =head1 SITES USING
 
@@ -6767,8 +7682,14 @@ would like to show your support of the software by being listed,
 please send your URL to me at joshua@chamas.com and I'll be 
 sure to add it to the list.
 
+        Anime Wallpapers dot com
+        http://www.animewallpapers.com/
+
 	Chamas Enterprises Inc.		
 	http://www.chamas.com
+
+        Direct.it
+        http://www.direct.it/
 
 	HCST
 	http://www.hcst.net
@@ -6776,14 +7697,23 @@ sure to add it to the list.
 	International Telecommunication Union
 	http://www.itu.int
 
+	Integra
+	http://www.integra.ru/
+
 	Internetowa Gielda Samochodowa		
 	http://www.gielda.szczecin.pl
+
+        Money FM
+        http://www.moneyfm.gr
+
+	Motorsport.com
+	http://www.motorsport.com
 
 	Multiple Listing Service of Greater Cincinnati
 	http://www.cincymls.com
 
 	NodeWorks - web link monitoring				
-	http://www.nodeworks.com
+	http://nodeworks.com
 
 	OnTheWeb Services
 	http://www.ontheweb.nu
@@ -6797,6 +7727,9 @@ sure to add it to the list.
 	redhat.com | support
 	http://www.redhat.com/apps/support/
 
+	Samara.RU
+	http://portal.samara.ru/
+
 	Sex Shop Online				
 	http://www.sex.shop.pl
 	
@@ -6806,8 +7739,35 @@ sure to add it to the list.
 	USCD Electrical & Computer Engineering
 	http://ece-local.ucsd.edu
 
-	Wild Technologies Limited
-	http://wild.com.hk
+=head1 RESOURCES
+
+Here are some important resources listed related to 
+the use of Apache::ASP for publishing web applications:
+
+	mod_perl Apache web module
+	http://perl.apache.org
+
+	mod_perl Guide
+	http://perl.apache.org/guide/
+
+	mod_perl book
+	http://www.modperl.com
+	
+	Perl Programming Language
+	http://www.perl.com
+
+	Apache Web Server
+	http://www.apache.org
+ 
+	PerlMonth Online Magazine
+	http://www.perlmonth.com
+
+	Apache & mod_perl Reference Cards
+	http://www.refcards.com/
+
+	Perl DBI Database Access
+	http://www.symbolstone.org/technology/perl/DBI/		
+
 
 =head1 TODO
 
@@ -6817,14 +7777,9 @@ interest to you, and I will give it higher priority.
 
 =head2 WILL BE DONE 
 
- + Better debugging, line numbers for dynamic includes.  
-   Maybe also some lightweight syntax error checking.
- + MailErrorsPower, sends duplicate errors every 1,10,100... occurances
- + MailErrorsPowerPeriod, resets the duplicate errors counter.
- + XML extensions allowing full rendering of XML documents, and 
-   custom tag extensions for a site.
- + Database storage of $Session & $Application, so web clusters may be used
-   to serve up Apache::ASP content, maybe via Apache::Session.
+ + Database storage of $Session & $Application, so web clusters 
+   may scale better than the current NFS StateDir implementation
+   allows, maybe via Apache::Session.
  + Dumping state of Apache::ASP during an error, and being
    able to go through it with the perl debugger.
  + Investigating possibility of hooking $Session timeout into 
@@ -6840,25 +7795,212 @@ interest to you, and I will give it higher priority.
  + Close integration with HTML::Embperl
  + BerkeleyDB2 integration for state management, maybe getting
    shared memory to work.
+ + MailErrorsPower, sends duplicate errors every 1,10,100... occurences
+ + MailErrorsPowerPeriod, resets the duplicate errors counter.
 
 =head1 CHANGES
 
  + = improvement; - = bug fix
 
-=item $VERSION = .18; $DATE="02/03/00";
+=item $VERSION = 1.91; $DATE="07/02/00";
+
+ +Documented XMLSubsMatch & XSLT* configuration
+  settings in CONFIG section.
+
+ +XSLT XSL template is now first executed as an 
+  ASP script just like the XML scripts.  This is 
+  just one step away now from implementing XSP logic.
+
+ +$Server->Execute and $Server->Transfer API extensions
+  implemented.  Execute is the same as $Request->Include()
+  and $Server->Transfer is like an apache internal redirect
+  but keeps the current ASP objects for the next script.
+
+  Added examples, transfer.htm, and modified dynamic_includes.htm.
+
+ +Better compile time error debugging with Debug 2 or -2.
+  Will hilite/link the buggy line for global.asa errors, 
+  include errors, and XML/XSLT errors just like with 
+  ASP scripts before.
+
+ +Nice source hiliting when viewing source for the example
+  scripts.
+
+ +Runtime string writing optimization for static HTML going
+  through $Response.
+
+ +New version numbering just like everyone else.  Starting at 1.91
+  since I seem to be off by a factor of 10, last release would have
+  been 1.9.
+
+=item $VERSION = 0.19; $DATE="NOT RELEASED";
+
+ +XMLSubsMatch and XSLT* settings documented in 
+  the XML/XSLT section of the site/README.
+
+ -XMLSubsMatch will strip parens in a pattern match
+  so it does not interfere with internal matching use.
+
+ +XSLT integration allowing XML to be rendered by XSLT
+  on the fly.  XSLT specifies XSL file to transform XML.
+  XSLTMatch is a regexp that matches XML file names, like \.xml$,
+  which will be transformed by XSLT setting, default .*
+  
+  XSLTCacheSize when specified uses Tie::Cache to cached XML DOMs 
+  internally and cache XSLT transformations output per XML/XSL 
+  combination.  XML DOM objects can take a lot of RAM, so use
+  this setting judiciously like setting to 100.  Definitely 
+  experiment with this value.
+
+ +More client info in the error mail feature, including
+  client IP, form data, query string, and HTTP_* client headers
+
+ +With Time::HiRes loaded, and Debug set to non 0, 
+  will add a <!-- Apache::ASP served request in xx.xx seconds -->
+  to text/html output, similar to Cocoon, per user request  
+  Will also add this to the system debug error log output
+  when Debug is < 0
+
+ -bug fix on object initialization optimization earlier
+  in this release, that was introduced for faster event
+  handler execution.
+
+ +Apache::ASP::Parse() takes a file name, scalar, or
+  scalar ref for arguments of data to parse for greater
+  integration ability with other applications.
+
+ +PodComments optimization, small speed increase at
+  compilation time.
+
+ +String optimization on internal rendering that avoids 
+  unnecessary copying of static html, by using refs.  Should 
+  make a small difference on sites with large amounts of 
+  static html.
+
+ +CompressGzip setting which, when Compress::Zlib is installed,
+  will compress text/html automatically going out to the web
+  browser if the client supports gzip encoding.
+
+ ++Script_OnFlush event handler, and auxiliary work optimizing
+  asp events in general.  $Response->{BinaryRef} created which
+  is a reference to outgoing output, which can be used 
+  to modify the data at runtime before it goes out to the client. 
+
+ +Some code optimizations that boost speed from 22 to 24 
+  hits per second when using Sessions without $Application,
+  on a simple hello world benchmark on a WinNT PII300.
+
+ ++Better SessionManagement, more aware of server farms that 
+  don't have reliable NFS locking.  The key here is to have only
+  one process on one server in charge of session garbage collection
+  at any one time, and try to create this situation with a snazzy
+  CleanupMaster routine.  This is done by having a process register
+  itself in the internal database with a server key created at
+  apache start time.  If this key gets stale, another process can 
+  become the master, and this period will not exceed the period
+  SessionTimeout / StateManager.
+
+  ** Work on session manager sponsored by LRN, http://www.lrn.com.  **
+  ** This work was used to deploy a server farm in production with  **
+  ** NFS mounted StateDir. Thanks to Craig Samuel for his belief in **
+  ** open source. :)                                                **
+
+  Future work for server farm capabilities might include breaking
+  up the internal database into one of 256 internal databases 
+  hashed by the first 2 chars of the session id.  Also on the plate
+  is Apache::Session like abilities with locking and/or data storage
+  occuring in a SQL database.  The first dbs to be done will include
+  MySQL & Oracle.
+
+ +Better session security which will create a new session id for an 
+  incoming session id that does not match one already seen.  This will
+  help for those with Search engines that have bookmarked
+  pages with the session ids in the query strings.  This breaks away
+  from standard ASP session id implementation which will automatically
+  use the session id presented by the browser, now a new session id will
+  be returned if the presented one is invalid or expired.
+
+ -$Application->GetSession will only return a session if
+  one already existed.  It would create one before by default.
+
+ +Script_OnFlush global.asa event handler, and $Response->{BinaryRef}
+  member which is a scalar reference to the content about to be flushed.
+  See ./site/eg/global.asa for example usage, used in this case to
+  insert font tags on the fly into the output.
+
+ +Highlighting and linking of line error when Debug is set to 2 or -2.
+
+ --removed fork() call from flock() backup routine? How did 
+   that get in there?  Oh right, testing on Win32. :(
+   Very painful lesson this one, sorry to whom it may concern.
+
+ +$Application->SessionCount support turned off by default
+  must enable with SessionCount config option.  This feature
+  puts an unnecessary load on busy sites, so not default 
+  behavior now.  
+
+ ++XMLSubsMatch setting that allows the developer to 
+  create custom tags XML style that execute perl subroutines.
+  See ./site/eg/xml_subs.asp
+
+ +MailFrom config option that defaults the From: field for 
+  mails sent via the Mail* configs and $Server->Mail()
+
+ +$Server->Mail(\%mail, %smtp_args) API extension
+
+ +MailErrorsTo & MailAlertTo now can take comma
+  separated email addresses for multiple recipients.
+
+ -tracking of subroutines defined in scripts and includes so 
+  StatINC won't undefine them when reloading the GlobalPackage, 
+  and so an warning will be logged when another script redefines 
+  the same subroutine name, which has been the bane of at least
+  a few developers.
+
+ -Loader() will now recompile dynamic includes that 
+  have changed, even if main including script has not.
+  This is useful if you are using Loader() in a 
+  PerlRestartHandler, for reloading scripts when
+  gracefully restarting apache.
+
+ -Apache::ASP used to always set the status to 200 by 
+  default explicitly with $r->status().  This would be 
+  a problem if a script was being used to as a 404 
+  ErrorDocument, because it would always return a 200 error
+  code, which is just wrong.  $Response->{Status} is now 
+  undefined by default and will only be used if set by 
+  the developer.  
+
+  Note that by default a script will still return a 200 status, 
+  but $Response->{Status} may be used to override this behavior.
+
+ +$Server->Config($setting) API extension that allows developer
+  to access config settings like Global, StateDir, etc., and is a 
+  wrapper around Apache->dir_config($setting)
+
+ +Loader() will log the number of scripts
+  recompiled and the number of scripts checked, instead
+  of just the number of scripts recompiled, which is
+  misleading as it reports 0 for child httpds after
+  a parent fork that used Loader() upon startup.  	
+
+ -Apache::ASP->Loader() would have a bad error if it didn't load 
+  any scripts when given a directory, prints "loaded 0 scripts" now
+
+=item $VERSION = 0.18; $DATE="02/03/00";
 
  +Documented SessionQuery* & $Server->URL() and 
   cleaned up formatting some, as well as redoing
   some of the sections ordering for better readability.
   Document the cookieless session functionality more
-  in a new COOKIES section.  Also documented new 
+  in a new SESSIONS section.  Also documented new 
   FileUpload configs and $Request->FileUpload collection.
   Documented StatScripts.
 
  +StatScripts setting which if set to 0 will not reload
   includes, global.asa, or scripts when changed.
 
- +FileUpload filehandles cleanup at garbage collection
+ +FileUpload file handles cleanup at garbage collection
   time so developer does not have to worry about lazy coding
   and undeffing filehandles used in code.  Also set 
   uploaded filehandles to binmode automatically on Win32 
@@ -6906,7 +8048,7 @@ interest to you, and I will give it higher priority.
 
   With SessionQueryParse on, it will just parse non-absolute
   URLs, but with SessionQueryParseMatch set to some server
-  url regexp, like http://www.mysite.com, will also parse
+  url regexp, like ^http://localhost , will also parse
   in the session id for URLs that match that.
 
   When testing, the performance hit from this parsing
@@ -6923,7 +8065,7 @@ interest to you, and I will give it higher priority.
 
   Your mileage may vary and you will have to test the difference
   yourself.  Get yourself a valid URL with a session-id in
-  it, and run it through ab, or socrates, with SessionQuery
+  it, and run it through ab, or Socrates, with SessionQuery
   turned on, and then with SessionQueryParse set to see 
   the difference.  SessionQuery just enables of session id
   setting from the query string but will not auto parse urls.
@@ -6934,7 +8076,7 @@ interest to you, and I will give it higher priority.
 
  +UseStrict setting compiles all scripts including
   global.asa with "use strict" turned on for catching
-  more coding errors.  With this setting enableb,
+  more coding errors.  With this setting enabled,
   use strict errors die during compilation forcing
   Apache::ASP to try to recompile the script until
   successful.
@@ -6967,20 +8109,20 @@ interest to you, and I will give it higher priority.
   22 from 21 hits / sec on dev NT box.
 
  +Cut more fat for faster startup, now on my dev box 
-  I get 44 hits per sec Apache::ASP vs 48 Embperl 
-  vs 52 CGI via Apache::Registry for the HelloWorld Scripts.
+  I get 44 hits per sec Apache::ASP vs. 48 Embperl 
+  vs. 52 CGI via Apache::Registry for the HelloWorld Scripts.
 
  -Improved linking for the online site documentation, 
   where a few links before were bad.
 
-=item $VERSION = .17; $DATE="11/15/99";
+=item $VERSION = 0.17; $DATE="11/15/99";
 
  ++20%+ faster startup script execution, as measured by the 
   HelloWorld bench.  I cut a lot of the fat out of 
   the code, and is now at least 20% faster on startup 
   both with and without state.
 
-  On my dev (NT,apache 1.3.6+mod_perl) machine, I now get:
+  On my dev (NT, apache 1.3.6+mod_perl) machine, I now get:
 
 	42 hits per sec on Apache::ASP HelloWorld bench
 	46 hits per sec on Embperl (1.2b10) and
@@ -7022,7 +8164,7 @@ interest to you, and I will give it higher priority.
  -IncludesDir config now works with DynamicIncludes.
 
  +DebugBufferLength feature added, giving control to 
-  how much buffered output get's shown when debugging errors.
+  how much buffered output gets shown when debugging errors.
 
  ++Tuning of $Response->Write(), which processes all
   static html internally, to be almost 50% faster for
@@ -7032,7 +8174,7 @@ interest to you, and I will give it higher priority.
   This can show significant speed improvements for tight
   loops that render ASP output.
 
- +Auto linking of ./site/eg/.* text to example scripts
+ +Auto linking of ./site/eg/ text to example scripts
   at web site.
 
  +$Application->GetSession($session_id) API extension, useful
@@ -7045,7 +8187,7 @@ interest to you, and I will give it higher priority.
   undef when value for 'name' is undefined.  Put extra
   logic in there to make sure this happens. 
 
-=item $VERSION = .16; $DATE="09/22/99";
+=item $VERSION = 0.16; $DATE="09/22/99";
 
  -$Response->{Buffer} and PerlSetVar BufferingOn
   configs now work when set to 0, to unbuffer output,
@@ -7086,7 +8228,7 @@ interest to you, and I will give it higher priority.
   breaking them when implementing the AllowApplicationState
   config setting.
 
- +Better pre-fork cacheing ... StatINC & StatINCMatch are now 
+ +Better pre-fork caching ... StatINC & StatINCMatch are now 
   args for Apache::ASP->Loader(), so StatINC symbols loading
   may be done pre-fork and shared between httpds.  This lowers
   the child httpd init cost of StatINC.  Documented.
@@ -7108,7 +8250,7 @@ interest to you, and I will give it higher priority.
  -MailErrorsTo should report the right file now that generates
   the error.
 
-=item $VERSION = .15; $DATE="08/24/99";
+=item $VERSION = 0.15; $DATE="08/24/99";
 
  --State databases like $Session, $Application are 
   now tied/untied to every lock/unlock triggered by read/write 
@@ -7158,7 +8300,7 @@ interest to you, and I will give it higher priority.
   To see the number of lock/unlocks or ties/unties to each database
   during a script execution, look at the last lines of debug output
   to your error log when Debug is set to 1.  This can help you
-  perfomance tweak access to these databases.
+  performance tweak access to these databases.
 
  +Updated documentation with new config settings and
   API extensions.
@@ -7188,13 +8330,13 @@ interest to you, and I will give it higher priority.
 
  -Added in much more locking in session manager 
   and session garbage collector to help avoid collisions
-  between the two.  There were definate windows that the
+  between the two.  There were definite windows that the
   two would collide in, during which bad things could 
   happen on a high volume site.
 
  -Fixed some warnings in DESTROY and ParseParams()
 
-=item $VERSION = .14; $DATE="07/29/99";
+=item $VERSION = 0.14; $DATE="07/29/99";
 
  -CGI & StatINC or StatINCMatch would have bad results
   at times, with StatINC deleting dynamically compiled
@@ -7223,7 +8365,7 @@ interest to you, and I will give it higher priority.
   can be recompiled with the same errors, and work w/o any use strict
   error messaging.  
 
-=item $VERSION = .12; $DATE="07/01/99";
+=item $VERSION = 0.12; $DATE="07/01/99";
 
  -Compiles are now 10 +times faster for scripts with lots of big
   embedded perl blocks <% #perl %>
@@ -7271,7 +8413,7 @@ interest to you, and I will give it higher priority.
  +"use strict" friendly handling of compiling dynamic includes
   with errors
 
-=item $VERSION = .11; $DATE="06/24/99";
+=item $VERSION = 0.11; $DATE="06/24/99";
 
  +Lots of documentation updates
 
@@ -7306,7 +8448,7 @@ interest to you, and I will give it higher priority.
   so that scripts and dynamic includes don't have to be recompiled.  
   The global.asa will still have to be though.  Since we started
   compiling all routines into a package that can be named with
-  GlobalPackage, we've been undef'ing compiled scripts and includes
+  GlobalPackage, we've been undeffing compiled scripts and includes
   when the real GlobalPackage changed on disk, as we do a full sweep
   through the namespace.  Now, we skip those subs that we know to 
   be includes or scripts. 
@@ -7326,7 +8468,7 @@ interest to you, and I will give it higher priority.
  +Reoptimized pod comment parsing.  I slowed it down to sync
   lines numbers in the last version, but found another corner I could cut.
 
-=item $VERSION = .10; $DATE="05/24/99";
+=item $VERSION = 0.10; $DATE="05/24/99";
 
  += improvement; - = bug fix
 
@@ -7336,7 +8478,7 @@ interest to you, and I will give it higher priority.
  +Clean config option, or setting $Response->{Clean} to 1 - 9,
   uses HTML::Clean to compress text/html output of ASP scripts.
   I like the Clean 1 setting which is lightweight, stripping 
-  whitespace for about 10% compression, at a cost of less than
+  white space for about 10% compression, at a cost of less than
   a 5% performance penalty.
 
  +Using pod style commenting no longer confuses the line
@@ -7391,10 +8533,10 @@ interest to you, and I will give it higher priority.
 
     asp -b -o out *.asp
 
-  Without an output dir, script output is written to STDOUT
+  Without an output directory, script output is written to STDOUT
 
 
-=item $VERSION = .09; $DATE="04/22/99";
+=item $VERSION = 0.09; $DATE="04/22/99";
 
  +Updated Makefile.PL optional modules output for CGI & DB_File
 
@@ -7513,7 +8655,7 @@ interest to you, and I will give it higher priority.
  +README FAQ for PerlHandler errors
 
 
-=item $VERSION = .08; $DATE="02/06/99";
+=item $VERSION = 0.08; $DATE="02/06/99";
 
  ++SSI with Apache::Filter & Apache::SSI, see config options & ./eg files
   Currently filtering only works in the direction Apache::ASP -> Apache::SSI,
@@ -7538,7 +8680,7 @@ interest to you, and I will give it higher priority.
  -Fixed up some config doc errors.
 
 
-=item $VERSION = .07; $DATE="01/20/99";
+=item $VERSION = 0.07; $DATE="01/20/99";
 
  -removed SIG{__WARN__} handler, it was a bad idea.
 
@@ -7546,16 +8688,16 @@ interest to you, and I will give it higher priority.
 
  +removed message about Win32::OLE on UNIX platforms from Makefile.PL
 
- -Better lock garbage collection.  Works with StatINC seemlessly.
+ -Better lock garbage collection.  Works with StatINC seamlessly.
 
  -Multiple select forms now work in array context with $Response->Form()
 	@values = $Response->Form('multi');
 
  -Better CGI.pm compatibility with $r->header_out('Content-type'),
-  improved garabage collection under modperl, esp. w/ file uploads
+  improved garbage collection under modperl, esp. w/ file uploads
 
 
-=item $VERSION = .06; $DATE="12/21/98";
+=item $VERSION = 0.06; $DATE="12/21/98";
 
  +Application_OnStart & Application_OnEnd event handlers support.
 
@@ -7574,7 +8716,8 @@ interest to you, and I will give it higher priority.
 
  +StateDir configuration directive implemented.
   StateDir allows the session state directory to be specified separately 
-  from the Global directory, useful for OS's with caching filesystems.
+  from the Global directory, useful for operating systems with caching file 
+  systems.
 
  +StateManager config directive.  StateManager specifies how frequently
   Sessions are cleaned up, with 10 (default) meaning that old Sessions
@@ -7604,7 +8747,7 @@ interest to you, and I will give it higher priority.
   without perl choking on the extra \r characters.
 
 
-=item $VERSION = .05; $DATE="10/19/98";
+=item $VERSION = 0.05; $DATE="10/19/98";
 
  +Added PERFORMANCE doc, which includes benchmarks  +hints.
 
@@ -7631,7 +8774,7 @@ interest to you, and I will give it higher priority.
   html includes, and other SSI directives
 
 
-=item $VERSION = .04; $DATE="10/14/98";
+=item $VERSION = 0.04; $DATE="10/14/98";
 
  +Example script eg/cgi.htm demonstrating CGI.pm use for output.
 
@@ -7679,7 +8822,7 @@ interest to you, and I will give it higher priority.
  +POD / README cleanup, formatting and HTML friendly.
 
 
-=item $VERSION = .03; $DATE="09/14/98";
+=item $VERSION = 0.03; $DATE="09/14/98";
 
  +Installation 'make test' now works
 
@@ -7710,7 +8853,7 @@ interest to you, and I will give it higher priority.
   Thus notation like $main::Response->Write() can be used anywhere.
 
 
-=item $VERSION = .02; $DATE="07/12/98";
+=item $VERSION = 0.02; $DATE="07/12/98";
 
  ++Session Manager, won't break under denial of service attack
 
@@ -7729,11 +8872,11 @@ interest to you, and I will give it higher priority.
  -Loads Win32/OLE properly, won't break with UNIX
 
 
-=item $VERSION = .01; $DATE="06/26/98";
+=item $VERSION = 0.01; $DATE="06/26/98";
 
  Syntax Support
  --------------
- Intial realease, could be considered alpha software.
+ Initial release, could be considered alpha software.
  Allows developers to embed perl in html ASP style.
 
  <!-- sample here -->
@@ -7767,10 +8910,7 @@ Copyright (c) 1998-2000, Joshua Chamas, Chamas Enterprises Inc.
 All rights reserved.  This program is free software; you can 
 redistribute it and/or modify it under the same terms as Perl itself. 
 
-
-
-
-
+=cut
 
 
 

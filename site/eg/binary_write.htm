@@ -10,6 +10,7 @@ if($Request->QueryString('type') eq 'gif') {
     $/ = undef;
     my $data = <FILE>;
     $Response->{ContentLength} = length $data;
+    $Response->Clear;
     $Response->BinaryWrite($data);
     $Response->End();
 } else {

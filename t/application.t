@@ -19,7 +19,7 @@ for(1..3) {
 }
 
 $t->eok(sub { $Application->UnLock }, '$Application->UnLock');
-$t->eok($Application->SessionCount(), '$Application->SessionCount()');
+#$t->eok($Application->SessionCount(), '$Application->SessionCount()');
 $t->eok($Application->GetSession($Session->{SessionID}), '$Application->GetSession()');
 %>
 

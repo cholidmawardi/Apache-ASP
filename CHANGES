@@ -1,5 +1,10 @@
-$MODULE=Apache::ASP; $VERSION = .18; $DATE="TBA";
+$MODULE=Apache::ASP; $VERSION = 1.91; $DATE="TBA";
 
 Please see README for changes for past versions.
 
  + = improvement; - = bug fix
+
+$MODULE=Apache::ASP; $VERSION = 1.93; $DATE="TBA";
+
+
+

@@ -12,6 +12,7 @@ my @cmds = (
 	    '$Server->MapPath("'.$file2.'")',
 	    '$Server->HTMLEncode("'.$html.'")',
 	    '$Server->URLEncode("'.$url.'")',	    
+	    '$Server->Config("GlobalPackage")',
 	    );
 ($^O eq 'MSWin32') && push(@cmds, '$Server->CreateObject("MSWC.AdRotator")');
 

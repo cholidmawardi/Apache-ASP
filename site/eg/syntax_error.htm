@@ -33,12 +33,17 @@ This pod comment will be yanked upon compilation
 	\"of reference",
 	"or scalar"
 	);
+
+   print "Try this script also with <a href=".basename($0)."?buffer=1>buffering on.</a>";
 %>
-Try this script also with <a href=<%=basename($0)%>?buffer=1>buffering on.</a>
 <p>
 <a href="source.asp?file=<%=$Request->ServerVariables("SCRIPT_NAME")%>">
 view this file's source
 </a>
+
+<br>
+<br>
+
 <% 
 	# create a run-time syntax error
 	$Object->SyntaxError(); 

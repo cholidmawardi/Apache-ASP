@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl5 asp
 
-<!--#include file=header.inc args="$Request->Form('color') || 'white',5"-->
+<% $Response->Include('header.inc', $Request->Form('color') || 'white',5); %>
 <h3> Demonstration of dynamic includes. </h3>
 <table border=0>
 <tr>
@@ -36,7 +36,15 @@
 	<%
 	my $size = $Request->Form('size');
 	if($size > 0 and $size <= 10) {		
+	    # Response->Include() and Server->Execute do the same things
+	    # but the former is the native solution, and the latter comes
+	    # from the recent IIS/ASP 3.0 API extension.  Formally, Execute()
+	    # doesn't take arguments, but we allow this functionality.
+	    if($size % 2) {
 		$Response->Include('table.inc', $size);
+	    } else {
+	        $Server->Execute('table.inc', $size);
+	    }
 	} else {
 		print "Please enter a valid number from 1 to 10 in the form.\n";
 	}    
@@ -46,3 +54,5 @@
 </table>
 
 <!--#include file=footer.inc-->
+
+
