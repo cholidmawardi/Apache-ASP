@@ -4,7 +4,7 @@ NAME
 SYNOPSIS
       SetHandler perl-script
       PerlHandler Apache::ASP
-      PerlSetVar Global /tmp
+      PerlSetVar Global /tmp/asp
 
 DESCRIPTION
     This perl module provides an Active Server Pages port to the Apache HTTP
@@ -265,7 +265,8 @@ CONFIG
     NoState
     default 0, if true, neither the $Application nor $Session objects will
     be created. Use this for a performance increase. Please note that this
-    setting takes precedence over the AllowSessionState setting.
+    setting takes precedence over the AllowSessionState and
+    AllowApplicationState settings.
 
       PerlSetVar NoState 0
 
@@ -316,6 +317,29 @@ CONFIG
     handled.
 
       PerlSetVar StateDB SDBM_File
+
+    StateCache
+    Default 0, set to 1 for lock files that are acquired for $Application
+    and an internal database used for session management to be cached and
+    held open between requests, for up to a 10% performance gain. Per ASP
+    application this is will keep up to 2 extra file handles open per httpd
+    process, one for the internal database, and one for $Application.
+
+    The only problem with this caching is that you can only delete the
+    StateDir if you have first shutdown the web server, as the lock files
+    will not be recreated between requests. Not that you should be deleting
+    your StateDir anyway, but if you are, there is more to worry about.
+
+      PerlSetVar StateCache 0
+
+    AllowApplicationState
+    Default 1. If you want to leave $Application undefined, then set this to
+    0, for a performance increase of around 2-3%. Allowing use of
+    $Application is less expensive than $Session, as there is more work for
+    the StateManager associated with $Session garbage collection so this
+    parameter should be only used for extreme tuning.
+
+      PerlSetVar AllowApplicationState 1
 
     Filter
     On/Off,default Off. With filtering enabled, you can take advantage of
@@ -635,6 +659,36 @@ OBJECTS
     $Session->Abandon()
         The abandon method times out the session immediately. All Session
         data is cleared in the process, just as when any session times out.
+
+    $Session->Lock()
+        API extension. If you are about to use $Session for many consecutive
+        reads or writes, you can improve performance by explicitly locking
+        $Session, and then unlocking, like:
+
+          $Session->Lock();
+          $Session->{count}++;
+          $Session->{count}++;
+          $Session->{count}++;
+          $Session->UnLock();  
+
+        This sequence causes $Session to be locked and unlocked only 1 time,
+        instead of the 6 times that it would be locked otherwise, 2 for each
+        increment with one to read and one to write.
+
+        Because of flushing issues with SDBM_File and DB_File databases,
+        each lock actually ties fresh to the database, so the performance
+        savings here can be considerable.
+
+        Note that if you have SessionSerialize set, $Session is already
+        locked for each script invocation automatically, as if you had
+        called $Session->Lock() in Script_OnStart. Thus you do not need to
+        worry about $Session locking for performance. Please read the
+        section on SessionSerialize for more info.
+
+    $Session->UnLock()
+        API Extension. Unlocks the $Session explicitly. If you do not call
+        this, $Session will be unlocked automatically at the end of the
+        script.
 
   $Response Object
 
@@ -1502,6 +1556,11 @@ SEE ALSO
     perl(1), mod_perl(3), Apache(3), MLDBM(3), HTTP::Date(3), CGI(3),
     Win32::OLE(3)
 
+KEYWORDS
+    apache,asp,perl,mod_perl,active server pages,web application,session
+    management, scripting,dynamic html,perlscript,unix,win32,winnt,cgi
+    compatible
+
 NOTES
     Many thanks to those who helped me make this module a reality. ASP +
     Apache, web development could not be better! Kudos go out to:
@@ -1526,6 +1585,8 @@ NOTES
      :) Russell Weiss, for being every so "strict" about his code.
      :) Paul Linder, who is Mr. Clean... not just the code, its faster too !
      :) Tony Merc Mobily, inspiring tweaks to compile scripts 10 times faster
+     :) Russell Weiss again, for finding the internal session garbage collection 
+        behaving badly with DB_File's sensitive i/o flushing requirements.
 
 SUPPORT
     Support is available via email and mailing list archive.
@@ -1539,12 +1600,13 @@ SUPPORT
   EMAIL
 
     Please send any questions or comments to the Apache modperl mailing list
-    at modperl@apache.org?subject=Apache::ASP or if you do not feel
-    appropriate for the list, just to me directly at
-    chamas@alumni.stanford.org . Please email the modperl list when
-    possible, as it allows other Apache::ASP users the opportunity to answer
-    your questions, and archives the answer at the above list mailing list
-    archive.
+    at modperl@apache.org with Apache::ASP in the subject line, or if you do
+    not feel appropriate for the list, just to me directly at
+    chamas@alumni.stanford.org .
+
+    Please email the modperl list when possible, as it allows other
+    Apache::ASP users the opportunity to answer your questions, and archives
+    the answer at the above list mailing list archive.
 
 SITES USING
     What follows is a list of public sites that are using Apache::ASP. If
@@ -1558,6 +1620,9 @@ SITES USING
             HCST
             http://www.hcst.net/
 
+            International Telecommunication Union
+            http://www.itu.int/
+
             Internetowa Gielda Samochodowa          
             http://www.gielda.szczecin.pl
 
@@ -1567,8 +1632,14 @@ SITES USING
             NODEWORKS - web site link monitoring                            
             http://www.nodeworks.com
 
+            OnTheWeb Services
+            http://www.ontheweb.nu/
+
             Polish Ports Handbook                   
             http://www.link.fnet.pl
+
+            Prices for Antiques
+            http://www.p4a.com/
 
             Sex Shop Online                         
             http://www.sex.shop.pl

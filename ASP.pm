@@ -4,7 +4,7 @@
 # or try `perldoc Apache::ASP`
 
 package Apache::ASP;
-$VERSION = 0.14;
+$VERSION = 0.15;
 
 use MLDBM;
 use SDBM_File;
@@ -13,7 +13,7 @@ use File::Basename;
 use Fcntl qw( O_RDWR O_CREAT );
 use MD5;
 use HTTP::Date;
-use Carp qw(confess);
+use Carp qw(confess cluck);
 
 # use Storable;
 # problem with Storable with MLDBM, when referencing empty undefined
@@ -100,9 +100,12 @@ sub handler {
     }
 
     # better error checking ?
-    return(404) unless (-e $r->filename());
+    my $filename = $r->filename();
+    return(404) if (-d $filename);
+    return(404) unless (-e $filename);
 
     # ASP object creation, a lot goes on in there!    
+    local $| = 1;
     my($self) = new($r);
 
     $self->Debug('ASP object created', $self) if $self->{debug};    
@@ -228,7 +231,9 @@ sub Loader {
 	return if ! $asp->IsChanged();
 
 	my $script = $asp->Parse();
+#	$asp->StatINC();
 	$asp->Compile($script);
+#	$asp->StatINC();
 	if($asp->{errors}) {
 	    warn("$asp->{errors} errors compiling $file while loading");
 	    return 0;
@@ -270,6 +275,8 @@ sub new {
     # asp object is handy for passing state around
     my $self = bless 
       { 
+       allow_application_state => (defined $r->dir_config('AllowApplicationState') ? 
+				   $r->dir_config('AllowApplicationState') : 1),
        app_start      => 0,  # set this if the application is starting
        
        'basename'     => $basename,
@@ -347,6 +354,7 @@ sub new {
 	stat_inc       => $r->dir_config('StatINC'),    
 	stat_inc_match => $r->dir_config('StatINCMatch'),
 	
+        state_cache => $r->dir_config('StateCache'),
 	state_db       => $r->dir_config('StateDB') || 'SDBM_File',
 	state_dir      => $state_dir,
 	state_manager  => $state_manager,
@@ -468,6 +476,7 @@ sub DESTROY {
     }
     @Apache::ASP::Cleanup = ();
 
+    local $^W = 0; # suppress untie while x inner references warnings
     select(STDOUT); 
     untie *STDIN if tied *STDIN;
 
@@ -498,7 +507,6 @@ sub DESTROY {
 	# But the destroy won't work without first untieing, go figure
 	my $tied = tied %{$self->{$_}};
 	next unless $tied;
-	local $^W = 0; # suppress untie while x inner references warnings
 	untie %{$self->{$_}};
 	$tied->DESTROY(); # call explicit DESTROY
 	delete $self->{$_};
@@ -516,8 +524,9 @@ sub DESTROY {
 sub InitObjects {
     my($self) = @_;
 
+    # GLOBALASA, RESPONSE, REQUEST, SERVER
     # always create these
-    $self->{GlobalASA} = &Apache::ASP::GlobalASA::new($self);
+    my $global_asa = $self->{GlobalASA} = &Apache::ASP::GlobalASA::new($self);
     $self->{Response}  = &Apache::ASP::Response::new($self);
     $self->{Request}   = &Apache::ASP::Request::new($self);
     $self->{Server}    = &Apache::ASP::Server::new($self);
@@ -527,14 +536,14 @@ sub InitObjects {
     # get run
     if($self->{unique_packages}) {
 	$self->{id} .= "::handler";
-	my $subid = $self->{GlobalASA}{'package'}.'::'.$self->{id};
+	my $subid = $global_asa->{'package'}.'::'.$self->{id};
 	my $package = $subid;
 	$package =~ s/::[^:]+$//;
 	$self->{'package'} = $package;
-	$self->{init_packages} = ['main', $self->{GlobalASA}{'package'}, $self->{'package'}];	
+	$self->{init_packages} = ['main', $global_asa->{'package'}, $self->{'package'}];	
     } else {
-	$self->{'package'} = $self->{GlobalASA}{'package'};
-	$self->{init_packages} = ['main', $self->{GlobalASA}{'package'}];	
+	$self->{'package'} = $global_asa->{'package'};
+	$self->{init_packages} = ['main', $global_asa->{'package'}];	
     }
 
     # cut out now before we get to the big objects
@@ -544,42 +553,64 @@ sub InitObjects {
     # state objects: Application, Internal, Session
     return $self if $self->{no_state};
 
-    # create application object
-    ($self->{Application} = &Apache::ASP::Application::new($self)) 
-	|| $self->Error("can't get application state");
-    $self->{debug} && 
-	$self->Debug('created $Application', $self->{Application});
+    # APPLICATION create application object
+    if($self->{allow_application_state}) {
+	($self->{Application} = &Apache::ASP::Application::new($self)) 
+	  || $self->Error("can't get application state");
+	if($self->{debug}) {
+	    $self->{Application}->Lock();
+	    $self->Debug('created $Application', $self->{Application});
+	    $self->{Application}->UnLock();	
+	}
+    } else {
+	$self->{debug} && $self->Debug("no application allowed config");
+    }
 
-    # tie to the application internal info
+    # INTERNAL tie to the application internal info
     my %Internal;
-    tie(%Internal, 'Apache::ASP::State', $self,
-	'internal', 'server', O_RDWR|O_CREAT)
+    tie(%Internal, 'Apache::ASP::State', $self, 'internal', 'server', O_RDWR|O_CREAT)
       || $self->Error("can't tie to internal state");
-    $self->{Internal} = bless \%Internal, 'Apache::ASP::State';
+    my $internal = $self->{Internal} = bless \%Internal, 'Apache::ASP::State';
     
-    # if we are tracking state, set up the appropriate objects
+    # SESSION if we are tracking state, set up the appropriate objects
     if(! $self->{no_session}) {
 	# Session state is dependent on internal state
-	$self->{Session} = &Apache::ASP::Session::new($self);    	
-	if($self->{Session}->Started) {
+	my $session = $self->{Session} = &Apache::ASP::Session::new($self);    	
+	if($session->Started()) {
 	    # we only want one process purging at a time
-	    $self->{Internal}->LOCK();
-	    if(($self->{Internal}{LastSessionTimeout} || 0) < time()) {
-		$self->{Session}->Refresh();
-		$self->{Internal}->UNLOCK();
-		$self->CleanupGroups('PURGE');
-		$self->{GlobalASA}->ApplicationOnEnd();
-		$self->{GlobalASA}->ApplicationOnStart();
-	    } 
-	    $self->{Internal}->UNLOCK();
-	    $self->{GlobalASA}->SessionOnStart();
+	    if($self->{asp}{allow_application_state}) {
+		$internal->LOCK();
+		if(($internal->{LastSessionTimeout} || 0) < time()) {
+		    $internal->{'LastSessionTimeout'} = $self->{session_timeout} + time;
+		    $internal->UNLOCK();
+		    $self->CleanupGroups('PURGE');		
+		    $global_asa->ApplicationOnEnd();
+		    $global_asa->ApplicationOnStart();
+		} 
+		$internal->UNLOCK();
+	    }
+	    $global_asa->SessionOnStart();
 	}
-	$self->{Session}->Refresh();
+	$internal->{'LastSessionTimeout'} = $self->{session_timeout} + time;
     } else {
 	$self->{debug} && $self->Debug("no sessions allowed config");
     }
     
     $self;
+}
+
+sub RefreshSessionId {
+    my($self, $id, $data) = @_;
+    my $internal = $self->{Internal};
+
+    my $idata = $data || $internal->{$id};    
+    my $refresh_timeout = $idata->{refresh_timeout} || $self->{session_timeout};
+    my $timeout = $idata->{'timeout'} = time() + $refresh_timeout;
+    
+    $self->{debug} && $self->Debug("refreshing $id with timeout $timeout");
+    $internal->{$id} = $idata;	
+
+    1;
 }
 
 sub FileId {
@@ -967,7 +998,7 @@ sub Compile {
     $subid = $self->{GlobalASA}{'package'}.'::'.$id;
     
     $self->UndefRoutine($subid);
-    $self->Debug("compiling into package $self->{'package'}") if $self->{debug};
+    $self->Debug("compiling into package $self->{'package'} subid $subid") if $self->{debug};
 
     my($eval) = 
       join(" ;; ", 
@@ -1072,44 +1103,54 @@ sub CleanupGroup {
     my($self, $group_id, $force) = @_;
     return unless $self->{Session};
 
-    my($state, $temp_state, $total);
+    my($state, $temp_state);
     my $asp = $self; # bad hack for some moved around code
     my $id = $self->{Session}->SessionID();
     my $deleted = 0;
     $force ||= 0;
 
-    if($group_id) {
-	# use a temp state object
-	$state = &Apache::ASP::State::new($asp, $group_id);
-    } else {
+    # GET GROUP_ID
+    unless($group_id) {
 	$state = $self->{Session}{_STATE};
 	$group_id = $state->GroupId();
     }
-    
+
     # we must have a group id to work with
     $asp->Error("no group id") unless $group_id;
-    $group_id = "GroupId" . $group_id;
+    my $group_key = "GroupId" . $group_id;
 
     # cleanup timed out sessions, from current group
-    my($group_check) = $asp->{Internal}{$group_id} || 0;
-    return unless ($force || ($group_check < time()));
-
-    $asp->Debug("group check $group_id");
-    # set the next group_check
-    $asp->{Internal}{$group_id} = time() + $asp->{group_refresh};
+    my $internal = $asp->{Internal};
+    $internal->LOCK();
+    my $group_check = $internal->{$group_key} || 0;
+    unless($force || ($group_check < time())) {
+	$internal->UNLOCK();
+	return;
+    }
     
+    # set the next group_check
+    $internal->{$group_key} = time() + $asp->{group_refresh};
+    $internal->UNLOCK();
+#    $asp->Log("group check $group_id");
+    $asp->{debug} && $asp->Debug("group check $group_id");
+
+    ## GET STATE for group
+    $state ||= &Apache::ASP::State::new($asp, $group_id);
+
     my $ids = $state->GroupMembers();
-    my @ids = @{$ids};
-    $total = @ids;
-    for(@ids) {
-	my $timeout = $asp->{Internal}{$_}{timeout} || 0;
+    my $total = @{$ids};
+    for(@{$ids}) {
 	if($id eq $_) {
 	    $asp->Debug("skipping delete self", {id => $id});
 	    next;
 	}
-	
-	# only delete sessions that have timed out
-	next unless ($timeout < time());
+
+	# we lock the internal, so a session isn't being initialized
+	# while we are garbage collecting it... we release it every
+	# time so we don't starve session creation if this is a large
+	# directory that we are garbage collecting
+	$internal->LOCK();
+	my $timeout = $internal->{$_}{timeout} || 0;
 	
 	unless($timeout) {
 	    # we don't have the timeout always, since this session
@@ -1117,33 +1158,64 @@ sub CleanupGroup {
 	    # a corrupted session (does this happen), we give it
 	    # a timeout now, so we will be sure to clean it up 
 	    # eventualy
-	    $asp->{Internal}{$_} = {
-		'timeout' => time() + $asp->{session_timeout}
-	    };
+#	    $internal->{$_} = undef;
+	    delete $internal->{$_};
+	    $internal->{$_} = {
+			       'timeout' => time() + $asp->{session_timeout}
+			      };
+	    $asp->Debug("resetting timeout for $_ to $internal->{$_}{timeout}");
+	    $internal->UNLOCK();
 	    next;
 	}	
+	# only delete sessions that have timed out
+	unless($timeout < time()) {
+	    $asp->Debug("not timed out with $timeout");
+	    $internal->UNLOCK();
+	    next;
+	}
+	
+	# UPDATE & UNLOCK, as soon as we update internal, we may free it
+	# definately don't lock around SessionOnEnd, as it might take
+	# a while to process	
+	
+	# set the timeout for this session forward so it won't
+	# get garbage collected by another process
+	$asp->Debug("resetting timeout for deletion lock on $_");
+	$internal->{$_} = {	    
+	    'timeout' => time() + $asp->{session_timeout}
+	};
+	$internal->UNLOCK();
 	
 	# Run SessionOnEnd
 	$asp->{GlobalASA}->SessionOnEnd($_);
-	
+
 	# set up state
-	my($member_state) = Apache::ASP::State::new($asp, $_);
+	my($member_state) = Apache::ASP::State::new($asp, $_);	
 	if(my $count = $member_state->Delete()) {
-	    $asp->Debug("deleting session", {
-		session_id => $_, 
-		files_deleted => $count,
-	    });
+	    $asp->{debug} && 
+	      $asp->Debug("deleting session", {
+					       session_id => $_, 
+					       files_deleted => $count,
+					      });
 	    $deleted++;
+	    delete $internal->{$_};
 	} else {
 	    $asp->Error("can't delete session id: $_");
 	    next;
 	}
-	delete $asp->{Internal}{$_};
     }
     
-    # if the directory is now empty, remove it
+    # REMOVE DIRECTORY, LOCK 
+    # if the directory is still empty, remove it, lock it 
+    # down so no new sessions will be created in it while we 
+    # are testing
     if($deleted == $total) {
-	$state->DeleteGroupId();
+	$asp->{Internal}->LOCK();
+	my $ids = $state->GroupMembers();
+	if(@{$ids} == 0) {
+	    $state->DeleteGroupId();
+	}
+	$asp->{Internal}->UNLOCK();
     }
 
     $deleted;
@@ -1157,7 +1229,7 @@ sub CleanupGroups {
     my $state_dir = $self->{state_dir};
     $force ||= 0;
 
-    $self->Debug("forcing groups cleanup") if $force;
+    $self->Debug("forcing groups cleanup") if ($self->{debug} && $force);
 
     # each apache process has an internal time in which it 
     # did its last check, once we have passed that, we check
@@ -1166,12 +1238,14 @@ sub CleanupGroups {
     # does not become another bottleneck for scripts
     if(($Apache::ASP::CleanupGroups{$state_dir} || 0) < time()) {
 	$Apache::ASP::CleanupGroups{$state_dir} = time() + $self->{groups_refresh};
-	$self->{Internal}->LOCK;
-	if($force || ($self->{Internal}{CleanupGroups} < time())) {
-	    $self->{Internal}{CleanupGroups} = time() + $self->{groups_refresh};
+	$self->Debug("testing internal time for cleanup groups");
+	my $internal = $self->{Internal};
+	$internal->LOCK();
+	if($force || ($internal->{CleanupGroups} < time())) {
+	    $internal->{CleanupGroups} = time() + $self->{groups_refresh};
 	    $cleanup = 1;
 	}
-	$self->{Internal}->UNLOCK;
+	$internal->UNLOCK;
     }
     return unless $cleanup;
 
@@ -1180,7 +1254,7 @@ sub CleanupGroups {
     for(@{$groups}) {	
 	$sum_deleted = $self->CleanupGroup($_, $force);
     }
-    $self->Debug("cleanup groups", { deleted => $sum_deleted });	
+    $self->Debug("cleanup groups", { deleted => $sum_deleted }) if $self->{debug};
 
     $sum_deleted;
 }
@@ -1254,7 +1328,7 @@ sub Log {
     my($self, @msg) = @_;
     my $msg = join(' ', @msg);
     $msg =~ s/[\r\n]+/ \<\-\-\> /sg;
-    $self->{r}->log_error("[asp] $msg");
+    $self->{r}->log_error("[asp] [$$] $msg");
 }    
 
 sub Error {
@@ -1277,6 +1351,7 @@ sub Error {
     1;
 }   
 
+# sub Debug { # for matching
 *Debug = *Out; # default
 sub Null {};
 sub Out {
@@ -1315,7 +1390,9 @@ sub Out {
     }
 	
     my $debug = join(' - ', @data);
-    $self->Log("[debug] [$$] $debug");
+#    use Carp;
+#    $self->Log(Carp::longmess("[debug] $debug"));
+    $self->Log("[debug] $debug");
     push(@{$self->{debugs_output}}, $debug);
     
     # someone might try to insert a debug as a scalar, better 
@@ -1831,6 +1908,7 @@ sub new {
 sub IsCompiled {
     my($self, $routine) = @_;
     my $compiled = $Apache::ASP::Compiled{$self->{id}}->{'routines'};
+    $self->{asp}->Debug("compiled", $compiled);
     $compiled->{$routine};
 }
 
@@ -2079,6 +2157,7 @@ sub ParseParams {
     my($self, $string) = @_;
 
     ($string = $$string) if ref($string); ## faster if we pass a ref for a big string
+    $string ||= '';
     my @params = map { $self->Unescape($_) } split /[=&]/, $string, -1;
     my %params;
 
@@ -2679,8 +2758,7 @@ sub Lock { $_[0]->{_LOCK} = 1; }
 sub UnLock { $_[0]->{_LOCK} = 0; }    
 
 sub SessionCount {
-    my $self = shift;
-    $self->{_SELF}{asp}{Internal}{SessionCount};
+    tied(%{$_[0]})->{asp}{Internal}{SessionCount};
 }
 
 1;
@@ -2688,7 +2766,6 @@ sub SessionCount {
 # Session Object
 package Apache::ASP::Session;
 @ISA = qw(Apache::ASP::Collection);
-# use Apache;
 
 # allow to pass in id so we can cleanup other sessions with 
 # the session manager
@@ -2711,22 +2788,31 @@ sub new {
 	return bless \%self;
     }
 
+    # lock down so no conflict with garbage collection
+    my $internal = $asp->{Internal};
+    $internal->LOCK();
     if($id = $asp->SessionId()) {
-	$state = Apache::ASP::State::new($asp, $id);
-	$state->UserLock() if $asp->{session_serialize};
-#	$asp->Debug("new session state $state");
-
-	my $internal;
-	if($internal = $asp->{Internal}{$id}) {
+	my $idata;
+	if($idata = $internal->{$id}) {
 	    # user is authentic, since the id is in our internal hash
-	    if($internal->{timeout} > time()) {
+	    if($idata->{timeout} > time()) {
+		# refresh and unlock as early as possible to not conflict 
+		# with garbage collection
+		$asp->RefreshSessionId($id);
+		$internal->UNLOCK();
+
+		$state = Apache::ASP::State::new($asp, $id);
+
 		# session not expired
-		$asp->Debug("session not expired",{'time'=>time(), timeout=>$internal->{timeout}});
+		$asp->{debug} && 
+		  $asp->Debug("session not expired",{'time'=>time(), timeout=>$idata->{timeout}});
+
 		unless($state->Get('NO_ERROR')) {
 		    $asp->Log("session not timed out, but we can't tie to old session! ".
 			      "report this as an error with the relevant log information for this ".
 			      "session.  We repair the session by default so the user won't notice."
 			      );
+
 		    unless($state->Set()) {
 			$asp->Error("failed to re-initialize session");
 		    }
@@ -2736,6 +2822,7 @@ sub new {
 		    local $^W = 0;
 		    # by testing for whether UA was set to begin with, we 
 		    # allow a smooth upgrade to ParanoidSessions
+		    $state->UserLock() if $asp->{session_serialize};
 		    my $state_ua = $state->FETCH('_UA');
 		    if(defined($state_ua) and $state_ua ne $asp->{'ua'}) {
 			$asp->Log("[security] hacker guessed id $id; ".
@@ -2751,16 +2838,17 @@ sub new {
 		$started = 0;
 	    } else {
 		# expired, get & reset
+		$asp->RefreshSessionId($id, {});
+		$internal->UNLOCK();
+
 		$asp->Debug("session timed out, clearing");
-		undef $state;
+#		undef $state;
 		$asp->{GlobalASA}->SessionOnEnd($id);
 		
 		# we need to create a new state now after the clobbering
 		# with SessionOnEnd
 		$state = Apache::ASP::State::new($asp, $id);
-		$state->UserLock() if $asp->{session_serialize};		
 		$state->Set() || $asp->Error("session state startup failed");
-		$asp->{Internal}{$id} = {};
 		$started = 1;
 	    }
 	} else {
@@ -2772,9 +2860,12 @@ sub new {
 	    # hash session key is 2^128 in size, so would 
 	    # take arguably too long for someone to try all the 
 	    # sessions before they get garbage collected
-	    sleep(1); 
+	    $asp->RefreshSessionId($id, {});
+	    $internal->UNLOCK();
+
+	    sleep(1); # definately sleep after unlock so the whole system isn't slowed down
+	    $state = Apache::ASP::State::new($asp, $id);
 	    $state->Init() || $asp->Error("session state init failed");
-	    $asp->{Internal}{$id} = {};
 
 	    # wish we could do more 
 	    # but proxying + nat prevents us from securing via ip address
@@ -2786,13 +2877,12 @@ sub new {
 	# only critical part of the session manager
 
       NEW_SESSION_ID:
-	$asp->{Internal}{_LOCK} = 1;
 	my($trys);
 	for(1..10) {
 	    $trys++;
 	    $id = $asp->Secret();
 
-	    if($asp->{Internal}{$id}) {
+	    if($internal->{$id}) {
 		$id = '';
 	    } else {
 		last;
@@ -2805,16 +2895,15 @@ sub new {
 	$asp->Error("no unique secret generated")
 	    unless $id;
 	
-	$asp->{Internal}{$id} = {};
-	$asp->{Internal}{_LOCK} = 0;
-	$asp->Debug("new session id $id");
+	$asp->RefreshSessionId($id, {});
+	$asp->{Internal}->UNLOCK();	
+	$asp->{debug} && $asp->Debug("new session id $id");
 	$asp->SessionId($id);
-	$state = &Apache::ASP::State::new($asp, $id);
 
-	# we serialize for the first request only, to make sure UA gets set
+	$state = &Apache::ASP::State::new($asp, $id);
 	$state->Set() || $asp->Error("session state set failed");
+
 	if($asp->{paranoid_session}) {
-	    $state->UserLock(); 
 	    $asp->Debug("storing user-agent $asp->{'ua'}");
 	    $state->STORE(_UA, $asp->{'ua'});
 	}
@@ -2826,6 +2915,8 @@ sub new {
 	return;
     }
 
+    $state->UserLock() if $asp->{session_serialize};
+    $asp->Debug("tieing session $id");
     tie %self, 'Apache::ASP::Session', 
     {
 	state=>$state, 
@@ -2833,9 +2924,13 @@ sub new {
 	id=>$id,
 	started=>$started,
     };
-    $asp->Debug("tieing session", \%self);
+    if($asp->{debug}) {
+	$state->UserLock();
+	$asp->Debug("tied session", \%self);
+	$state->UserUnLock();
+    }
     if($started) {
-	$asp->Debug("clearing starting session");
+	$asp->{debug} && $asp->Debug("clearing starting session");
 	%self = ();
     }
 
@@ -2887,7 +2982,6 @@ sub STORE {
     if($index eq 'Timeout') {
 	$self->Timeout($value);
     } else {	
-	$self->{state}->STORE('_LOCK', 1);
 	$self->{state}->STORE($index, $value);
     }
 }
@@ -2969,35 +3063,17 @@ sub TTL {
     my $ttl = $timeout - time();
 }
 
-sub Refresh {
-    my($self) = @_;
-    $self = $self->{_SELF};
-
-    my $asp   = $self->{asp};
-    my $id    = $self->{id};
-    my $internal = $asp->{Internal};
-    my $idata = $internal->{$id};
-
-    my $refresh_timeout = $idata->{refresh_timeout};
-    $refresh_timeout ||= $asp->{session_timeout};
-    my $timeout = time() + $refresh_timeout;
-    $idata->{'timeout'} = $timeout;
-
-#    $self->{asp}->Log("refreshing $id with timeout $timeout");
-    # we lock it down here to avoid relocking for each write
-    # LastSessionTimeout is used to help with Application global.asa events
-    $internal->LOCK();
-    $internal->{$id} = $idata;	
-    $internal->{'LastSessionTimeout'} = $timeout;
-    $internal->UNLOCK();
-
-    1;
-}
-
 sub Started {
     my($self) = @_;
     $self->{_SELF}{started};
 }
+
+# we provide these, since session serialize is not 
+# the default... locking around writes will also be faster,
+# since there will be only one tie to the database and 
+# one flush per lock set
+sub Lock { $_[0]->{_LOCK} = 1 }
+sub UnLock { $_[0]->{_LOCK} = 0 }    
 
 1;
 
@@ -3010,6 +3086,7 @@ $Apache::ASP::State::DefaultGroupIdLength = 2;
        SDBM_File => ['.pag', '.dir'],
        DB_File => ['']
        );
+%CACHE = ();
 
 # About locking, we use a separate lock file from the SDBM files
 # generated because locking directly on the SDBM files occasionally
@@ -3046,25 +3123,43 @@ sub new {
     my $state_dir = "$asp->{state_dir}";
     my $group_dir = "$state_dir/$group";
     my $lock_file = "$group_dir/$id.lock";
+    my $file = "$group_dir/$id";
 
-    my $self = bless {
-	asp=>$asp,
-	dbm => undef, 
-	'dir' => $group_dir,
-	'ext' => ['.lock'],	    
-	id => $id, 
-	file => "$group_dir/$id",
-	group => $group, 
-	group_dir => $group_dir,
-	locked => 0,
-	lock_file => $lock_file,
-	lock_file_fh => $lock_file,
-	open_lock => 0,
-	state_dir => $state_dir,
-	user_lock => 0,
-    };
+    if($group eq 'server' and $asp->{state_cache}) {
+	my $state = $Cache{$file};
+	if($state) {
+	    $asp->{debug} && $asp->Debug("returning state $state from cache for $id $group");
+	    $state->{asp} = $asp;
+	    $state->UserUnLock();
+	    return $state;
+	}
+    }
 
-    push(@{$self->{'ext'}}, @{$DB{$asp->{state_db}}});    
+    # we only need SDBM_File for internal, and its faster so use it
+    my $state_db = ($id eq 'internal') ? 'SDBM_File' : $asp->{state_db};
+#    my $state_db = $asp->{state_db};
+    my $self = 
+      bless {
+	     asp=>$asp,
+	     dbm => undef, 
+	     'dir' => $group_dir,
+	     'ext' => ['.lock'],	    
+	     id => $id, 
+	     file => $file,
+	     group => $group, 
+	     group_dir => $group_dir,
+	     num_locks => 0,
+	     lock_file => $lock_file,
+	     lock_file_fh => $lock_file,
+	     open_lock => 0,
+	     state_db => $state_db,
+	     state_dir => $state_dir,
+	     total_locks => 0,
+	     total_unlocks => 0,
+	     write_locked => 0,
+	    };
+    
+    push(@{$self->{'ext'}}, @{$DB{$self->{state_db}}});    
 #    $self->{asp}->Debug("db ext: ".join(",", @{$self->{'ext'}}));
 
     # create state directory
@@ -3089,7 +3184,11 @@ sub new {
     $self->OpenLock() unless ($group eq $id);
 
     if($permissions) {
-	$self->Do($permissions);
+	if($self->Do($permissions)) {
+	    if($group eq 'server' and $asp->{state_cache}) {
+		$Cache{$file} = $self;
+	    }
+	}    
     }
 
     $self;
@@ -3132,16 +3231,21 @@ sub Do {
     #
 
     my @temp = ($MLDBM::UseDB, $MLDBM::Serializer);
-    $MLDBM::UseDB = $self->{asp}{state_db};
+    $MLDBM::UseDB = $self->{state_db};
     $MLDBM::Serializer = 'Data::Dumper';
+    # clear current tied relationship first, if any
+    $self->{dbm} = undef; 
     $self->{dbm} = &MLDBM::TIEHASH('MLDBM', $self->{file}, $permissions, 0640);
     ($MLDBM::UseDB, $MLDBM::Serializer) = @temp;    
 
     if($self->{dbm}) {
 	# used to have locking code here
+#	if($self->{state_db} eq 'DB_File') {
+#	    $self->{dbm}{cachesize} = 0;
+#	}
     } else {
 	unless($no_error) {
-	    $self->{asp}->Error("Can't tie to file $self->{file}!! \n".
+	    $self->{asp}->Error("Can't tie to file $self->{file}, $permissions, $! !! \n".
 				"Make sure you have the permissions on the \n".
 				"directory set correctly, and that your \n".
 				"version of Data::Dumper is up to date. \n".
@@ -3168,7 +3272,9 @@ sub Delete {
     $self->CloseLock();
     
     # manually unlink state files
-    for(@{$self->{'ext'}}) {
+    # all the file extensions so a switched StateDB will collect too
+    for('.pag', '.dir', '', '.lock') { 
+#    for(@{$self->{'ext'}}) {
 	my $unlink_file = $self->{file}.$_;
 	next unless (-e $unlink_file);
 
@@ -3191,7 +3297,7 @@ sub DeleteGroupId {
 	if(rmdir($self->{group_dir})) {
 	    $self->{asp}->Debug("deleting group dir ". $self->GroupId());
 	} else {
-	    $self->{asp}->Log("cannot delete group dir $self->{group_dir}");
+	    $self->{asp}->Log("cannot delete group dir $self->{group_dir}: $!");
 	}
     }
 }    
@@ -3207,14 +3313,19 @@ sub GroupMembers {
     my(%ids, @ids);
 
     unless(-d $self->{group_dir}) {
-	$self->{asp}->Error("no group dir:$self->{group_dir} to get group from");
-	return;
+	$self->{asp}->Log("no group dir:$self->{group_dir} to get group from");
+	return [];
     }
 
-    opendir(DIR, $self->{group_dir}) 
-	|| $self->{asp}->Error("opening group $self->{group_dir} failed: $!");
+    unless(opendir(DIR, $self->{group_dir})) {
+	$self->{asp}->Log("opening group $self->{group_dir} failed: $!");
+	return [];
+    }
+
     for(readdir(DIR)) {
-	$_ =~ /(.*)\.[^\.]+$/;
+	next if /^\.\.?$/;
+	$_ =~ /^(.*?)(\.[^\.]+)?$/;
+#	$self->{asp}->Debug("group $1 $2");
 	next unless $1;
 	$ids{$1}++;
     }
@@ -3245,10 +3356,30 @@ sub DefaultGroups {
 
 sub DESTROY {
     my $self = shift;
-    untie $self->{dbm} if $self->{dbm};
-    $self->{dbm} = undef;
-    $self->UnLock();
-    $self->CloseLock();
+
+    if($self->{num_locks} > 1) {
+	# we set num locks down to 1, so UnLock
+	# really unlocks the lock file, instead
+	# of just popping a lock off
+	$self->{num_locks} = 1;
+    }
+
+    if($Cache{$self->{file}}) {
+	$self->UnLock();
+    } else {
+	untie $self->{dbm} if $self->{dbm};
+	$self->{dbm} = undef;
+	$self->UnLock();
+	$self->CloseLock();    
+    }
+
+    if($self->{asp}{debug}) {
+	$self->{asp}->Debug(
+			    "state $self->{id} locks: $self->{total_locks}, ".
+			    "unlocks: $self->{total_unlocks}"
+			   );
+    }
+    $self->{total_locks} = $self->{total_unlocks} = 0;
 }
 
 # don't need to skip DESTROY since we have it defined
@@ -3259,16 +3390,10 @@ sub AUTOLOAD {
     $AUTOLOAD =~ s/^(.*)::(.*?)$/$2/o;
 
     my $value;
-    if($self->{user_lock}) {
-	# if it is locked by the user, no need to 
-	# lock item by item
-	$value = $self->{dbm}->$AUTOLOAD(@_);
-    } else {
-	$self->WriteLock();
-	$value = $self->{dbm}->$AUTOLOAD(@_);
-	$self->UnLock();
-    }
-
+    $self->WriteLock();
+    $value = $self->{dbm}->$AUTOLOAD(@_);
+    $self->UnLock();
+    
     $value;
 }
 
@@ -3285,6 +3410,31 @@ sub TIEHASH {
     }
 }
 
+# FIRSTKEY / NEXTKEY is what makes references like %array
+# and each %array tick.  What we do is take a snapshot of
+# the keys when first key is called and just pop from there
+# assuming sequencing NEXTKEYS... I used this method
+# for Tie::Cache and it works just fine.
+sub FIRSTKEY {
+    my $self = shift;
+    my @keys;
+
+    $self->WriteLock();
+    my $key = $self->{dbm}->FIRSTKEY();
+    while(defined $key) {
+	push(@keys, $key);	
+	$key = $self->{dbm}->NEXTKEY($key);
+    }
+    $self->UnLock();
+    $self->{'keys'} = \@keys;
+    shift @{$self->{'keys'}};
+}
+
+sub NEXTKEY {
+    my $self = shift;
+    shift @{$self->{'keys'}};
+}
+
 sub FETCH {
     my($self, $index) = @_;
     my $value;
@@ -3294,14 +3444,9 @@ sub FETCH {
     } elsif($index eq '_SELF') {
 	$value = $self;
     } else {
-	# again, no need to lock if locked by user
-	if($self->{user_lock}) {
-	    $value = $self->{dbm}->FETCH($index);
-	} else {
-	    $self->ReadLock();
-	    $value = $self->{dbm}->FETCH($index);
-	    $self->UnLock();
-	}
+	$self->WriteLock();
+	$value = $self->{dbm}->FETCH($index);
+	$self->UnLock();
     }
 
     $value;
@@ -3310,29 +3455,21 @@ sub FETCH {
 sub STORE {
     my($self, $index, $value) = @_;
 
-    # at writing, user locks take precedence over internal locks
-    # and internal locks will not be used while user locks are 
-    # in effect.  this is an optimization.
-
     if($index eq '_LOCK') {
 	if($value) {
-	    $self->UserLock();
-	} else {
-	    $self->UserUnLock();
-	}
-    } else {
-	if($self->{user_lock}) {
-	    $self->{dbm}->STORE($index, $value);
-	} else {
 	    $self->WriteLock();
-	    $self->{dbm}->STORE($index, $value);
+	} else {
 	    $self->UnLock();
 	}
+    } else {
+	$self->WriteLock();
+	$self->{dbm}->STORE($index, $value);
+	$self->UnLock();
     }
 }
 
-sub LOCK { shift->{_SELF}->UserLock(); }
-sub UNLOCK { shift->{_SELF}->UserUnLock(); }
+sub LOCK { tied(%{(shift)})->WriteLock(); }
+sub UNLOCK { tied(%{(shift)})->UnLock(); }
 
 # the +> mode open a read/write w/clobber file handle.
 # the clobber is useful, since we don't have to create
@@ -3342,7 +3479,7 @@ sub OpenLock {
     return if $self->{open_lock};
     $self->{open_lock} = 1;
     my $mode = (-e $self->{lock_file}) ? "+<" : "+>"; 
-#    $self->{asp}->Debug("opening lock file $self->{lock_file}");
+    $self->{asp}{debug} && $self->{asp}->Debug("opening lock file $self->{lock_file}");
     open($self->{lock_file_fh}, $mode . $self->{lock_file}) 
 	|| $self->{asp}->Error("Can't open $self->{lock_file}: $!");
 }
@@ -3357,49 +3494,40 @@ sub CloseLock {
     close($_[0]->{lock_file_fh});
 }
 
-sub ReadLock {
-    my($self) = @_;
-    no strict 'refs';
-    my $file = $self->{lock_file_fh};
-
-    if($self->{locked}) {
-	$self->{asp}->Debug("already read locked $file");
-	1;
-    } else {
-	$self->{locked} = 1;
-	(-e $self->{lock_file})
-	    || $self->{asp}->Error("$self->{lock_file} does not exists");
-	flock($file, LOCK_SH)
-	    || $self->{asp}->Error("Can't read lock $file: $!");    
-    }
-}
-
 sub WriteLock {
-    my($self) = @_;
-    no strict 'refs';
+    my $self = shift;
     my $file = $self->{lock_file_fh};
+    $self->{num_locks}++;
 
-    if($self->{locked}) {
-	$self->{asp}->Debug("already write locked $file");
+    if($self->{write_locked}) {
+#	$self->{asp}->Log("writelock: already write locked $file");
 	1;
     } else {
-	$self->{locked} = 1;
+	$self->{write_locked} = 1;
+	$self->{total_locks}++;
+#	$self->{asp}{debug} && $self->{asp}->Debug("lock $file");
 	flock($file, LOCK_EX)
 	    || $self->{asp}->Error("can't write lock $file: $!");    
+	$self->Set();
     }
 }
 
 sub UnLock {
-    my($self) = @_;
+    my $self = shift;
     no strict 'refs';
     my $file = $self->{lock_file_fh};
-    
-    if($self->{locked}) {
+
+    if(($self->{num_locks} == 1) and $self->{write_locked}) {
 	# locks only work when they were locked before
 	# we started erroring, because file locking will
 	# will hang a system if locking doesn't work properly
-	$self->{locked} = 0;
-	unless(flock($file, ($UNLOCK || LOCK_UN))) {
+	$self->{write_locked} = 0;
+	$self->{total_unlocks}++;
+	$self->{dbm} = undef;
+	if(flock($file, ($UNLOCK || LOCK_UN))) {
+#	    $self->{asp}{debug} && $self->{asp}->Debug("unlock $file");
+	} else {
+	    $self->{asp}->Debug("basic unlock of $file failed: $!");
 	    # we try a flock work around here for QNX
 	    my $err = $!;
 	    local $^W = 0;
@@ -3418,26 +3546,14 @@ sub UnLock {
 	# better to unlock to much than too little
     }
 
+#    $self->{asp}->Log("unlock called with $self->{num_locks} acquired");
+    $self->{num_locks} && $self->{num_locks}--;
+
     1;
 }
 
-sub UserLock {
-    my $self = $_[0];
-    
-    unless($self->{user_lock}) {
-	$self->{user_lock} = 1;
-	$self->WriteLock();
-    }
-}
-
-sub UserUnLock {
-    my $self = $_[0];
-    
-    if($self->{user_lock}) {
-	$self->{user_lock} = 0;
-	$self->UnLock();
-    }
-}   
+*UserLock = *WriteLock;
+*UserUnLock = *UnLock;
 
 1;
 
@@ -3725,7 +3841,7 @@ __END__
 
   SetHandler perl-script
   PerlHandler Apache::ASP
-  PerlSetVar Global /tmp
+  PerlSetVar Global /tmp/asp
 
 =head1 DESCRIPTION
 
@@ -4008,7 +4124,8 @@ redirect is specified.
 
 default 0, if true, neither the $Application nor $Session objects will
 be created.  Use this for a performance increase.  Please note that 
-this setting takes precedence over the AllowSessionState setting.
+this setting takes precedence over the AllowSessionState and
+AllowApplicationState settings.
 
   PerlSetVar NoState 0
 
@@ -4064,6 +4181,33 @@ the different database formats, including the way garbage collection
 is handled.
 
   PerlSetVar StateDB SDBM_File
+
+=item StateCache
+
+Default 0, set to 1 for lock files that are acquired for $Application 
+and an internal database used for session management to be cached
+and held open between requests, for up to a 10% performance
+gain.  Per ASP application this is will keep up to 2 extra
+file handles open per httpd process, one for the internal
+database, and one for $Application.
+
+The only problem with this caching is that you can only
+delete the StateDir if you have first shutdown the web server,
+as the lock files will not be recreated between requests.
+Not that you should be deleting your StateDir anyway, but
+if you are, there is more to worry about. 
+
+  PerlSetVar StateCache 0
+
+=item AllowApplicationState
+
+Default 1.  If you want to leave $Application undefined, then set this
+to 0, for a performance increase of around 2-3%.  Allowing use of 
+$Application is less expensive than $Session, as there is more
+work for the StateManager associated with $Session garbage collection
+so this parameter should be only used for extreme tuning.
+
+  PerlSetVar AllowApplicationState 1
 
 =item Filter
 
@@ -4413,6 +4557,38 @@ garbage collects it eventually.
 
 The abandon method times out the session immediately.  All Session
 data is cleared in the process, just as when any session times out.
+
+=item $Session->Lock()  
+
+API extension. If you are about to use $Session for many consecutive 
+reads or writes, you can improve performance by explicitly locking 
+$Session, and then unlocking, like:
+
+  $Session->Lock();
+  $Session->{count}++;
+  $Session->{count}++;
+  $Session->{count}++;
+  $Session->UnLock();  
+
+This sequence causes $Session to be locked and unlocked only
+1 time, instead of the 6 times that it would be locked otherwise,
+2 for each increment with one to read and one to write.
+
+Because of flushing issues with SDBM_File and DB_File databases,
+each lock actually ties fresh to the database, so the performance
+savings here can be considerable.  
+
+Note that if you have SessionSerialize set, $Session is
+already locked for each script invocation automatically, as if
+you had called $Session->Lock() in Script_OnStart.  Thus you 
+do not need to worry about $Session locking for performance.
+Please read the section on SessionSerialize for more info.
+
+=item $Session->UnLock()
+
+API Extension. Unlocks the $Session explicitly.  If you do not call this,
+$Session will be unlocked automatically at the end of the 
+script.
 
 =back
 
@@ -5373,6 +5549,11 @@ code for includes between scripts.
 perl(1), mod_perl(3), Apache(3), MLDBM(3), HTTP::Date(3), CGI(3),
 Win32::OLE(3)
 
+=head1 KEYWORDS
+
+apache,asp,perl,mod_perl,active server pages,web application,session management,
+scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible
+
 =head1 NOTES
 
 Many thanks to those who helped me make this module a reality.
@@ -5398,6 +5579,8 @@ ASP + Apache, web development could not be better!  Kudos go out to:
  :) Russell Weiss, for being every so "strict" about his code.
  :) Paul Linder, who is Mr. Clean... not just the code, its faster too !
  :) Tony Merc Mobily, inspiring tweaks to compile scripts 10 times faster
+ :) Russell Weiss again, for finding the internal session garbage collection 
+    behaving badly with DB_File's sensitive i/o flushing requirements.
 
 =head1 SUPPORT
 
@@ -5413,12 +5596,14 @@ questions.
 =head2 EMAIL
 
 Please send any questions or comments to the Apache modperl mailing
-list at modperl@apache.org?subject=Apache::ASP or if you do not
-feel appropriate for the list, just to me directly 
-at chamas@alumni.stanford.org . Please email the modperl list 
-when possible, as it allows other Apache::ASP users the 
-opportunity to answer your questions, and archives the 
-answer at the above list mailing list archive. 
+list at modperl@apache.org with Apache::ASP in the subject line,
+or if you do not feel appropriate for the list, just to me directly 
+at chamas@alumni.stanford.org . 
+
+Please email the modperl list when possible, as it allows 
+other Apache::ASP users the opportunity to answer your 
+questions, and archives the answer at the above list 
+mailing list archive. 
 
 =head1 SITES USING
 
@@ -5434,6 +5619,9 @@ sure to add it to the list.
 	HCST
 	http://www.hcst.net/
 
+	International Telecommunication Union
+	http://www.itu.int/
+
 	Internetowa Gielda Samochodowa		
 	http://www.gielda.szczecin.pl
 
@@ -5443,8 +5631,14 @@ sure to add it to the list.
 	NODEWORKS - web site link monitoring				
 	http://www.nodeworks.com
 
+	OnTheWeb Services
+	http://www.ontheweb.nu/
+
 	Polish Ports Handbook			
 	http://www.link.fnet.pl
+
+	Prices for Antiques
+	http://www.p4a.com/
 
 	Sex Shop Online				
 	http://www.sex.shop.pl
@@ -5459,7 +5653,6 @@ Copyright (c) 1998-1999, Joshua Chamas, Chamas Enterprises Inc.
 
 All rights reserved.  This program is free software; you can 
 redistribute it and/or modify it under the same terms as Perl itself. 
-
 
 
 

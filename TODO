@@ -6,6 +6,8 @@ interest to you, and I will give it higher priority.
 
 WILL BE DONE 
 ============
+- Try to get pre-compiling and statinc module reloading into the 
+  parent httpd prefork, so it can be shared with the children.
 - MailErrorsPower, sends duplicate errors every 1,10,100... occurances
 - MailErrorsPowerPeriod, resets the duplicate errors counter.
 - $Request->ClientCertificate()
@@ -26,3 +28,5 @@ MAY BE DONE
 - Close integration with HTML::Embperl
 - Dumping state of Apache::ASP during an error, and being
   able to go through it with the perl debugger.
+
+

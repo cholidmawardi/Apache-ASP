@@ -1,11 +1,97 @@
-$MODULE=Apache::ASP; $VERSION = .14; $DATE="TBA";
+$MODULE=Apache::ASP; $VERSION = .15; $DATE="08/24/99";
 
 + = improvement; - = bug fix
+
+--State databases like $Session, $Application are 
+  now tied/untied to every lock/unlock triggered by read/write 
+  access.  This was necessary for correctness issues, so that 
+  database file handles are flushed appropriately between writes
+  in a highly concurrent multi-process environment.
+
+  This problem raised its ugly head because under high volume, 
+  a DB_File can become corrupt if not flushed correctly.  
+  Unfortunately, there is no way to flush SDBM_Files & DB_Files 
+  consistently other than to tie/untie the databases every access.
+
+  DB_File may be used optionally for StateDB, but the default is
+  to use SDBM_File which is much faster, but limited to 1024 byte
+  key/value pairs.
+
+  For SDBM_Files before, if there were too many concurrent 
+  writes to a shared database like $Application, some of the 
+  writes would not be saved because another process
+  might overwrite the changes with its own.
+
+  There is now a 10 fold performance DECREASE associated
+  with reading from and writing to files like $Session 
+  and $Application.  With rough benchmarks I can get about
+  100 increments (++) now per second to $Session->{count}, where
+  before I could get 1000 increments / second.  
+
+  You can improve this if you have many reads / writes happening
+  at the same time, by placing locking code around the group like
+  
+	$Session->Lock();
+	$Session->{count}++;
+	$Session->{count}++;
+	$Session->{count}++;
+	$Session->UnLock();	
+
+  This method will reduce the number of ties to the $Session database
+  from 6 to 1 for this kind of code, and will improve the performance
+  dramatically.
+
+  Also, instead of using explicit $Session locking, you can 
+  create an automatic lock on $Session per script by setting
+  SessionSerialize in your config to 1.  The danger here is
+  if you have any long running scripts, the user will have
+  to wait for it to finish before another script can be run.
+
+  To see the number of lock/unlocks or ties/unties to each database
+  during a script execution, look at the last lines of debug output
+  to your error log when Debug is set to 1.  This can help you
+  perfomance tweak access to these databases.
+
++ Updated documentation with new config settings and
+  API extensions.
+
++ Added AllowApplicationState config option which allows
+  you to leave $Application undefined, and will not
+  execute Application_OnStart or Application_OnEnd.
+  This can be a slight performance increase of 2-3% if
+  you are not using $Application, but are using $Session.
+
++ Added $Session->Lock() / $Session->UnLock() API routines
+  necessary additions since access to session is not
+  serialized by default like IIS ASP.  Also prompted
+  by change in locking code which retied to SDBM_File
+  or DB_File each lock.  If you $Session->Lock / UnLock
+  around many read/writes, you will increase performance.
+
++ Added StateCache config which, if set will cache
+  the file handle locks for $Application and an internal 
+  database used for tracking $Session info.  This caching can 
+  make an ASP application perform up to 10% faster,
+  at a cost of each web server process holding 2 more 
+  cached file handles open, per ASP application using
+  this configuration.  The data written to or read from
+  these state databases is not cached, just the locking 
+  file handles are held open.
+
+- Added in much more locking in session manager 
+  and session garbage collector to help avoid collisions
+  between the two.  There were definate windows that the
+  two would collide in, during which bad things could 
+  happen on a high volume site.
+
+- Fixed some warnings in DESTROY and ParseParams()
+
+$MODULE=Apache::ASP; $VERSION = .14; $DATE="07/29/99";
 
 - CGI & StatINC or StatINCMatch would have bad results
   at times, with StatINC deleting dynamically compiled
   CGI subroutines, that were imported into other scripts
-  namespaces.
+  and modules namespaces.
 
   A couple tweaks, and now StatINC & CGI play nice again ;)
   StatINCMatch should be safe to use in production with CGI. 

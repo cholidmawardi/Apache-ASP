@@ -3,6 +3,18 @@
 <html>
 <head>
 <title>Apache :: ASP :: OBJECTS</title>
+
+	<meta name="keywords" content="apache,asp,perl,mod_perl,active server pages,web application,session management,
+scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible">
+
+	<meta name="description" content="This perl module provides an Active Server Pages port to the 
+Apache HTTP Server with perl as the host scripting language. 
+Active Server Pages is a web application platform that originated 
+with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
+it allows a developer to create dynamic web applications with session 
+management and perl code embedded in static html files.">
+
+
 </head>
 <body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
 
@@ -110,7 +122,7 @@ following sections.</font>
 
 	<hr size=1>
 	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
-	<a href=#%24Session%20Object><font color=#3355cc>$Session Object</font></a><br><br><a href=#%24Session-%3E%7BCodePage%7D><font color=#3355cc>$Session->{CodePage}</font></a><br><a href=#%24Session-%3E%7BLCID%7D><font color=#3355cc>$Session->{LCID}</font></a><br><a href=#%24Session-%3E%7BSessionID%7D><font color=#3355cc>$Session->{SessionID}</font></a><br><a href=#%24Session-%3E%7BTimeout%7D%20%5B%3D%20%24minutes%5D><font color=#3355cc>$Session->{Timeout} [= $minutes]</font></a><br><a href=#%24Session-%3EAbandon%28%29><font color=#3355cc>$Session->Abandon()</font></a><br><br><a href=#%24Response%20Object><font color=#3355cc>$Response Object</font></a><br><br><a href=#%24Response-%3E%7BBuffer%7D><font color=#3355cc>$Response->{Buffer}</font></a><br><a href=#%24Response-%3E%7BCacheControl%7D><font color=#3355cc>$Response->{CacheControl}</font></a><br><a href=#%24Response-%3E%7BCharset%7D><font color=#3355cc>$Response->{Charset}</font></a><br><a href=#%24Response-%3E%7BClean%7D%20%3D%200-9%3B><font color=#3355cc>$Response->{Clean} = 0-9;</font></a><br><a href=#%24Response-%3E%7BContentType%7D%20%3D%20%22text%2Fhtml%22><font color=#3355cc>$Response->{ContentType} = "text/html"</font></a><br><a href=#%24Response-%3E%7BExpires%7D%20%3D%20%24time><font color=#3355cc>$Response->{Expires} = $time</font></a><br><a href=#%24Response-%3E%7BExpiresAbsolute%7D%20%3D%20%24date><font color=#3355cc>$Response->{ExpiresAbsolute} = $date</font></a><br><a href=#%24Response-%3E%7BIsClientConnected%7D><font color=#3355cc>$Response->{IsClientConnected}</font></a><br><a href=#%24Response-%3E%7BPICS%7D><font color=#3355cc>$Response->{PICS}</font></a><br><a href=#%24Response-%3E%7BStatus%7D%20%3D%20%24status><font color=#3355cc>$Response->{Status} = $status</font></a><br><a href=#%24Response-%3EAddHeader%28%24name%2C%20%24value%29><font color=#3355cc>$Response->AddHeader($name, $value)</font></a><br><a href=#%24Response-%3EAppendToLog%28%24message%29><font color=#3355cc>$Response->AppendToLog($message)</font></a><br><a href=#%24Response-%3EBinaryWrite%28%24data%29><font color=#3355cc>$Response->BinaryWrite($data)</font></a><br><a href=#%24Response-%3EClear%28%29><font color=#3355cc>$Response->Clear()</font></a><br><a href=#%24Response-%3ECookies%28%24name%2C%20%5B%24key%2C%5D%20%24value%29><font color=#3355cc>$Response->Cookies($name, [$key,] $value)</font></a><br><a href=#%24Response-%3EDebug%28%40args%29><font color=#3355cc>$Response->Debug(@args)</font></a><br><a href=#%24Response-%3EEnd%28%29><font color=#3355cc>$Response->End()</font></a><br><a href=#%24Response-%3EFlush%28%29><font color=#3355cc>$Response->Flush()</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#%24Response-%3EInclude%28%24filename%2C%20%40args%29><font color=#3355cc>$Response->Include($filename, @args)</font></a><br><a href=#%24Response-%3ERedirect%28%24url%29><font color=#3355cc>$Response->Redirect($url)</font></a><br><a href=#%24Response-%3EWrite%28%24data%29><font color=#3355cc>$Response->Write($data)</font></a><br><br><a href=#%24Request%20Object><font color=#3355cc>$Request Object</font></a><br><br><a href=#%24Request-%3E%7BTotalBytes%7D><font color=#3355cc>$Request->{TotalBytes}</font></a><br><a href=#%24Request-%3EBinaryRead%28%24length%29><font color=#3355cc>$Request->BinaryRead($length)</font></a><br><a href=#%24Request-%3EClientCertificate%28%29><font color=#3355cc>$Request->ClientCertificate()</font></a><br><a href=#%24Request-%3ECookies%28%24name%20%5B%2C%24key%5D%29><font color=#3355cc>$Request->Cookies($name [,$key])</font></a><br><a href=#%24Request-%3EForm%28%24name%29><font color=#3355cc>$Request->Form($name)</font></a><br><a href=#%24Request-%3EQueryString%28%24name%29><font color=#3355cc>$Request->QueryString($name)</font></a><br><a href=#%24Request-%3EServerVariables%28%24name%29><font color=#3355cc>$Request->ServerVariables($name)</font></a><br><br><a href=#%24Application%20Object><font color=#3355cc>$Application Object</font></a><br><br><a href=#%24Application-%3ELock%28%29><font color=#3355cc>$Application->Lock()</font></a><br><a href=#%24Application-%3EUnLock%28%29><font color=#3355cc>$Application->UnLock()</font></a><br><a href=#%24Application-%3ESessionCount%28%29><font color=#3355cc>$Application->SessionCount()</font></a><br><br><a href=#%24Server%20Object><font color=#3355cc>$Server Object</font></a><br><br><a href=#%24Server-%3E%7BScriptTimeout%7D%20%3D%20%24seconds><font color=#3355cc>$Server->{ScriptTimeout} = $seconds</font></a><br><a href=#%24Server-%3ECreateObject%28%24program_id%29><font color=#3355cc>$Server->CreateObject($program_id)</font></a><br><a href=#%24Server-%3EHTMLEncode%28%24string%29><font color=#3355cc>$Server->HTMLEncode($string)</font></a><br><a href=#%24Server-%3EMapPath%28%24url%29%3B><font color=#3355cc>$Server->MapPath($url);</font></a><br><a href=#%24Server-%3EURLEncode%28%24string%29><font color=#3355cc>$Server->URLEncode($string)</font></a><br><a href=#%24Server-%3ERegisterCleanup%28%24sub_reference%29%20><font color=#3355cc>$Server->RegisterCleanup($sub_reference) </font></a><br>	
+	<a href=#%24Session%20Object><font color=#3355cc>$Session Object</font></a><br><br><a href=#%24Session-%3E%7BCodePage%7D><font color=#3355cc>$Session->{CodePage}</font></a><br><a href=#%24Session-%3E%7BLCID%7D><font color=#3355cc>$Session->{LCID}</font></a><br><a href=#%24Session-%3E%7BSessionID%7D><font color=#3355cc>$Session->{SessionID}</font></a><br><a href=#%24Session-%3E%7BTimeout%7D%20%5B%3D%20%24minutes%5D><font color=#3355cc>$Session->{Timeout} [= $minutes]</font></a><br><a href=#%24Session-%3EAbandon%28%29><font color=#3355cc>$Session->Abandon()</font></a><br><a href=#%24Session-%3ELock%28%29%20%20><font color=#3355cc>$Session->Lock()  </font></a><br><a href=#%24Session-%3EUnLock%28%29><font color=#3355cc>$Session->UnLock()</font></a><br><br><a href=#%24Response%20Object><font color=#3355cc>$Response Object</font></a><br><br><a href=#%24Response-%3E%7BBuffer%7D><font color=#3355cc>$Response->{Buffer}</font></a><br><a href=#%24Response-%3E%7BCacheControl%7D><font color=#3355cc>$Response->{CacheControl}</font></a><br><a href=#%24Response-%3E%7BCharset%7D><font color=#3355cc>$Response->{Charset}</font></a><br><a href=#%24Response-%3E%7BClean%7D%20%3D%200-9%3B><font color=#3355cc>$Response->{Clean} = 0-9;</font></a><br><a href=#%24Response-%3E%7BContentType%7D%20%3D%20%22text%2Fhtml%22><font color=#3355cc>$Response->{ContentType} = "text/html"</font></a><br><a href=#%24Response-%3E%7BExpires%7D%20%3D%20%24time><font color=#3355cc>$Response->{Expires} = $time</font></a><br><a href=#%24Response-%3E%7BExpiresAbsolute%7D%20%3D%20%24date><font color=#3355cc>$Response->{ExpiresAbsolute} = $date</font></a><br><a href=#%24Response-%3E%7BIsClientConnected%7D><font color=#3355cc>$Response->{IsClientConnected}</font></a><br><a href=#%24Response-%3E%7BPICS%7D><font color=#3355cc>$Response->{PICS}</font></a><br><a href=#%24Response-%3E%7BStatus%7D%20%3D%20%24status><font color=#3355cc>$Response->{Status} = $status</font></a><br><a href=#%24Response-%3EAddHeader%28%24name%2C%20%24value%29><font color=#3355cc>$Response->AddHeader($name, $value)</font></a><br><a href=#%24Response-%3EAppendToLog%28%24message%29><font color=#3355cc>$Response->AppendToLog($message)</font></a><br><a href=#%24Response-%3EBinaryWrite%28%24data%29><font color=#3355cc>$Response->BinaryWrite($data)</font></a><br><a href=#%24Response-%3EClear%28%29><font color=#3355cc>$Response->Clear()</font></a><br><a href=#%24Response-%3ECookies%28%24name%2C%20%5B%24key%2C%5D%20%24value%29><font color=#3355cc>$Response->Cookies($name, [$key,] $value)</font></a><br><a href=#%24Response-%3EDebug%28%40args%29><font color=#3355cc>$Response->Debug(@args)</font></a><br><a href=#%24Response-%3EEnd%28%29><font color=#3355cc>$Response->End()</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#%24Response-%3EFlush%28%29><font color=#3355cc>$Response->Flush()</font></a><br><a href=#%24Response-%3EInclude%28%24filename%2C%20%40args%29><font color=#3355cc>$Response->Include($filename, @args)</font></a><br><a href=#%24Response-%3ERedirect%28%24url%29><font color=#3355cc>$Response->Redirect($url)</font></a><br><a href=#%24Response-%3EWrite%28%24data%29><font color=#3355cc>$Response->Write($data)</font></a><br><br><a href=#%24Request%20Object><font color=#3355cc>$Request Object</font></a><br><br><a href=#%24Request-%3E%7BTotalBytes%7D><font color=#3355cc>$Request->{TotalBytes}</font></a><br><a href=#%24Request-%3EBinaryRead%28%24length%29><font color=#3355cc>$Request->BinaryRead($length)</font></a><br><a href=#%24Request-%3EClientCertificate%28%29><font color=#3355cc>$Request->ClientCertificate()</font></a><br><a href=#%24Request-%3ECookies%28%24name%20%5B%2C%24key%5D%29><font color=#3355cc>$Request->Cookies($name [,$key])</font></a><br><a href=#%24Request-%3EForm%28%24name%29><font color=#3355cc>$Request->Form($name)</font></a><br><a href=#%24Request-%3EQueryString%28%24name%29><font color=#3355cc>$Request->QueryString($name)</font></a><br><a href=#%24Request-%3EServerVariables%28%24name%29><font color=#3355cc>$Request->ServerVariables($name)</font></a><br><br><a href=#%24Application%20Object><font color=#3355cc>$Application Object</font></a><br><br><a href=#%24Application-%3ELock%28%29><font color=#3355cc>$Application->Lock()</font></a><br><a href=#%24Application-%3EUnLock%28%29><font color=#3355cc>$Application->UnLock()</font></a><br><a href=#%24Application-%3ESessionCount%28%29><font color=#3355cc>$Application->SessionCount()</font></a><br><br><a href=#%24Server%20Object><font color=#3355cc>$Server Object</font></a><br><br><a href=#%24Server-%3E%7BScriptTimeout%7D%20%3D%20%24seconds><font color=#3355cc>$Server->{ScriptTimeout} = $seconds</font></a><br><a href=#%24Server-%3ECreateObject%28%24program_id%29><font color=#3355cc>$Server->CreateObject($program_id)</font></a><br><a href=#%24Server-%3EHTMLEncode%28%24string%29><font color=#3355cc>$Server->HTMLEncode($string)</font></a><br><a href=#%24Server-%3EMapPath%28%24url%29%3B><font color=#3355cc>$Server->MapPath($url);</font></a><br><a href=#%24Server-%3EURLEncode%28%24string%29><font color=#3355cc>$Server->URLEncode($string)</font></a><br><a href=#%24Server-%3ERegisterCleanup%28%24sub_reference%29%20><font color=#3355cc>$Server->RegisterCleanup($sub_reference) </font></a><br>	
 	</font>
 	</td>
 	</tr>
@@ -189,6 +201,39 @@ garbage collects it eventually.</font>
 	<font face=verdana><font size=-1 color=#555555><b>$Session->Abandon()</b></font><p>
 The abandon method times out the session immediately.  All Session
 data is cleared in the process, just as when any session times out.</font>
+	
+	<p>
+	<a name=%24Session-%3ELock%28%29%20%20></a>
+	<font face=verdana><font size=-1 color=#555555><b>$Session->Lock()  </b></font><p>
+API extension. If you are about to use $Session for many consecutive 
+reads or writes, you can improve performance by explicitly locking 
+$Session, and then unlocking, like:
+<pre>
+  $Session-&gt;Lock();
+  $Session-&gt;{count}++;
+  $Session-&gt;{count}++;
+  $Session-&gt;{count}++;
+  $Session-&gt;UnLock();
+</pre>This sequence causes $Session to be locked and unlocked only
+1 time, instead of the 6 times that it would be locked otherwise,
+2 for each increment with one to read and one to write.
+<pre>
+</pre>Because of flushing issues with SDBM_File and DB_File databases,
+each lock actually ties fresh to the database, so the performance
+savings here can be considerable.  
+<pre>
+</pre>Note that if you have SessionSerialize set, $Session is
+already locked for each script invocation automatically, as if
+you had called $Session-&gt;Lock() in Script_OnStart.  Thus you 
+do not need to worry about $Session locking for performance.
+Please read the section on SessionSerialize for more info.</font>
+	
+	<p>
+	<a name=%24Session-%3EUnLock%28%29></a>
+	<font face=verdana><font size=-1 color=#555555><b>$Session->UnLock()</b></font><p>
+API Extension. Unlocks the $Session explicitly.  If you do not call this,
+$Session will be unlocked automatically at the end of the 
+script.</font>
 	
 	<p>
 	<a name=%24Response%20Object></a>

@@ -3,6 +3,18 @@
 <html>
 <head>
 <title>Apache :: ASP :: CONFIG</title>
+
+	<meta name="keywords" content="apache,asp,perl,mod_perl,active server pages,web application,session management,
+scripting,dynamic html,perlscript,unix,win32,winnt,cgi compatible">
+
+	<meta name="description" content="This perl module provides an Active Server Pages port to the 
+Apache HTTP Server with perl as the host scripting language. 
+Active Server Pages is a web application platform that originated 
+with the Microsoft IIS server.  Under Apache for both Win32 and Unix, 
+it allows a developer to create dynamic web applications with session 
+management and perl code embedded in static html files.">
+
+
 </head>
 <body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
 
@@ -120,7 +132,7 @@ and see them in action on the example scripts.</font>
 
 	<hr size=1>
 	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
-	<a href=#Global><font color=#3355cc>Global</font></a><br><a href=#CookiePath><font color=#3355cc>CookiePath</font></a><br><a href=#GlobalPackage><font color=#3355cc>GlobalPackage</font></a><br><a href=#UniquePackages><font color=#3355cc>UniquePackages</font></a><br><a href=#AllowSessionState><font color=#3355cc>AllowSessionState</font></a><br><a href=#SessionTimeout><font color=#3355cc>SessionTimeout</font></a><br><a href=#SecureSession><font color=#3355cc>SecureSession</font></a><br><a href=#ParanoidSession><font color=#3355cc>ParanoidSession</font></a><br><a href=#Debug><font color=#3355cc>Debug</font></a><br><a href=#BufferingOn><font color=#3355cc>BufferingOn</font></a><br><a href=#StatINC><font color=#3355cc>StatINC</font></a><br><a href=#StatINCMatch><font color=#3355cc>StatINCMatch</font></a><br><a href=#SessionSerialize><font color=#3355cc>SessionSerialize</font></a><br><a href=#SoftRedirect><font color=#3355cc>SoftRedirect</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#NoState><font color=#3355cc>NoState</font></a><br><a href=#StateDir><font color=#3355cc>StateDir</font></a><br><a href=#StateManager><font color=#3355cc>StateManager</font></a><br><a href=#StateDB><font color=#3355cc>StateDB</font></a><br><a href=#Filter><font color=#3355cc>Filter</font></a><br><a href=#PodComments><font color=#3355cc>PodComments</font></a><br><a href=#DynamicIncludes><font color=#3355cc>DynamicIncludes</font></a><br><a href=#CgiHeaders><font color=#3355cc>CgiHeaders</font></a><br><a href=#Clean><font color=#3355cc>Clean</font></a><br><a href=#MailHost><font color=#3355cc>MailHost</font></a><br><a href=#MailErrorsTo><font color=#3355cc>MailErrorsTo</font></a><br><a href=#MailAlertTo><font color=#3355cc>MailAlertTo</font></a><br><a href=#MailAlertPeriod><font color=#3355cc>MailAlertPeriod</font></a><br>	
+	<a href=#Global><font color=#3355cc>Global</font></a><br><a href=#CookiePath><font color=#3355cc>CookiePath</font></a><br><a href=#GlobalPackage><font color=#3355cc>GlobalPackage</font></a><br><a href=#UniquePackages><font color=#3355cc>UniquePackages</font></a><br><a href=#AllowSessionState><font color=#3355cc>AllowSessionState</font></a><br><a href=#SessionTimeout><font color=#3355cc>SessionTimeout</font></a><br><a href=#SecureSession><font color=#3355cc>SecureSession</font></a><br><a href=#ParanoidSession><font color=#3355cc>ParanoidSession</font></a><br><a href=#Debug><font color=#3355cc>Debug</font></a><br><a href=#BufferingOn><font color=#3355cc>BufferingOn</font></a><br><a href=#StatINC><font color=#3355cc>StatINC</font></a><br><a href=#StatINCMatch><font color=#3355cc>StatINCMatch</font></a><br><a href=#SessionSerialize><font color=#3355cc>SessionSerialize</font></a><br><a href=#SoftRedirect><font color=#3355cc>SoftRedirect</font></a><br><a href=#NoState><font color=#3355cc>NoState</font></a><br></font></td><td valign=top><font face=verdana size=-1><a href=#StateDir><font color=#3355cc>StateDir</font></a><br><a href=#StateManager><font color=#3355cc>StateManager</font></a><br><a href=#StateDB><font color=#3355cc>StateDB</font></a><br><a href=#StateCache><font color=#3355cc>StateCache</font></a><br><a href=#AllowApplicationState><font color=#3355cc>AllowApplicationState</font></a><br><a href=#Filter><font color=#3355cc>Filter</font></a><br><a href=#PodComments><font color=#3355cc>PodComments</font></a><br><a href=#DynamicIncludes><font color=#3355cc>DynamicIncludes</font></a><br><a href=#CgiHeaders><font color=#3355cc>CgiHeaders</font></a><br><a href=#Clean><font color=#3355cc>Clean</font></a><br><a href=#MailHost><font color=#3355cc>MailHost</font></a><br><a href=#MailErrorsTo><font color=#3355cc>MailErrorsTo</font></a><br><a href=#MailAlertTo><font color=#3355cc>MailAlertTo</font></a><br><a href=#MailAlertPeriod><font color=#3355cc>MailAlertPeriod</font></a><br>	
 	</font>
 	</td>
 	</tr>
@@ -344,7 +356,8 @@ redirect is specified.
 	<font face=verdana><font size=+0 color=#555555><b>NoState</b></font><p>
 default 0, if true, neither the $Application nor $Session objects will
 be created.  Use this for a performance increase.  Please note that 
-this setting takes precedence over the AllowSessionState setting.
+this setting takes precedence over the AllowSessionState and
+AllowApplicationState settings.
 <pre>
   PerlSetVar NoState 0</pre></font>
 	
@@ -403,6 +416,35 @@ the different database formats, including the way garbage collection
 is handled.
 <pre>
   PerlSetVar StateDB SDBM_File</pre></font>
+	
+	<p>
+	<a name=StateCache></a>
+	<font face=verdana><font size=+0 color=#555555><b>StateCache</b></font><p>
+Default 0, set to 1 for lock files that are acquired for $Application 
+and an internal database used for session management to be cached
+and held open between requests, for up to a 10% performance
+gain.  Per ASP application this is will keep up to 2 extra
+file handles open per httpd process, one for the internal
+database, and one for $Application.
+<pre>
+</pre>The only problem with this caching is that you can only
+delete the StateDir if you have first shutdown the web server,
+as the lock files will not be recreated between requests.
+Not that you should be deleting your StateDir anyway, but
+if you are, there is more to worry about. 
+<pre>
+  PerlSetVar StateCache 0</pre></font>
+	
+	<p>
+	<a name=AllowApplicationState></a>
+	<font face=verdana><font size=+0 color=#555555><b>AllowApplicationState</b></font><p>
+Default 1.  If you want to leave $Application undefined, then set this
+to 0, for a performance increase of around 2-3%.  Allowing use of 
+$Application is less expensive than $Session, as there is more
+work for the StateManager associated with $Session garbage collection
+so this parameter should be only used for extreme tuning.
+<pre>
+  PerlSetVar AllowApplicationState 1</pre></font>
 	
 	<p>
 	<a name=Filter></a>
@@ -520,7 +562,7 @@ as Debug 2 is a development setting where errors are displayed in the browser,
 and MailErrorsTo is a production setting so that errors are silently logged
 and sent via email to the web admin.
 <pre>
-  PerlSetVar MailErrorsTo <a href=mailto:youremail@yourdomain.com>youremail@yourdomain.com</a></pre></font>
+  PerlSetVar MailErrorsTo <b>youremail@yourdomain.com</b></pre></font>
 	
 	<p>
 	<a name=MailAlertTo></a>
@@ -534,7 +576,7 @@ that server error.
 </pre>This config does not work when Debug 2 is set, as it is a setting for
 use in production only, where Debug 2 is for development use.
 <pre>
-  PerlSetVar MailAlertTo <a href=mailto:youremail@yourdomain.com>youremail@yourdomain.com</a></pre></font>
+  PerlSetVar MailAlertTo <b>youremail@yourdomain.com</b></pre></font>
 	
 	<p>
 	<a name=MailAlertPeriod></a>

@@ -3,9 +3,8 @@
 
 PerlSetVar GlobalPackage Apache::ASP::Demo
 PerlSetVar StateDir  /tmp/asp_demo
-PerlModule CGI
 PerlSetVar StatINC 0
-PerlSetVar StatINCMatch CGI
+PerlSetVar StatINCMatch zzz
 
 # .asp files for Session state enabled
 <Files ~ (\.asp)>
@@ -15,6 +14,7 @@ PerlSetVar StatINCMatch CGI
 	PerlSetVar Debug  2
 	PerlSetVar CookiePath  /	
 	PerlSetVar SessionTimeout  .5
+	PerlSetVar StateCache 1
 </Files>
 
 # .htm files for the ASP parsing, but not the $Session object

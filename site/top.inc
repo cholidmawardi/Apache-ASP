@@ -1,37 +1,23 @@
 <%
 
 use File::Basename;
-
 my $basename = basename($0);
 ($basename) = split(/\./, $basename);
 my $section = $FILES{$basename} || die("no section for $basename");
 my ($data) = grep($_->{name} eq $section, @{$ASP->{stack}});
+
 my ($copy) = grep($_->{name} eq 'COPYRIGHT', @{$ASP->{stack}});
-my ($desc) = grep($_->{name} eq 'INTRO', @{$ASP->{stack}});
-my ($keywords) = grep($_->{name} eq 'KEYWORDS', @{$ASP->{stack}});
-
-$desc ={%$desc};
 $copy->{body} =~ s/\n\n.*$//sg;
-$desc->{body} =~ s/\n\n.*$//sg;
-
-my %meta = (
-	'description' => $desc->{body},
-	'keywords' => $keywords->{body},
-	);
 
 $data || die("can't get data for $section");
 my $module = "Apache :: ASP";
-my $title = "$module :: ".uc(lc $data->{name});# ." - Active Server Pages for Apache with mod_perl";
+my $title = "$module :: ".uc(lc $data->{name});
 
 %>
 
 <html>
 <head>
 <title><%=$title%></title>
-<% for (keys %meta) { %>
-	<meta name="<%=$_%>" content="<%=$Server->HTMLEncode($meta{$_})%>">
-<% } %>
-
 </head>
 <body bgcolor=white link=#3355cc alink=#ff5599 vlink=#993399>
 
@@ -44,8 +30,7 @@ my $title = "$module :: ".uc(lc $data->{name});# ." - Active Server Pages for Ap
 	<tr><td align=center><hr size=1></td></tr>
 
 	<% 
-	my $top;
-	for $top (@{$ASP->{stack}}, '', { name=> 'EXAMPLES', file => 'eg/index'}) { 
+	for $top (@{$ASP->{stack}}, '', { name=> EXAMPLES, file => 'eg/index'}) { 
 		unless($top) {
 			%><tr><td><hr size=1></td></tr><%
 			next;
@@ -109,7 +94,7 @@ if(@order > 2) {
 	<hr size=1>
 	<table width=100% border=0 cellpadding=5><tr><td valign=top><font face=verdana size=-1>
 	<% 
-	for(my $i=0; $i<@links; $i++) { 
+	for($i=0; $i<@links; $i++) { 
 		if($i == (int((@links+1) / 2))) {
 			print "</font></td><td valign=top><font face=verdana size=-1>";
 		}

@@ -1,5 +1,6 @@
 
 use Data::Dumper;
+use vars qw(%FILES %ALIASES %LINKS $ASP);
 
 $DEBUG = 0;
 %FILES = ('index' => 'INTRO',
@@ -142,7 +143,8 @@ sub pod2html {
 
     #$body =~ s/\n\s*\n+/<p>/isg;
     $body =~ s|(http://\w+\.[\w\.\/\-]+)|<a href=$1>$1</a>|sg;
-    $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<a href=mailto:$1$2>$1</a>|sg;
+    $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<b>$1</b>|sg;
+#    $body =~ s|(\w+\@[\w\.\,\@]+)(\?[\w\=\:]+)?|<a href=mailto:$1$2>$1</a>|sg;
 
     $body =~ s|\n\n</pre>|\n</pre>|isg;
     for(keys %LINKS) {
