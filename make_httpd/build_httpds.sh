@@ -27,11 +27,11 @@ echo
 sleep 1
 
 # SSL
-SSL_BASE=/usr/local/openssl
+SSL_BASE=/usr/local/ssl
 export SSL_BASE
 cd $MODSSL
 echo
-echo "Configuring mod_ssl =========================="
+echo "Configuring mod_ssl with OpenSSL at $SSL_BASE =========================="
 echo
 sleep 1
 ./configure \

@@ -1,10 +1,12 @@
-#!perl
+#!/usr/local/bin/perl
 
 use strict;
 
 my $necessary_modules = {
 #    'Apache' => 'Make sure your installation of mod_perl is complete',
+    'Class::Struct' => "Apache::ASP->Loader() precompile scripts functionality",
     'MLDBM' => 'This is used for reading and writing multi-level hashes on disk',
+    'MLDBM::Sync 0.15' => 'Support for State dbms like $Session & $Application',		 
     'SDBM_File' => 'Internal databases used for state files, like $Session',
     'Data::Dumper' => 'Serializes data for MLDBM',
     'Fcntl' => 'Used for file locking constants',
@@ -22,8 +24,8 @@ my $optional_modules =
 		   },
    'CGI' => 'Required for file upload, make test, and command line ./cgi/asp script',
    'Compress::Zlib' => "Required for html gzip text compression for browsers that support it",
-   'DB_File' => 'Optional module for StateDB config option',
-   'MLDBM::Sync::SDBM_File' => 'Optional module for StateDB config option that is faster than DB_File on Linux.  Also default CacheDB for XSLT caching.',
+   'DB_File' => 'Optional module for StateDB & CacheDB config options',
+   'MLDBM::Sync::SDBM_File' => 'Optional module for StateDB config option that is faster than DB_File on Linux.  Also default CacheDB for XSLT caching, but DB_File may also be used.',
    'HTML::Clean' => 'Compress text/html with Clean config or $Response->{Clean} set to 1-9',
    'HTML::FillInForm' => 
    'Enables FormFill feature which will auto fill forms from $Request->Form data',
@@ -39,7 +41,7 @@ my $optional_modules =
 print "Checking for the REQUIRED modules...\n";
 my($errors, $warnings);
 for(sort keys %$necessary_modules) {
-    eval 'require ' . $_ ;
+    eval 'use ' . $_ ;
     if($@) {
 	$errors++;
 	print " !!! you need the module: $_\n";
@@ -82,9 +84,13 @@ execute the following:
 
 > perl -MCPAN -eshell
 
-Then to install any modules, like HTTP::Date
+Then to install any required modules, like HTTP::Date
 
-> install HTTP::Date
+ cpan> install HTTP::Date
+
+To install the modules commonly used with Apache::ASP, do:
+
+ cpan> install Bundle::Apache::ASP
 
 and cpan will do all the work for you.  For more 
 information, please view the CPAN docs with 

@@ -263,29 +263,13 @@ documents at:
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#%24Application%20%26%20%24Session%20State>$Application & $Session State</a>
+			<a href=#%24Application941f90bf>$Application & $Session State</a>
 			</font>
 			</td>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Precompile%20Scripts>Precompile Scripts</a>
-			</font>
-			</td>
-							
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#High%20MaxRequests>High MaxRequests</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#No%20.htaccess%20or%20StatINC>No .htaccess or StatINC</a>
+			<a href=#No%20.htaccessc4c9e884>No .htaccess or StatINC</a>
 			</font>
 			</td>
 							
@@ -295,13 +279,13 @@ documents at:
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Low%20MaxClients>Low MaxClients</a>
+			<a href=#Low%20MaxClien5a8237ea>Low MaxClients</a>
 			</font>
 			</td>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Turn%20off%20Debugging>Turn off Debugging</a>
+			<a href=#Turn%20off%20Debe0bab100>Turn off Debugging</a>
 			</font>
 			</td>
 							
@@ -311,7 +295,7 @@ documents at:
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Precompile%20Modules>Precompile Modules</a>
+			<a href=#High%20MaxRequ0724a06d>High MaxRequestsPerChild</a>
 			</font>
 			</td>
 		
@@ -322,13 +306,39 @@ documents at:
 			</td>
 							
 		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Precompile%20M39676a96>Precompile Modules</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Resource%20Limfd66f2d8>Resource Limits</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Precompile%20S36827838>Precompile Scripts</a>
+			</font>
+			</td>
+		<td>&nbsp;</td>					
+		</tr>
 			
 	</table>
 	<hr size=1>
 	<p>
 
 	<p>
-	<a name=%24Application%20%26%20%24Session%20State></a>
+	<a name=%24Application941f90bf></a>
 	<font face=verdana><font size=+0 color=#555555><b>$Application & $Session State</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Use NoState 1 setting if you don't need the $Application or $Session
@@ -338,11 +348,12 @@ performance penalty.
 </pre></font>If you need the state objects $Application and $Session, and if 
 running an OS that caches files in memory, set your &quot;StateDir&quot; 
 directory to a cached file system.  On WinNT, all files 
-may be cached, and you have no control of this.  On Solaris, /tmp is cached
-and would be a good place to set the &quot;StateDir&quot; config setting to.  
-When cached file systems are used there is little performance penalty 
-for using state files.  Linux tends to do a good job caching its
-file systems, so pick a StateDir for ease of system administration.
+may be cached, and you have no control of this.  On Solaris, /tmp is
+a RAM disk and would be a good place to set the &quot;StateDir&quot; config 
+setting to.  When cached file systems are used there is little 
+performance penalty for using state files.  Linux tends to do a good job 
+caching its file systems, so pick a StateDir for ease of system 
+administration.
 <font face="courier new" size=3><pre>
 </pre></font>On Win32 systems, where <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a> requests are serialized, you 
 can freely use SessionSerialize to make your $Session requests
@@ -351,16 +362,7 @@ $Application if you call $Application-&gt;Lock() in your
 global.asa's Script_OnStart.</font>
 	
 	<p>
-	<a name=High%20MaxRequests></a>
-	<font face=verdana><font size=+0 color=#555555><b>High MaxRequests</b></font><p>
-<font face="courier new" size=3><pre>
-</pre></font>Set your max requests per child thread or process (in httpd.conf) high, 
-so that ASP scripts have a better chance being cached, which happens after 
-they are first compiled.  You will also avoid the process fork penalty on 
-UNIX systems.  Somewhere between 100 - 1000 is probably pretty good.</font>
-	
-	<p>
-	<a name=Low%20MaxClients></a>
+	<a name=Low%20MaxClien5a8237ea></a>
 	<font face=verdana><font size=+0 color=#555555><b>Low MaxClients</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Set your MaxClients low, such that if you have that
@@ -371,7 +373,19 @@ even with 1 gig RAM!  To handle more client connections,
 look into a dual server, mod_proxy front end.</font>
 	
 	<p>
-	<a name=Precompile%20Modules></a>
+	<a name=High%20MaxRequ0724a06d></a>
+	<font face=verdana><font size=+0 color=#555555><b>High MaxRequestsPerChild</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>Set your max requests per child thread or process (in httpd.conf) high, 
+so that ASP scripts have a better chance being cached, which happens after 
+they are first compiled.  You will also avoid the process fork penalty on 
+UNIX systems.  Somewhere between 50 - 500 is probably pretty good.
+You do not want to set this too high though or you will risk having
+your web processes use too much RAM.  One may use Apache::SizeLimit
+or Apache::GTopLimit to optimally tune MaxRequestsPerChild at runtime.</font>
+	
+	<p>
+	<a name=Precompile%20M39676a96></a>
 	<font face=verdana><font size=+0 color=#555555><b>Precompile Modules</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>For those modules that your Apache::ASP application uses,
@@ -380,7 +394,7 @@ file, or loaded with PerlModule in your httpd.conf, so
 that your modules are compiled pre-fork in the parent httpd.</font>
 	
 	<p>
-	<a name=Precompile%20Scripts></a>
+	<a name=Precompile%20S36827838></a>
 	<font face=verdana><font size=+0 color=#555555><b>Precompile Scripts</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Precompile your scripts by using the Apache::ASP-&gt;Loader() routine
@@ -389,10 +403,10 @@ a script from suffering compile time lag.  On UNIX, precompiling scripts
 upon server startup allows this code to be shared with forked child
 www servers, so you reduce overall memory usage, and use less CPU 
 compiling scripts for each separate www server process.  These 
-savings could be significant.  On my PII300, it takes a couple seconds
+savings could be significant.  On a PII300 Solaris x86, it takes a couple seconds
 to compile 28 scripts upon server startup, with an average of 50K RAM
-per compiled script, and this savings is passed on to the child httpd 
-servers.
+per compiled script, and this savings is passed on to the ALL child httpd 
+servers, so total savings would be 50Kx28x20(MaxClients)=28M!
 <font face="courier new" size=3><pre>
 </pre></font>Apache::ASP-&gt;Loader() can be called to precompile scripts and
 even entire ASP applications at server startup.  Note 
@@ -408,23 +422,28 @@ in a directory will be compiled by default.
 <font face="courier new" size=3><pre>
 </pre></font>The %config args, are the config options that you want set that affect 
 compilation.  These options include Debug, Global, GlobalPackage, 
-DynamicIncludes, StatINC, and StatINCMatch.  If your scripts are later 
-run with different config options, your scripts may have to be recompiled.
+DynamicIncludes, StatINC, StatINCMatch, XMLSubsMatch, and XMLSubsStrict.  
+If your scripts are later run with different config options, your 
+scripts may have to be recompiled.
 <font face="courier new" size=3><pre>
 </pre></font>Here is an example of use in a *.conf file:
 <font face="courier new" size=3><pre>
  &lt;Perl&gt; 
  Apache::ASP-&gt;Loader(
-	'c:/proj/site', &quot;(asp|htm)\$&quot;, 
-	Global =&gt; '/proj/perllib',
-	Debug =&gt; 1, # see output when starting apache
+	'/usr/local/proj/site', &quot;(asp|htm)\$&quot;, 
+	'Global' =&gt; '/proj/perllib',
+	'Debug' =&gt; -3, # see system output when starting apache
 
 	# OPTIONAL configs if you use them in your apache configuration
 	# these settings affect how the scripts are compiled and loaded
-	GlobalPackage =&gt; SomePackageName,
-	DynamicIncludes =&gt; 1,	
-	StatINC =&gt; 1,		
-	); 
+	'GlobalPackage' =&gt; 'SomePackageName',
+	'DynamicIncludes' =&gt; 1,	
+	'StatINC' =&gt; 1,		
+        'StatINCMatch' =&gt; 'My',
+        'UseStrict' =&gt; 1,
+        'XMLSubsMatch' =&gt; 'my:\w+',
+        'XMLSubsStrict' =&gt; 0 || 1,
+	);
  &lt;/Perl&gt;
 </pre></font>This config section tells the server to compile all scripts
 in c:/proj/site that end in asp or htm, and print debugging
@@ -439,7 +458,7 @@ for your application in general and watch your error_log for
 messages indicating scripts being cached.</font>
 	
 	<p>
-	<a name=No%20.htaccess%20or%20StatINC></a>
+	<a name=No%20.htaccessc4c9e884></a>
 	<font face=verdana><font size=+0 color=#555555><b>No .htaccess or StatINC</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Don't use .htaccess files or the StatINC setting in a production system
@@ -450,14 +469,20 @@ the .htaccess file, move settings into *.conf Apache files.
 </pre></font>Instead of StatINC, try using the StatINCMatch config, which 
 will check a small subset of perl libraries for changes.  This
 config is fine for a production environment, and if used well
-might only incur a 10-20% performance penalty.</font>
+might only incur a 10-20% performance penalty, depending on the
+number of modules your system loads in all, as each module
+needs to be checked for changes on a per request basis.</font>
 	
 	<p>
-	<a name=Turn%20off%20Debugging></a>
+	<a name=Turn%20off%20Debe0bab100></a>
 	<font face=verdana><font size=+0 color=#555555><b>Turn off Debugging</b></font><p>
 <font face="courier new" size=3><pre>
-</pre></font>Turn debugging off by setting Debug to 0.  Having the debug config option
-on slows things down immensely.</font>
+</pre></font>Turn off system debugging by setting Debug to 0-3.  Having the system 
+debug config option on slows things down immensely, but can be useful
+when troubleshooting your application.  System level debugging is 
+settings -3 through -1, where user level debugging is 1 to 3.  User level
+debugging is much more light weight depending on how many $Reponse-&gt;Debug()
+statements you use in your program, and you may want to leave it on.</font>
 	
 	<p>
 	<a name=RAM%20Sparing></a>
@@ -470,6 +495,24 @@ script.  These numbers are very rough.  If you use includes, you
 can instead try setting DynamicIncludes to 1, which will share compiled
 code for includes between scripts by turning an &lt;!--#include file..--&gt;
 into a $Response-&gt;Include().</font>
+	
+	<p>
+	<a name=Resource%20Limfd66f2d8></a>
+	<font face=verdana><font size=+0 color=#555555><b>Resource Limits</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>Make sure your web processes do not use too many resources
+like CPU or RAM with the handy Apache::Resource module.
+Such a config might look like:
+<font face="courier new" size=3><pre>
+ PerlModule Apache::Resource
+ PerlSetEnv PERL_RLIMIT_CPU  1000
+ PerlSetEnv PERL_RLIMIT_DATA 60:60
+</pre></font>If ever a web process should begin to take more than 60M ram
+or use more than 1000 CPU seconds, it will be killed by 
+the OS this way.  You only want to use this configuration
+to protect against runaway processes and web program errors,
+not for terminating a normally functioning system, so set
+these limits HIGH!</font>
 	
 
 </font>

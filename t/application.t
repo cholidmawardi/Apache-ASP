@@ -1,4 +1,11 @@
 use Apache::ASP;
+
+#use lib qw(. ..);
+#use ASP;
+
+use strict;
+$SIG{__DIE__} = \&Carp::confess;
+
 &Apache::ASP::CGI::do_self(
 #	Debug => -1
 );
@@ -7,6 +14,7 @@ __END__
 
 <% 
 
+for(1..10) { $Application->UnLock; }
 $t->eok(sub { $Application->Lock }, '$Application->Lock');
 $t->eok($Application->{Start}, 'Application_OnStart did not run');
 
@@ -23,4 +31,5 @@ $t->eok(sub { $Application->UnLock }, '$Application->UnLock');
 #$t->eok($Application->SessionCount(), '$Application->SessionCount()');
 $t->eok($Application->GetSession($Session->{SessionID}), '$Application->GetSession()');
 %>
+
 

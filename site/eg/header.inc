@@ -23,9 +23,9 @@
   <td align="right">
     <% 
        my $date = HTTP::Date::time2iso(); 
-       $date =~ s/:\d\d$//;
+       $date =~ s/\s*\d\d:\d\d:\d\d$//;
      %>
-    <font color="white" size="-1"><%=$date %> PST</font>
+    <font color="white" size="-1"><%=$date %></font>
   </td>
 </tr>
 

@@ -17,7 +17,7 @@
 %>
 We just incremented the $Application->{Count} variable by 3.
 Here is the value of the $Application->{Count} variable... <br>
-<b><%=$Application->{Count}%></b>
+<b><%= sprintf("%06d", $Application->{Count}) %></b>
 <p>
 We reset this value to 20 every Application_OnStart.  Check
 out the global.asa!

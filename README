@@ -2,9 +2,10 @@ NAME
       Apache::ASP - Active Server Pages for Apache with mod_perl 
 
 SYNOPSIS
-      SetHandler perl-script
+      SetHandler  perl-script
+      PerlModule  Apache::ASP
       PerlHandler Apache::ASP
-      PerlSetVar Global /tmp/asp
+      PerlSetVar  Global /tmp/asp
 
 DESCRIPTION
     Apache::ASP provides an Active Server Pages port to the Apache Web
@@ -36,7 +37,6 @@ INSTALL
     The latest Apache::ASP can be found at your nearest CPAN, and also:
 
       http://www.perl.com/CPAN-local/modules/by-module/Apache/
-      http://download.sourceforge.net/mirrors/CPAN/modules/by-module/Apache/
       ftp://ftp.duke.edu/pub/perl/modules/by-module/Apache/
 
     As a perl user, you should make yourself familiar with the CPAN.pm
@@ -137,6 +137,7 @@ CONFIG
 
      <Files ~ (\.asp)>    
        SetHandler  perl-script
+       PerlModule  Apache::ASP
        PerlHandler Apache::ASP
        PerlSetVar  Global .
        PerlSetVar  StateDir /tmp/asp
@@ -640,18 +641,57 @@ CONFIG
 
   Caching
 
-    Currently only XSLTCache uses the dbm caching layer. The caching layer
-    is built generically to be able to use it for convenient output and user
-    data caching.
+    The output caching layer is a file dbm based output cache that runs on
+    top of the MLDBM::Sync so inherits its performance characteristics. With
+    CacheDB set to MLDBM::Sync::SDBM_File, the cache layer is very fast at
+    caching entries up to 20K in size, but for greater cached items, you
+    should set CacheDB to another dbm like DB_File or GDBM_File.
+
+    In order for the cache layer to function properly, whether for
+    $Response->Include() output caching, see OBJECTS, or XSLT caching, see
+    XML/XSLT, then Apache::ASP must be loaded in the parent httpd like so:
+
+      # httpd.conf
+      PerlModule Apache::ASP
+        -- or --
+      <Perl>
+        use Apache::ASP;
+      </Perl>
+
+    The cache layer automatically expires entries upon server restart, but
+    for this to work, a $ServerID must be computed when the Apache::ASP
+    module gets loaded to store in each cached item. Without the above done,
+    each child httpd process will get its own $ServerID, so caching will not
+    work at all.
+
+    This said, output caching will not work in raw CGI mode, just running
+    under mod_perl.
 
     CacheDB
     Like StateDB, sets dbm format for caching. Since SDBM_File only support
     key/values pairs of around 1K max in length, the default for this is
-    MLDBM::Sync::SDBM_File, which is very fast for < 50K file sizes. For
-    caching larger data than 50K, DB_File or GDBM_File are probably better
+    MLDBM::Sync::SDBM_File, which is very fast for < 20K file sizes. For
+    caching larger data than 20K, DB_File or GDBM_File are probably better
     to use.
 
       PerlSetVar CacheDB MLDBM::Sync::SDBM_File
+
+    Here are some benchmarks about the CacheDB when used with caching output
+    from $Response->Include(\%cache) running on a Linux 2.2.14 dual PIII-
+    450. The variables are output size being cached & the CacheDB used, the
+    default being MLDBM::Sync::SDBM_File.
+
+     CacheDB                 Output Cached   Cache Fetch/sec
+     -------                 -------------   ---------------
+     MLDBM::Sync::SDBM_File  32000 bytes     41.7
+     DB_File                 32000 bytes     53
+     MLDBM::Sync::SDBM_File   3200 bytes     177
+     DB_File                  3200 bytes     59
+
+     CacheDB                 Output Cached   Cache Store/sec
+     -------                 -------------   ---------------
+     MLDBM::Sync::SDBM_File   3200 bytes     42
+     DB_File                  3200 bytes     39
 
     CacheDir
     By default, the cache directory is at StateDir/cache, but if StateDir is
@@ -660,16 +700,30 @@ CONFIG
 
       PerlSetVar CacheDir /tmp/asp_demo
 
+    On a system like Solaris where there is a RAM disk mounted on the system
+    like /tmp, I could put the cache there. On a system like Linux where
+    files are cached pretty well by default, this is less important.
+
     CacheSize
-    By default, this is 10000000, or nearly 10M of data per cache. When any
-    cache, like the XSLTCache, reaches this limit, the cache will be purged
-    by deleting the cached dbm files entirely. This is better for long term
-    running of dbms than deleting individual records, because dbm formats
-    will often degrade in performance with lots of insert & deletes.
+    By default, this is 10M of data per cache. When any cache, like the
+    XSLTCache, reaches this limit, the cache will be purged by deleting the
+    cached dbm files entirely. This is better for long term running of dbms
+    than deleting individual records, because dbm formats will often degrade
+    in performance with lots of insert & deletes.
 
-      PerlSetVar CacheSize 10000000
+    Units of M, K, and B are supported for megabytes, kilobytes, and bytes,
+    with the default unit being B, so the following configs all mean the
+    same thing;
 
-    Currently the only cache that can be used is the XSLTCache.
+      PerlSetVar CacheSize 10M
+      PerlSetVar CacheSize 10240K
+      PerlSetVar CacheSize 10485760B
+      PerlSetVar CacheSize 10485760
+
+    There are 2 caches currently, the XSLTCache, and the Response cache, the
+    latter which is currently invoked for caching output from includes with
+    special syntax. See $Response->Include() for more info on the Response
+    cache.
 
   Miscellaneous
 
@@ -1040,11 +1094,13 @@ SYNTAX
     this list.
 
 EVENTS
+  Overview
+
     The ASP platform allows developers to create Web Applications. In
     fulfillment of real software requirements, ASP allows event-triggered
     actions to be taken, which are defined in a global.asa file. The
     global.asa file resides in the Global directory, defined as a config
-    option , and may define the following actions:
+    option, and may define the following actions:
 
             Action                  Event
             ------                  ------
@@ -1073,7 +1129,9 @@ EVENTS
     A web application starts when the user visits a page in that
     application, and has a new $Session created. Right before the first
     $Session is created, the $Application is created. When the last user
-    $Session expires, that $Application expires also.
+    $Session expires, that $Application expires also. For some web
+    applications that are always busy, the Application_OnEnd event may never
+    occur.
 
   Script_OnStart & Script_OnEnd
 
@@ -1148,6 +1206,139 @@ EVENTS
 
     The end of the application is marked by this event, which is run after
     the last user session has timed out for a given ASP application.
+
+  Server_OnStart ( pseudo-event )
+
+    Some might want something like a Server_OnStart event, where some code
+    gets runs when the web server starts. In mod_perl, this is easy to
+    achieve outside of the scope of an ASP application, by putting some
+    initialization code into a <Perl> section in the httpd.conf file.
+    Initializations that you would like to be shared with the child httpds
+    are particularly useful, one such being the Apache::ASP->Loader()
+    routine which you can read more about in the TUNING section - Precompile
+    Scripts subsection. It is could be called like:
+
+      # httpd.conf
+      <Perl>
+         Apache::ASP->Loader($path, $pattern, %config)
+      </Perl>
+
+    So a <Perl> section is your Server_OnStart routine!
+
+  mod_perl handlers
+
+    If one wants to extend one's environment with mod_perl handlers,
+    Apache::ASP does not stop this. Basic use of Apache::ASP in fact only
+    involves the content handler phase of mod_perl's PerlHandler, like
+
+      SetHandler perl-script
+      PerlModule Apache::ASP
+      PerlHandler Apache::ASP 
+
+    But mod_perl allows for direct access to many more Apache event stages,
+    for full list try "perldoc mod_perl" or buy the mod_perl Eagle book.
+    Some commonly used ones are:
+
+      PerlInitHandler
+      PerlTransHandler
+      PerlFixupHandler
+      PerlHandler
+      PerlLogHandler
+      PerlCleanupHandler
+
+    For straight Apache::ASP programming, there are some equivalents, say
+    Script_OnStart event instead of Init/Fixup stages, or $Server-
+    >RegisterCleanup() for Log/Cleanup stages, but you can do things in the
+    mod_perl handlers that you cannot do in Apache::ASP, especially if you
+    want to handle all files globally, and not just ASP scripts.
+
+    For many Apache::* modules for use with mod_perl, of which Apache::ASP
+    is just one, check out http://perl.apache.org/src/apache-modlist.html
+
+    To gain access to the ASP objects like $Session outside in a non-
+    PerlHandler mod_perl handler, you may use this API: my $ASP =
+    Apache::ASP->new($r); # $r is Apache->request object
+
+    as in this possible Authen handler:
+
+      <Perl>
+        use Apache::ASP;
+        sub My::Auth::handler {
+          my $r = shift;
+          my $ASP = Apache::ASP->new($r) 
+          my $Session = $ASP->Session;
+        }
+      </Perl>
+
+    Here are some examples of do-it-yourself mod_perl handler programming...
+
+     === Forbid Bad HSlide User Agent ===
+
+     # httpd.conf
+     PerlAccessHandler My::Access
+     <Perl>
+       sub My::Access::handler {
+         my $r = shift;
+         if($r->header_in('USER_AGENT') =~ /HSlide/) {
+             403;
+         } else {
+             200;
+         }
+       }
+     </Perl>
+
+     === Runtime Path Parsing ===
+
+    This example shows how one might take an arbitrary URL path
+    /$path/$file.asp, and turn that into a runtime config for your site, so
+    your scripts get executed always in your sites DocumentRoot.
+
+     INPUT URL /SomeCategory/
+     OUTPUT
+      Script: index.asp
+      $Server->Config('PATH') eq '/SomeCategory'
+
+     INPUT URL /SomeCategory/index.asp
+     OUTPUT
+      Script: index.asp
+      $Server->Config('PATH') eq '/SomeCategory'
+
+     INPUT URI /index.asp
+     OUTPUT
+      Script: index.asp
+      $Server->Config('PATH') eq ''
+
+     # httpd.conf
+     PerlTransHandler My::Init
+     use lib qw( $custom_perllib );
+
+     # $custom_perllib/My/Init.pm
+     package My::Init;
+     use strict;
+     use Apache::Constants qw(:common);
+     sub handler {
+        my $r = shift;
+
+        my $uri = $r->uri || '/';
+        unless($uri =~ m|^(.*)(/([^/.]+\.[\w]+)?)$|i) {
+            warn("can't parse uri $uri");
+            return DECLINED;
+        }
+        $uri = $2;
+        my $PATH = $1 || '';
+        $r->dir_config('PATH', $PATH);
+
+        if($uri eq '/') {
+            $uri = '/index.asp';
+        }
+
+        $r->uri($uri);
+        $r->filename($r->document_root.$uri);
+
+        DECLINED;
+     }
+
+     1;
 
 OBJECTS
     The beauty of the ASP Object Model is that it takes the burden of CGI
@@ -1373,6 +1564,14 @@ OBJECTS
         BufferingOn is set, by default $Response->Flush() will only be
         called at the end of the HTML output.
 
+        As of version 2.23 this value is updated correctly before global.asa
+        Script_OnStart is called, so global script termination may be
+        correctly handled during that event, which one might want to do with
+        excessive user STOP/RELOADS when the web server is very busy.
+
+        An API extension $Response->IsClientConnected may be called for
+        refreshed connection status without calling first a $Response->Flush
+
     $Response->{PICS}
         If this property has been set, a PICS-Label HTTP header will be sent
         with its value. For those that do not know, PICS is a header that is
@@ -1543,7 +1742,100 @@ OBJECTS
         code by allowing includes to be called with runtime arguments. Files
         included are compiled once, and the anonymous code ref from that
         compilation is cached, thus including a file in this manner is just
-        like calling a perl subroutine.
+        like calling a perl subroutine. The @args can be found in @_ in the
+        includes like:
+
+          # include.inc
+          <% my @args = @_; %>
+
+        As of 2.23, multiple return values can be returned from an include
+        like:
+
+         my @rv = $Response->Include($filename, @args);
+
+    $Response->Include(\%cache_args, @sub_args) *CACHE API*
+        As of version 2.23, output from an include may be cached with this
+        API and the CONFIG settings CacheDir & CacheDB. This can be used to
+        execute expensive includes only rarely where applicable, drastically
+        increasing performance in some cases.
+
+        This API extension applies to the entire include family:
+
+          my @rv = $Response->Include(\%cache_args, @include_args)
+          my $html_ref = $Response->TrapInclude(\%cache_args, @include_args)
+          $Server->Execute(\%cache_args, @include_args)
+
+        For this output cache to work, you must load Apache::ASP in the
+        Apache parent httpd like so:
+
+          # httpd.conf
+          PerlModule Apache::ASP
+
+        The cache arguments are shown here
+
+          $Response->Include({
+            File => 'file.inc',
+            Cache => 1, # to activate cache layer
+            Expires => 3600, # to expire in one hour
+            LastModified => time() - 600, # to expire if cached before 10 minutes ago
+            Key => $Request->Form, # to cache based on checksum of serialized form data,
+            Clear => 1, # always executes include & cache output
+          }, @include_args);
+
+          File - include file to execute, can be file name or \$script 
+            script data passed in as scalar ref.
+
+          Cache - activate caching, will run like normal include without this
+
+          Expires - only cache for this long in seconds
+
+          LastModified - if cached before this time(), expire
+
+          Key - The cache item identity.  Can be $data, \$data, \%data, \@data, 
+            this data is serialized and combined with the filename & @include_args 
+            to create a MD5 checksum to fetch from the cache with. If you wanted
+            to cache the results of a search page from form data POSTed, 
+            then this key could be 
+
+              { Key => $Request->Form }
+
+          Clear - If set to 1, or boolean true, will always execute the include 
+            and update the cache entry for it.
+
+        Motivation: If an include takes 1 second to execute because of
+        complex SQL to a database, and you can cache the output of this
+        include because it is not realtime data, and the cache layer runs at
+        .01 seconds, then you have a 100 fold savings on that part of the
+        script. Site scalability can be dramatically increased in this way
+        by intelligently caching bottlenecks in the web application.
+
+        Use Sparingly: If you have a fast include, then it may execute
+        faster than the cache layer runs, in which case you may actually
+        slow your site down by using this feature. Therefore try to use this
+        sparingly, and only when sure you really need it. Apache::ASP
+        scripts generally execute very quickly, so most developers will not
+        need to use this feature at all.
+
+    $Response->IsClientConnected()
+        API Extension. 1 for web client still connected, 0 if disconneted
+        which might happen if the user hits the stop button. The original
+        API for this $Response->{IsClientConnected} is only updated after a
+        $Response->Flush is called, so this method may be called for a
+        refreshed status.
+
+        Note $Response->Flush calls $Response->IsClientConnected to update
+        $Response->{IsClientConnected} so to use this you are going straight
+        to the source! But if you are doing a loop like:
+
+          while(@data) {
+            $Response->End if ! $Response->{IsClientConnected};
+            my $row = shift @data;
+            %> <%= $row %> <%
+            $Response->Flush;
+          }
+
+        Then its more efficient to use the member instead of the method
+        since $Response->Flush() has already updated that value for you.
 
     $Response->Redirect($url)
         Sends the client a command to go to a different url $url. Script
@@ -1671,7 +1963,16 @@ OBJECTS
     $Request->Form($name)
         Returns the value of the input of name $name used in a form with
         POST method. If $name is not specified, returns a ref to a hash of
-        all the form data.
+        all the form data. One can use this hash to create a nice alias to
+        the form data like:
+
+         # in global.asa
+         use vars qw( $Form );
+         sub Script_OnStart {
+           $Form = $Request->Form;
+         }
+         # then in ASP scripts
+         <%= $Form->{var} %>
 
         File upload data will be loaded into $Request->Form('file_field'),
         where the value is the actual file name of the file uploaded, and
@@ -1683,6 +1984,19 @@ OBJECTS
         For more information, please see the CGI / File Upload section, as
         file uploads are implemented via the CGI.pm module. An example can
         be found in the installation samples ./site/eg/file_upload.asp
+
+    $Request->Params($name)
+        API extension. If RequestParams CONFIG is set, the $Request->Params
+        object is created with combined contents of $Request->QueryString
+        and $Request->Form. This is for developer convenience simlar to
+        CGI.pm's param() method. Just like for $Response->Form, one could
+        create a nice alias like:
+
+         # in global.asa
+         use vars qw( $Params );
+         sub Script_OnStart {
+           $Params = $Request->Params;
+         }
 
     $Request->QueryString($name)
         Returns the value of the input of name $name used in a form with GET
@@ -1776,6 +2090,9 @@ OBJECTS
 
           Apache->dir_config($setting)
 
+        May also be invoked as $Server->Config(), which will return a hash
+        ref of all the PerlSetVar settings.
+
     $Server->CreateObject($program_id)
         Allows use of ActiveX objects on Win32. This routine returns a
         reference to an Win32::OLE object upon success, and nothing upon
@@ -1799,11 +2116,27 @@ OBJECTS
         Not implemented, will likely not ever be because this is dependent
         on how IIS handles errors and is not relevant in Apache.
 
-    $Server->HTMLEncode($string)
+    $Server->HTMLEncode( $string || \$string )
         Returns an HTML escapes version of $string. &, ", >, <, are each
         escapes with their HTML equivalents. Strings encoded in this nature
         should be raw text displayed to an end user, as HTML tags become
-        escaped with this method. "
+        escaped with this method.
+
+        As of version 2.23, $Server->HTMLEncode() may take a scalar
+        reference for an optmization when encoding a large buffer as an API
+        extension. Here is how one might use one over the other:
+
+          my $buffer = '&' x 100000;
+          $buffer = $Server->HTMLEncode($buffer);
+          print $buffer;
+            - or -
+          my $buffer = '&' x 100000;
+          $Server->HTMLEncode(\$buffer);
+          print $buffer;
+
+        Using the reference passing method in benchmarks on 100K of data was
+        5% more efficient, but maybe useful for some. It saves on copying
+        the 100K buffer twice.
 
     $Server->MapPath($url);
         Given the url $url, absolute, or relative to the current executing
@@ -2650,24 +2983,16 @@ TUNING
     If you need the state objects $Application and $Session, and if running
     an OS that caches files in memory, set your "StateDir" directory to a
     cached file system. On WinNT, all files may be cached, and you have no
-    control of this. On Solaris, /tmp is cached and would be a good place to
-    set the "StateDir" config setting to. When cached file systems are used
-    there is little performance penalty for using state files. Linux tends
-    to do a good job caching its file systems, so pick a StateDir for ease
-    of system administration.
+    control of this. On Solaris, /tmp is a RAM disk and would be a good
+    place to set the "StateDir" config setting to. When cached file systems
+    are used there is little performance penalty for using state files.
+    Linux tends to do a good job caching its file systems, so pick a
+    StateDir for ease of system administration.
 
     On Win32 systems, where mod_perl requests are serialized, you can freely
     use SessionSerialize to make your $Session requests faster, and you can
     achieve similar performance benefits for $Application if you call
     $Application->Lock() in your global.asa's Script_OnStart.
-
-  High MaxRequests
-
-    Set your max requests per child thread or process (in httpd.conf) high,
-    so that ASP scripts have a better chance being cached, which happens
-    after they are first compiled. You will also avoid the process fork
-    penalty on UNIX systems. Somewhere between 100 - 1000 is probably pretty
-    good.
 
   Low MaxClients
 
@@ -2676,6 +3001,17 @@ TUNING
     swapping to disk because of excessive RAM usage. Typical settings are
     less than 100 even with 1 gig RAM! To handle more client connections,
     look into a dual server, mod_proxy front end.
+
+  High MaxRequestsPerChild
+
+    Set your max requests per child thread or process (in httpd.conf) high,
+    so that ASP scripts have a better chance being cached, which happens
+    after they are first compiled. You will also avoid the process fork
+    penalty on UNIX systems. Somewhere between 50 - 500 is probably pretty
+    good. You do not want to set this too high though or you will risk
+    having your web processes use too much RAM. One may use
+    Apache::SizeLimit or Apache::GTopLimit to optimally tune
+    MaxRequestsPerChild at runtime.
 
   Precompile Modules
 
@@ -2692,9 +3028,10 @@ TUNING
     upon server startup allows this code to be shared with forked child www
     servers, so you reduce overall memory usage, and use less CPU compiling
     scripts for each separate www server process. These savings could be
-    significant. On my PII300, it takes a couple seconds to compile 28
-    scripts upon server startup, with an average of 50K RAM per compiled
-    script, and this savings is passed on to the child httpd servers.
+    significant. On a PII300 Solaris x86, it takes a couple seconds to
+    compile 28 scripts upon server startup, with an average of 50K RAM per
+    compiled script, and this savings is passed on to the ALL child httpd
+    servers, so total savings would be 50Kx28x20(MaxClients)=28M!
 
     Apache::ASP->Loader() can be called to precompile scripts and even
     entire ASP applications at server startup. Note also that in modperl,
@@ -2711,24 +3048,28 @@ TUNING
 
     The %config args, are the config options that you want set that affect
     compilation. These options include Debug, Global, GlobalPackage,
-    DynamicIncludes, StatINC, and StatINCMatch. If your scripts are later
-    run with different config options, your scripts may have to be
-    recompiled.
+    DynamicIncludes, StatINC, StatINCMatch, XMLSubsMatch, and XMLSubsStrict.
+    If your scripts are later run with different config options, your
+    scripts may have to be recompiled.
 
     Here is an example of use in a *.conf file:
 
      <Perl> 
      Apache::ASP->Loader(
-            'c:/proj/site', "(asp|htm)\$", 
-            Global => '/proj/perllib',
-            Debug => 1, # see output when starting apache
+            '/usr/local/proj/site', "(asp|htm)\$", 
+            'Global' => '/proj/perllib',
+            'Debug' => -3, # see system output when starting apache
 
             # OPTIONAL configs if you use them in your apache configuration
             # these settings affect how the scripts are compiled and loaded
-            GlobalPackage => SomePackageName,
-            DynamicIncludes => 1,   
-            StatINC => 1,           
-            ); 
+            'GlobalPackage' => 'SomePackageName',
+            'DynamicIncludes' => 1, 
+            'StatINC' => 1,         
+            'StatINCMatch' => 'My',
+            'UseStrict' => 1,
+            'XMLSubsMatch' => 'my:\w+',
+            'XMLSubsStrict' => 0 || 1,
+            );
      </Perl>
 
     This config section tells the server to compile all scripts in
@@ -2752,12 +3093,19 @@ TUNING
     Instead of StatINC, try using the StatINCMatch config, which will check
     a small subset of perl libraries for changes. This config is fine for a
     production environment, and if used well might only incur a 10-20%
-    performance penalty.
+    performance penalty, depending on the number of modules your system
+    loads in all, as each module needs to be checked for changes on a per
+    request basis.
 
   Turn off Debugging
 
-    Turn debugging off by setting Debug to 0. Having the debug config option
-    on slows things down immensely.
+    Turn off system debugging by setting Debug to 0-3. Having the system
+    debug config option on slows things down immensely, but can be useful
+    when troubleshooting your application. System level debugging is
+    settings -3 through -1, where user level debugging is 1 to 3. User level
+    debugging is much more light weight depending on how many $Reponse-
+    >Debug() statements you use in your program, and you may want to leave
+    it on.
 
   RAM Sparing
 
@@ -2768,6 +3116,22 @@ TUNING
     instead try setting DynamicIncludes to 1, which will share compiled code
     for includes between scripts by turning an <!--#include file..--> into a
     $Response->Include().
+
+  Resource Limits
+
+    Make sure your web processes do not use too many resources like CPU or
+    RAM with the handy Apache::Resource module. Such a config might look
+    like:
+
+     PerlModule Apache::Resource
+     PerlSetEnv PERL_RLIMIT_CPU  1000
+     PerlSetEnv PERL_RLIMIT_DATA 60:60
+
+    If ever a web process should begin to take more than 60M ram or use more
+    than 1000 CPU seconds, it will be killed by the OS this way. You only
+    want to use this configuration to protect against runaway processes and
+    web program errors, not for terminating a normally functioning system,
+    so set these limits HIGH!
 
 SEE ALSO
     perl(1), mod_perl(3), Apache(3), MLDBM(3), HTTP::Date(3), CGI(3),
@@ -2990,6 +3354,58 @@ TODO
 
 CHANGES
      + = improvement; - = bug fix
+
+    $VERSION = 2.21; $DATE="8/5/2001";
+     +Documented RequestParams config in CONFIG misc section.
+
+     +Documented new XSLT caching directives.
+
+     +Updated ./site/eg/.htaccess XSLT example config
+      to use XSLTCache setting.
+
+     +New FAQ section on why perl variables are sticky globals,
+      suggested by Mark Seger.
+
+     -push Global directory onto @INC during ASP script execution
+      Protect contents of original @INC with local.  This makes
+      things compatible with .09 Apache::ASP where we always had
+      Global in @INC.  Fixed needed by Henrik Tougaard
+
+     - ; is a valid separator like & for QueryString Parameters
+      Fixed wanted by Anders
+
+     -XSMLSubsMatch doc fix in CONFIG section
+
+     +Reduces number of Session groups to 16 from 32, so 
+      session manager for small user sets will be that much faster.
+
+     +optimizations for internal database, $Application, and $Session
+      creation.
+
+     +XSLTCache must be set for XSLT caching to begin using CacheDir
+
+     +CacheDB like StateDB bug sets dbm format for caching, which
+      defaults to MLDBM::Sync::SDBM_File, which works well for caching
+      output sizes < 50K
+
+     +CacheDir config for XSLT caching ... defaults to StateDir
+
+     +CacheSize in bytes determines whether the caches in CacheDir
+      are deleted at the end of the request.  A cache will be 
+      reset in this way back to 0 bytes. Defaults to 10000000 bytes
+      or about 10M.
+
+     +Caching infrastructure work that is being used in XSLT
+      can be leveraged later for output caching of includes,
+      or arbitrary user caching.
+
+     -t/server_mail.t test now uses valid email for testing
+      purposes ... doesn't actually send a mail, but for SMTP
+      runtime validation purposes it should be OK.
+
+     +fixed where POST data was read from under MOD_PERL,
+      harmless bug this was that just generated the wrong
+      system debugging message.
 
     $VERSION = 2.19; $DATE="7/10/2001";
      +update docs in various parts

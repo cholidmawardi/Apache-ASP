@@ -4,6 +4,7 @@ use vars qw(%FILES %ALIASES %LINKS $ASP $DOCINIT $DUMP);
 use MD5;
 use Time::HiRes;
 use Data::Dumper;
+use Digest::MD5 qw( md5_hex );
 
 $DUMP = "/tmp/aspbuilddumpdata";
 %FILES = ('index' => 'INTRO',
@@ -100,6 +101,7 @@ sub doc_init {
 	#    $body =~ s/\n=over\s*$//s;
 	my $item = { 
 		    name => $name,
+		    unique => substr($name, 0, 12).(length($name) > 12 ? substr(md5_hex($name.$body),0,8) : ''),
 		    body => $body,
 		    stack => [],
 		    level => ($level + 1),

@@ -257,7 +257,7 @@ if(@order > 1) {
 			}
 			$last_level = $data->{level};
 		}		
-		push(@links, "<a href=#".$Server->URLEncode($data->{name}).">$data->{name}</a>");
+		push(@links, "<a href=#".$Server->URLEncode($data->{unique}).">$data->{name}</a>");
 	}
 	%>
 
@@ -322,7 +322,7 @@ if(@order > 1) {
 for $data (@order) { 
 	%>
 	<p>
-	<a name=<%=$Server->URLEncode($data->{name})%>></a>
+	<a name=<%=$Server->URLEncode($data->{unique})%>></a>
 	<%=pod2html($data->{body}, $data->{name}, $data->{level})%>
 	<%
 }

@@ -1,5 +1,5 @@
 use Apache::ASP;
-&Apache::ASP::CGI::do_self('NoState' => 1);
+&Apache::ASP::CGI::do_self('NoState' => 1, Debug => 0);
 
 __END__
 
@@ -13,6 +13,7 @@ if('<!--#include file="include.inc"-->' =~ /^1/) {
 } else {
 	$t->not_ok;
 }
+#$Response->Debug($Server->{asp});
 
 # should parse both in at once
 if('<!--#include file="include.inc"-->' =~ /^1/) {
@@ -43,6 +44,11 @@ $Response->Include('include.inc');
 my $ref = $Response->{BinaryRef};
 $t->eok($$ref =~ /1/, '$Response->Include()');
 $$ref =~ s/1//isg;
+
+# return values
+
+@rv = $Response->Include('include_return.inc');
+$t->eok(@rv == 2 and $rv[0] == 1 and $rv[1] == 2, 'include return values');
 
 $t->done;
 %>

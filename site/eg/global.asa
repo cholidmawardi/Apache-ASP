@@ -11,30 +11,31 @@ sub Session_OnStart {
 	$Session->{Count} = 10;
 	$Session->{onstart} = time();
 	$Application->{'Session'.$Session->SessionID} = '?';
+	$Response->AppendToLog("Session_OnStart! in ./eg/global.asa ". $Session->SessionID);
 }
 
 sub Session_OnEnd {
 	my $t_session_active = time() - $Session->{onstart};
 	$Application->{'Session'.$Session->SessionID} = $t_session_active;
-	$Response->AppendToLog("Session Ending :) in ./eg/global.asa ". 
-		$Session->SessionID);
+	$Response->AppendToLog("Session_OnEnd! in ./eg/global.asa ". $Session->SessionID);
 }
 
 sub Application_OnStart {
+	$Response->AppendToLog("Application_OnStart! in ./eg/global.asa");
 	$Application->{Count} = 20;
 }
 
 sub Application_OnEnd {
-	$Response->AppendToLog("Application Ending :) in ./eg/global.asa");
+	$Response->AppendToLog("Application_OnEnd! in ./eg/global.asa");
 }
 
 sub Script_OnStart {
-    $Response->Debug("starting script $0 in global.asa Script_OnStart");
+    $Response->Debug("Script_OnStart $0 in global.asa");
     $Session->{Started}++;
     $title = '';
 }
 sub Script_OnEnd {
-    $Response->Debug("ending script $0 in global.asa Script_OnEnd");
+    $Response->Debug("Script_OnEnd $0 in global.asa");
     $Session->{Ended}++;
 }
 
@@ -134,7 +135,7 @@ sub Script_OnFlush {
        'controlling XMLSubs execution to compile time arguments.',
        
 
-       'xslt.xml' => 'XSLT transformation of XML script, powered by XML::XSLT and Tie::Cache',
+       'xslt.xml' => 'XSLT transformation of XML script, using XML::XSLT, and a DBM based cache with the XSLTCache setting. Also possible for the XSLTParser setting is XML::Sablotron for faster XSLT rendering.',
 );
 
 $SIG{__DIE__} = \&Carp::confess;

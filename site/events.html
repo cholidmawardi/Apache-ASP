@@ -236,12 +236,101 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 <font size=+0 face=verdana,arial>
 
 <font face=verdana><font size=+1 color=#555555><b>EVENTS</b></font><p>
+</font>
+
+	<hr size=1>
+	<table width=100% border=0 cellpadding=1 cellspacing=3>
+	<tr>
+	<td valign=top><font face="lucida console" size=-1>
+	<ul>
+	
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Overview>Overview</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Application_61345d1d>Application_OnStart</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Script_OnSta6a4cfa7f>Script_OnStart & Script_OnEnd</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Application_4bca009c>Application_OnEnd</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Session_OnSt3cfacd72>Session_OnStart</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Server_OnSta0d174f59>Server_OnStart ( pseudo-event )</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Session_OnEne9575396>Session_OnEnd</a>
+			</font>
+			</td>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#mod_perl%20han4ea2575f>mod_perl handlers</a>
+			</font>
+			</td>
+							
+		</tr>
+		
+		<tr>
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#Script_OnFludc73a8d8>Script_OnFlush</a>
+			</font>
+			</td>
+		<td>&nbsp;</td>					
+		</tr>
+			
+	</table>
+	<hr size=1>
+	<p>
+
+	<p>
+	<a name=Overview></a>
+	<font face=verdana><font size=+0 color=#555555><b>Overview</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The ASP platform allows developers to create Web Applications.
 In fulfillment of real software requirements, ASP allows 
 event-triggered actions to be taken, which are defined in
 a global.asa file.  The global.asa file resides in the 
-Global directory, defined as a config option , and may
+Global directory, defined as a config option, and may
 define the following actions:
 <font face="courier new" size=3><pre>
 	Action			Event
@@ -271,68 +360,11 @@ $Session upon revisiting.
 application, and has a new $Session created.  Right before
 the first $Session is created, the $Application is created.
 When the last user $Session expires, that $Application 
-expires also.</font>
-
-	<hr size=1>
-	<table width=100% border=0 cellpadding=1 cellspacing=3>
-	<tr>
-	<td valign=top><font face="lucida console" size=-1>
-	<ul>
+expires also.  For some web applications that are always busy,
+the Application_OnEnd event may never occur.</font>
 	
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Script_OnStart%20%26%20Script_OnEnd>Script_OnStart & Script_OnEnd</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Script_OnFlush>Script_OnFlush</a>
-			</font>
-			</td>
-							
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Session_OnStart>Session_OnStart</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Application_OnStart>Application_OnStart</a>
-			</font>
-			</td>
-							
-		</tr>
-		
-		<tr>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Session_OnEnd>Session_OnEnd</a>
-			</font>
-			</td>
-		
-			<td valign=top >
-			<font face="lucida console" size=-1>
-			<a href=#Application_OnEnd>Application_OnEnd</a>
-			</font>
-			</td>
-							
-		</tr>
-			
-	</table>
-	<hr size=1>
 	<p>
-
-	<p>
-	<a name=Script_OnStart%20%26%20Script_OnEnd></a>
+	<a name=Script_OnSta6a4cfa7f></a>
 	<font face=verdana><font size=+0 color=#555555><b>Script_OnStart & Script_OnEnd</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The script events are used to run any code for all scripts
@@ -351,7 +383,7 @@ code, use the API extension:
 </pre></font>
 	
 	<p>
-	<a name=Session_OnStart></a>
+	<a name=Session_OnSt3cfacd72></a>
 	<font face=verdana><font size=+0 color=#555555><b>Session_OnStart</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Triggered by the beginning of a user's session, Session_OnStart
@@ -363,7 +395,7 @@ and avoids having the caching handled by clumsy code inserted into
 each script being executed.</font>
 	
 	<p>
-	<a name=Session_OnEnd></a>
+	<a name=Session_OnEne9575396></a>
 	<font face=verdana><font size=+0 color=#555555><b>Session_OnEnd</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>Triggered by a user session ending, Session_OnEnd can be useful
@@ -386,7 +418,7 @@ of an application ever run will never have its Session_OnEnd run.
 just stuff that would be nice to run whenever it gets run.</font>
 	
 	<p>
-	<a name=Script_OnFlush></a>
+	<a name=Script_OnFludc73a8d8></a>
 	<font face=verdana><font size=+0 color=#555555><b>Script_OnFlush</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>API extension. This event will be called prior to flushing
@@ -402,7 +434,7 @@ output without having to modify all the scripts.
 </pre></font>Check out the <a href=eg/global.asa>./site/eg/global.asa</a> for an example of its use.</font>
 	
 	<p>
-	<a name=Application_OnStart></a>
+	<a name=Application_61345d1d></a>
 	<font face=verdana><font size=+0 color=#555555><b>Application_OnStart</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>This event marks the beginning of an ASP application, and 
@@ -411,12 +443,151 @@ of an application.  This event is useful to load up
 $Application with data that will be used in all user sessions.</font>
 	
 	<p>
-	<a name=Application_OnEnd></a>
+	<a name=Application_4bca009c></a>
 	<font face=verdana><font size=+0 color=#555555><b>Application_OnEnd</b></font><p>
 <font face="courier new" size=3><pre>
 </pre></font>The end of the application is marked by this event, which
 is run after the last user session has timed out for a 
 given ASP application.</font>
+	
+	<p>
+	<a name=Server_OnSta0d174f59></a>
+	<font face=verdana><font size=+0 color=#555555><b>Server_OnStart ( pseudo-event )</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>Some might want something like a Server_OnStart event, where
+some code gets runs when the web server starts.  In <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>,
+this is easy to achieve outside of the scope of an ASP
+application, by putting some initialization code into
+a &lt;Perl&gt; section in the httpd.conf file.  Initializations
+that you would like to be shared with the child httpds are
+particularly useful, one such being the Apache::ASP-&gt;Loader() 
+routine which you can read more about in the <a href=tuning.html><font size=-1 face=verdana><b>TUNING</b></font></a> section -
+Precompile Scripts subsection. It is could be called like:
+<font face="courier new" size=3><pre>
+  # httpd.conf
+  &lt;Perl&gt;
+     Apache::ASP-&gt;Loader($path, $pattern, %config)
+  &lt;/Perl&gt;
+</pre></font>So a &lt;Perl&gt; section is your Server_OnStart routine!</font>
+	
+	<p>
+	<a name=mod_perl%20han4ea2575f></a>
+	<font face=verdana><font size=+0 color=#555555><b>mod_perl handlers</b></font><p>
+<font face="courier new" size=3><pre>
+</pre></font>If one wants to extend one's environment with <a href=http://perl.apache.org><font size=-1 face=verdana><b>mod_perl</b></font></a>
+handlers, Apache::ASP does not stop this.  Basic
+use of Apache::ASP in fact only involves the content
+handler phase of mod_perl's PerlHandler, like
+<font face="courier new" size=3><pre>
+  SetHandler perl-script
+  PerlModule Apache::ASP
+  PerlHandler Apache::ASP 
+</pre></font>But mod_perl allows for direct access to many more
+Apache event stages, for full list try &quot;perldoc mod_perl&quot;
+or buy the mod_perl Eagle book.  Some commonly used ones are:
+<font face="courier new" size=3><pre>
+  PerlInitHandler
+  PerlTransHandler
+  PerlFixupHandler
+  PerlHandler
+  PerlLogHandler
+  PerlCleanupHandler
+</pre></font>For straight Apache::ASP programming, there are some 
+equivalents, say Script_OnStart event instead of Init/Fixup
+stages, or $Server-&gt;RegisterCleanup() for Log/Cleanup stages,
+but you can do things in the mod_perl handlers that you 
+cannot do in Apache::ASP, especially if you want to handle
+all files globally, and not just ASP scripts.
+<font face="courier new" size=3><pre>
+</pre></font>For many Apache::* modules for use with mod_perl, of which
+Apache::ASP is just one, check out
+<a href=http://perl.apache.org/src/apache-modlist.html>http://perl.apache.org/src/apache-modlist.html</a>
+<font face="courier new" size=3><pre>
+</pre></font>To gain access to the ASP objects like $Session outside
+in a non-PerlHandler mod_perl handler, you may use this API:
+<font face="courier new" size=3><pre>  
+  my $ASP = Apache::ASP-&gt;new($r); # $r is Apache-&gt;request object
+</pre></font>as in this possible Authen handler:
+<font face="courier new" size=3><pre>
+  &lt;Perl&gt;
+    use Apache::ASP;
+    sub My::Auth::handler {
+      my $r = shift;
+      my $ASP = Apache::ASP-&gt;new($r) 
+      my $Session = $ASP-&gt;Session;
+    }
+  &lt;/Perl&gt;
+</pre></font>Here are some examples of do-it-yourself mod_perl
+handler programming...
+<font face="courier new" size=3><pre>
+ === Forbid Bad HSlide User Agent ===
+
+ # httpd.conf
+ PerlAccessHandler My::Access
+ &lt;Perl&gt;
+   sub My::Access::handler {
+     my $r = shift;
+     if($r-&gt;header_in('USER_AGENT') =~ /HSlide/) {
+	 403;
+     } else {
+	 200;
+     }
+   }
+ &lt;/Perl&gt;
+
+ === Runtime Path Parsing ===
+</pre></font>This example shows how one might take an arbitrary
+URL path /$path/$file.asp, and turn that into a runtime 
+config for your site, so your scripts get executed
+always in your sites DocumentRoot.
+<font face="courier new" size=3><pre>
+ INPUT URL /SomeCategory/
+ OUTPUT
+  Script: index.asp
+  $Server-&gt;Config('PATH') eq '/SomeCategory'
+
+ INPUT URL /SomeCategory/index.asp
+ OUTPUT
+  Script: index.asp
+  $Server-&gt;Config('PATH') eq '/SomeCategory'
+
+ INPUT URI /index.asp
+ OUTPUT
+  Script: index.asp
+  $Server-&gt;Config('PATH') eq ''
+
+ # httpd.conf
+ PerlTransHandler My::Init
+ use lib qw( $custom_perllib );
+
+ # $custom_perllib/My/Init.pm
+ package My::Init;
+ use strict;
+ use Apache::Constants qw(:common);
+ sub handler {
+    my $r = shift;
+
+    my $uri = $r-&gt;uri || '/';
+    unless($uri =~ m|^(.*)(/([^/.]+\.[\w]+)?)$|i) {
+	warn(&quot;can't parse uri $uri&quot;);
+	return DECLINED;
+    }
+    $uri = $2;
+    my $PATH = $1 || '';
+    $r-&gt;dir_config('PATH', $PATH);
+
+    if($uri eq '/') {
+	$uri = '/index.asp';
+    }
+
+    $r-&gt;uri($uri);
+    $r-&gt;filename($r-&gt;document_root.$uri);
+
+    DECLINED;
+ }
+
+ 1;
+</pre></font>
 	
 
 </font>
