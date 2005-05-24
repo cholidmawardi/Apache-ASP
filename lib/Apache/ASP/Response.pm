@@ -9,6 +9,7 @@ use vars qw(@ISA @Members %LinkTags $TextHTMLRegexp);
 @ISA = qw(Apache::ASP::Collection);
 use Carp qw(confess);
 use Data::Dumper qw(DumperX);
+use bytes;
 
 @Members = qw( Buffer Clean ContentType Expires ExpiresAbsolute Status );
 
@@ -410,11 +411,16 @@ sub Redirect {
     my $r = $self->{r};
 
     $asp->{dbg} && $asp->Debug('redirect called', {location=>$location});
+    
+    # X: maybe this instead, so no session-id on normal redirects?
+    #    if($asp->{Session}) {
+    #	$location = $asp->{Server}->URL($location);
+
     if($asp->{Session} and $asp->{session_url_parse}) {
 	$location = &SessionQueryParseURL($self, $location);
 	$asp->{dbg} && $asp->Debug("new location after session query parsing $location");
     }
-       
+
     $r->headers_out->set('Location', $location);
     $self->{Status} = 302;
     $r->status(302);

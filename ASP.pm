@@ -4,7 +4,7 @@
 
 package Apache::ASP;
 
-$VERSION = 2.57;
+$VERSION = 2.59;
 
 #require DynaLoader;
 #@ISA = qw(DynaLoader);
@@ -50,7 +50,7 @@ unless($LoadModPerl++) {
 	# Only pre-load these if in a mod_perl environment for sharing memory post fork.
 	# These will not be loaded then for CGI until absolutely necessary at runtime
 	push(@load_modules, qw( 
-          Apache2 mod_perl
+          mod_perl
           MLDBM::Serializer::Data::Dumper Devel::Symdump CGI
           Apache::ASP::StateManager Apache::ASP::Session Apache::ASP::Application
           Apache::ASP::StatINC Apache::ASP::Error
@@ -66,6 +66,7 @@ unless($LoadModPerl++) {
 	$ModPerl2 = ($mod_perl::VERSION >= 1.99);
 	if($ModPerl2) {
 	    eval "use Apache::ASP::ApacheCommon ();";
+	    die($@) if $@;
 	}
     }
 }
@@ -161,10 +162,11 @@ sub handler {
     # rarely happens, but just in case
     my $filename;
     unless($filename = eval { $r->filename }) {
-	if($filename = eval { Apache->request->filename }) {
-	    $r = Apache->request;
+        my $rtest = $ModPerl2 ? Apache2::RequestUtil->request() : Apache->request();
+	if($filename = eval { $rtest->filename }) {
+	    $r = $rtest;
 	} else {
-	    return &DSOError($r);
+	    return &DSOError($rtest);
 	}
     }
 
@@ -424,6 +426,7 @@ sub new {
 # called upon every end of connection by RegisterCleanup
 sub DESTROY {
     my $self = shift;
+
     return unless $self->{destroy}; # still active object
     $self->{dbg} && $self->Debug("destroying ASP object $self");
 
@@ -3465,6 +3468,7 @@ define the following actions:
         Script_OnStart *	Beginning of Script execution
         Script_OnEnd *		End of Script execution
         Script_OnFlush *	Before $Response being flushed to client.
+        Script_OnParse *        Before script compilation
 	Application_OnStart	Beginning of Application
 	Application_OnEnd	End of Application
 	Session_OnStart		Beginning of user Session.
@@ -3553,6 +3557,18 @@ output without having to modify all the scripts.
  }
 
 Check out the ./site/eg/global.asa for an example of its use.
+
+=head2 Script_OnParse
+
+This event allows one to set up a source filter on the script text,
+allowing one to change the script on the fly before the compilation
+stage occurs.  The script text is available in the $Server->{ScriptRef}
+scalar reference, and can be accessed like so:
+
+ sub Script_OnParse {
+   my $code = $Server->{ScriptRef}
+   $$code .= " ADDED SOMETHING ";
+ }
 
 =head2 Application_OnStart
 
@@ -4824,9 +4840,9 @@ but not as of the 2.11 release.
 
 =head1 SSI
 
-SSI is great!  One of the main features of SSI is to include
-other files in the script being requested.  In Apache::ASP, this
-is implemented in a couple ways, the most crucial of which
+SSI is great!  One of the main features of server side includes 
+is to include other files in the script being requested.  In Apache::ASP, 
+this is implemented in a couple ways, the most crucial of which
 is implemented in the file include.  Formatted as
 
  <!--#include file=filename.inc-->
@@ -5242,6 +5258,10 @@ the script to get going.  This functionality has been implemented so that
 developers may have the best of both worlds when building their 
 web applications.
 
+For more information about CGI.pm, please see the web site
+
+  http://stein.cshl.org/WWW/software/CGI/
+
 =item Query Object Initialization
 
 You may create a CGI.pm $query object like so:
@@ -5306,8 +5326,19 @@ name of the file handle.
 
 Please see the docs on CGI.pm (try perldoc CGI) for more information
 on this topic, and ./site/eg/file_upload.asp for an example of its use.
+Also, for more details about CGI.pm itself, please see the web site:
 
-There is a $Request->FileUpload() API extension that you can use to get 
+    http://stein.cshl.org/WWW/software/CGI/
+
+Occasionally, a newer version of CGI.pm will be released which breaks
+file upload compatibility with Apache::ASP.  If you find this to occur,
+then you might consider downgrading to a version that works.  For example,
+one can install a working CGI.pm v2.78 for a working version, and to 
+get old versions of this module, one can go to BACKPAN at:
+
+    http://backpan.cpan.org/modules/by-authors/id/L/LD/LDS/
+
+There is also $Request->FileUpload() API extension that you can use to get 
 more data about a file upload, so that the following properties are
 available for querying:
 
@@ -5666,14 +5697,11 @@ work for most cases.
 
 Yes, but not with this Perl module.  For ASP with other scripting
 languages besides Perl, you will need to go with a commercial vendor
-in the UNIX world.  Sun and Stryon have such solutions.
+in the UNIX world.  Sun has such a solution.
 Of course on Windows NT and Windows 2000, you get VBScript for free with IIS.
 
   Sun ONE Active Server Pages (formerly Sun Chili!Soft ASP)
   http://www.chilisoft.com
-
-  Instant ASP from Stryon (formerly Halcyon Software)
-  http://www.stryon.com
 
 =item How is database connectivity handled?
 
@@ -5954,13 +5982,15 @@ Win32::OLE(3)
 Many thanks to those who helped me make this module a reality.
 With Apache + ASP + Perl, web development could not be better!
 
-Special thanks go to Kevin Chamas & Karolina Lund for their 
+Special thanks go to my father Kevin & wife Lina for their 
 love and support through it all, and without whom none of it
 would have been possible.
 
 Other honorable mentions include:
 
  !! Doug MacEachern, for moral support and of course mod_perl
+ :) Helmut Zeilinger, Skylos, John Drago, and Warren Young for their help in the community
+ :) Randy Kobes, for the win32 binaries, and for always being the epitome of helpfulness
  :) Francesco Pasqualini, for bug fixes with stand alone CGI mode on Win32
  :) Szymon Juraszczyk, for better ContentType handling for settings like Clean.
  :) Oleg Kobyakovskiy, for identifying the double Session_OnEnd cleanup bug.
@@ -6042,60 +6072,36 @@ The Apache::ASP mailing list archives are located at:
 The mod_perl mailing list archives are located at:
 
  http://forum.swarthmore.edu/epigone/modperl
- http://www.geocrawler.com/lists/3/web/182/0/
  http://www.egroups.com/group/modperl/
 
 =item Mailing List
 
 Please subscribe to the Apache::ASP mailing list
-by sending an email to asp-subscribe@perl.apache.org
+by sending an email to asp-subscribe[at]perl.apache.org
 and send your questions or comments to the list
 after your subscription is confirmed.
 
 To unsubscribe from the Apache::ASP mailing list,
-just send an email to asp-unsubscribe@perl.apache.org
+just send an email to asp-unsubscribe[at]perl.apache.org
 
 If you think this is a mod_perl specific issue, you can
-send your question to modperl@apache.org
+send your question to modperl[at]apache.org
 
 =item Donations
 
 Apache::ASP is freely distributed under the terms of the GPL license 
-( see the LICENSE section ).  However development time is expensive, 
-and is fueled in part by donations from the user community in the 
-form of patches, debugging, and money.  For monetary contributions, 
-please go to:
-
-  http://www.chamas.com/open_source.htm
-
-and contribute via the PayPal button, or you may send a check to
-the address listed at:
-
-  http://www.chamas.com/contact.htm
+( see the LICENSE section ). If you would like to donate time to 
+the project, please get involved on the Apache::ASP Mailing List,
+and submit ideas, bug fixes and patches for the core system,
+and perhaps most importantly to simply support others in learning
+the ins and outs of the software.
 
 =head2 COMMERCIAL
 
 If you would like commercial support for Apache::ASP, please
 check out any of the following listed companies.  Note that 
 this is not an endorsement, and if you would like your company
-listed here, please email asp@chamas.com with your information.
-
-=item Chamas Enterprises Inc.
-
-We created Apache::ASP, and we can bring you top notch software
-engineering solutions!  We are experts with open source web
-and database systems.  We offer:
-
- * Installation support & configuration
- * System optimization & tuning
- * Custom development
- * Apache::ASP core extensions
- * Advanced support for mod_perl, MySQL, Apache, Perl, & UNIX 
-
-For more information please see:
-
- http://www.chamas.com/consulting.htm
- http://www.chamas.com/open_source.htm
+listed here, please email asp-dev[at]chamas.com with your information.
 
 =item AlterCom
 
@@ -6109,6 +6115,14 @@ anyone with their mod_perl Apache::ASP needs.  Our mod_perl hosting is $24.95 mo
 Our hosting services support Apache:ASP along with Mod_Perl, PHP and MySQL.
 
   http://www.Cyberchute.com
+
+=item GrokThis.net
+
+Web hosting provider.  Specializing in mod_perl and mod_python
+hosting,  we allow users to edit their own Apache configuration files
+and run their own Apache servers.
+
+  http://grokthis.net
 
 =item OmniTI
 
@@ -6132,12 +6146,18 @@ The prices for our service are about 900 EUR per day which is negotiable
 What follows is a list of public sites that are using 
 Apache::ASP.  If you use the software for your site, and 
 would like to show your support of the software by being listed, 
-please send your link to asp@chamas.com
+please send your link to asp-dev[at]chamas.com
 
 For a list of testimonials of those using Apache::ASP, please see the TESTIMONIALS section.
 
-        NodeWorks Directory
-        http://dir.nodeworks.com
+        Zapisy - Testy
+        http://www.ch.pwr.wroc.pl/~bruno/testy/
+
+        NodeWorks Encyclopedia
+        http://pedia.nodeworks.com
+
+        SalesJobs.com
+        http://www.salesjobs.com
 
         FreeLotto
         http://www.freelotto.com
@@ -6168,9 +6188,6 @@ For a list of testimonials of those using Apache::ASP, please see the TESTIMONIA
 
         AmericanGamers.com
         http://www.AmericanGamers.com/
-
-        SEAWA, Software Engineering Australia
-        http://www.seawa.org.au/
 
         ESSTECwebservices
         http://www.esstec.be/
@@ -6220,6 +6237,9 @@ For a list of testimonials of those using Apache::ASP, please see the TESTIMONIA
 	MLS of Greater Cincinnati
 	http://www.cincymls.com
 
+        NodeWorks Directory
+        http://dir.nodeworks.com
+
 	NodeWorks Link Checker
 	http://www.nodeworks.com
 
@@ -6245,7 +6265,9 @@ For a list of testimonials of those using Apache::ASP, please see the TESTIMONIA
 
 Here are testimonials from those using Apache::ASP.
 If you use this software and would like to show your 
-support please send your testimonial to asp@chamas.com
+support please send your testimonial to Apache::ASP mailing 
+list at asp[at]perl.apache.org and indicate that we can 
+post it to the web site.
 
 For a list of sites using Apache::ASP, please see the SITES USING section.
 
@@ -6399,7 +6421,7 @@ again).
 Here are some important resources listed related to 
 the use of Apache::ASP for publishing web applications.
 If you have any more to suggest, please email the Apache::ASP list
-at asp@perl.apache.org
+at asp[at]perl.apache.org
 
 =head2 Articles
 
@@ -6497,6 +6519,17 @@ means first production ready release, this would be the
 equivalent of a 1.0 release for other kinds of software.
 
  + = improvement   - = bug fix    (d) = documentations
+
+=item $VERSION = 2.57; $DATE="01/29/2004"
+
+ - $Server->Transfer will update $0 correctly
+
+ - return 0 for mod_perl handler to work with latest mod_perl 2 release
+   when we were returning 200 ( HTTP_OK ) before
+
+ - fixed bug in $Server->URL when called like $Server->URL($url)
+   without parameters.  Its not clear which perl versions this bug 
+   affected.
 
 =item $VERSION = 2.55; $DATE="08/09/2003"
 
@@ -7751,10 +7784,6 @@ equivalent of a 1.0 release for other kinds of software.
   writing exploit would only have effect if the web server user
   has write permission on those files.
 
-  Similar bug announced by openhack.org for minivend software
-  in story at: 
-    http://www.zdnet.com/eweek/stories/general/0,11011,2600258,00.html
-
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  -$0 now set to transferred file, when using $Server->Transfer
@@ -8882,7 +8911,7 @@ equivalent of a 1.0 release for other kinds of software.
 
 =head1 LICENSE
 
-Copyright (c) 1998-2004, Josh Chamas, Chamas Enterprises Inc. 
+Copyright (c) 1998-2005, Josh Chamas, Chamas Enterprises Inc. 
 All rights reserved.
 
 Apache::ASP is a perl native port of Active Server Pages for Apache
@@ -8905,7 +8934,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 For general licensing questions, please see the SUPPORT section.
 
-To contact us about licensing terms, please email asp@chamas.com.
+To contact us about licensing terms, please email asp-dev[at]chamas.com.
 
 =cut
 

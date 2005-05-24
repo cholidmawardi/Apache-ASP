@@ -386,7 +386,12 @@ when working under Apache::ASP.  Thus if you would like to port existing
 cgi scripts over to Apache::ASP, all you need to do is wrap &lt;% %&gt; around
 the script to get going.  This functionality has been implemented so that
 developers may have the best of both worlds when building their 
-web applications.</font>
+web applications.
+<font face="courier new" size=3><pre>
+</pre></font>For more information about CGI.pm, please see the web site
+<font face="courier new" size=3><pre>
+  <a href=http://stein.cshl.org/WWW/software/CGI/>http://stein.cshl.org/WWW/software/CGI/</a>
+</pre></font>
 	
 	<p>
 	<a name=Query%20Object4fef5875></a>
@@ -457,8 +462,17 @@ name of the file handle.
 	};
 </pre></font>Please see the docs on CGI.pm (try perldoc CGI) for more information
 on this topic, and <a href=eg/file_upload.asp>./site/eg/file_upload.asp</a> for an example of its use.
+Also, for more details about CGI.pm itself, please see the web site:
 <font face="courier new" size=3><pre>
-</pre></font>There is a $Request-&gt;FileUpload() API extension that you can use to get 
+    <a href=http://stein.cshl.org/WWW/software/CGI/>http://stein.cshl.org/WWW/software/CGI/</a>
+</pre></font>Occasionally, a newer version of CGI.pm will be released which breaks
+file upload compatibility with Apache::ASP.  If you find this to occur,
+then you might consider downgrading to a version that works.  For example,
+one can install a working CGI.pm v2.78 for a working version, and to 
+get old versions of this module, one can go to BACKPAN at:
+<font face="courier new" size=3><pre>
+    <a href=http://backpan.cpan.org/modules/by-authors/id/L/LD/LDS/>http://backpan.cpan.org/modules/by-authors/id/L/LD/LDS/</a>
+</pre></font>There is also $Request-&gt;FileUpload() API extension that you can use to get 
 more data about a file upload, so that the following properties are
 available for querying:
 <font face="courier new" size=3><pre>
@@ -487,7 +501,7 @@ available for querying:
 <tr bgcolor=#063678>
 	<td colspan=3 align=center width=80%>
 	<font face=verdana color=white size=-1>
-	Copyright &copy; 1998-2004,
+	Copyright &copy; 1998-2005,
 	<a href=http://www.chamas.com><font color=white>Chamas Enterprises Inc.</font></a>
 	</font>
 	</td>

@@ -266,7 +266,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Application_61345d1d>Application_OnStart</a>
+			<a href=#Script_OnPar383e5cdf>Script_OnParse</a>
 			</font>
 			</td>
 							
@@ -282,7 +282,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Application_4bca009c>Application_OnEnd</a>
+			<a href=#Application_61345d1d>Application_OnStart</a>
 			</font>
 			</td>
 							
@@ -298,7 +298,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#Server_OnSta0d174f59>Server_OnStart ( pseudo-event )</a>
+			<a href=#Application_4bca009c>Application_OnEnd</a>
 			</font>
 			</td>
 							
@@ -314,7 +314,7 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		
 			<td valign=top >
 			<font face="lucida console" size=-1>
-			<a href=#mod_perl%20han02da5c9c>mod_perl handlers</a>
+			<a href=#Server_OnSta0d174f59>Server_OnStart ( pseudo-event )</a>
 			</font>
 			</td>
 							
@@ -327,7 +327,13 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 			<a href=#Script_OnFludc73a8d8>Script_OnFlush</a>
 			</font>
 			</td>
-		<td>&nbsp;</td>					
+		
+			<td valign=top >
+			<font face="lucida console" size=-1>
+			<a href=#mod_perl%20han02da5c9c>mod_perl handlers</a>
+			</font>
+			</td>
+							
 		</tr>
 			
 	</table>
@@ -350,6 +356,7 @@ define the following actions:
         Script_OnStart *	Beginning of Script execution
         Script_OnEnd *		End of Script execution
         Script_OnFlush *	Before $Response being flushed to client.
+        Script_OnParse *        Before script compilation
 	Application_OnStart	Beginning of Application
 	Application_OnEnd	End of Application
 	Session_OnStart		Beginning of user Session.
@@ -444,6 +451,21 @@ output without having to modify all the scripts.
    $$ref =~ s/\s+/ /sg; # to strip extra white space
  }
 </pre></font>Check out the <a href=eg/global.asa>./site/eg/global.asa</a> for an example of its use.</font>
+	
+	<p>
+	<a name=Script_OnPar383e5cdf></a>
+	<font face=verdana><font class=title size=+0 color=#555555><b>Script_OnParse</b></font>
+<font face="courier new" size=3><pre>
+</pre></font>This event allows one to set up a source filter on the script text,
+allowing one to change the script on the fly before the compilation
+stage occurs.  The script text is available in the $Server-&gt;{ScriptRef}
+scalar reference, and can be accessed like so:
+<font face="courier new" size=3><pre>
+ sub Script_OnParse {
+   my $code = $Server-&gt;{ScriptRef}
+   $$code .= &quot; ADDED SOMETHING &quot;;
+ }
+</pre></font>
 	
 	<p>
 	<a name=Application_61345d1d></a>
@@ -613,7 +635,7 @@ always in your sites DocumentRoot.
 <tr bgcolor=#063678>
 	<td colspan=3 align=center width=80%>
 	<font face=verdana color=white size=-1>
-	Copyright &copy; 1998-2004,
+	Copyright &copy; 1998-2005,
 	<a href=http://www.chamas.com><font color=white>Chamas Enterprises Inc.</font></a>
 	</font>
 	</td>

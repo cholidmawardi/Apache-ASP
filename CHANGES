@@ -1,13 +1,14 @@
-$MODULE=Apache::ASP; $VERSION = '2.57'; $DATE="TBD"
+$MODULE=Apache::ASP; $VERSION = 2.59; $DATE="05/23/2005"
 
 Please see README for changes for past versions.
 
  + = improvement;    - = bug fix;    (d) = documentation
 
- - $Server->Transfer will update $0 correctly
+ + added "use bytes" to Response object to calculate Content-Length
+   correctly for UTF8 data, which should require therefore at least
+   perl version 5.6 installed
 
- - return 0 for mod_perl handler to work with latest mod_perl 2 release
+ + updated to work with latest mod_perl 2.0 module naming convention,
+   thanks to Randy Kobes for patch
 
- - fixed bug in $Server->URL when called like $Server->URL($url)
-   without parameters.  Its not clear which perl versions this bug 
-   affected.
+ + examples now exclude usage of Apache::Filter & Apache::SSI under mod_perl 2.0

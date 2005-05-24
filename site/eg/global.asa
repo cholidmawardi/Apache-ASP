@@ -149,6 +149,11 @@ sub Application_OnEnd {
        'xslt.xml' => 'XSLT transformation of XML script, using XML::XSLT, and a DBM based cache with the XSLTCache setting. Also possible for the XSLTParser setting is XML::Sablotron for faster XSLT rendering.',
 );
 
+if($Apache::ASP::ModPerl2) {
+  delete $EG{'ssi_filter.ssi'};
+  delete $EG{'filter.filter'};
+}
+
 $SIG{__DIE__} = \&Carp::confess;
 
 # note if you include XMLSubs in the global.asa, make sure to 
