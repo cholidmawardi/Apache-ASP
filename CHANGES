@@ -1,14 +1,13 @@
-$MODULE=Apache::ASP; $VERSION = 2.59; $DATE="05/23/2005"
+$MODULE=Apache::ASP; $VERSION = 2.61; $DATE="05/24/2008"
 
 Please see README for changes for past versions.
 
  + = improvement;    - = bug fix;    (d) = documentation
 
- + added "use bytes" to Response object to calculate Content-Length
-   correctly for UTF8 data, which should require therefore at least
-   perl version 5.6 installed
+ - updated for more recent mod_perl 2 environment to trigger correct loading of modules
 
- + updated to work with latest mod_perl 2.0 module naming convention,
-   thanks to Randy Kobes for patch
+ + loads modules in a backwards compatible way for older versions of mod_perl 1.99_07 to 1.99_09
 
- + examples now exclude usage of Apache::Filter & Apache::SSI under mod_perl 2.0
+ + license changes from GPL to Perl Artistic License
+
+

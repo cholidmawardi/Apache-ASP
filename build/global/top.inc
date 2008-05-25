@@ -185,8 +185,6 @@ marginheight=0 marginwidth=0 leftMargin=0 topMargin=0>
 		<a href=http://perl.apache.org><site:img src="powered_by_modperl.gif" alt="Powered by ModPerl and Apache"/></a>
 		<br>
 		<a href=http://www.perl.com><site:img src="rectangle_power_perl.gif" alt="Powered by Perl" /></a>
-		<br>
-		<a href=http://www.nodeworks.com/partner.htm?partner_id=apacheasp><site:img src="nodecheck_button.gif" alt="NodeWorks Link Checker" /></a>
 		</center>
 
 </center>

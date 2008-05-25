@@ -4,7 +4,7 @@
 
 package Apache::ASP;
 
-$VERSION = 2.59;
+$VERSION = 2.61;
 
 #require DynaLoader;
 #@ISA = qw(DynaLoader);
@@ -62,11 +62,12 @@ unless($LoadModPerl++) {
          eval "use $module ();";
     }
 
-    if($ENV{MOD_PERL}) {
-	$ModPerl2 = ($mod_perl::VERSION >= 1.99);
-	if($ModPerl2) {
-	    eval "use Apache::ASP::ApacheCommon ();";
-	    die($@) if $@;
+    if(exists $ENV{MOD_PERL_API_VERSION}) {
+	if($ModPerl2 = ($ENV{MOD_PERL_API_VERSION} >= 2)) {
+	    if($ModPerl2) {
+		eval "use Apache::ASP::ApacheCommon ();";
+		die($@) if $@;
+	    }
 	}
     }
 }
@@ -6101,7 +6102,7 @@ the ins and outs of the software.
 If you would like commercial support for Apache::ASP, please
 check out any of the following listed companies.  Note that 
 this is not an endorsement, and if you would like your company
-listed here, please email asp-dev[at]chamas.com with your information.
+listed here, please email asp-dev [at] chamas.com with your information.
 
 =item AlterCom
 
@@ -6146,15 +6147,12 @@ The prices for our service are about 900 EUR per day which is negotiable
 What follows is a list of public sites that are using 
 Apache::ASP.  If you use the software for your site, and 
 would like to show your support of the software by being listed, 
-please send your link to asp-dev[at]chamas.com
+please send your link to asp-dev [at] chamas.com
 
 For a list of testimonials of those using Apache::ASP, please see the TESTIMONIALS section.
 
         Zapisy - Testy
         http://www.ch.pwr.wroc.pl/~bruno/testy/
-
-        NodeWorks Encyclopedia
-        http://pedia.nodeworks.com
 
         SalesJobs.com
         http://www.salesjobs.com
@@ -6236,9 +6234,6 @@ For a list of testimonials of those using Apache::ASP, please see the TESTIMONIA
 
 	MLS of Greater Cincinnati
 	http://www.cincymls.com
-
-        NodeWorks Directory
-        http://dir.nodeworks.com
 
 	NodeWorks Link Checker
 	http://www.nodeworks.com
@@ -6519,6 +6514,17 @@ means first production ready release, this would be the
 equivalent of a 1.0 release for other kinds of software.
 
  + = improvement   - = bug fix    (d) = documentations
+
+=item $VERSION = 2.59; $DATE="05/23/2005"
+
+ + added "use bytes" to Response object to calculate Content-Length
+   correctly for UTF8 data, which should require therefore at least
+   perl version 5.6 installed
+
+ + updated to work with latest mod_perl 2.0 module naming convention,
+   thanks to Randy Kobes for patch
+
+ + examples now exclude usage of Apache::Filter & Apache::SSI under mod_perl 2.0
 
 =item $VERSION = 2.57; $DATE="01/29/2004"
 
@@ -8911,30 +8917,12 @@ equivalent of a 1.0 release for other kinds of software.
 
 =head1 LICENSE
 
-Copyright (c) 1998-2005, Josh Chamas, Chamas Enterprises Inc. 
-All rights reserved.
+Copyright (c) 1998-2008, Josh Chamas, Chamas Enterprises Inc. 
+All rights reserved.  This program is free software; you can 
+redistribute it and/or modify it under the same terms as Perl itself.
 
 Apache::ASP is a perl native port of Active Server Pages for Apache
-and mod_perl.  This software is licensed under the GPL.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-For the full text of the GPL, see the license file in the 
-distribution of this software, visit the GPL site at 
-http://www.gnu.org/copyleft/gpl.html or write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-For general licensing questions, please see the SUPPORT section.
-
-To contact us about licensing terms, please email asp-dev[at]chamas.com.
+and mod_perl.  
 
 =cut
 

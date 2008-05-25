@@ -16,8 +16,6 @@ my %args = @_;
   <td align="right" width="300">
     <a href="http://perl.apache.org"><img src="<%=$gifdir%>/powered_by_modperl.gif" border="0" alt="Powered by ModPerl &amp; Apache" /></a> 
     <a href="http://www.apache-asp.org"><img src="<%=$gifdir%>/powered_by_apache_asp.jpg" border="0" alt="Powered by Apache::ASP" /></a> 
-    <a href="http://www.nodeworks.com/partner.htm?partner_id=apacheasp"><img 
-      src="<%=$gifdir%>/nodecheck_button.gif" border="0" alt="Links Checked by NodeWorks" /></a>
   </td>
 </tr>
 <tr bgcolor="gray" width="100%">

@@ -1,25 +1,36 @@
 package Apache::ASP::ApacheCommon;
 
-# For mod_perl 2.0 in particular, just load all the modules
-# Loading only the modules needed in particular only saved between 500K-2M
-# during benchmarking
-# eval { &ModPerl::MethodLookup::preload_all_modules(); };
-	
-# here is the list of modules from mod_perl 2.0 that I would need to load
-# explicitly for all the Apache methods needed.  This is by no means definitive
-# but what I found during testing.
-# --jc, 5/5/2003
+eval {
+    # Try new Apache2 module requests first
+    require Apache2::RequestRec;
+    require Apache2::RequestUtil;
+    require Apache2::RequestIO;
+    require Apache2::Response;
+    require APR::Table;
+    require APR::Pool;
+    require Apache2::Connection;
+    require Apache2::ServerUtil;
+    require Apache2::ServerRec;
+    require Apache2::SubRequest;
+    require Apache2::Log;
+};
 
-use Apache2::RequestRec ();
-use Apache2::RequestUtil ();
-use Apache2::RequestIO ();
-use Apache2::Response ();
-use APR::Table ();
-use APR::Pool ();
-use Apache2::Connection ();
-use Apache2::ServerUtil ();
-use Apache2::ServerRec ();
-use Apache2::SubRequest ();
-use Apache2::Log ();
+# per Warren Young, to work with mod_perls of 1.99_07 and _09 vintage
+if($@) {
+    eval {
+	# Alternative if above fails because system is old, but not
+	# so old that it's incompatible.
+	require Apache::RequestRec;
+	require Apache::RequestUtil;
+	require Apache::RequestIO;
+	require Apache::Response;
+	require APR::Table;
+	require APR::Pool;
+	require Apache::Connection;
+	require Apache::ServerUtil;
+	require Apache::SubRequest;
+	require Apache::Log;
+    };
+}
 
 1;

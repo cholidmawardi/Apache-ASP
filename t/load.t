@@ -12,6 +12,7 @@ $t->eok($main::TestLoad, "failed to execute load.inc while loading");
 my $error_mark;
 {	
     # Apache::ASP->Loader() uses warn() aliased to Apache::ASP::Warn() to put out error messages
+    $^W = 0;
     local *Apache::ASP::Warn = sub {
 	my $log_output = join("", @_);
 	if($log_output =~ /not_scoped_variable/is) {
@@ -20,6 +21,7 @@ my $error_mark;
 	    warn(@_);
 	}
     };
+    $^W = 1;
   Apache::ASP->Loader('load_error.inc', undef, Debug => 1, UseStrict => 1);
 }
 $t->eok($error_mark, "failed to catch compile error of load_error.inc while loading");

@@ -137,6 +137,7 @@ sub Run {
 	  || die($@);
 
 	if($args{'Execute'}) {
+	    local $^W = 0;
 	    local *Apache::ASP::Response::Flush = sub {};
 	    $asp->Run;
 	}
